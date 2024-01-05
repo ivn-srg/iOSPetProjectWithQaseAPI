@@ -7,9 +7,7 @@
 
 import Foundation
 
-struct Projects {
+struct DataModel: Codable {
     let status: Bool
-    let result: [String:Any]
-    let totalNumberOfProject: Int
-    let resultProjects: [Project]
+    let result: Result
 }

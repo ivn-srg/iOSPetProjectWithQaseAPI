@@ -18,8 +18,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let scene = (scene as? UIWindowScene) else { return }
         
-        let vc = ProjectsViewController()
-        let navigationController = UINavigationController(rootViewController: vc)
+//        let vc = ProjectsViewController()
+//        let navigationController = UINavigationController(rootViewController: vc)
         
         let vc1 = AuthViewController()
         let navigationController1 = UINavigationController(rootViewController: vc1)

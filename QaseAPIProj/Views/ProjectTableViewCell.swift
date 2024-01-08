@@ -64,8 +64,6 @@ class ProjectTableViewCell: UITableViewCell {
     
     // MARK: - lifecycles
     
-    
-    
     func configure(
         nameOfProject: String,
         codeOfProject: String,

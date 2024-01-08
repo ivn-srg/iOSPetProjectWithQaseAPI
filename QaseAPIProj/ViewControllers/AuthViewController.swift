@@ -9,9 +9,6 @@ import UIKit
 
 class AuthViewController: UIViewController {
     
-    let apiKey = ""
-    var urlString = "https://api.qase.io/v1/project?limit=10&offset=0"
-    
     // MARK: - UI
     
     private lazy var viewCn: UIView = {
@@ -19,6 +16,13 @@ class AuthViewController: UIViewController {
         vc.translatesAutoresizingMaskIntoConstraints = false
         vc.backgroundColor = .white
         return vc
+    }()
+    
+    private var logoImg: UIImageView = {
+        let limg = UIImageView()
+        limg.translatesAutoresizingMaskIntoConstraints = false
+        limg.contentMode = .scaleAspectFit
+        return limg
     }()
     
     private var inputTokenField: UITextField = {
@@ -48,34 +52,25 @@ class AuthViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setup()
         
         self.view.backgroundColor = .white
-        
-//        performSelector(inBackground: #selector(fetchJSON), with: nil)
     }
     
     @objc private func authorizate() {
         
         func showError() {
-            let ac = UIAlertController(title: "Неверный ввод", message: "Введите токен для авторизации на сервисе Qase", preferredStyle: .alert)
+            let ac = UIAlertController(title: "Incorrect input", message: "Input the API Token for authorization on Qase service", preferredStyle: .alert)
             ac.addAction(UIAlertAction(title: "OK", style: .default))
             present(ac, animated: true)
         }
         
         if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
             if !inputTokenFieldText.isEmpty {
-//                if let url = URL(string: urlString) {
-//                    if let data = try? Data(contentsOf: url) {
-//                        // we're OK to parse!
-////                        parse(json: data)
-//                        return
-//                    } else {  }
-//                } else {  }
                 
                 let vc = ProjectsViewController()
                 vc.TOKEN = inputTokenFieldText
                 navigationController?.pushViewController(vc, animated: true)
+                
             } else {
                 showError()
             }
@@ -89,16 +84,18 @@ private extension AuthViewController {
     
     func setup() {
         
-        navigationController?.navigationBar.topItem?.title = "Authorization"
+        logoImg.image = UIImage(named: "FullLogo.png")
         
         inputTokenField.layer.borderWidth = 1
-        inputTokenField.layer.cornerRadius = 10
+        inputTokenField.layer.cornerRadius = 8
         inputTokenField.layer.borderColor = UIColor.gray.cgColor
+        inputTokenField.placeholder = "API Token"
         
         authButton.setTitle("Next", for: .normal)
         authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
         
         view.addSubview(viewCn)
+        view.addSubview(logoImg)
         view.addSubview(inputTokenField)
         view.addSubview(authButton)
         
@@ -108,14 +105,20 @@ private extension AuthViewController {
             viewCn.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             viewCn.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             
-            inputTokenField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
-            inputTokenField.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            inputTokenField.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
-            inputTokenField.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
+            logoImg.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            logoImg.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            logoImg.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
+            logoImg.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
             
-            authButton.topAnchor.constraint(equalTo: inputTokenField.bottomAnchor, constant: 10),
+            inputTokenField.topAnchor.constraint(equalTo: logoImg.bottomAnchor, constant: 20),
+            inputTokenField.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            inputTokenField.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
+            inputTokenField.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
+            
+            authButton.topAnchor.constraint(equalTo: inputTokenField.bottomAnchor, constant: 30),
             authButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            authButton.widthAnchor.constraint(equalToConstant: 70)
+            authButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
+            authButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
         ])
     }
 }

@@ -10,7 +10,6 @@ import UIKit
 class ProjectsViewController: UIViewController {
     
     var projects = [Entity]()
-    var urlString = "https://api.qase.io/v1/project?limit=10&offset=0"
     var TOKEN = ""
     
     // MARK: - UI
@@ -19,9 +18,6 @@ class ProjectsViewController: UIViewController {
         let tv = UITableView()
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.backgroundColor = .white
-//        tv.
-//        tv.rowHeight = UITableView.automaticDimension
-//        tv.estimatedRowHeight = 40
         tv.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         tv.register(ProjectTableViewCell.self, forCellReuseIdentifier: ProjectTableViewCell.cellId)
         return tv
@@ -38,6 +34,9 @@ class ProjectsViewController: UIViewController {
         super.viewDidLoad()
         
         view.backgroundColor = .white
+        
+        tableVw.delegate = self
+        tableVw.dataSource = self
         
         performSelector(inBackground: #selector(fetchJSON), with: nil)
     }
@@ -59,7 +58,9 @@ class ProjectsViewController: UIViewController {
         let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
             // Проверяем наличие ошибок
             if let error = error {
-                // Обработка ошибок
+                let ac = UIAlertController(title: "Something went wrong", message: "\(error)", preferredStyle: .alert)
+                ac.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(ac, animated: true)
             } else if let data = data {
                 // Парсим ответ
                 let decoder = JSONDecoder()
@@ -72,7 +73,9 @@ class ProjectsViewController: UIViewController {
                         self.tableVw.reloadData() // Обновляем интерфейс на главной очереди
                     }
                 } catch {
-                    // Обработка ошибок парсинга
+                    let ac = UIAlertController(title: "Server Error", message: "Invalid network response", preferredStyle: .alert)
+                    ac.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(ac, animated: true)
                 }
             }
         }
@@ -84,8 +87,8 @@ private extension ProjectsViewController {
     
     func setup() {
         
-        navigationController?.navigationBar.topItem?.title = "Projects"
-        navigationController?.navigationBar.prefersLargeTitles = true
+        title = "Projects"
+        navigationItem.largeTitleDisplayMode = .never
         
         tableVw.dataSource = self
         
@@ -113,7 +116,6 @@ extension ProjectsViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as! ProjectTableViewCell
         let project = projects[indexPath.row]
-        var content = cell.defaultContentConfiguration()
         
         cell.configure(
             nameOfProject: project.title,
@@ -125,6 +127,15 @@ extension ProjectsViewController: UITableViewDataSource {
         
         return cell
     }
+}
+
+// MARK: - UITableViewDelegate
+
+extension ProjectsViewController: UITableViewDelegate {
     
-    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        
+        cell.separatorInset = UIEdgeInsets(top: 0, left: 1/*cell.bounds.size.width*/, bottom: 2, right: -5)
+        
+    }
 }

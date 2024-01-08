@@ -11,5 +11,5 @@ struct Result: Codable {
     let total: Int
     let filtered: Int
     let count: Int
-    let entities: Entity
+    let entities: [Entity]
 }

@@ -10,47 +10,32 @@ import UIKit
 class AuthViewController: UIViewController {
     
     let apiKey = ""
-    var projects: Result = Result(
-        total: 0,
-        filtered: 0,
-        count: 0,
-        entities: Entity(
-            title: "",
-            code: "",
-            counts: Counts(
-                cases: 0,
-                suites: 0,
-                milestones: 0,
-                runs: Runs(
-                    total: 0,
-                    active: 0),
-                defects: Defects(
-                    total: 0,
-                    open: 0)
-            )
-        )
-    )
     var urlString = "https://api.qase.io/v1/project?limit=10&offset=0"
-
+    
     // MARK: - UI
     
     private lazy var viewCn: UIView = {
         let vc = UITableView()
         vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.backgroundColor = .clear
+        vc.backgroundColor = .white
         return vc
     }()
     
     private var inputTokenField: UITextField = {
         let inf = UITextField()
         inf.translatesAutoresizingMaskIntoConstraints = false
-        inf.backgroundColor = .clear
+        inf.backgroundColor = .white
+        inf.textColor = .systemGray
+        inf.borderStyle = .roundedRect
         return inf
     }()
     
     private var authButton: UIButton = {
         let ab = UIButton()
         ab.translatesAutoresizingMaskIntoConstraints = false
+        ab.backgroundColor = .systemBlue
+        ab.layer.cornerRadius = 12
+        ab.titleLabel?.textColor = .white
         return ab
     }()
     
@@ -63,9 +48,11 @@ class AuthViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setup()
         
-        authButton.addTarget(self, action: #selector(authorizate), for: .allEvents)
+        self.view.backgroundColor = .white
         
+//        performSelector(inBackground: #selector(fetchJSON), with: nil)
     }
     
     @objc private func authorizate() {
@@ -78,13 +65,17 @@ class AuthViewController: UIViewController {
         
         if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
             if !inputTokenFieldText.isEmpty {
-                if let url = URL(string: urlString) {
-                   if let data = try? Data(contentsOf: url) {
-                       // we're OK to parse!
-                       parse(json: data)
-                       return
-                   } else {  }
-                } else {  }
+//                if let url = URL(string: urlString) {
+//                    if let data = try? Data(contentsOf: url) {
+//                        // we're OK to parse!
+////                        parse(json: data)
+//                        return
+//                    } else {  }
+//                } else {  }
+                
+                let vc = ProjectsViewController()
+                vc.TOKEN = inputTokenFieldText
+                navigationController?.pushViewController(vc, animated: true)
             } else {
                 showError()
             }
@@ -92,21 +83,20 @@ class AuthViewController: UIViewController {
             showError()
         }
     }
-    
-    func parse(json: Data) {
-        let decoder = JSONDecoder()
-
-        if let jsonProjects = try? decoder.decode(DataModel.self, from: json) {
-            projects = jsonProjects.result
-//            filteredProjects = petitions.filter({$0.title.lowercased().contains(searchText.lowercased())})
-//            tableView.reloadData()
-        }
-    }
 }
 
 private extension AuthViewController {
     
     func setup() {
+        
+        navigationController?.navigationBar.topItem?.title = "Authorization"
+        
+        inputTokenField.layer.borderWidth = 1
+        inputTokenField.layer.cornerRadius = 10
+        inputTokenField.layer.borderColor = UIColor.gray.cgColor
+        
+        authButton.setTitle("Next", for: .normal)
+        authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
         
         view.addSubview(viewCn)
         view.addSubview(inputTokenField)
@@ -120,9 +110,12 @@ private extension AuthViewController {
             
             inputTokenField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
             inputTokenField.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            inputTokenField.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            inputTokenField.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
             
-            authButton.topAnchor.constraint(equalTo: inputTokenField.bottomAnchor, constant: 5),
+            authButton.topAnchor.constraint(equalTo: inputTokenField.bottomAnchor, constant: 10),
             authButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            authButton.widthAnchor.constraint(equalToConstant: 70)
         ])
     }
 }

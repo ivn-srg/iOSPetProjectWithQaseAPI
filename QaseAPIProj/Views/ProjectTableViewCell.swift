@@ -64,20 +64,14 @@ class ProjectTableViewCell: UITableViewCell {
     
     // MARK: - lifecycles
     
-    func configure(
-        nameOfProject: String,
-        codeOfProject: String,
-        numberOfTest: Int,
-        numberOfSuites: Int,
-        numOfActiveRuns: Int
-    ) {
-        let infoAboutActiveRuns = numOfActiveRuns == 0 ? "No active runs" : "\(numOfActiveRuns) active run(-s)"
+    func configure(with project: Entity) {
+        let infoAboutActiveRuns = project.counts.runs.active == 0 ? "No active runs" : "\(project.counts.runs.active) active run(-s)"
         
         containerVw.backgroundColor = .white
         
-        nameLbl.text = nameOfProject
-        codeLbl.text = codeOfProject
-        testsAndSuitesLbl.text = "\(numberOfTest) cases | \(numberOfSuites) suites | \(infoAboutActiveRuns)"
+        nameLbl.text = project.title
+        codeLbl.text = project.code
+        testsAndSuitesLbl.text = "\(project.counts.cases) cases | \(project.counts.suites) suites | \(infoAboutActiveRuns)"
         
         self.contentView.addSubview(containerVw)
         

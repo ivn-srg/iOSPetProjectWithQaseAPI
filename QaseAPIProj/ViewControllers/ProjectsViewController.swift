@@ -10,7 +10,6 @@ import UIKit
 class ProjectsViewController: UIViewController {
     
     var projects = [Entity]()
-    var TOKEN = ""
     
     // MARK: - UI
     
@@ -18,7 +17,6 @@ class ProjectsViewController: UIViewController {
         let tv = UITableView()
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.backgroundColor = .white
-        tv.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         tv.register(ProjectTableViewCell.self, forCellReuseIdentifier: ProjectTableViewCell.cellId)
         return tv
     }()
@@ -37,49 +35,6 @@ class ProjectsViewController: UIViewController {
         
         tableVw.delegate = self
         tableVw.dataSource = self
-        
-        performSelector(inBackground: #selector(fetchJSON), with: nil)
-    }
-    
-    @objc func fetchJSON() {
-        let urlString: String = "https://api.qase.io/v1/project?limit=10&offset=0"
-        
-        // Создаем URL и URLRequest
-        let url = URL(string: urlString)!
-        var request = URLRequest(url: url)
-        
-        // Устанавливаем HTTP метод
-        request.httpMethod = "GET"
-        
-        // Устанавливаем свой заголовок
-        request.addValue(TOKEN, forHTTPHeaderField: "Token")
-        
-        // Отправляем запрос
-        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-            // Проверяем наличие ошибок
-            if let error = error {
-                let ac = UIAlertController(title: "Something went wrong", message: "\(error)", preferredStyle: .alert)
-                ac.addAction(UIAlertAction(title: "OK", style: .default))
-                self.present(ac, animated: true)
-            } else if let data = data {
-                // Парсим ответ
-                let decoder = JSONDecoder()
-                do {
-                    // Пробуем декодировать полученные данные
-                    let jsonProjects = try decoder.decode(DataModel.self, from: data)
-                    // Операции с результатами парсинга
-                    self.projects = jsonProjects.result.entities
-                    DispatchQueue.main.async {
-                        self.tableVw.reloadData() // Обновляем интерфейс на главной очереди
-                    }
-                } catch {
-                    let ac = UIAlertController(title: "Server Error", message: "Invalid network response", preferredStyle: .alert)
-                    ac.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(ac, animated: true)
-                }
-            }
-        }
-        task.resume()
     }
 }
 
@@ -117,13 +72,7 @@ extension ProjectsViewController: UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as! ProjectTableViewCell
         let project = projects[indexPath.row]
         
-        cell.configure(
-            nameOfProject: project.title,
-            codeOfProject: project.code,
-            numberOfTest: project.counts.cases,
-            numberOfSuites: project.counts.suites,
-            numOfActiveRuns: project.counts.runs.active
-        )
+        cell.configure(with: project)
         
         return cell
     }

@@ -9,6 +9,10 @@ import UIKit
 
 class AuthViewController: UIViewController {
     
+    
+    var projects = [Entity]()
+    var TOKEN = ""
+    
     // MARK: - UI
     
     private lazy var viewCn: UIView = {
@@ -67,9 +71,14 @@ class AuthViewController: UIViewController {
         if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
             if !inputTokenFieldText.isEmpty {
                 
+                DispatchQueue.global().async {
+                    self.fetchJSON(inputTokenFieldText)
+                    
+                }
+                
                 let vc = ProjectsViewController()
-                vc.TOKEN = inputTokenFieldText
-                navigationController?.pushViewController(vc, animated: true)
+                vc.projects = self.projects
+                self.navigationController?.pushViewController(vc, animated: true)
                 
             } else {
                 showError()
@@ -78,13 +87,56 @@ class AuthViewController: UIViewController {
             showError()
         }
     }
+    
+    private func fetchJSON(_ token: String) {
+        let urlString: String = "https://api.qase.io/v1/project?limit=10&offset=0"
+        
+        // Создаем URL и URLRequest
+        let url = URL(string: urlString)!
+        var request = URLRequest(url: url)
+        
+        // Устанавливаем HTTP метод
+        request.httpMethod = "GET"
+        
+        // Устанавливаем свой заголовок
+        request.addValue(token, forHTTPHeaderField: "Token")
+        
+        // Отправляем запрос
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            // Проверяем наличие ошибок
+            if let error = error {
+                DispatchQueue.main.async {
+                    let ac = UIAlertController(title: "Something went wrong", message: "\(error)", preferredStyle: .alert)
+                    ac.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(ac, animated: true)
+                }
+            } else if let data = data {
+                // Парсим ответ
+                let decoder = JSONDecoder()
+                do {
+                    // Пробуем декодировать полученные данные
+                    let jsonProjects = try decoder.decode(ProjectDataModel.self, from: data)
+                    // Операции с результатами парсинга
+                    self.projects = jsonProjects.result.entities
+                    
+                } catch {
+                    DispatchQueue.main.async {
+                        let ac = UIAlertController(title: "Server Error", message: "Invalid network response", preferredStyle: .alert)
+                        ac.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(ac, animated: true)
+                    }
+                }
+            }
+        }
+        task.resume()
+    }
 }
 
 private extension AuthViewController {
     
     func setup() {
         
-        logoImg.image = UIImage(named: "FullLogo.png")
+        logoImg.image = Assets.LogoApp
         
         inputTokenField.layer.borderWidth = 1
         inputTokenField.layer.cornerRadius = 8

@@ -16,29 +16,33 @@ struct Result: Codable {
     let total: Int
     let filtered: Int
     let count: Int
-    let entities: [Entity]
+    let entities: [Project]
 }
 
-struct Entity: Codable {
+struct Project: Codable {
     let title: String
     let code: String
-    let counts: Counts
+    let counts: CountsOfProject
 }
 
-struct Counts: Codable {
+struct CountsOfProject: Codable {
     let cases: Int
     let suites: Int
     let milestones: Int
-    let runs: Runs
-    let defects: Defects
+    let runs: TestRuns
+    let defects: BugReports
 }
 
-struct Runs: Codable {
+struct TestRuns: Codable {
     let total: Int
     let active: Int
 }
 
-struct Defects: Codable {
+struct BugReports: Codable {
     let total: Int
     let open: Int
+}
+
+struct ProjectErrorDataModel: Codable {
+    let error: String
 }

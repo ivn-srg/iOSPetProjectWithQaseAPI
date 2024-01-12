@@ -10,13 +10,13 @@ import UIKit
 class AuthViewController: UIViewController {
     
     
-    var projects = [Entity]()
-    var TOKEN = ""
+    var projects = [Project]()
+    var statusOfResponse = false
     
     // MARK: - UI
     
     private lazy var viewCn: UIView = {
-        let vc = UITableView()
+        let vc = UIView()
         vc.translatesAutoresizingMaskIntoConstraints = false
         vc.backgroundColor = .white
         return vc
@@ -47,6 +47,26 @@ class AuthViewController: UIViewController {
         return ab
     }()
     
+    private var progView: UIActivityIndicatorView = {
+        let pv = UIActivityIndicatorView(style: .large)
+        pv.translatesAutoresizingMaskIntoConstraints = false
+        return pv
+    }()
+    
+    private var textLoader: UILabel = {
+        let tl = UILabel()
+        tl.translatesAutoresizingMaskIntoConstraints = false
+        tl.text = "Loading..."
+        return tl
+    }()
+    
+    private var darkView: UIView = {
+        let dw = UIView()
+        dw.translatesAutoresizingMaskIntoConstraints = false
+        dw.backgroundColor = UIColor(white: 0, alpha: 0.5)
+        return dw
+    }()
+    
     // MARK: - Lifecycle
     
     override func loadView() {
@@ -60,36 +80,42 @@ class AuthViewController: UIViewController {
         self.view.backgroundColor = .white
     }
     
+    func showErrorAlert(titleAlert: String, messageAlert: String) {
+        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "OK", style: .default))
+        present(ac, animated: true)
+    }
+    
     @objc private func authorizate() {
-        
-        func showError() {
-            let ac = UIAlertController(title: "Incorrect input", message: "Input the API Token for authorization on Qase service", preferredStyle: .alert)
-            ac.addAction(UIAlertAction(title: "OK", style: .default))
-            present(ac, animated: true)
-        }
         
         if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
             if !inputTokenFieldText.isEmpty {
                 
+                Constants.TOKEN = inputTokenFieldText
+                
+                self.darkView.isHidden = false
+                progView.startAnimating()
+                
                 DispatchQueue.global().async {
-                    self.fetchJSON(inputTokenFieldText)
-                    
+                    self.fetchProjectsJSON(Constants.TOKEN)
                 }
                 
-                let vc = ProjectsViewController()
-                vc.projects = self.projects
-                self.navigationController?.pushViewController(vc, animated: true)
-                
             } else {
-                showError()
+                showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
             }
         } else {
-            showError()
+            showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
         }
     }
     
-    private func fetchJSON(_ token: String) {
-        let urlString: String = "https://api.qase.io/v1/project?limit=10&offset=0"
+    private func ValidationToken(token: String) -> Bool {
+        
+        
+        return false
+    }
+    
+    private func fetchProjectsJSON(_ token: String) {
+        let urlString: String = "https://api.qase.io/v1/project?limit=100&offset=0"
         
         // Создаем URL и URLRequest
         let url = URL(string: urlString)!
@@ -103,12 +129,12 @@ class AuthViewController: UIViewController {
         
         // Отправляем запрос
         let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-            // Проверяем наличие ошибок
+            
             if let error = error {
                 DispatchQueue.main.async {
-                    let ac = UIAlertController(title: "Something went wrong", message: "\(error)", preferredStyle: .alert)
-                    ac.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(ac, animated: true)
+                    self.darkView.isHidden = true
+                    self.progView.stopAnimating()
+                    self.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
                 }
             } else if let data = data {
                 // Парсим ответ
@@ -118,12 +144,30 @@ class AuthViewController: UIViewController {
                     let jsonProjects = try decoder.decode(ProjectDataModel.self, from: data)
                     // Операции с результатами парсинга
                     self.projects = jsonProjects.result.entities
+                    self.statusOfResponse = jsonProjects.status
                     
-                } catch {
                     DispatchQueue.main.async {
-                        let ac = UIAlertController(title: "Server Error", message: "Invalid network response", preferredStyle: .alert)
-                        ac.addAction(UIAlertAction(title: "OK", style: .default))
-                        self.present(ac, animated: true)
+                        self.darkView.isHidden = true
+                        self.progView.stopAnimating()
+                        let vc = ProjectsViewController()
+                        vc.Token = Constants.TOKEN
+                        vc.projects = self.projects
+                        self.navigationController?.pushViewController(vc, animated: true)
+                    }
+                } catch {
+                    do {
+                        let jsonProjects = try decoder.decode(ProjectErrorDataModel.self, from: data)
+                        DispatchQueue.main.async {
+                            self.darkView.isHidden = true
+                            self.progView.stopAnimating()
+                            self.showErrorAlert(titleAlert: "Error", messageAlert: jsonProjects.error)
+                        }
+                    } catch {
+                        DispatchQueue.main.async {
+                            self.darkView.isHidden = true
+                            self.progView.stopAnimating()
+                            self.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid network response")
+                        }
                     }
                 }
             }
@@ -146,10 +190,21 @@ private extension AuthViewController {
         authButton.setTitle("Next", for: .normal)
         authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
         
+        progView.layer.borderColor = UIColor(.gray).cgColor
+        progView.layer.borderWidth = 1
+        progView.layer.cornerRadius = 12
+        progView.backgroundColor = .white
+        progView.color = .systemBlue
+        
+        darkView.isHidden = true
+        
         view.addSubview(viewCn)
         view.addSubview(logoImg)
         view.addSubview(inputTokenField)
         view.addSubview(authButton)
+        view.addSubview(darkView)
+        
+        darkView.addSubview(progView)
         
         NSLayoutConstraint.activate([
             viewCn.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -157,20 +212,30 @@ private extension AuthViewController {
             viewCn.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             viewCn.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             
-            logoImg.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
-            logoImg.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            logoImg.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
-            logoImg.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
+            darkView.topAnchor.constraint(equalTo: view.topAnchor),
+            darkView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            darkView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            darkView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            logoImg.topAnchor.constraint(equalTo: viewCn.topAnchor, constant: 30),
+            logoImg.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
+            logoImg.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
+            logoImg.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
             
             inputTokenField.topAnchor.constraint(equalTo: logoImg.bottomAnchor, constant: 20),
-            inputTokenField.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            inputTokenField.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
-            inputTokenField.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
+            inputTokenField.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
+            inputTokenField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
+            inputTokenField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
             
             authButton.topAnchor.constraint(equalTo: inputTokenField.bottomAnchor, constant: 30),
-            authButton.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            authButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
-            authButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
+            authButton.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
+            authButton.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
+            authButton.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
+            
+            progView.centerYAnchor.constraint(equalTo: darkView.centerYAnchor),
+            progView.centerXAnchor.constraint(equalTo: darkView.centerXAnchor),
+            progView.widthAnchor.constraint(equalToConstant: 100),
+            progView.heightAnchor.constraint(equalToConstant: 100),
         ])
     }
 }

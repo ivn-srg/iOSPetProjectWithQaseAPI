@@ -9,7 +9,8 @@ import UIKit
 
 class ProjectsViewController: UIViewController {
     
-    var projects = [Entity]()
+    var projects = [Project]()
+    var Token = ""
     
     // MARK: - UI
     
@@ -35,6 +36,7 @@ class ProjectsViewController: UIViewController {
         
         tableVw.delegate = self
         tableVw.dataSource = self
+        
     }
 }
 
@@ -75,6 +77,13 @@ extension ProjectsViewController: UITableViewDataSource {
         cell.configure(with: project)
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let vc = SuitesAndCasesTableViewController()
+        vc.codeOfProject = projects[indexPath.row].code
+        vc.Token = self.Token
+        self.navigationController?.pushViewController(vc, animated: true)
     }
 }
 

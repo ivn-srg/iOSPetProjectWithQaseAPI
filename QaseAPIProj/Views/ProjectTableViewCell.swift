@@ -64,8 +64,8 @@ class ProjectTableViewCell: UITableViewCell {
     
     // MARK: - lifecycles
     
-    func configure(with project: Entity) {
-        let infoAboutActiveRuns = project.counts.runs.active == 0 ? "No active runs" : "\(project.counts.runs.active) active run(-s)"
+    func configure(with project: Project) {
+        let infoAboutActiveRuns = project.counts.runs.active == 0 ? "No active runs" : "\(project.counts.runs.active) active run(s)"
         
         containerVw.backgroundColor = .white
         

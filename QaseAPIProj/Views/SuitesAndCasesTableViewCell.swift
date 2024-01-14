@@ -65,42 +65,62 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
     
     // MARK: - lifecycles
     
-    func configure(with project: Project) {
-        let infoAboutActiveRuns = project.counts.runs.active == 0 ? "No active runs" : "\(project.counts.runs.active) active run(s)"
+    func configure(with testCase: TestEntity) {
         
         containerVw.backgroundColor = .white
         
-//        nameLbl.text = project.title
-//        codeLbl.text = project.code
-//        testsAndSuitesLbl.text = "\(project.counts.cases) cases | \(project.counts.suites) suites | \(infoAboutActiveRuns)"
-//        
-//        self.contentView.addSubview(containerVw)
-//        
-//        containerVw.addSubview(contentStackVw)
-//        containerVw.addSubview(leftContainerVw)
-//        
-//        contentStackVw.addArrangedSubview(nameLbl)
-//        contentStackVw.addArrangedSubview(codeLbl)
-//        contentStackVw.addArrangedSubview(testsAndSuitesLbl)
-//        
-//        NSLayoutConstraint.activate([
-//            containerVw.topAnchor.constraint(equalTo: self.contentView.topAnchor),
-//            containerVw.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor),
-//            containerVw.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor),
-//            containerVw.trailingAnchor.constraint(equalTo: self.contentView.trailingAnchor),
-//            
-//            leftContainerVw.topAnchor.constraint(equalTo: containerVw.topAnchor, constant: 6),
-//            leftContainerVw.bottomAnchor.constraint(equalTo: containerVw.bottomAnchor, constant: -6),
-//            leftContainerVw.leadingAnchor.constraint(equalTo: containerVw.leadingAnchor, constant: 8),
-//            leftContainerVw.widthAnchor.constraint(equalToConstant: 4),
-//            
-//            contentStackVw.topAnchor.constraint(equalTo: self.leftContainerVw.topAnchor),
-//            contentStackVw.bottomAnchor.constraint(equalTo: self.leftContainerVw.bottomAnchor),
-//            contentStackVw.leadingAnchor.constraint(equalTo: self.leftContainerVw.trailingAnchor, constant: 6),
-//            contentStackVw.trailingAnchor.constraint(equalTo: self.containerVw.trailingAnchor, constant: -8),
-//            
-//        ])
+        switch testCase.priority {
+        case 1:
+            priorityImage.image = Constants.highPriorityImage
+        case 2:
+            priorityImage.image = Constants.mediumPriorityImage
+        case 3:
+            priorityImage.image = Constants.lowPriorityImage
+        default:
+            priorityImage.image = nil
+        }
+        
+        switch testCase.automation {
+        case 0:
+            automationImage.image = Constants.notAutomationImage
+        case 1:
+            automationImage.image = Constants.toBeAutomationImage
+        case 2:
+            automationImage.image = Constants.automationImage
+        default:
+            automationImage.image = nil
+        }
+        
+        titleLbl.text = testCase.title
+        descriptionLbl.text = testCase.description
+        
+        self.contentView.addSubview(containerVw)
+        
+        containerVw.addSubview(priorityImage)
+        containerVw.addSubview(automationImage)
+        containerVw.addSubview(contentStackVw)
+        
+        contentStackVw.addArrangedSubview(titleLbl)
+        contentStackVw.addArrangedSubview(descriptionLbl)
+        
+        NSLayoutConstraint.activate([
+            containerVw.topAnchor.constraint(equalTo: self.contentView.topAnchor),
+            containerVw.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor),
+            containerVw.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor),
+            containerVw.trailingAnchor.constraint(equalTo: self.contentView.trailingAnchor),
+            
+            priorityImage.centerYAnchor.constraint(equalTo: containerVw.centerYAnchor),
+            priorityImage.leadingAnchor.constraint(equalTo: containerVw.leadingAnchor, constant: 12),
+            
+            automationImage.centerYAnchor.constraint(equalTo: containerVw.centerYAnchor),
+            automationImage.leadingAnchor.constraint(equalTo: priorityImage.leadingAnchor, constant: 12),
+            
+            contentStackVw.topAnchor.constraint(equalTo: self.containerVw.topAnchor),
+            contentStackVw.bottomAnchor.constraint(equalTo: self.containerVw.bottomAnchor),
+            contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: 6),
+            contentStackVw.trailingAnchor.constraint(equalTo: self.containerVw.trailingAnchor, constant: -30),
+            
+        ])
     }
     
 }
-

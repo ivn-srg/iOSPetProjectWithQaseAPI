@@ -18,26 +18,77 @@ struct TestEntity: Codable {
     let priority: Int
     let type: Int
     let layer: Int
-    let is_flaky: Int
+    let isFlaky: Int
     let behavior: Int
     let automation: Int
     let status: Int
-    let milestone_id: Int?
-    let suite_id: Int
+    let suiteId: Int
     let links: [String]
-    let custom_fields: [String]
+    let customFields: [String]
     let attachments: [String]
-    let steps_type: String?
-    let steps: [String]
+    let stepsType: String?
+    let steps: [StepsInTestCase]
     let params: [String]
-    let member_id: Int
-    let author_id: Int
+    let memberId: Int
+    let authorId: Int
     let tags: [String]
-    let deleted: String?
-    let created: String
-    let updated: String
-    let created_at: String
-    let updated_at: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case position
+        case title
+        case description
+        case preconditions
+        case postconditions
+        case severity
+        case priority
+        case type
+        case layer
+        case isFlaky = "is_flaky"
+        case behavior
+        case automation
+        case status
+        case suiteId = "suite_id"
+        case links
+        case customFields = "custom_fields"
+        case attachments
+        case stepsType = "steps_type"
+        case steps
+        case params
+        case memberId = "member_id"
+        case authorId = "author_id"
+        case tags
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Раскодируйте каждое свойство
+        id = try container.decode(Int.self, forKey: .id)
+        position = try container.decode(Int.self, forKey: .position)
+        title = try container.decode(String.self, forKey: .title)
+        description = try container.decode(String?.self, forKey: .description)
+        preconditions = try container.decode(String?.self, forKey: .preconditions)
+        postconditions = try container.decode(String?.self, forKey: .postconditions)
+        severity = try container.decode(Int.self, forKey: .severity)
+        priority = try container.decode(Int.self, forKey: .priority)
+        type = try container.decode(Int.self, forKey: .type)
+        layer = try container.decode(Int.self, forKey: .layer)
+        isFlaky = try container.decode(Int.self, forKey: .isFlaky)
+        behavior = try container.decode(Int.self, forKey: .behavior)
+        automation = try container.decode(Int.self, forKey: .automation)
+        status = try container.decode(Int.self, forKey: .status)
+        suiteId = try container.decode(Int.self, forKey: .suiteId)
+        links = try container.decode([String].self, forKey: .links)
+        customFields = try container.decode([String].self, forKey: .customFields)
+        attachments = try container.decode([String].self, forKey: .attachments)
+        stepsType = try container.decode(String?.self, forKey: .stepsType)
+        steps = try container.decode([StepsInTestCase].self, forKey: .steps)
+        params = try container.decode([String].self, forKey: .params)
+        memberId = try container.decode(Int.self, forKey: .memberId)
+        authorId = try container.decode(Int.self, forKey: .authorId)
+        tags = try container.decode([String].self, forKey: .tags)
+    }
 }
 
 struct TestCasesModel: Codable {
@@ -52,3 +103,14 @@ struct TestResult: Codable {
     let entities: [TestEntity]
 }
 
+struct StepsInTestCase: Codable {
+    let hash: String
+    let position: Int
+    let shared_step_hash: String?
+    let shared_step_nested_hash: String?
+    let attachments: [Int]
+    let action: String?
+    let expected_result: String?
+    let data: String?
+    let steps: [StepsInTestCase]
+}

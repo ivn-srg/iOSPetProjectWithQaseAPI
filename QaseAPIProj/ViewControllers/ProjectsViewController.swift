@@ -9,8 +9,13 @@ import UIKit
 
 class ProjectsViewController: UIViewController {
     
+    var suitesAndCasesCompletion: (() -> Void)?
+    
     var projects = [Project]()
     var Token = ""
+    var codeOfProject = ""
+    var suitesOfProject = [Entity]()
+    var casesOfProject = [TestEntity]()
     
     // MARK: - UI
     
@@ -21,6 +26,12 @@ class ProjectsViewController: UIViewController {
         tv.register(ProjectTableViewCell.self, forCellReuseIdentifier: ProjectTableViewCell.cellId)
         return tv
     }()
+    
+    func showErrorAlert(titleAlert: String, messageAlert: String) {
+        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "OK", style: .default))
+        present(ac, animated: true)
+    }
     
     // MARK: - Lifecycle
     
@@ -37,6 +48,61 @@ class ProjectsViewController: UIViewController {
         tableVw.delegate = self
         tableVw.dataSource = self
         
+    }
+    
+    private func fetchSuitesJSON(_ token: String, projectCode: String) {
+        let urlString = Constants.urlString(Constants.APIMethods.suite.rawValue, projectCode, 100, 0)
+        
+        APIManager.shared.fetchData(from: urlString, method: "GET", token: token, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let jsonSuites):
+                    self?.suitesOfProject = jsonSuites.result.entities
+                    
+                case .failure(let error):
+                    if let apiError = error as? APIError, apiError == .invalidURL {
+                        
+                        LoadingIndicator.stopLoading()
+                        self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
+                        
+                    } else {
+                        
+                        LoadingIndicator.stopLoading()
+                        self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
+                        
+                    }
+                }
+            }
+        }
+    }
+    
+    private func fetchCasesJSON(_ token: String, projectCode: String) {
+        let urlString = Constants.urlString(Constants.APIMethods.cases.rawValue, projectCode, 100, 0)
+        
+        APIManager.shared.fetchData(from: urlString, method: "GET", token: token, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let jsonCases):
+                    self?.casesOfProject = jsonCases.result.entities
+                    print("pull")
+                    self?.suitesAndCasesCompletion!()
+                    
+                case .failure(let error):
+                    if let apiError = error as? APIError, apiError == .invalidURL {
+                        
+                        LoadingIndicator.stopLoading()
+                        self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
+                        
+                    } else {
+                        
+                        LoadingIndicator.stopLoading()
+                        self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
+                        
+                    }
+                }
+            }
+            
+        }
     }
 }
 
@@ -80,10 +146,20 @@ extension ProjectsViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let vc = SuitesAndCasesTableViewController()
-        vc.codeOfProject = projects[indexPath.row].code
-        vc.Token = self.Token
-        self.navigationController?.pushViewController(vc, animated: true)
+        
+        LoadingIndicator.startLoading()
+        
+        suitesAndCasesCompletion = {
+            let vc = SuitesAndCasesTableViewController()
+            vc.codeOfProject = self.projects[indexPath.row].code
+            vc.suitesOfProject = self.suitesOfProject
+            vc.casesOfProject = self.casesOfProject
+            print("push")
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+        
+        self.fetchSuitesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
+        self.fetchCasesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
     }
 }
 

@@ -7,23 +7,13 @@
 
 import UIKit
 
+
 class SuitesAndCasesTableViewController: UITableViewController {
     
     var codeOfProject = ""
     var Token = ""
     var suitesOfProject = [Entity]()
     var casesOfProject = [TestEntity]()
-    
-    let GroupSection = ["---","Описание","Ингредиенты","Как приготовить", "Пищевая ценность"]
-
-    // Создаём массив с данными
-    let itemsInfoArrays = [
-    ["1111111111111111"],
-    ["1.4","1.5","1.6"],
-    ["22", "33"],
-    ["6","7", "8"],
-    ["26","27", "28"]
-    ]
     
     // MARK: - UI
     
@@ -35,8 +25,14 @@ class SuitesAndCasesTableViewController: UITableViewController {
         return tv
     }()
     
+    func showErrorAlert(titleAlert: String, messageAlert: String) {
+        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "OK", style: .default))
+        present(ac, animated: true)
+    }
+    
     // MARK: - Lifecycles
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -47,111 +43,64 @@ class SuitesAndCasesTableViewController: UITableViewController {
         tableVw.delegate = self
         tableVw.dataSource = self
         
-        fetchSuitesJSON(Constants.TOKEN)
-        fetchCasesJSON(Constants.TOKEN)
+        LoadingIndicator.stopLoading()
     }
     
     private func fetchSuitesJSON(_ token: String) {
-        let urlString: String = "https://api.qase.io/v1/suite/\(codeOfProject)?limit=100&offset=0"
-        
-        // Создаем URL и URLRequest
-        let url = URL(string: urlString)!
-        var request = URLRequest(url: url)
-        
-        // Устанавливаем HTTP метод
-        request.httpMethod = "GET"
-        
-        // Устанавливаем свой заголовок
-        request.addValue(token, forHTTPHeaderField: "Token")
-        
-        // Отправляем запрос
-        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-            // Проверяем наличие ошибок
-            if let error = error {
-                DispatchQueue.main.async {
-                    let ac = UIAlertController(title: "Something went wrong", message: "\(error)", preferredStyle: .alert)
-                    ac.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(ac, animated: true)
-                }
-            } else if let data = data {
-                // Парсим ответ
-                let decoder = JSONDecoder()
-                do {
-                    // Пробуем декодировать полученные данные
-                    let jsonSuites = try decoder.decode(SuitesDataModel.self, from: data)
-                    // Операции с результатами парсинга
-                    self.suitesOfProject = jsonSuites.result.entities
-                    
-                    DispatchQueue.main.async {
-                        self.tableVw.reloadData()
-                    }
-                    
-                } catch {
-                    print(response ?? "просто ответ", data, error)
-                    DispatchQueue.main.async {
-                        let ac = UIAlertController(title: "Server Error", message: "Invalid network response", preferredStyle: .alert)
-                        ac.addAction(UIAlertAction(title: "OK", style: .default))
-                        self.present(ac, animated: true)
+        let urlString = "https://api.qase.io/v1/suite/\(codeOfProject)?limit=100&offset=0"
+
+        APIManager.shared.fetchData(from: urlString, method: "GET", token: token, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
+            DispatchQueue.global().async {
+
+                switch result {
+                case .success(let jsonSuites):
+                    self?.suitesOfProject = jsonSuites.result.entities
+
+                case .failure(let error):
+                    if let apiError = error as? APIError, apiError == .invalidURL {
+                        DispatchQueue.main.async {
+                            self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
+                        }
                     }
                 }
             }
         }
-        task.resume()
     }
     
     private func fetchCasesJSON(_ token: String) {
-        let urlString: String = "https://api.qase.io/v1/case/\(codeOfProject)?limit=100&offset=0"
-        
-        // Создаем URL и URLRequest
-        let url = URL(string: urlString)!
-        var request = URLRequest(url: url)
-        
-        // Устанавливаем HTTP метод
-        request.httpMethod = "GET"
-        
-        // Устанавливаем свой заголовок
-        request.addValue(token, forHTTPHeaderField: "Token")
-        
-        // Отправляем запрос
-        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-            // Проверяем наличие ошибок
-            if let error = error {
-                DispatchQueue.main.async {
-                    let ac = UIAlertController(title: "Something went wrong", message: "\(error)", preferredStyle: .alert)
-                    ac.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(ac, animated: true)
-                }
-            } else if let data = data {
-                // Парсим ответ
-                let decoder = JSONDecoder()
-                do {
-                    // Пробуем декодировать полученные данные
-                    let jsonSuites = try decoder.decode(TestCasesModel.self, from: data)
-                    // Операции с результатами парсинга
-                    self.casesOfProject = jsonSuites.result.entities
-                    
-                    DispatchQueue.main.async {
-                        self.tableVw.reloadData()
-                    }
-                    
-                } catch {
-                    print(response ?? "просто ответ", data, error)
-                    DispatchQueue.main.async {
-                        let ac = UIAlertController(title: "Server Error", message: "Invalid network response", preferredStyle: .alert)
-                        ac.addAction(UIAlertAction(title: "OK", style: .default))
-                        self.present(ac, animated: true)
+        let urlString = "https://api.qase.io/v1/case/\(codeOfProject)?limit=100&offset=0"
+
+        APIManager.shared.fetchData(from: urlString, method: "GET", token: token, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
+            DispatchQueue.global().async {
+
+                switch result {
+                case .success(let jsonCases):
+                    self?.casesOfProject = jsonCases.result.entities
+
+                case .failure(let error):
+                    if let apiError = error as? APIError, apiError == .invalidURL {
+                        DispatchQueue.main.async {
+                            self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
+                        }
                     }
                 }
             }
         }
-        task.resume()
     }
-
+    
     // MARK: - Table view data source
-
+    
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
-//        print("count of suites: \(suitesOfProject.filter( {$0.parentId == nil}).count)")
+        //        print("count of suites: \(suitesOfProject.filter( {$0.parentId == nil}).count)")
         return suitesOfProject.filter( {$0.parent_id == nil} ).count
     }
     
@@ -159,26 +108,59 @@ class SuitesAndCasesTableViewController: UITableViewController {
         let section = self.suitesOfProject.filter( {$0.parent_id == nil} )[section].title
         return section
     }
-
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        print("rjkичество кейсов \(casesOfProject.filter( {$0.suite_id == suitesOfProject.filter( {$0.parent_id == nil} )[section].id} ).count)")
-        return casesOfProject.filter( {$0.suite_id == suitesOfProject.filter( {$0.parent_id == nil} )[section].id} ).count
+        let suite = suitesOfProject[section]
+        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
+        return testCasesInSuite.count
+        
     }
-
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableVw.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        let section = indexPath.section
-
-
-        cell.textLabel?.text = casesOfProject.filter( {$0.suite_id == suitesOfProject.filter( {$0.parent_id == nil} )[section].id} )[indexPath.row].title
+        var content = cell.defaultContentConfiguration()
+        
+        let suite = suitesOfProject[indexPath.section]
+        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
+        let testCase = testCasesInSuite[indexPath.row]
+        
+        switch testCase.automation {
+        case 0:
+            content.image = Constants.notAutomationImage
+        case 1:
+            content.image = Constants.toBeAutomationImage
+        case 2:
+            content.image = Constants.automationImage
+        default:
+            content.image = nil
+        }
+        
+//        switch testCase.priority {
+//        case 1:
+//            content.image = Constants.highPriorityImage
+//        case 2:
+//            content.image = Constants.mediumPriorityImage
+//        case 3:
+//            content.image = Constants.lowPriorityImage
+//        default:
+//            content.image = nil
+//        }
+        content.text = testCase.title
+        
+        content.secondaryTextProperties.color = .gray
+        content.secondaryText = testCase.description
+        
+        cell.contentConfiguration = content
+    
         return cell
+        
     }
-
+    
 }
 
 
-private extension SuitesAndCasesTableViewController {
+extension SuitesAndCasesTableViewController {
     
     func setup() {
         
@@ -197,3 +179,4 @@ private extension SuitesAndCasesTableViewController {
         ])
     }
 }
+

@@ -22,6 +22,8 @@
 		9384FCDF2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */; };
 		9395F7342B46DC820050C3F8 /* ProjectDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */; };
 		93C743102B4C7BBA009F8865 /* Assets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C7430F2B4C7BBA009F8865 /* Assets.swift */; };
+		93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */; };
+		93F3B1642B52C3B7007844F5 /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1632B52C3B7007844F5 /* APIManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +44,8 @@
 		9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewController.swift; sourceTree = "<group>"; };
 		9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDataModel.swift; sourceTree = "<group>"; };
 		93C7430F2B4C7BBA009F8865 /* Assets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assets.swift; sourceTree = "<group>"; };
+		93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewCell.swift; sourceTree = "<group>"; };
+		93F3B1632B52C3B7007844F5 /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,9 +62,9 @@
 		93748C2F2B4808BF00BE7FFB /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */,
 				93748C302B4808F500BE7FFB /* ProjectsViewController.swift */,
 				93748C322B480F4400BE7FFB /* AuthViewController.swift */,
-				9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -70,6 +74,7 @@
 			children = (
 				93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */,
 				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
+				93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -100,6 +105,7 @@
 				937F04252AD84E3D006DDB28 /* AppDelegate.swift */,
 				937F04272AD84E3D006DDB28 /* SceneDelegate.swift */,
 				935DCFE12B516BAA00F08ECF /* Constants.swift */,
+				93F3B1632B52C3B7007844F5 /* APIManager.swift */,
 				937F042B2AD84E3D006DDB28 /* Main.storyboard */,
 				937F042E2AD84E3F006DDB28 /* Assets.xcassets */,
 				937F04302AD84E3F006DDB28 /* LaunchScreen.storyboard */,
@@ -233,7 +239,9 @@
 				935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */,
 				93748C312B4808F500BE7FFB /* ProjectsViewController.swift in Sources */,
 				937F04262AD84E3D006DDB28 /* AppDelegate.swift in Sources */,
+				93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */,
 				937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */,
+				93F3B1642B52C3B7007844F5 /* APIManager.swift in Sources */,
 				93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */,
 				935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */,
 				935DCFE62B51961F00F08ECF /* TestCasesModel.swift in Sources */,

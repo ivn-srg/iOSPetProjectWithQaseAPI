@@ -9,10 +9,10 @@ import Foundation
 
 struct SuitesDataModel: Codable {
     let status: Bool
-    let result: SResult
+    let result: SuitesResult
 }
 
-struct SResult: Codable {
+struct SuitesResult: Codable {
     let total: Int
     let filtered: Int
     let count: Int
@@ -27,9 +27,5 @@ struct Entity: Codable {
     let position: Int
     let cases_count: Int
     let parent_id: Int?
-    let created: String
-    let updated: String
-    let created_at: String
-    let updated_at: String
 }
 

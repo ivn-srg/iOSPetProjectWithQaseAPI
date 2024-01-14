@@ -9,10 +9,10 @@ import Foundation
 
 struct ProjectDataModel: Codable {
     let status: Bool
-    let result: Result
+    let result: ProjectsResult
 }
 
-struct Result: Codable {
+struct ProjectsResult: Codable {
     let total: Int
     let filtered: Int
     let count: Int
@@ -28,9 +28,9 @@ struct Project: Codable {
 struct CountsOfProject: Codable {
     let cases: Int
     let suites: Int
-    let milestones: Int
+//    let milestones: Int
     let runs: TestRuns
-    let defects: BugReports
+//    let defects: BugReports
 }
 
 struct TestRuns: Codable {
@@ -38,10 +38,10 @@ struct TestRuns: Codable {
     let active: Int
 }
 
-struct BugReports: Codable {
-    let total: Int
-    let open: Int
-}
+//struct BugReports: Codable {
+//    let total: Int
+//    let open: Int
+//}
 
 struct ProjectErrorDataModel: Codable {
     let error: String

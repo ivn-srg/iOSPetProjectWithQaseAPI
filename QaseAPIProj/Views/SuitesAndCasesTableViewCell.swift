@@ -59,7 +59,7 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         return cLbl
     }()
     
-    private lazy var deepIcon: UIImageView = {
+    private lazy var deepArrowIcon: UIImageView = {
         let tLbl = UIImageView()
         tLbl.translatesAutoresizingMaskIntoConstraints = false
         return tLbl
@@ -67,40 +67,44 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
     
     // MARK: - lifecycles
     
-    func configure(with testCase: TestEntity) {
+    func configure(with dataForCell: SuiteAndCaseData) {
         
         containerVw.backgroundColor = .white
         
-        switch testCase.priority {
-            case 1:
-                priorityImage.image = Constants.highPriorityImage
-                priorityImage.tintColor = .systemRed
-            case 2:
-                priorityImage.image = Constants.mediumPriorityImage
-                priorityImage.tintColor = .systemGray
-            case 3:
-                priorityImage.image = Constants.lowPriorityImage
-                priorityImage.tintColor = .systemGreen
-            default:
-                priorityImage.image = nil
+        if !dataForCell.isSuites {
+            switch dataForCell.priority {
+                case 1:
+                    priorityImage.image = Assets.highPriorityImage
+                    priorityImage.tintColor = .systemRed
+                case 2:
+                    priorityImage.image = Assets.mediumPriorityImage
+                    priorityImage.tintColor = .systemGray
+                case 3:
+                    priorityImage.image = Assets.lowPriorityImage
+                    priorityImage.tintColor = .systemGreen
+                default:
+                    priorityImage.image = nil
+            }
+            
+            switch dataForCell.automation {
+                case 0:
+                    automationImage.image = Assets.notAutomationImage
+                    automationImage.tintColor = .systemGray
+                case 1:
+                    automationImage.image = Assets.toBeAutomationImage
+                    automationImage.tintColor = .systemGray
+                case 2:
+                    automationImage.image = Assets.automationImage
+                    automationImage.tintColor = .systemBlue
+                default:
+                    automationImage.image = nil
+            }
+        } else {
+            accessoryType = .disclosureIndicator
         }
-        
-        switch testCase.automation {
-            case 0:
-                automationImage.image = Constants.notAutomationImage
-                automationImage.tintColor = .systemGray
-            case 1:
-                automationImage.image = Constants.toBeAutomationImage
-                automationImage.tintColor = .systemGray
-            case 2:
-                automationImage.image = Constants.automationImage
-                automationImage.tintColor = .systemBlue
-            default:
-                automationImage.image = nil
-        }
-        
-        titleLbl.text = testCase.title
-        descriptionLbl.text = testCase.description
+                
+        titleLbl.text = "\(dataForCell.title) \(dataForCell.isSuites)"
+        descriptionLbl.text = dataForCell.description
         
         self.contentView.addSubview(containerVw)
         
@@ -112,8 +116,6 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         contentStackVw.addArrangedSubview(descriptionLbl)
         
         NSLayoutConstraint.activate([
-            //            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
-            
             containerVw.topAnchor.constraint(equalTo: self.contentView.topAnchor),
             containerVw.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor),
             containerVw.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor),

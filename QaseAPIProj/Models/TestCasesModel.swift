@@ -22,7 +22,7 @@ struct TestEntity: Codable {
     let behavior: Int
     let automation: Int
     let status: Int
-    let suiteId: Int
+    let suiteId: Int?
     let links: [String]
     let customFields: [String]
     let attachments: [String]
@@ -78,7 +78,7 @@ struct TestEntity: Codable {
         behavior = try container.decode(Int.self, forKey: .behavior)
         automation = try container.decode(Int.self, forKey: .automation)
         status = try container.decode(Int.self, forKey: .status)
-        suiteId = try container.decode(Int.self, forKey: .suiteId)
+        suiteId = try container.decode(Int?.self, forKey: .suiteId)
         links = try container.decode([String].self, forKey: .links)
         customFields = try container.decode([String].self, forKey: .customFields)
         attachments = try container.decode([String].self, forKey: .attachments)

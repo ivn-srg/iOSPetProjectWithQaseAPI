@@ -11,9 +11,18 @@ import UIKit
 class SuitesAndCasesTableViewController: UIViewController {
     
     var codeOfProject = ""
-    var Token = ""
-    var suitesOfProject = [Entity]()
-    var casesOfProject = [TestEntity]()
+    var parentSuite: Int? = nil
+    var suitesAndCaseData = [SuiteAndCaseData]() {
+        didSet {
+            if parentSuite == nil {
+                filteredData = suitesAndCaseData.filter( {$0.parent_id == nil && $0.suiteId == nil} )
+            } else {
+                filteredData = suitesAndCaseData.filter( {$0.parent_id == self.parentSuite || $0.suiteId == self.parentSuite} )
+            }
+        }
+    }
+    
+    var filteredData = [SuiteAndCaseData]()
     
     // MARK: - UI
     
@@ -40,13 +49,6 @@ class SuitesAndCasesTableViewController: UIViewController {
         
         setup()
         
-        view.backgroundColor = .white
-        
-        tableVw.delegate = self
-        tableVw.dataSource = self
-        
-        tableVw.register(SuitesAndCasesTableViewCell.self, forCellReuseIdentifier: SuitesAndCasesTableViewCell.cellId)
-        
         LoadingIndicator.stopLoading()
     }
 }
@@ -55,9 +57,12 @@ extension SuitesAndCasesTableViewController {
     
     func setup() {
         
-        navigationItem.title = "Test suites"
+        navigationItem.title = parentSuite == nil ? codeOfProject : self.filteredData.filter( {$0.id == $0.parent_id} ).first?.title
         navigationItem.largeTitleDisplayMode = .never
         
+        view.backgroundColor = .white
+        
+        tableVw.delegate = self
         tableVw.dataSource = self
         
         view.addSubview(tableVw)
@@ -77,35 +82,45 @@ extension SuitesAndCasesTableViewController {
 extension SuitesAndCasesTableViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        //        print("count of suites: \(suitesOfProject.filter( {$0.parentId == nil}).count)")
-        return suitesOfProject.filter( {$0.parent_id == nil} ).count
+        return 1
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let section = self.suitesOfProject.filter( {$0.parent_id == nil} )[section].title
+        let section = self.parentSuite != nil ? self.suitesAndCaseData.filter( {$0.isSuites && $0.parent_id == self.parentSuite} ).first?.title : self.codeOfProject
         return section
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        let suite = suitesOfProject[section]
-        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
-        return testCasesInSuite.count
+        
+//        print("\(filteredData[4].title) \(filteredData[4].parent_id) \(filteredData[4].suiteId)")
+        return filteredData.count
         
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: SuitesAndCasesTableViewCell.cellId, for: indexPath) as! SuitesAndCasesTableViewCell
         
-        let suite = suitesOfProject[indexPath.section]
-        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
-        let testCase = testCasesInSuite[indexPath.row]
+        let dataForCell = filteredData[indexPath.row]
         
-        cell.configure(with: testCase)
+        cell.configure(with: dataForCell)
         
         return cell
         
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if filteredData[indexPath.row].isSuites {
+            let vc = SuitesAndCasesTableViewController()
+            vc.suitesAndCaseData = self.filteredData
+            vc.parentSuite = filteredData[indexPath.row].id
+            self.navigationController?.pushViewController(vc, animated: true)
+            
+            self.suitesAndCaseData.removeAll()
+            self.parentSuite = nil
+            self.filteredData.removeAll()
+        } else {
+            tableVw.reloadData()
+        }
     }
 }
 

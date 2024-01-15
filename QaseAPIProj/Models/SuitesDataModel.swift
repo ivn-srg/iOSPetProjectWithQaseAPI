@@ -16,10 +16,10 @@ struct SuitesResult: Codable {
     let total: Int
     let filtered: Int
     let count: Int
-    let entities: [Entity]
+    let entities: [SuiteEntity]
 }
 
-struct Entity: Codable {
+struct SuiteEntity: Codable {
     let id: Int
     let title: String
     let description: String?

@@ -9,6 +9,7 @@ import UIKit
 
 class AuthViewController: UIViewController {
     
+    private var tapCount: Int = 0
     
     var projects = [Project]()
     var statusOfResponse = false
@@ -64,6 +65,18 @@ class AuthViewController: UIViewController {
         super.viewDidLoad()
         
         self.view.backgroundColor = .white
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
+
+        // Установите количество касаний, равное 3
+        tapGestureRecognizer.numberOfTapsRequired = 3
+
+        // Добавьте gesture recognizer к вашему изображению
+        logoImg.addGestureRecognizer(tapGestureRecognizer)
+
+        // Обязательно установите для изображения userInteractionEnabled в true, чтобы оно реагировало на жесты
+        logoImg.isUserInteractionEnabled = true
+
     }
     
     @objc private func authorizate() {
@@ -101,7 +114,6 @@ class AuthViewController: UIViewController {
                     LoadingIndicator.stopLoading()
                     
                     let vc = ProjectsViewController()
-                    vc.Token = Constants.TOKEN
                     vc.projects = self!.projects
                     self?.navigationController?.pushViewController(vc, animated: true)
                 }
@@ -120,6 +132,18 @@ class AuthViewController: UIViewController {
             }
             
         }
+    }
+    
+    @objc private func tapForFillingTextLb() {
+//        tapCount += 1
+//            
+//        if tapCount == 3 {
+//            // Здесь укажите ваш TextField и строку, которой хотите заполнить
+            inputTokenField.text = "04e78090842e843ed490a3b129d5e46871b6399d0ca5fbfebaf12f547e0199d0"
+            
+//            // Сбросите счетчик
+//            tapCount = 0
+//        }
     }
 }
 

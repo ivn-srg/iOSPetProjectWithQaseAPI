@@ -42,18 +42,12 @@ class ProjectsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        view.backgroundColor = .white
-        
-        tableVw.delegate = self
-        tableVw.dataSource = self
-        
     }
     
     private func fetchSuitesJSON(_ token: String, projectCode: String) {
         let urlString = Constants.urlString(Constants.APIMethods.suite.rawValue, projectCode, 100, 0)
         
-        APIManager.shared.fetchData(from: urlString, method: "GET", token: token, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
+        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let jsonSuites):
@@ -79,12 +73,11 @@ class ProjectsViewController: UIViewController {
     private func fetchCasesJSON(_ token: String, projectCode: String) {
         let urlString = Constants.urlString(Constants.APIMethods.cases.rawValue, projectCode, 100, 0)
         
-        APIManager.shared.fetchData(from: urlString, method: "GET", token: token, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
+        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let jsonCases):
                     self?.casesOfProject = jsonCases.result.entities
-                    print("pull")
                     self?.suitesAndCasesCompletion!()
                     
                 case .failure(let error):
@@ -113,6 +106,9 @@ private extension ProjectsViewController {
         title = "Projects"
         navigationItem.largeTitleDisplayMode = .never
         
+        view.backgroundColor = .white
+        
+        tableVw.delegate = self
         tableVw.dataSource = self
         
         view.addSubview(tableVw)
@@ -132,7 +128,6 @@ extension ProjectsViewController: UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        print(projects.count)
         return projects.count
     }
     
@@ -154,7 +149,6 @@ extension ProjectsViewController: UITableViewDataSource {
             vc.codeOfProject = self.projects[indexPath.row].code
             vc.suitesOfProject = self.suitesOfProject
             vc.casesOfProject = self.casesOfProject
-            print("push")
             self.navigationController?.pushViewController(vc, animated: true)
         }
         

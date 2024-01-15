@@ -91,10 +91,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
-//        print("\(filteredData[4].title) \(filteredData[4].parent_id) \(filteredData[4].suiteId)")
         return filteredData.count
-        
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

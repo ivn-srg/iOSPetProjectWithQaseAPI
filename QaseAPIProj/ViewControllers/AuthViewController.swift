@@ -139,7 +139,7 @@ class AuthViewController: UIViewController {
 //            
 //        if tapCount == 3 {
 //            // Здесь укажите ваш TextField и строку, которой хотите заполнить
-            inputTokenField.text = "04e78090842e843ed490a3b129d5e46871b6399d0ca5fbfebaf12f547e0199d0"
+            inputTokenField.text = ""
             
 //            // Сбросите счетчик
 //            tapCount = 0

@@ -8,7 +8,7 @@
 import UIKit
 
 
-class SuitesAndCasesTableViewController: UITableViewController {
+class SuitesAndCasesTableViewController: UIViewController {
     
     var codeOfProject = ""
     var Token = ""
@@ -21,6 +21,8 @@ class SuitesAndCasesTableViewController: UITableViewController {
         let tv = UITableView()
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.backgroundColor = .white
+        tv.rowHeight = UITableView.automaticDimension
+        tv.estimatedRowHeight = 44
         tv.register(SuitesAndCasesTableViewCell.self, forCellReuseIdentifier: SuitesAndCasesTableViewCell.cellId)
         return tv
     }()
@@ -47,41 +49,6 @@ class SuitesAndCasesTableViewController: UITableViewController {
         
         LoadingIndicator.stopLoading()
     }
-    
-    // MARK: - Table view data source
-    
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        //        print("count of suites: \(suitesOfProject.filter( {$0.parentId == nil}).count)")
-        return suitesOfProject.filter( {$0.parent_id == nil} ).count
-    }
-    
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let section = self.suitesOfProject.filter( {$0.parent_id == nil} )[section].title
-        return section
-    }
-    
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        let suite = suitesOfProject[section]
-        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
-        return testCasesInSuite.count
-        
-    }
-    
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: SuitesAndCasesTableViewCell.cellId, for: indexPath) as! SuitesAndCasesTableViewCell
-        
-        let suite = suitesOfProject[indexPath.section]
-        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
-        let testCase = testCasesInSuite[indexPath.row]
-        
-        cell.configure(with: testCase)
-    
-        return cell
-        
-    }
-    
 }
 
 extension SuitesAndCasesTableViewController {
@@ -103,3 +70,48 @@ extension SuitesAndCasesTableViewController {
         ])
     }
 }
+
+
+// MARK: - Table view data source
+
+extension SuitesAndCasesTableViewController: UITableViewDataSource {
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        // #warning Incomplete implementation, return the number of sections
+        //        print("count of suites: \(suitesOfProject.filter( {$0.parentId == nil}).count)")
+        return suitesOfProject.filter( {$0.parent_id == nil} ).count
+    }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        let section = self.suitesOfProject.filter( {$0.parent_id == nil} )[section].title
+        return section
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        // #warning Incomplete implementation, return the number of rows
+        let suite = suitesOfProject[section]
+        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
+        return testCasesInSuite.count
+        
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: SuitesAndCasesTableViewCell.cellId, for: indexPath) as! SuitesAndCasesTableViewCell
+        
+        let suite = suitesOfProject[indexPath.section]
+        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
+        let testCase = testCasesInSuite[indexPath.row]
+        
+        cell.configure(with: testCase)
+        
+        return cell
+        
+    }
+}
+
+extension SuitesAndCasesTableViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
+    }
+}
+

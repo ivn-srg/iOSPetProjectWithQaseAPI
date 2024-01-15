@@ -120,16 +120,16 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
             containerVw.trailingAnchor.constraint(equalTo: self.contentView.trailingAnchor),
             
             priorityImage.centerYAnchor.constraint(equalTo: containerVw.centerYAnchor),
-            priorityImage.leadingAnchor.constraint(equalTo: containerVw.leadingAnchor, constant: priorityImage.image != nil ? 10 : 0),
-            priorityImage.widthAnchor.constraint(equalToConstant: priorityImage.image != nil ? 40 : 0),
+            priorityImage.leadingAnchor.constraint(equalTo: containerVw.leadingAnchor, constant: priorityImage.image != nil ? 15 : 0),
+            priorityImage.widthAnchor.constraint(equalToConstant: priorityImage.image != nil ? 20 : 0),
             
             automationImage.centerYAnchor.constraint(equalTo: containerVw.centerYAnchor),
-            automationImage.leadingAnchor.constraint(equalTo: priorityImage.trailingAnchor),
-            automationImage.widthAnchor.constraint(equalToConstant: 40),
+            automationImage.leadingAnchor.constraint(equalTo: priorityImage.trailingAnchor, constant: 10),
+            automationImage.widthAnchor.constraint(equalToConstant: 20),
             
             contentStackVw.topAnchor.constraint(equalTo: self.containerVw.topAnchor, constant: 8),
             contentStackVw.bottomAnchor.constraint(equalTo: self.containerVw.bottomAnchor, constant: -8),
-            contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: 6),
+            contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: 10),
             contentStackVw.trailingAnchor.constraint(equalTo: self.containerVw.trailingAnchor, constant: -50),
             
             titleLbl.topAnchor.constraint(equalTo: contentStackVw.topAnchor),

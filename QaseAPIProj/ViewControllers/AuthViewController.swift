@@ -90,7 +90,7 @@ class AuthViewController: UIViewController {
     private func fetchProjectsJSON(_ token: String) {
         let urlString = Constants.urlString(Constants.APIMethods.project.rawValue, nil, 100, 0)
         
-        APIManager.shared.fetchData(from: urlString, method: "GET", token: token, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
+        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
             
             switch result {
             case .success(let jsonProjects):

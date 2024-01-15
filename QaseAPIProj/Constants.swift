@@ -8,6 +8,11 @@
 import UIKit
 
 struct Constants {
+    enum APIType: String {
+        case get = "GET"
+        case post = "POST"
+    }
+    
     enum APIMethods: String {
         case project = "project"
         case suite = "suite"

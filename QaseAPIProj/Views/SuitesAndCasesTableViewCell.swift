@@ -36,7 +36,7 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
     private lazy var contentStackVw: UIStackView = {
         let stackVw = UIStackView()
         stackVw.translatesAutoresizingMaskIntoConstraints = false
-        stackVw.spacing = 6
+        stackVw.spacing = 8
         stackVw.axis = .vertical
         return stackVw
     }()
@@ -44,7 +44,7 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
     private lazy var titleLbl: UILabel = {
         let nameLbl = UILabel()
         nameLbl.translatesAutoresizingMaskIntoConstraints = false
-        nameLbl.font = .systemFont(ofSize: 15, weight: .bold)
+        nameLbl.font = .systemFont(ofSize: 14, weight: .bold)
         nameLbl.numberOfLines = 2
         nameLbl.textColor = .black
         return nameLbl
@@ -54,7 +54,7 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         let cLbl = UILabel()
         cLbl.translatesAutoresizingMaskIntoConstraints = false
         cLbl.font = .systemFont(ofSize: 12, weight: .regular)
-        cLbl.numberOfLines = 3
+        cLbl.numberOfLines = 2
         cLbl.textColor = .systemGray
         return cLbl
     }()
@@ -72,31 +72,31 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         containerVw.backgroundColor = .white
         
         switch testCase.priority {
-        case 1:
-            priorityImage.image = Constants.highPriorityImage
-            priorityImage.tintColor = .systemRed
-        case 2:
-            priorityImage.image = Constants.mediumPriorityImage
-            priorityImage.tintColor = .systemGray
-        case 3:
-            priorityImage.image = Constants.lowPriorityImage
-            priorityImage.tintColor = .systemGreen
-        default:
-            priorityImage.image = nil
+            case 1:
+                priorityImage.image = Constants.highPriorityImage
+                priorityImage.tintColor = .systemRed
+            case 2:
+                priorityImage.image = Constants.mediumPriorityImage
+                priorityImage.tintColor = .systemGray
+            case 3:
+                priorityImage.image = Constants.lowPriorityImage
+                priorityImage.tintColor = .systemGreen
+            default:
+                priorityImage.image = nil
         }
         
         switch testCase.automation {
-        case 0:
-            automationImage.image = Constants.notAutomationImage
-            automationImage.tintColor = .systemGray
-        case 1:
-            automationImage.image = Constants.toBeAutomationImage
-            automationImage.tintColor = .systemGray
-        case 2:
-            automationImage.image = Constants.automationImage
-            automationImage.tintColor = .systemBlue
-        default:
-            automationImage.image = nil
+            case 0:
+                automationImage.image = Constants.notAutomationImage
+                automationImage.tintColor = .systemGray
+            case 1:
+                automationImage.image = Constants.toBeAutomationImage
+                automationImage.tintColor = .systemGray
+            case 2:
+                automationImage.image = Constants.automationImage
+                automationImage.tintColor = .systemBlue
+            default:
+                automationImage.image = nil
         }
         
         titleLbl.text = testCase.title
@@ -112,7 +112,7 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         contentStackVw.addArrangedSubview(descriptionLbl)
         
         NSLayoutConstraint.activate([
-            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
+            //            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
             
             containerVw.topAnchor.constraint(equalTo: self.contentView.topAnchor),
             containerVw.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor),
@@ -128,9 +128,9 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
             automationImage.widthAnchor.constraint(equalToConstant: 40),
             
             contentStackVw.topAnchor.constraint(equalTo: self.containerVw.topAnchor, constant: 8),
-            contentStackVw.bottomAnchor.constraint(equalTo: self.containerVw.bottomAnchor, constant: 8),
+            contentStackVw.bottomAnchor.constraint(equalTo: self.containerVw.bottomAnchor, constant: -8),
             contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: 6),
-            contentStackVw.trailingAnchor.constraint(equalTo: self.containerVw.trailingAnchor, constant: -30),
+            contentStackVw.trailingAnchor.constraint(equalTo: self.containerVw.trailingAnchor, constant: -50),
             
             titleLbl.topAnchor.constraint(equalTo: contentStackVw.topAnchor),
             titleLbl.leadingAnchor.constraint(equalTo: contentStackVw.leadingAnchor),

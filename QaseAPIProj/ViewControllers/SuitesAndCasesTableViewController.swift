@@ -8,12 +8,22 @@
 import UIKit
 
 
-class SuitesAndCasesTableViewController: UIViewController {
+final class SuitesAndCasesTableViewController: UIViewController {
     
     var codeOfProject = ""
-    var Token = ""
-    var suitesOfProject = [Entity]()
-    var casesOfProject = [TestEntity]()
+    var parentSuite: Int? = nil
+    var suitesAndCaseData = [SuiteAndCaseData]() {
+        didSet {
+            if parentSuite == nil {
+                filteredData = suitesAndCaseData.filter( {$0.parent_id == nil && $0.suiteId == nil} )
+                
+            } else {
+                filteredData = suitesAndCaseData.filter( {$0.parent_id == self.parentSuite || $0.suiteId == self.parentSuite} )
+            }
+        }
+    }
+    
+    var filteredData = [SuiteAndCaseData]()
     
     // MARK: - UI
     
@@ -25,6 +35,17 @@ class SuitesAndCasesTableViewController: UIViewController {
         tv.estimatedRowHeight = 44
         tv.register(SuitesAndCasesTableViewCell.self, forCellReuseIdentifier: SuitesAndCasesTableViewCell.cellId)
         return tv
+    }()
+    
+    private let emptyDataLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "There's nothing here yet =("
+        label.textAlignment = .center
+        label.textColor = .gray
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
     }()
     
     func showErrorAlert(titleAlert: String, messageAlert: String) {
@@ -40,34 +61,38 @@ class SuitesAndCasesTableViewController: UIViewController {
         
         setup()
         
+        LoadingIndicator.stopLoading()
+    }
+}
+
+private extension SuitesAndCasesTableViewController {
+    
+    func setup() {
+        
+        title = parentSuite == nil ? codeOfProject : self.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.parentSuite} ).first?.title
+        navigationItem.largeTitleDisplayMode = .never
+        
         view.backgroundColor = .white
         
         tableVw.delegate = self
         tableVw.dataSource = self
         
-        tableVw.register(SuitesAndCasesTableViewCell.self, forCellReuseIdentifier: SuitesAndCasesTableViewCell.cellId)
-        
-        LoadingIndicator.stopLoading()
-    }
-}
-
-extension SuitesAndCasesTableViewController {
-    
-    func setup() {
-        
-        navigationItem.title = "Test suites"
-        navigationItem.largeTitleDisplayMode = .never
-        
-        tableVw.dataSource = self
-        
         view.addSubview(tableVw)
+        tableVw.addSubview(emptyDataLabel)
         
         NSLayoutConstraint.activate([
             tableVw.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableVw.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             tableVw.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             tableVw.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            
+            emptyDataLabel.centerYAnchor.constraint(equalTo: tableVw.centerYAnchor),
+            emptyDataLabel.centerXAnchor.constraint(equalTo: tableVw.centerXAnchor),
         ])
+    }
+    
+    private func updateEmptyDataLabelVisibility() {
+        emptyDataLabel.isHidden = filteredData.count > 0
     }
 }
 
@@ -77,35 +102,38 @@ extension SuitesAndCasesTableViewController {
 extension SuitesAndCasesTableViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        //        print("count of suites: \(suitesOfProject.filter( {$0.parentId == nil}).count)")
-        return suitesOfProject.filter( {$0.parent_id == nil} ).count
+        updateEmptyDataLabelVisibility()
+        return filteredData.count > 0 ? 1 : 0
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let section = self.suitesOfProject.filter( {$0.parent_id == nil} )[section].title
-        return section
+        title
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        let suite = suitesOfProject[section]
-        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
-        return testCasesInSuite.count
-        
+        filteredData.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: SuitesAndCasesTableViewCell.cellId, for: indexPath) as! SuitesAndCasesTableViewCell
         
-        let suite = suitesOfProject[indexPath.section]
-        let testCasesInSuite = casesOfProject.filter( {$0.suiteId == suite.id} )
-        let testCase = testCasesInSuite[indexPath.row]
+        let dataForCell = filteredData[indexPath.row]
         
-        cell.configure(with: testCase)
+        cell.configure(with: dataForCell)
         
         return cell
         
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if filteredData[indexPath.row].isSuites {
+            let vc = SuitesAndCasesTableViewController()
+            vc.parentSuite = filteredData[indexPath.row].id
+            vc.suitesAndCaseData = self.suitesAndCaseData
+            self.navigationController?.pushViewController(vc, animated: true)
+        } else {
+            tableVw.reloadData()
+        }
     }
 }
 

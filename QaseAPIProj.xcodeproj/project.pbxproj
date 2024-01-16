@@ -10,6 +10,7 @@
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
 		935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE32B518A4000F08ECF /* LoaderView.swift */; };
 		935DCFE62B51961F00F08ECF /* TestCasesModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE52B51961F00F08ECF /* TestCasesModel.swift */; };
+		93651C822B555F2100E96345 /* SuiteAndCaseData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93651C812B555F2100E96345 /* SuiteAndCaseData.swift */; };
 		93748C312B4808F500BE7FFB /* ProjectsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93748C302B4808F500BE7FFB /* ProjectsViewController.swift */; };
 		93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93748C322B480F4400BE7FFB /* AuthViewController.swift */; };
 		93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */; };
@@ -29,7 +30,8 @@
 /* Begin PBXFileReference section */
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		935DCFE32B518A4000F08ECF /* LoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderView.swift; sourceTree = "<group>"; };
-		935DCFE52B51961F00F08ECF /* TestCasesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TestCasesModel.swift; path = QaseAPIProj/Views/TestCasesModel.swift; sourceTree = SOURCE_ROOT; };
+		935DCFE52B51961F00F08ECF /* TestCasesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TestCasesModel.swift; path = QaseAPIProj/Models/TestCasesModel.swift; sourceTree = SOURCE_ROOT; };
+		93651C812B555F2100E96345 /* SuiteAndCaseData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuiteAndCaseData.swift; sourceTree = "<group>"; };
 		93748C302B4808F500BE7FFB /* ProjectsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewController.swift; sourceTree = "<group>"; };
 		93748C322B480F4400BE7FFB /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
 		93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectTableViewCell.swift; sourceTree = "<group>"; };
@@ -40,7 +42,7 @@
 		937F042E2AD84E3F006DDB28 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		937F04312AD84E3F006DDB28 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		937F04332AD84E3F006DDB28 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SuitesDataModel.swift; path = QaseAPIProj/Resources/SuitesDataModel.swift; sourceTree = SOURCE_ROOT; };
+		9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SuitesDataModel.swift; path = QaseAPIProj/Models/SuitesDataModel.swift; sourceTree = SOURCE_ROOT; };
 		9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewController.swift; sourceTree = "<group>"; };
 		9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDataModel.swift; sourceTree = "<group>"; };
 		93C7430F2B4C7BBA009F8865 /* Assets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assets.swift; sourceTree = "<group>"; };
@@ -117,43 +119,12 @@
 		9395F7372B46DE970050C3F8 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				9395F73B2B46DEE10050C3F8 /* Authors */,
-				9395F73A2B46DED70050C3F8 /* TestCases */,
-				9395F7392B46DECD0050C3F8 /* Siutes */,
-				9395F7382B46DEA40050C3F8 /* Projects */,
+				9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */,
+				935DCFE52B51961F00F08ECF /* TestCasesModel.swift */,
+				9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */,
+				93651C812B555F2100E96345 /* SuiteAndCaseData.swift */,
 			);
 			path = Models;
-			sourceTree = "<group>";
-		};
-		9395F7382B46DEA40050C3F8 /* Projects */ = {
-			isa = PBXGroup;
-			children = (
-				9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */,
-			);
-			path = Projects;
-			sourceTree = "<group>";
-		};
-		9395F7392B46DECD0050C3F8 /* Siutes */ = {
-			isa = PBXGroup;
-			children = (
-				9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */,
-			);
-			path = Siutes;
-			sourceTree = "<group>";
-		};
-		9395F73A2B46DED70050C3F8 /* TestCases */ = {
-			isa = PBXGroup;
-			children = (
-				935DCFE52B51961F00F08ECF /* TestCasesModel.swift */,
-			);
-			path = TestCases;
-			sourceTree = "<group>";
-		};
-		9395F73B2B46DEE10050C3F8 /* Authors */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Authors;
 			sourceTree = "<group>";
 		};
 		93C7430E2B4C7B9A009F8865 /* Resources */ = {
@@ -236,6 +207,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				93C743102B4C7BBA009F8865 /* Assets.swift in Sources */,
+				93651C822B555F2100E96345 /* SuiteAndCaseData.swift in Sources */,
 				935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */,
 				93748C312B4808F500BE7FFB /* ProjectsViewController.swift in Sources */,
 				937F04262AD84E3D006DDB28 /* AppDelegate.swift in Sources */,

@@ -7,8 +7,9 @@
 
 import UIKit
 
-class AuthViewController: UIViewController {
+final class AuthViewController: UIViewController {
     
+    private var tapCount: Int = 0
     
     var projects = [Project]()
     var statusOfResponse = false
@@ -64,6 +65,12 @@ class AuthViewController: UIViewController {
         super.viewDidLoad()
         
         self.view.backgroundColor = .white
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
+        tapGestureRecognizer.numberOfTapsRequired = 3
+        logoImg.addGestureRecognizer(tapGestureRecognizer)
+        logoImg.isUserInteractionEnabled = true
+
     }
     
     @objc private func authorizate() {
@@ -101,7 +108,6 @@ class AuthViewController: UIViewController {
                     LoadingIndicator.stopLoading()
                     
                     let vc = ProjectsViewController()
-                    vc.Token = Constants.TOKEN
                     vc.projects = self!.projects
                     self?.navigationController?.pushViewController(vc, animated: true)
                 }
@@ -120,6 +126,11 @@ class AuthViewController: UIViewController {
             }
             
         }
+    }
+    
+    @objc private func tapForFillingTextLb() {
+        inputTokenField.text = ""
+        authorizate()
     }
 }
 

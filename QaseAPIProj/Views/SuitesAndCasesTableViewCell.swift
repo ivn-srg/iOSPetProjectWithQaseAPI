@@ -7,7 +7,7 @@
 
 import UIKit
 
-class SuitesAndCasesTableViewCell: UITableViewCell {
+final class SuitesAndCasesTableViewCell: UITableViewCell {
     
     static let cellId = "SuitesAndCasesTableViewCell"
     
@@ -59,48 +59,56 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         return cLbl
     }()
     
-    private lazy var deepIcon: UIImageView = {
+    private lazy var deepArrowIcon: UIImageView = {
         let tLbl = UIImageView()
         tLbl.translatesAutoresizingMaskIntoConstraints = false
         return tLbl
     }()
     
+    
     // MARK: - lifecycles
     
-    func configure(with testCase: TestEntity) {
+    func configure(with dataForCell: SuiteAndCaseData) {
         
         containerVw.backgroundColor = .white
         
-        switch testCase.priority {
-            case 1:
-                priorityImage.image = Constants.highPriorityImage
-                priorityImage.tintColor = .systemRed
-            case 2:
-                priorityImage.image = Constants.mediumPriorityImage
-                priorityImage.tintColor = .systemGray
-            case 3:
-                priorityImage.image = Constants.lowPriorityImage
-                priorityImage.tintColor = .systemGreen
-            default:
-                priorityImage.image = nil
-        }
         
-        switch testCase.automation {
-            case 0:
-                automationImage.image = Constants.notAutomationImage
-                automationImage.tintColor = .systemGray
-            case 1:
-                automationImage.image = Constants.toBeAutomationImage
-                automationImage.tintColor = .systemGray
-            case 2:
-                automationImage.image = Constants.automationImage
-                automationImage.tintColor = .systemBlue
-            default:
-                automationImage.image = nil
+        if !dataForCell.isSuites {
+            
+            switch dataForCell.priority {
+                case 1:
+                    priorityImage.image = Assets.highPriorityImage
+                    priorityImage.tintColor = .systemRed
+                case 2:
+                    priorityImage.image = Assets.mediumPriorityImage
+                    priorityImage.tintColor = .systemGray
+                case 3:
+                    priorityImage.image = Assets.lowPriorityImage
+                    priorityImage.tintColor = .systemGreen
+                default:
+                    priorityImage.image = Assets.noPriorityImage
+                    priorityImage.tintColor = .systemGray
+            }
+            
+            switch dataForCell.automation {
+                case 0:
+                    automationImage.image = Assets.notAutomationImage
+                    automationImage.tintColor = .systemGray
+                case 1:
+                    automationImage.image = Assets.toBeAutomationImage
+                    automationImage.tintColor = .systemGray
+                case 2:
+                    automationImage.image = Assets.automationImage
+                    automationImage.tintColor = .systemBlue
+                default:
+                    automationImage.image = nil
+            }
+        } else {
+            accessoryType = .disclosureIndicator
         }
-        
-        titleLbl.text = testCase.title
-        descriptionLbl.text = testCase.description
+                
+        titleLbl.text = dataForCell.title
+        descriptionLbl.text = dataForCell.description
         
         self.contentView.addSubview(containerVw)
         
@@ -111,8 +119,8 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         contentStackVw.addArrangedSubview(titleLbl)
         contentStackVw.addArrangedSubview(descriptionLbl)
         
-        NSLayoutConstraint.activate([
-            //            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
+        var constraints = [
+            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
             
             containerVw.topAnchor.constraint(equalTo: self.contentView.topAnchor),
             containerVw.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor),
@@ -129,19 +137,31 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
             
             contentStackVw.topAnchor.constraint(equalTo: self.containerVw.topAnchor, constant: 8),
             contentStackVw.bottomAnchor.constraint(equalTo: self.containerVw.bottomAnchor, constant: -8),
-            contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: 10),
+            contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: automationImage.image != nil ? 10 : 0),
             contentStackVw.trailingAnchor.constraint(equalTo: self.containerVw.trailingAnchor, constant: -50),
             
             titleLbl.topAnchor.constraint(equalTo: contentStackVw.topAnchor),
-            titleLbl.leadingAnchor.constraint(equalTo: contentStackVw.leadingAnchor),
-            titleLbl.trailingAnchor.constraint(equalTo: contentStackVw.trailingAnchor),
+            titleLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
             
             descriptionLbl.topAnchor.constraint(equalTo: titleLbl.bottomAnchor),
-            descriptionLbl.leadingAnchor.constraint(equalTo: contentStackVw.leadingAnchor),
-            descriptionLbl.trailingAnchor.constraint(equalTo: contentStackVw.trailingAnchor),
+            descriptionLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
             descriptionLbl.bottomAnchor.constraint(equalTo: contentStackVw.bottomAnchor),
-            
-        ])
+        ]
+        
+        if dataForCell.description == nil {
+            constraints.append(descriptionLbl.heightAnchor.constraint(equalToConstant: 0)) 
+        }
+        
+        NSLayoutConstraint.activate(constraints)
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        
+        accessoryType = .none
+        titleLbl.text = ""
+        descriptionLbl.text = ""
+        priorityImage.image = nil
+        automationImage.image = nil
+    }
 }

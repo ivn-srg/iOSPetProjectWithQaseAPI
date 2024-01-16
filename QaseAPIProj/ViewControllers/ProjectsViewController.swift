@@ -7,7 +7,7 @@
 
 import UIKit
 
-class ProjectsViewController: UIViewController {
+final class ProjectsViewController: UIViewController {
     
     var suitesAndCasesCompletion: (() -> Void)?
     
@@ -77,9 +77,9 @@ class ProjectsViewController: UIViewController {
             
             switch result {
             case .success(let jsonCases):
+                self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: jsonCases.result.entities)
                 
                 DispatchQueue.main.async {
-                    self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: jsonCases.result.entities)
                     self?.suitesAndCasesCompletion!()
                 }
             case .failure(let error):

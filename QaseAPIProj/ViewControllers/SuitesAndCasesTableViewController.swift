@@ -8,7 +8,7 @@
 import UIKit
 
 
-class SuitesAndCasesTableViewController: UIViewController {
+final class SuitesAndCasesTableViewController: UIViewController {
     
     var codeOfProject = ""
     var parentSuite: Int? = nil
@@ -37,6 +37,17 @@ class SuitesAndCasesTableViewController: UIViewController {
         return tv
     }()
     
+    private let emptyDataLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "There's nothing here yet =("
+        label.textAlignment = .center
+        label.textColor = .gray
+        label.numberOfLines = 0
+        label.isHidden = true
+        return label
+    }()
+    
     func showErrorAlert(titleAlert: String, messageAlert: String) {
         let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
         ac.addAction(UIAlertAction(title: "OK", style: .default))
@@ -54,7 +65,7 @@ class SuitesAndCasesTableViewController: UIViewController {
     }
 }
 
-extension SuitesAndCasesTableViewController {
+private extension SuitesAndCasesTableViewController {
     
     func setup() {
         
@@ -67,13 +78,21 @@ extension SuitesAndCasesTableViewController {
         tableVw.dataSource = self
         
         view.addSubview(tableVw)
+        tableVw.addSubview(emptyDataLabel)
         
         NSLayoutConstraint.activate([
             tableVw.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableVw.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             tableVw.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             tableVw.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            
+            emptyDataLabel.centerYAnchor.constraint(equalTo: tableVw.centerYAnchor),
+            emptyDataLabel.centerXAnchor.constraint(equalTo: tableVw.centerXAnchor),
         ])
+    }
+    
+    private func updateEmptyDataLabelVisibility() {
+        emptyDataLabel.isHidden = filteredData.count > 0
     }
 }
 
@@ -83,16 +102,16 @@ extension SuitesAndCasesTableViewController {
 extension SuitesAndCasesTableViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+        updateEmptyDataLabelVisibility()
+        return filteredData.count > 0 ? 1 : 0
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let section = title
-        return section
+        title
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredData.count
+        filteredData.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

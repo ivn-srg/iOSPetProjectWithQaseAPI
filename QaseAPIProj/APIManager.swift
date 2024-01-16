@@ -7,10 +7,8 @@
 
 import Foundation
 
-class APIManager {
+final class APIManager {
     static let shared = APIManager()
-
-    private init() {}
 
     func fetchData<T: Decodable>(from urlString: String, method: String, token: String, modelType: T.Type, completion: @escaping (Result<T, Error>) -> Void) {
         guard let url = URL(string: urlString) else {

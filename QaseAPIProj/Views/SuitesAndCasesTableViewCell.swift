@@ -7,7 +7,7 @@
 
 import UIKit
 
-class SuitesAndCasesTableViewCell: UITableViewCell {
+final class SuitesAndCasesTableViewCell: UITableViewCell {
     
     static let cellId = "SuitesAndCasesTableViewCell"
     

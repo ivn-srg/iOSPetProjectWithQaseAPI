@@ -40,9 +40,9 @@ class SuiteAndCaseData {
         self.description = description
         self.parent_id = parent_id
         self.case_count = case_count
-        self.priority = nil
-        self.automation = nil
-        self.suiteId = nil
+        self.priority = priority
+        self.automation = automation
+        self.suiteId = suiteId
         
     }
 }

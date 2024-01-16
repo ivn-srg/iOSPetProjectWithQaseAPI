@@ -67,14 +67,8 @@ class AuthViewController: UIViewController {
         self.view.backgroundColor = .white
         
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
-
-        // Установите количество касаний, равное 3
         tapGestureRecognizer.numberOfTapsRequired = 3
-
-        // Добавьте gesture recognizer к вашему изображению
         logoImg.addGestureRecognizer(tapGestureRecognizer)
-
-        // Обязательно установите для изображения userInteractionEnabled в true, чтобы оно реагировало на жесты
         logoImg.isUserInteractionEnabled = true
 
     }
@@ -135,15 +129,8 @@ class AuthViewController: UIViewController {
     }
     
     @objc private func tapForFillingTextLb() {
-//        tapCount += 1
-//            
-//        if tapCount == 3 {
-//            // Здесь укажите ваш TextField и строку, которой хотите заполнить
-            inputTokenField.text = ""
-            
-//            // Сбросите счетчик
-//            tapCount = 0
-//        }
+        inputTokenField.text = ""
+        authorizate()
     }
 }
 

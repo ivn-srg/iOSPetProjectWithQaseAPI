@@ -16,6 +16,7 @@ class SuitesAndCasesTableViewController: UIViewController {
         didSet {
             if parentSuite == nil {
                 filteredData = suitesAndCaseData.filter( {$0.parent_id == nil && $0.suiteId == nil} )
+                
             } else {
                 filteredData = suitesAndCaseData.filter( {$0.parent_id == self.parentSuite || $0.suiteId == self.parentSuite} )
             }
@@ -57,7 +58,7 @@ extension SuitesAndCasesTableViewController {
     
     func setup() {
         
-        navigationItem.title = parentSuite == nil ? codeOfProject : self.filteredData.filter( {$0.id == $0.parent_id} ).first?.title
+        title = parentSuite == nil ? codeOfProject : self.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.parentSuite} ).first?.title
         navigationItem.largeTitleDisplayMode = .never
         
         view.backgroundColor = .white
@@ -86,7 +87,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        let section = self.parentSuite != nil ? self.suitesAndCaseData.filter( {$0.isSuites && $0.parent_id == self.parentSuite} ).first?.title : self.codeOfProject
+        let section = title
         return section
     }
     
@@ -108,13 +109,9 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if filteredData[indexPath.row].isSuites {
             let vc = SuitesAndCasesTableViewController()
-            vc.suitesAndCaseData = self.filteredData
             vc.parentSuite = filteredData[indexPath.row].id
+            vc.suitesAndCaseData = self.suitesAndCaseData
             self.navigationController?.pushViewController(vc, animated: true)
-            
-            self.suitesAndCaseData.removeAll()
-            self.parentSuite = nil
-            self.filteredData.removeAll()
         } else {
             tableVw.reloadData()
         }

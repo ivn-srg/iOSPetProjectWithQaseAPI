@@ -65,13 +65,16 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         return tLbl
     }()
     
+    
     // MARK: - lifecycles
     
     func configure(with dataForCell: SuiteAndCaseData) {
         
         containerVw.backgroundColor = .white
         
+        
         if !dataForCell.isSuites {
+            
             switch dataForCell.priority {
                 case 1:
                     priorityImage.image = Assets.highPriorityImage
@@ -83,7 +86,8 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
                     priorityImage.image = Assets.lowPriorityImage
                     priorityImage.tintColor = .systemGreen
                 default:
-                    priorityImage.image = nil
+                    priorityImage.image = Assets.noPriorityImage
+                    priorityImage.tintColor = .systemGray
             }
             
             switch dataForCell.automation {
@@ -103,7 +107,7 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
             accessoryType = .disclosureIndicator
         }
                 
-        titleLbl.text = "\(dataForCell.title) \(dataForCell.isSuites)"
+        titleLbl.text = dataForCell.title
         descriptionLbl.text = dataForCell.description
         
         self.contentView.addSubview(containerVw)
@@ -115,7 +119,9 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
         contentStackVw.addArrangedSubview(titleLbl)
         contentStackVw.addArrangedSubview(descriptionLbl)
         
-        NSLayoutConstraint.activate([
+        var constraints = [
+            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
+            
             containerVw.topAnchor.constraint(equalTo: self.contentView.topAnchor),
             containerVw.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor),
             containerVw.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor),
@@ -131,19 +137,31 @@ class SuitesAndCasesTableViewCell: UITableViewCell {
             
             contentStackVw.topAnchor.constraint(equalTo: self.containerVw.topAnchor, constant: 8),
             contentStackVw.bottomAnchor.constraint(equalTo: self.containerVw.bottomAnchor, constant: -8),
-            contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: 10),
+            contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: automationImage.image != nil ? 10 : 0),
             contentStackVw.trailingAnchor.constraint(equalTo: self.containerVw.trailingAnchor, constant: -50),
             
             titleLbl.topAnchor.constraint(equalTo: contentStackVw.topAnchor),
-            titleLbl.leadingAnchor.constraint(equalTo: contentStackVw.leadingAnchor),
-            titleLbl.trailingAnchor.constraint(equalTo: contentStackVw.trailingAnchor),
+            titleLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
             
             descriptionLbl.topAnchor.constraint(equalTo: titleLbl.bottomAnchor),
-            descriptionLbl.leadingAnchor.constraint(equalTo: contentStackVw.leadingAnchor),
-            descriptionLbl.trailingAnchor.constraint(equalTo: contentStackVw.trailingAnchor),
+            descriptionLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
             descriptionLbl.bottomAnchor.constraint(equalTo: contentStackVw.bottomAnchor),
-            
-        ])
+        ]
+        
+        if dataForCell.description == nil {
+            constraints.append(descriptionLbl.heightAnchor.constraint(equalToConstant: 0)) 
+        }
+        
+        NSLayoutConstraint.activate(constraints)
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        
+        accessoryType = .none
+        titleLbl.text = ""
+        descriptionLbl.text = ""
+        priorityImage.image = nil
+        automationImage.image = nil
+    }
 }

@@ -48,7 +48,10 @@ class ProjectsViewController: UIViewController {
             
             switch result {
             case .success(let jsonSuites):
-                self?.changeDataTypeToUniversalizeData(isSuite: true, targetUniversalList: &self!.suitesAndCaseData, suites: jsonSuites.result.entities, testCases: nil)
+                DispatchQueue.main.async {
+                    self?.changeDataTypeToUniversalizeData(isSuite: true, targetUniversalList: &self!.suitesAndCaseData, suites: jsonSuites.result.entities, testCases: nil)
+                    
+                }
                 
             case .failure(let error):
                 if let apiError = error as? APIError, apiError == .invalidURL {
@@ -74,9 +77,9 @@ class ProjectsViewController: UIViewController {
             
             switch result {
             case .success(let jsonCases):
-                self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: jsonCases.result.entities)
                 
                 DispatchQueue.main.async {
+                    self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: jsonCases.result.entities)
                     self?.suitesAndCasesCompletion!()
                 }
             case .failure(let error):
@@ -137,10 +140,6 @@ class ProjectsViewController: UIViewController {
                     automation: testCase.automation,
                     suiteId: testCase.suiteId
                 )
-                
-                if testCase.title == "Первый запуск мп" {
-                    print("\(testCase.title) testCase.suiteId \(testCase.suiteId)")
-                }
                 
                 targetUniversalList.append(universalItem)
             }

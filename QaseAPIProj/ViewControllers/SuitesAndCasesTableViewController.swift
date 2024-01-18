@@ -48,12 +48,6 @@ final class SuitesAndCasesTableViewController: UIViewController {
         return label
     }()
     
-    func showErrorAlert(titleAlert: String, messageAlert: String) {
-        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
-    }
-    
     // MARK: - Lifecycles
     
     override func viewDidLoad() {

@@ -10,6 +10,7 @@
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
 		935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE32B518A4000F08ECF /* LoaderView.swift */; };
 		935DCFE62B51961F00F08ECF /* TestCasesModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE52B51961F00F08ECF /* TestCasesModel.swift */; };
+		935FF6382B58006C0092E11F /* UIAlertController+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935FF6372B58006B0092E11F /* UIAlertController+Extension.swift */; };
 		93651C822B555F2100E96345 /* SuiteAndCaseData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93651C812B555F2100E96345 /* SuiteAndCaseData.swift */; };
 		93748C312B4808F500BE7FFB /* ProjectsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93748C302B4808F500BE7FFB /* ProjectsViewController.swift */; };
 		93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93748C322B480F4400BE7FFB /* AuthViewController.swift */; };
@@ -22,6 +23,7 @@
 		9384FCDD2B4D7E37009EB478 /* SuitesDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */; };
 		9384FCDF2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */; };
 		9395F7342B46DC820050C3F8 /* ProjectDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */; };
+		93B265EB2B570BAC00D9AA00 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B265EA2B570BAC00D9AA00 /* ProjectsViewModel.swift */; };
 		93C743102B4C7BBA009F8865 /* Assets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C7430F2B4C7BBA009F8865 /* Assets.swift */; };
 		93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */; };
 		93F3B1642B52C3B7007844F5 /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1632B52C3B7007844F5 /* APIManager.swift */; };
@@ -31,6 +33,7 @@
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		935DCFE32B518A4000F08ECF /* LoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderView.swift; sourceTree = "<group>"; };
 		935DCFE52B51961F00F08ECF /* TestCasesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TestCasesModel.swift; path = QaseAPIProj/Models/TestCasesModel.swift; sourceTree = SOURCE_ROOT; };
+		935FF6372B58006B0092E11F /* UIAlertController+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIAlertController+Extension.swift"; sourceTree = "<group>"; };
 		93651C812B555F2100E96345 /* SuiteAndCaseData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuiteAndCaseData.swift; sourceTree = "<group>"; };
 		93748C302B4808F500BE7FFB /* ProjectsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewController.swift; sourceTree = "<group>"; };
 		93748C322B480F4400BE7FFB /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
@@ -45,6 +48,7 @@
 		9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SuitesDataModel.swift; path = QaseAPIProj/Models/SuitesDataModel.swift; sourceTree = SOURCE_ROOT; };
 		9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewController.swift; sourceTree = "<group>"; };
 		9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDataModel.swift; sourceTree = "<group>"; };
+		93B265EA2B570BAC00D9AA00 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
 		93C7430F2B4C7BBA009F8865 /* Assets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assets.swift; sourceTree = "<group>"; };
 		93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewCell.swift; sourceTree = "<group>"; };
 		93F3B1632B52C3B7007844F5 /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
@@ -71,14 +75,14 @@
 			path = ViewControllers;
 			sourceTree = "<group>";
 		};
-		93748C3E2B481C3D00BE7FFB /* Views */ = {
+		93748C3E2B481C3D00BE7FFB /* View */ = {
 			isa = PBXGroup;
 			children = (
 				93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */,
 				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
 				93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */,
 			);
-			path = Views;
+			path = View;
 			sourceTree = "<group>";
 		};
 		937F04192AD84E3D006DDB28 = {
@@ -100,14 +104,16 @@
 		937F04242AD84E3D006DDB28 /* QaseAPIProj */ = {
 			isa = PBXGroup;
 			children = (
+				93F1F3782B597FC600667DB9 /* Classes */,
+				93F1F3772B597FBA00667DB9 /* Networking */,
+				93F1F3762B597FAD00667DB9 /* Extensions */,
 				93C7430E2B4C7B9A009F8865 /* Resources */,
-				93748C3E2B481C3D00BE7FFB /* Views */,
+				93B265E92B5708D600D9AA00 /* ViewModel */,
+				93748C3E2B481C3D00BE7FFB /* View */,
 				93748C2F2B4808BF00BE7FFB /* ViewControllers */,
 				9395F7372B46DE970050C3F8 /* Models */,
 				937F04252AD84E3D006DDB28 /* AppDelegate.swift */,
 				937F04272AD84E3D006DDB28 /* SceneDelegate.swift */,
-				935DCFE12B516BAA00F08ECF /* Constants.swift */,
-				93F3B1632B52C3B7007844F5 /* APIManager.swift */,
 				937F042B2AD84E3D006DDB28 /* Main.storyboard */,
 				937F042E2AD84E3F006DDB28 /* Assets.xcassets */,
 				937F04302AD84E3F006DDB28 /* LaunchScreen.storyboard */,
@@ -127,12 +133,44 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		93B265E92B5708D600D9AA00 /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+				93F3B1632B52C3B7007844F5 /* APIManager.swift */,
+				93B265EA2B570BAC00D9AA00 /* ProjectsViewModel.swift */,
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
 		93C7430E2B4C7B9A009F8865 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 				93C7430F2B4C7BBA009F8865 /* Assets.swift */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		93F1F3762B597FAD00667DB9 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				935FF6372B58006B0092E11F /* UIAlertController+Extension.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		93F1F3772B597FBA00667DB9 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		93F1F3782B597FC600667DB9 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				935DCFE12B516BAA00F08ECF /* Constants.swift */,
+			);
+			path = Classes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -214,10 +252,12 @@
 				93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */,
 				937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */,
 				93F3B1642B52C3B7007844F5 /* APIManager.swift in Sources */,
+				93B265EB2B570BAC00D9AA00 /* ProjectsViewModel.swift in Sources */,
 				93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */,
 				935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */,
 				935DCFE62B51961F00F08ECF /* TestCasesModel.swift in Sources */,
 				9384FCDD2B4D7E37009EB478 /* SuitesDataModel.swift in Sources */,
+				935FF6382B58006C0092E11F /* UIAlertController+Extension.swift in Sources */,
 				9384FCDF2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift in Sources */,
 				93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */,
 				9395F7342B46DC820050C3F8 /* ProjectDataModel.swift in Sources */,

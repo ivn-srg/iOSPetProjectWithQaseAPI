@@ -9,10 +9,22 @@ import UIKit
 
 final class ProjectsViewController: UIViewController {
     
+    private let vm: ProjectsViewModel
+    
     var suitesAndCasesCompletion: (() -> Void)?
     
     var projects = [Project]()
     var suitesAndCaseData = [SuiteAndCaseData]()
+    
+    init(viewModel: ProjectsViewModel) {
+        self.vm = viewModel
+        self.vm.updateDataSource()
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - UI
     
@@ -24,17 +36,15 @@ final class ProjectsViewController: UIViewController {
         return tv
     }()
     
-    func showErrorAlert(titleAlert: String, messageAlert: String) {
-        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
-    }
+
     
     // MARK: - Lifecycle
     
     override func loadView() {
         super.loadView()
-        setup()
+        
+        setupTableView()
+        bindViewModel()
     }
     
     override func viewDidLoad() {
@@ -146,11 +156,22 @@ final class ProjectsViewController: UIViewController {
         }
         //        }
     }
+    
+    private func bindViewModel() {
+        
+        if let navigationController {
+            vm.inject(navigation: navigationController)
+        }
+                
+        vm.onRowChange = { [unowned self] row in
+            tableVw.reloadRows(at: [IndexPath(row: row, section: 0)], with: .none)
+        }
+    }
 }
 
 private extension ProjectsViewController {
     
-    func setup() {
+    func setupTableView() {
         
         title = "Projects"
         navigationItem.largeTitleDisplayMode = .never
@@ -177,32 +198,30 @@ extension ProjectsViewController: UITableViewDataSource {
     
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return projects.count
+        vm.numberOfRows()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as! ProjectTableViewCell
-        let project = projects[indexPath.row]
-        
-        cell.configure(with: project)
-        
-        return cell
+        vm.cell(for: tableView, at: indexPath)
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        LoadingIndicator.startLoading()
+//        LoadingIndicator.startLoading()
+//        
+//        suitesAndCasesCompletion = {
+//            let vc = SuitesAndCasesTableViewController()
+//            vc.suitesAndCaseData = self.suitesAndCaseData
+//            vc.codeOfProject = self.projects[indexPath.row].code
+//            self.navigationController?.pushViewController(vc, animated: true)
+//            self.suitesAndCaseData.removeAll()
+//        }
+//        
+//        self.fetchSuitesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
+//        self.fetchCasesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
         
-        suitesAndCasesCompletion = {
-            let vc = SuitesAndCasesTableViewController()
-            vc.suitesAndCaseData = self.suitesAndCaseData
-            vc.codeOfProject = self.projects[indexPath.row].code
-            self.navigationController?.pushViewController(vc, animated: true)
-            self.suitesAndCaseData.removeAll()
-        }
-        
-        self.fetchSuitesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
-        self.fetchCasesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
+        vm.navigateTo(indexPath.row)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
 }
 

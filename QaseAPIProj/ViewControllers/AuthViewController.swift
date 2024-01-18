@@ -9,11 +9,6 @@ import UIKit
 
 final class AuthViewController: UIViewController {
     
-    private var tapCount: Int = 0
-    
-    var projects = [Project]()
-    var statusOfResponse = false
-    
     // MARK: - UI
     
     private lazy var viewCn: UIView = {
@@ -23,14 +18,14 @@ final class AuthViewController: UIViewController {
         return vc
     }()
     
-    private var logoImg: UIImageView = {
+    private lazy var logoImg: UIImageView = {
         let limg = UIImageView()
         limg.translatesAutoresizingMaskIntoConstraints = false
         limg.contentMode = .scaleAspectFit
         return limg
     }()
     
-    private var inputTokenField: UITextField = {
+    private lazy var inputTokenField: UITextField = {
         let inf = UITextField()
         inf.translatesAutoresizingMaskIntoConstraints = false
         inf.backgroundColor = .white
@@ -39,7 +34,7 @@ final class AuthViewController: UIViewController {
         return inf
     }()
     
-    private var authButton: UIButton = {
+    private lazy var authButton: UIButton = {
         let ab = UIButton()
         ab.translatesAutoresizingMaskIntoConstraints = false
         ab.backgroundColor = .systemBlue
@@ -47,12 +42,6 @@ final class AuthViewController: UIViewController {
         ab.titleLabel?.textColor = .white
         return ab
     }()
-    
-    func showErrorAlert(titleAlert: String, messageAlert: String) {
-        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
-    }
     
     // MARK: - Lifecycle
     
@@ -82,9 +71,9 @@ final class AuthViewController: UIViewController {
                 
                 LoadingIndicator.startLoading()
                 
-                DispatchQueue.global().async {
-                    self.fetchProjectsJSON(Constants.TOKEN)
-                }
+                let vc = ProjectsViewController(viewModel: ProjectsViewModel())
+                self.navigationController?.pushViewController(vc, animated: true)
+                
                 
             } else {
                 showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
@@ -94,42 +83,10 @@ final class AuthViewController: UIViewController {
         }
     }
     
-    private func fetchProjectsJSON(_ token: String) {
-        let urlString = Constants.urlString(Constants.APIMethods.project.rawValue, nil, 100, 0)
-        
-        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
-            
-            switch result {
-            case .success(let jsonProjects):
-                self?.projects = jsonProjects.result.entities
-                self?.statusOfResponse = jsonProjects.status
-                
-                DispatchQueue.main.async {
-                    LoadingIndicator.stopLoading()
-                    
-                    let vc = ProjectsViewController()
-                    vc.projects = self!.projects
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                }
-            case .failure(let error):
-                if let apiError = error as? APIError, apiError == .invalidURL {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
-                    }
-                }
-            }
-            
-        }
-    }
+    
     
     @objc private func tapForFillingTextLb() {
-        inputTokenField.text = ""
+        inputTokenField.text = "04e78090842e843ed490a3b129d5e46871b6399d0ca5fbfebaf12f547e0199d0"
         authorizate()
     }
 }

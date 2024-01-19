@@ -10,12 +10,14 @@ import UIKit
 
 class ProjectsViewModel {
     
-    weak var navigationController: UINavigationController?
+    var isLoadingData: Observable<Bool> = Observable(false)
+    var dataSource: ProjectDataModel?
+    var projects: Observable<[ProjectTableCellViewModel]> = Observable(nil)
     
     var onRowChange: ((Int) -> Void)?
     
     private var tapCount: Int = 0
-    private var dataSource: [Project] = []
+//    private var dataSource: [Project] = []
     
     // MARK: - Network work
     
@@ -28,19 +30,20 @@ class ProjectsViewModel {
             let urlString = Constants.urlString(Constants.APIMethods.project.rawValue, nil, limit, Offset)
             
             APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
+                self?.isLoadingData.value = false
                 
                 switch result {
                 case .success(let jsonProjects):
-                    self?.dataSource += jsonProjects.result.entities
+                    self?.dataSource = jsonProjects
+                    self?.mapProjectData()
                     
                     if offset == 0 {
                         totalCount = jsonProjects.result.total
                     }
-                    offset += self?.dataSource.count ?? 0
                     
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                    }
+//                    DispatchQueue.main.async {
+//                        LoadingIndicator.stopLoading()
+//                    }
                 case .failure(let error):
                     if let apiError = error as? APIError, apiError == .invalidURL {
                         DispatchQueue.main.async {
@@ -57,20 +60,14 @@ class ProjectsViewModel {
             }
         }
         
-        LoadingIndicator.startLoading()
-        
-        repeat {
-            fetchProjectsJSON(Constants.TOKEN, limit: limit, Offset: offset)
-        } while totalCount > offset
-        
-        LoadingIndicator.stopLoading()
+        fetchProjectsJSON(Constants.TOKEN, limit: limit, Offset: offset)
+    }
+    
+    private func mapProjectData() {
+        projects.value = self.dataSource?.result.entities.compactMap({ProjectTableCellViewModel(project: $0)})
     }
     
     // MARK: - Routing
-    
-    func inject(navigation: UINavigationController) {
-        navigationController = navigation
-    }
     
     func navigateTo(_ row: Int) {
         
@@ -79,15 +76,14 @@ class ProjectsViewModel {
     // MARK: - VC func
     
     func numberOfRows() -> Int {
-        dataSource.count
+        dataSource?.result.entities.count ?? 0
     }
     
-    func cell(for tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as! ProjectTableViewCell
-        let data = dataSource[indexPath.row]
-        
-        cell.configure(with: data)
-        
-        return cell
-    }
+//    func cell(for tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
+//        let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as! ProjectTableViewCell
+//        
+//        cell.configure(with: data)
+//        
+//        return cell
+//    }
 }

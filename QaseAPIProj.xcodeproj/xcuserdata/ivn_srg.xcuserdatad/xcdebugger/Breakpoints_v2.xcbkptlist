@@ -119,54 +119,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "7E339EF7-9147-4560-AA49-497897B2F66E"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "QaseAPIProj/ViewModel/ProjectsViewModel.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "63"
-            endingLineNumber = "63"
-            landmarkName = "updateDataSource()"
-            landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "7E339EF7-9147-4560-AA49-497897B2F66E - 665fe693194556a8"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "QaseAPIProj.ProjectsViewModel.updateDataSource() -&gt; ()"
-                  moduleName = "QaseAPIProj"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ivn_srg/Desktop/Projects/iOSPetProjectWithQaseAPI/QaseAPIProj/ViewModel/ProjectsViewModel.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "63"
-                  endingLineNumber = "63"
-                  offsetFromSymbolStart = "180">
-               </Location>
-               <Location
-                  uuid = "7E339EF7-9147-4560-AA49-497897B2F66E - 665fe693194556a8"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "QaseAPIProj.ProjectsViewModel.updateDataSource() -&gt; ()"
-                  moduleName = "QaseAPIProj"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ivn_srg/Desktop/Projects/iOSPetProjectWithQaseAPI/QaseAPIProj/ViewModel/ProjectsViewModel.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "63"
-                  endingLineNumber = "63"
-                  offsetFromSymbolStart = "176">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "F96C3C42-D09F-4B2A-8B43-DA7F0479F094"
             shouldBeEnabled = "No"
             ignoreCount = "0"
@@ -174,10 +126,10 @@
             filePath = "QaseAPIProj/ViewModel/ProjectsViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "91"
-            endingLineNumber = "91"
-            landmarkName = "cell(for:at:)"
-            landmarkType = "7">
+            startingLineNumber = "87"
+            endingLineNumber = "87"
+            landmarkName = "ProjectsViewModel"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -190,8 +142,8 @@
             filePath = "QaseAPIProj/ViewModel/ProjectsViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "82"
-            endingLineNumber = "82"
+            startingLineNumber = "79"
+            endingLineNumber = "79"
             landmarkName = "numberOfRows()"
             landmarkType = "7">
          </BreakpointContent>
@@ -199,32 +151,16 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "21F14084-B082-482B-AD4E-E2CAEBB1AC69"
+            uuid = "FB132A57-24E0-42D1-A465-D839F550C39C"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "QaseAPIProj/ViewModel/ProjectsViewModel.swift"
+            filePath = "QaseAPIProj/ViewControllers/ProjectsViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "64"
-            endingLineNumber = "64"
-            landmarkName = "updateDataSource()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "A3DCC150-25B0-474E-8433-08E517E99DC8"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "QaseAPIProj/ViewModel/ProjectsViewModel.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "65"
-            endingLineNumber = "65"
-            landmarkName = "updateDataSource()"
+            startingLineNumber = "174"
+            endingLineNumber = "174"
+            landmarkName = "bindViewModel()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

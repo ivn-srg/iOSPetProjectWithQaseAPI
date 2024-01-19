@@ -34,20 +34,9 @@ struct TestEntity: Codable {
     let tags: [String]
     
     enum CodingKeys: String, CodingKey {
-        case id
-        case position
-        case title
-        case description
-        case preconditions
-        case postconditions
-        case severity
-        case priority
-        case type
-        case layer
+        case id, position, title, description, preconditions, postconditions, severity, priority, type, layer
         case isFlaky = "is_flaky"
-        case behavior
-        case automation
-        case status
+        case behavior, automation, status
         case suiteId = "suite_id"
         case links
         case customFields = "custom_fields"

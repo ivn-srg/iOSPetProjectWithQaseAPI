@@ -9,22 +9,24 @@ import UIKit
 
 final class ProjectsViewController: UIViewController {
     
-    private let vm: ProjectsViewModel
+    var vm: ProjectsViewModel = ProjectsViewModel()
+    
+    var projectsDataSource: [ProjectTableCellViewModel] = []
     
     var suitesAndCasesCompletion: (() -> Void)?
     
-    var projects = [Project]()
+//    var projects = [Project]()
     var suitesAndCaseData = [SuiteAndCaseData]()
     
-    init(viewModel: ProjectsViewModel) {
-        self.vm = viewModel
-        self.vm.updateDataSource()
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+//    init(viewModel: ProjectsViewModel) {
+//        self.vm = viewModel
+//        self.vm.updateDataSource()
+//        super.init(nibName: nil, bundle: nil)
+//    }
+//    
+//    required init?(coder: NSCoder) {
+//        fatalError("init(coder:) has not been implemented")
+//    }
     
     // MARK: - UI
     
@@ -49,7 +51,15 @@ final class ProjectsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        vm.updateDataSource()
     }
+    
+    func reloadTableView() {
+            DispatchQueue.main.async {
+                self.tableVw.reloadData()
+            }
+        }
     
     private func fetchSuitesJSON(_ token: String, projectCode: String) {
         let urlString = Constants.urlString(Constants.APIMethods.suite.rawValue, projectCode, 100, 0)
@@ -129,7 +139,7 @@ final class ProjectsViewController: UIViewController {
                 )
                 
                 if suite.title == "Первый запуск мп" {
-                    print("\(suite.title) \(suite.parent_id)")
+//                    print("\(suite.title) \(suite.parent_id)")
                 }
                 
                 targetUniversalList.append(universalItem)
@@ -157,16 +167,29 @@ final class ProjectsViewController: UIViewController {
         //        }
     }
     
-    private func bindViewModel() {
-        
-        if let navigationController {
-            vm.inject(navigation: navigationController)
+    func bindViewModel() {
+            vm.isLoadingData.bind { isLoading in
+                guard let isLoading = isLoading else {
+                    return
+                }
+                DispatchQueue.main.async {
+                    if isLoading {
+                        LoadingIndicator.startLoading()
+                    } else {
+                        LoadingIndicator.stopLoading()
+                    }
+                }
+            }
+            
+        vm.projects.bind { [weak self] projects in
+                guard let self = self,
+                      let projects = projects else {
+                    return
+                }
+                self.projectsDataSource = projects
+                self.reloadTableView()
+            }
         }
-                
-        vm.onRowChange = { [unowned self] row in
-            tableVw.reloadRows(at: [IndexPath(row: row, section: 0)], with: .none)
-        }
-    }
 }
 
 private extension ProjectsViewController {
@@ -202,7 +225,11 @@ extension ProjectsViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        vm.cell(for: tableView, at: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as? ProjectTableViewCell else { return UITableViewCell()
+        }
+        cell.configureCell(with: projectsDataSource[indexPath.row])
+        
+        return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -219,7 +246,6 @@ extension ProjectsViewController: UITableViewDataSource {
 //        
 //        self.fetchSuitesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
 //        self.fetchCasesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
-        
         vm.navigateTo(indexPath.row)
         tableView.deselectRow(at: indexPath, animated: true)
     }

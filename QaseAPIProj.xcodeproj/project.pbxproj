@@ -25,6 +25,8 @@
 		9395F7342B46DC820050C3F8 /* ProjectDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */; };
 		93B265EB2B570BAC00D9AA00 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B265EA2B570BAC00D9AA00 /* ProjectsViewModel.swift */; };
 		93C743102B4C7BBA009F8865 /* Assets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C7430F2B4C7BBA009F8865 /* Assets.swift */; };
+		93D86F4B2B5A8DCF00CAE13C /* Observable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D86F4A2B5A8DCF00CAE13C /* Observable.swift */; };
+		93D86F4D2B5AAB8800CAE13C /* ProjectsTableViewCellViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D86F4C2B5AAB8800CAE13C /* ProjectsTableViewCellViewModel.swift */; };
 		93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */; };
 		93F3B1642B52C3B7007844F5 /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1632B52C3B7007844F5 /* APIManager.swift */; };
 /* End PBXBuildFile section */
@@ -50,6 +52,8 @@
 		9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDataModel.swift; sourceTree = "<group>"; };
 		93B265EA2B570BAC00D9AA00 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
 		93C7430F2B4C7BBA009F8865 /* Assets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assets.swift; sourceTree = "<group>"; };
+		93D86F4A2B5A8DCF00CAE13C /* Observable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Observable.swift; sourceTree = "<group>"; };
+		93D86F4C2B5AAB8800CAE13C /* ProjectsTableViewCellViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsTableViewCellViewModel.swift; sourceTree = "<group>"; };
 		93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewCell.swift; sourceTree = "<group>"; };
 		93F3B1632B52C3B7007844F5 /* APIManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -128,7 +132,6 @@
 				9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */,
 				935DCFE52B51961F00F08ECF /* TestCasesModel.swift */,
 				9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */,
-				93651C812B555F2100E96345 /* SuiteAndCaseData.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -136,8 +139,8 @@
 		93B265E92B5708D600D9AA00 /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
-				93F3B1632B52C3B7007844F5 /* APIManager.swift */,
 				93B265EA2B570BAC00D9AA00 /* ProjectsViewModel.swift */,
+				93D86F4C2B5AAB8800CAE13C /* ProjectsTableViewCellViewModel.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -161,6 +164,7 @@
 		93F1F3772B597FBA00667DB9 /* Networking */ = {
 			isa = PBXGroup;
 			children = (
+				93F3B1632B52C3B7007844F5 /* APIManager.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -168,7 +172,9 @@
 		93F1F3782B597FC600667DB9 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				93651C812B555F2100E96345 /* SuiteAndCaseData.swift */,
 				935DCFE12B516BAA00F08ECF /* Constants.swift */,
+				93D86F4A2B5A8DCF00CAE13C /* Observable.swift */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -246,8 +252,10 @@
 			files = (
 				93C743102B4C7BBA009F8865 /* Assets.swift in Sources */,
 				93651C822B555F2100E96345 /* SuiteAndCaseData.swift in Sources */,
+				93D86F4D2B5AAB8800CAE13C /* ProjectsTableViewCellViewModel.swift in Sources */,
 				935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */,
 				93748C312B4808F500BE7FFB /* ProjectsViewController.swift in Sources */,
+				93D86F4B2B5A8DCF00CAE13C /* Observable.swift in Sources */,
 				937F04262AD84E3D006DDB28 /* AppDelegate.swift in Sources */,
 				93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */,
 				937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */,

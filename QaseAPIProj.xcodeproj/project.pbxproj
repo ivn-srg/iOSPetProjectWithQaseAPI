@@ -23,7 +23,7 @@
 		9384FCDF2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */; };
 		9395F7342B46DC820050C3F8 /* ProjectDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */; };
 		93C743102B4C7BBA009F8865 /* Assets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C7430F2B4C7BBA009F8865 /* Assets.swift */; };
-		93F1F37C2B59876000667DB9 /* DeatilTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37B2B59876000667DB9 /* DeatilTabBarController.swift */; };
+		93F1F37C2B59876000667DB9 /* DetailTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37B2B59876000667DB9 /* DetailTabBarController.swift */; };
 		93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */; };
 		93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */; };
 		93F1F3832B59881D00667DB9 /* RunsDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3822B59881D00667DB9 /* RunsDetailCaseViewController.swift */; };
@@ -51,7 +51,7 @@
 		9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewController.swift; sourceTree = "<group>"; };
 		9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDataModel.swift; sourceTree = "<group>"; };
 		93C7430F2B4C7BBA009F8865 /* Assets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assets.swift; sourceTree = "<group>"; };
-		93F1F37B2B59876000667DB9 /* DeatilTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeatilTabBarController.swift; sourceTree = "<group>"; };
+		93F1F37B2B59876000667DB9 /* DetailTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailTabBarController.swift; sourceTree = "<group>"; };
 		93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F1F3822B59881D00667DB9 /* RunsDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunsDetailCaseViewController.swift; sourceTree = "<group>"; };
@@ -149,7 +149,7 @@
 		93F1F37D2B59879900667DB9 /* DetailCaseScreen */ = {
 			isa = PBXGroup;
 			children = (
-				93F1F37B2B59876000667DB9 /* DeatilTabBarController.swift */,
+				93F1F37B2B59876000667DB9 /* DetailTabBarController.swift */,
 				93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */,
 				93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */,
 				93F1F3822B59881D00667DB9 /* RunsDetailCaseViewController.swift */,
@@ -242,7 +242,7 @@
 				93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */,
 				93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */,
 				935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */,
-				93F1F37C2B59876000667DB9 /* DeatilTabBarController.swift in Sources */,
+				93F1F37C2B59876000667DB9 /* DetailTabBarController.swift in Sources */,
 				935DCFE62B51961F00F08ECF /* TestCasesModel.swift in Sources */,
 				9384FCDD2B4D7E37009EB478 /* SuitesDataModel.swift in Sources */,
 				9384FCDF2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift in Sources */,

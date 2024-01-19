@@ -15,22 +15,11 @@ final class ProjectsViewController: UIViewController {
     
     var suitesAndCasesCompletion: (() -> Void)?
     
-//    var projects = [Project]()
     var suitesAndCaseData = [SuiteAndCaseData]()
-    
-//    init(viewModel: ProjectsViewModel) {
-//        self.vm = viewModel
-//        self.vm.updateDataSource()
-//        super.init(nibName: nil, bundle: nil)
-//    }
-//    
-//    required init?(coder: NSCoder) {
-//        fatalError("init(coder:) has not been implemented")
-//    }
     
     // MARK: - UI
     
-    private lazy var tableVw: UITableView = {
+    lazy var tableVw: UITableView = {
         let tv = UITableView()
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.backgroundColor = .white
@@ -38,28 +27,30 @@ final class ProjectsViewController: UIViewController {
         return tv
     }()
     
-
-    
     // MARK: - Lifecycle
     
     override func loadView() {
         super.loadView()
         
-        setupTableView()
+        configureView()
         bindViewModel()
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        vm.updateDataSource()
+        
     }
     
-    func reloadTableView() {
-            DispatchQueue.main.async {
-                self.tableVw.reloadData()
-            }
-        }
+    func configureView() {
+        vm.updateDataSource()
+        
+        title = "Projects"
+        navigationItem.largeTitleDisplayMode = .never
+        view.backgroundColor = .systemBackground
+        
+        setupTableView()
+    }
     
     private func fetchSuitesJSON(_ token: String, projectCode: String) {
         let urlString = Constants.urlString(Constants.APIMethods.suite.rawValue, projectCode, 100, 0)
@@ -86,7 +77,6 @@ final class ProjectsViewController: UIViewController {
                     }
                 }
             }
-            
         }
     }
     
@@ -138,10 +128,6 @@ final class ProjectsViewController: UIViewController {
                     case_count: suite.cases_count
                 )
                 
-                if suite.title == "Первый запуск мп" {
-//                    print("\(suite.title) \(suite.parent_id)")
-                }
-                
                 targetUniversalList.append(universalItem)
             }
         } else {
@@ -164,7 +150,6 @@ final class ProjectsViewController: UIViewController {
                 targetUniversalList.append(universalItem)
             }
         }
-        //        }
     }
     
     func bindViewModel() {
@@ -192,72 +177,3 @@ final class ProjectsViewController: UIViewController {
         }
 }
 
-private extension ProjectsViewController {
-    
-    func setupTableView() {
-        
-        title = "Projects"
-        navigationItem.largeTitleDisplayMode = .never
-        
-        view.backgroundColor = .white
-        
-        tableVw.delegate = self
-        tableVw.dataSource = self
-        
-        view.addSubview(tableVw)
-        
-        NSLayoutConstraint.activate([
-            tableVw.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableVw.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            tableVw.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            tableVw.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-        ])
-    }
-}
-
-// MARK: - UITableViewDataSource
-
-extension ProjectsViewController: UITableViewDataSource {
-    
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        vm.numberOfRows()
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as? ProjectTableViewCell else { return UITableViewCell()
-        }
-        cell.configureCell(with: projectsDataSource[indexPath.row])
-        
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-//        LoadingIndicator.startLoading()
-//        
-//        suitesAndCasesCompletion = {
-//            let vc = SuitesAndCasesTableViewController()
-//            vc.suitesAndCaseData = self.suitesAndCaseData
-//            vc.codeOfProject = self.projects[indexPath.row].code
-//            self.navigationController?.pushViewController(vc, animated: true)
-//            self.suitesAndCaseData.removeAll()
-//        }
-//        
-//        self.fetchSuitesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
-//        self.fetchCasesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
-        vm.navigateTo(indexPath.row)
-        tableView.deselectRow(at: indexPath, animated: true)
-    }
-}
-
-// MARK: - UITableViewDelegate
-
-extension ProjectsViewController: UITableViewDelegate {
-    
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
-        cell.separatorInset = UIEdgeInsets(top: 0, left: 1/*cell.bounds.size.width*/, bottom: 2, right: -5)
-        
-    }
-}

@@ -84,7 +84,7 @@ final class AuthViewController: UIViewController {
     
     
     @objc private func tapForFillingTextLb() {
-        inputTokenField.text = "04e78090842e843ed490a3b129d5e46871b6399d0ca5fbfebaf12f547e0199d0"
+        inputTokenField.text = ""
         authorizate()
     }
 }

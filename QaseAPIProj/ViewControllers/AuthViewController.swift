@@ -53,13 +53,7 @@ final class AuthViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.view.backgroundColor = .white
-        
-        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
-        tapGestureRecognizer.numberOfTapsRequired = 3
-        logoImg.addGestureRecognizer(tapGestureRecognizer)
-        logoImg.isUserInteractionEnabled = true
-
+        addDebugOptions()
     }
     
     @objc private func authorizate() {
@@ -72,7 +66,6 @@ final class AuthViewController: UIViewController {
                 let vc = ProjectsViewController()
                 self.navigationController?.pushViewController(vc, animated: true)
                 
-                
             } else {
                 showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
             }
@@ -81,17 +74,24 @@ final class AuthViewController: UIViewController {
         }
     }
     
-    
-    
-    @objc private func tapForFillingTextLb() {
+    @objc func tapForFillingTextLb() {
         inputTokenField.text = ""
         authorizate()
+    }
+    
+    func addDebugOptions() {
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
+        tapGestureRecognizer.numberOfTapsRequired = 3
+        logoImg.addGestureRecognizer(tapGestureRecognizer)
+        logoImg.isUserInteractionEnabled = true
     }
 }
 
 private extension AuthViewController {
     
     func setup() {
+        
+        view.backgroundColor = .white
         
         logoImg.image = Assets.LogoApp
         

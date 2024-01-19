@@ -1,12 +1,80 @@
 //
-//  ProjectsViewController+TableView.swift
+//  ProjectsViewController.swift
 //  QaseAPIProj
 //
-//  Created by Sergey Ivanov on 19.01.2024.
+//  Created by Sergey Ivanov on 05.01.2024.
 //
 
-import Foundation
 import UIKit
+
+final class ProjectsViewController: UIViewController {
+    
+    var vm: ProjectsViewModel = ProjectsViewModel()
+    
+    var projectsDataSource: [ProjectTableCellViewModel] = []
+    
+    var suitesAndCasesCompletion: (() -> Void)?
+    
+    var suitesAndCaseData = [SuiteAndCaseData]()
+    
+    // MARK: - UI
+    
+    private lazy var tableVw: UITableView = {
+        let tv = UITableView()
+        tv.translatesAutoresizingMaskIntoConstraints = false
+        tv.backgroundColor = .white
+        tv.register(ProjectTableViewCell.self, forCellReuseIdentifier: ProjectTableViewCell.cellId)
+        return tv
+    }()
+    
+    // MARK: - Lifecycle
+    
+    override func loadView() {
+        super.loadView()
+        
+        configureView()
+        bindViewModel()
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+    }
+    
+    func configureView() {
+        vm.updateDataSource()
+        
+        title = "Projects"
+        navigationItem.largeTitleDisplayMode = .never
+        view.backgroundColor = .systemBackground
+        
+        setupTableView()
+    }
+    
+    func bindViewModel() {
+        vm.isLoadingData.bind { isLoading in
+            guard let isLoading = isLoading else {
+                return
+            }
+            DispatchQueue.main.async {
+                if isLoading {
+                    LoadingIndicator.startLoading()
+                } else {
+                    LoadingIndicator.stopLoading()
+                }
+            }
+        }
+        
+        vm.projects.bind { [weak self] projects in
+            guard let self = self,
+                  let projects = projects else {
+                return
+            }
+            self.projectsDataSource = projects
+            self.reloadTableView()
+        }
+    }
+}
 
 extension ProjectsViewController: UITableViewDataSource, UITableViewDelegate {
     
@@ -66,3 +134,4 @@ extension ProjectsViewController: UITableViewDataSource, UITableViewDelegate {
         
     }
 }
+

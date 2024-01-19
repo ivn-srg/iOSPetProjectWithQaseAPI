@@ -14,14 +14,12 @@ class ProjectsViewModel {
     var dataSource: ProjectDataModel?
     var projects: Observable<[ProjectTableCellViewModel]> = Observable(nil)
     
-    var onRowChange: ((Int) -> Void)?
-    
-    private var tapCount: Int = 0
-//    private var dataSource: [Project] = []
-    
     // MARK: - Network work
     
     func updateDataSource() {
+        if isLoadingData.value ?? true {
+            return
+        }
         let limit = 100
         var offset = 0
         var totalCount = 0
@@ -29,6 +27,7 @@ class ProjectsViewModel {
         func fetchProjectsJSON(_ token: String, limit: Int, Offset: Int) {
             let urlString = Constants.urlString(Constants.APIMethods.project.rawValue, nil, limit, Offset)
             
+            isLoadingData.value = true
             APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
                 self?.isLoadingData.value = false
                 
@@ -78,12 +77,4 @@ class ProjectsViewModel {
     func numberOfRows() -> Int {
         dataSource?.result.entities.count ?? 0
     }
-    
-//    func cell(for tableView: UITableView, at indexPath: IndexPath) -> UITableViewCell {
-//        let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as! ProjectTableViewCell
-//        
-//        cell.configure(with: data)
-//        
-//        return cell
-//    }
 }

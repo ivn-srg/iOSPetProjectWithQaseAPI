@@ -12,8 +12,6 @@ class SuitesAndCasesViewModel {
     var isLoadingData: Observable<Bool> = Observable(false)
     var codeOfProject = ""
     var parentSuite: Int? = nil
-    var suiteDataSource: SuitesDataModel?
-    var caseDataSource: TestCasesModel?
     var suitesAndCaseData = [SuiteAndCaseData]()
     
     var filteredData = [SuiteAndCaseData]()
@@ -35,8 +33,9 @@ class SuitesAndCasesViewModel {
         func fetchSuitesJSON(_ token: String, projectCode: String, limit: Int) {
             let urlString = Constants.urlString(Constants.APIMethods.suite.rawValue, projectCode, limit, offset)
             
-            isLoadingData.value = true
+            
             APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
+                print("\(urlString)")
                 
                 switch result {
                 case .success(let jsonSuites):
@@ -78,22 +77,30 @@ class SuitesAndCasesViewModel {
                     
                     offset = parsedCases.count
                     
+                    print("offset \(offset) totatCount \(totalCount)")
+                    print("parsedSuites \(parsedCases) jsonSuites \(jsonCases.result)")
+                    
+                    self?.isLoadingData.value = false
+                    
                 case .failure(let error):
                     if let apiError = error as? APIError, apiError == .invalidURL {
                         DispatchQueue.main.async {
                             LoadingIndicator.stopLoading()
 //                            self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
+                            print("showErrorAlert(titleAlert: Error, messageAlert: Invalid URL)")
                         }
                     } else {
                         DispatchQueue.main.async {
                             LoadingIndicator.stopLoading()
 //                            self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
+                            print("self?.showErrorAlert(titleAlert: Something went wrong, messageAlert: (error))")
                         }
                     }
                 }
             }
         }
         
+        isLoadingData.value = true
         if suitesAndCaseData.isEmpty {
             repeat {
                 fetchSuitesJSON(Constants.TOKEN, projectCode: self.codeOfProject, limit: limit)
@@ -108,11 +115,10 @@ class SuitesAndCasesViewModel {
                 fetchCasesJSON(Constants.TOKEN, projectCode: self.codeOfProject, limit: limit)
             } while totalCount > offset
             
-            
             self.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self.suitesAndCaseData, suites: nil, testCases: parsedCases)
         }
+        
         mapSuitesAndCasesData()
-        isLoadingData.value = false
     }
     
     private func mapSuitesAndCasesData() {

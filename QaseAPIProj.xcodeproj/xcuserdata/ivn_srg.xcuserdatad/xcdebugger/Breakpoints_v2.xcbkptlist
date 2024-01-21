@@ -14,8 +14,8 @@
             filePath = "QaseAPIProj/ViewControllers/SuitesAndCasesTableViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "136"
-            endingLineNumber = "136"
+            startingLineNumber = "144"
+            endingLineNumber = "144"
             landmarkName = "SuitesAndCasesTableViewController"
             landmarkType = "21">
          </BreakpointContent>
@@ -30,8 +30,8 @@
             filePath = "QaseAPIProj/ViewControllers/SuitesAndCasesTableViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "138"
-            endingLineNumber = "138"
+            startingLineNumber = "146"
+            endingLineNumber = "146"
             landmarkName = "tableView(_:didSelectRowAt:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -46,8 +46,8 @@
             filePath = "QaseAPIProj/ViewControllers/SuitesAndCasesTableViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "82"
-            endingLineNumber = "82"
+            startingLineNumber = "91"
+            endingLineNumber = "91"
             landmarkName = "setup()"
             landmarkType = "7">
             <Locations>
@@ -142,10 +142,282 @@
             filePath = "QaseAPIProj/ViewControllers/ProjectsViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "70"
+            endingLineNumber = "70"
+            landmarkName = "bindViewModel()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "27E1EC38-ABB5-4A0A-BB24-88BDBAFBB286"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "122"
+            endingLineNumber = "122"
+            landmarkName = "updateDataSource()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "27E1EC38-ABB5-4A0A-BB24-88BDBAFBB286 - 81a65932cb5e15d8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "QaseAPIProj.SuitesAndCasesViewModel.mapSuitesAndCasesData() -&gt; ()"
+                  moduleName = "QaseAPIProj"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ivn_srg/Desktop/Projects/iOSPetProjectWithQaseAPI/QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "120"
+                  endingLineNumber = "120"
+                  offsetFromSymbolStart = "44">
+               </Location>
+               <Location
+                  uuid = "27E1EC38-ABB5-4A0A-BB24-88BDBAFBB286 - ab493cb83180f946"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "QaseAPIProj.SuitesAndCasesViewModel.updateDataSource() -&gt; ()"
+                  moduleName = "QaseAPIProj"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ivn_srg/Desktop/Projects/iOSPetProjectWithQaseAPI/QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "118"
+                  endingLineNumber = "118"
+                  offsetFromSymbolStart = "1608">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "AE7E6C81-488B-4B98-AB8C-2E4D5659B3FD"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "187"
+            endingLineNumber = "187"
+            landmarkName = "numberOfRows()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "FF440D95-92C4-410B-8D7B-F6E01E9CDF22"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "104"
+            endingLineNumber = "104"
+            landmarkName = "updateDataSource()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "2A1A10A1-1806-4208-A836-53D7CE9E705B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "106"
+            endingLineNumber = "106"
+            landmarkName = "updateDataSource()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B8BE2CCA-0149-4F54-B55E-F1237DCA0407"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "108"
+            endingLineNumber = "108"
+            landmarkName = "updateDataSource()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "B8BE2CCA-0149-4F54-B55E-F1237DCA0407 - ab493cb83180fb75"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "QaseAPIProj.SuitesAndCasesViewModel.updateDataSource() -&gt; ()"
+                  moduleName = "QaseAPIProj"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ivn_srg/Desktop/Projects/iOSPetProjectWithQaseAPI/QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "103"
+                  endingLineNumber = "103"
+                  offsetFromSymbolStart = "856">
+               </Location>
+               <Location
+                  uuid = "B8BE2CCA-0149-4F54-B55E-F1237DCA0407 - ab493cb83180fb14"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "QaseAPIProj.SuitesAndCasesViewModel.updateDataSource() -&gt; ()"
+                  moduleName = "QaseAPIProj"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ivn_srg/Desktop/Projects/iOSPetProjectWithQaseAPI/QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "104"
+                  endingLineNumber = "104"
+                  offsetFromSymbolStart = "856">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "950F693A-8C93-430C-AD24-E529800519E9"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "115"
+            endingLineNumber = "115"
+            landmarkName = "updateDataSource()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "035F9A53-6668-432F-ADE1-808C0B765C65"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewControllers/SuitesAndCasesTableViewController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "75"
+            endingLineNumber = "75"
+            landmarkName = "bindViewModel()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "FEF2534D-E0AA-483F-9526-7FC009F37FA4"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "116"
+            endingLineNumber = "116"
+            landmarkName = "updateDataSource()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "FAFA9837-7600-415F-B5FB-228A5566B1C0"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "114"
+            endingLineNumber = "114"
+            landmarkName = "updateDataSource()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "79C2D66A-2AA1-49E9-97F5-F76D91106BE1"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewModel/SuitesAndCasesViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "131"
+            endingLineNumber = "131"
+            landmarkName = "mapSuitesAndCasesData()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "A75F2090-F722-4643-BA31-D25B8D3BCE91"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "QaseAPIProj/ViewControllers/SuitesAndCasesTableViewController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
             startingLineNumber = "74"
             endingLineNumber = "74"
             landmarkName = "bindViewModel()"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "A75F2090-F722-4643-BA31-D25B8D3BCE91 - 6cf544e7c03f8b6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #2 (Swift.Optional&lt;Swift.Array&lt;QaseAPIProj.SuitesAndCasesTableViewCellViewModel&gt;&gt;) -&gt; () in QaseAPIProj.SuitesAndCasesTableViewController.bindViewModel() -&gt; ()"
+                  moduleName = "QaseAPIProj"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ivn_srg/Desktop/Projects/iOSPetProjectWithQaseAPI/QaseAPIProj/ViewControllers/SuitesAndCasesTableViewController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "74"
+                  endingLineNumber = "74"
+                  offsetFromSymbolStart = "296">
+               </Location>
+               <Location
+                  uuid = "A75F2090-F722-4643-BA31-D25B8D3BCE91 - 6cf544e7c03f8b6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #2 (Swift.Optional&lt;Swift.Array&lt;QaseAPIProj.SuitesAndCasesTableViewCellViewModel&gt;&gt;) -&gt; () in QaseAPIProj.SuitesAndCasesTableViewController.bindViewModel() -&gt; ()"
+                  moduleName = "QaseAPIProj"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/ivn_srg/Desktop/Projects/iOSPetProjectWithQaseAPI/QaseAPIProj/ViewControllers/SuitesAndCasesTableViewController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "74"
+                  endingLineNumber = "74"
+                  offsetFromSymbolStart = "224">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

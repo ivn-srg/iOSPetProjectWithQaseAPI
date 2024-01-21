@@ -8,6 +8,7 @@
 import Foundation
 
 class SuitesAndCasesTableViewCellViewModel {
+    var isSuite: Bool
     let id: Int
     var title: String
     var description: String?
@@ -17,6 +18,7 @@ class SuitesAndCasesTableViewCellViewModel {
     var priority: Int?
     
     init(suiteOrCase: SuiteAndCaseData) {
+        self.isSuite = suiteOrCase.isSuites
         self.id = suiteOrCase.id
         self.title = suiteOrCase.title
         self.description = suiteOrCase.description

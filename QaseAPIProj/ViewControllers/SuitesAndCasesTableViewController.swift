@@ -12,9 +12,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
     
     var viewModel: SuitesAndCasesViewModel = SuitesAndCasesViewModel()
     
-    var codeOfProject = ""
-    var parentSuite: Int? = nil
-    var suitesAndCaseData: [SuiteAndCaseData] = []
+    var suitesAndCasesDataSource: [SuitesAndCasesTableViewCellViewModel] = []
     
     // MARK: - UI
     
@@ -41,12 +39,17 @@ final class SuitesAndCasesTableViewController: UIViewController {
     
     // MARK: - Lifecycles
     
+    override func loadView() {
+        super.loadView()
+        viewModel.updateDataSource()
+        
+        
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         setup()
-        
-        LoadingIndicator.stopLoading()
+        bindViewModel()
     }
     
     func bindViewModel() {
@@ -63,13 +66,19 @@ final class SuitesAndCasesTableViewController: UIViewController {
             }
         }
         
-        viewModel.projects.bind { [weak self] projects in
+        viewModel.suitesAndCases.bind { [weak self] data in
             guard let self = self,
-                  let projects = projects else {
+                  let suitesAndCases = data else {
                 return
             }
-            self.projectsDataSource = projects
+            self.suitesAndCasesDataSource = suitesAndCases
             self.reloadTableView()
+        }
+    }
+    
+    private func reloadTableView() {
+        DispatchQueue.main.async {
+            self.tableVw.reloadData()
         }
     }
 
@@ -102,7 +111,7 @@ private extension SuitesAndCasesTableViewController {
     }
     
     private func updateEmptyDataLabelVisibility() {
-        emptyDataLabel.isHidden = viewModel.filteredData.count > 0
+        emptyDataLabel.isHidden = suitesAndCasesDataSource.count > 0
     }
 }
 
@@ -121,7 +130,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        viewModel.filteredData.count
+        viewModel.numberOfRows()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -129,16 +138,14 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
             return UITableViewCell()
         }
         
-        let dataForCell = viewModel.filteredData[indexPath.row]
-        cell.configure(with: dataForCell)
-        
+        cell.configureCell(with: suitesAndCasesDataSource[indexPath.row])
+        return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if viewModel.filteredData[indexPath.row].isSuites {
             let vc = SuitesAndCasesTableViewController()
-            vc.parentSuite = viewModel.filteredData[indexPath.row].id
-            vc.suitesAndCaseData = viewModel.suitesAndCaseData
+            vc.viewModel.parentSuite = viewModel.filteredData[indexPath.row].id
             self.navigationController?.pushViewController(vc, animated: true)
         } else {
             tableVw.reloadData()

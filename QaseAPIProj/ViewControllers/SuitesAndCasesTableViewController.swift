@@ -132,7 +132,8 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
             vc.suitesAndCaseData = self.suitesAndCaseData
             self.navigationController?.pushViewController(vc, animated: true)
         } else {
-            tableVw.reloadData()
+            let vc = DetailTabBarController()
+            self.navigationController?.pushViewController(vc, animated: true)
         }
     }
 }

@@ -42,7 +42,7 @@ final class ProjectsViewController: UIViewController {
     }
     
     private func fetchSuitesJSON(_ token: String, projectCode: String) {
-        let urlString = Constants.urlString(Constants.APIMethods.suite.rawValue, projectCode, 100, 0)
+        guard let urlString = Constants.urlString(.suites, projectCode, 100, 0, nil) else { return }
         
         APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
             
@@ -71,7 +71,7 @@ final class ProjectsViewController: UIViewController {
     }
     
     private func fetchCasesJSON(_ token: String, projectCode: String) {
-        let urlString = Constants.urlString(Constants.APIMethods.cases.rawValue, projectCode, 100, 0)
+        guard let urlString = Constants.urlString(.cases, projectCode, 100, 0, nil) else { return }
         
         APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
             
@@ -117,10 +117,6 @@ final class ProjectsViewController: UIViewController {
                     parent_id: suite.parent_id,
                     case_count: suite.cases_count
                 )
-                
-                if suite.title == "Первый запуск мп" {
-                    print("\(suite.title) \(suite.parent_id)")
-                }
                 
                 targetUniversalList.append(universalItem)
             }

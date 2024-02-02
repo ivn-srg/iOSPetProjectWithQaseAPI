@@ -69,19 +69,41 @@ struct Constants {
     
     enum APIMethods: String {
         case project = "project"
-        case suite = "suite"
+        case suites = "suite"
         case cases = "case"
+        case openedCase = ""
     }
     
     static var TOKEN = ""
     
+    static let DOMEN = "https://api.qase.io/v1"
+    
     static var urlString = {
-        (requiredEssence: String, codeOfProject: String?, limit: Int, offset: Int) -> String in
+        (APIMethod: APIMethods, codeOfProject: String?, limit: Int?, offset: Int?, caseId: Int?) -> String? in
         
-        if let codeOfProject = codeOfProject {
-            return "https://api.qase.io/v1/\(requiredEssence)/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
-        } else {
-            return "https://api.qase.io/v1/\(requiredEssence)?limit=\(limit)&offset=\(offset)"
+        switch APIMethod {
+        case .project:
+            guard let limit = limit else { return nil }
+            guard let offset = offset else { return nil }
+            
+            return "\(Constants.DOMEN)/project?limit=\(limit)&offset=\(offset)"
+        case .suites:
+            guard let limit = limit else { return nil }
+            guard let offset = offset else { return nil }
+            guard let codeOfProject = codeOfProject else { return nil }
+            
+            return "\(Constants.DOMEN)/suite/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
+        case .cases:
+            guard let limit = limit else { return nil }
+            guard let offset = offset else { return nil }
+            guard let codeOfProject = codeOfProject else { return nil }
+            
+            return "\(Constants.DOMEN)/case/\(codeOfProject)/?limit=\(limit)&offset=\(offset)"
+        case .openedCase:
+            guard let codeOfProject = codeOfProject else { return nil }
+            guard let caseId = caseId else { return nil }
+            
+            return "\(Constants.DOMEN)/case/\(codeOfProject)/\(caseId)"
         }
     }
 }

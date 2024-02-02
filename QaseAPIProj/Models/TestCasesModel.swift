@@ -96,6 +96,11 @@ struct TestCasesModel: Codable {
     let result: TestResult
 }
 
+struct TestCaseModel {
+    let status: Bool
+    let result: TestEntity
+}
+
 struct TestResult: Codable {
     let total: Int
     let filtered: Int

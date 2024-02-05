@@ -8,7 +8,7 @@
 import UIKit
 
 struct Constants {
-    enum Severity: String {
+    enum Severity: String, CaseIterable {
         case nothing = "Not set"
         case blocker = "Blocker"
         case critical = "Critical"
@@ -16,29 +16,69 @@ struct Constants {
         case normal = "Normal"
         case minor = "Minor"
         case trivial = "Trivial"
+        
+        static func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in Severity.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
+        }
     }
     
-    enum Status: String {
+    enum Status: String, CaseIterable {
         case actual = "Actual"
         case draft = "Draft"
         case deprecated = "Deprecated"
+        
+        static func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in Status.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
+        }
     }
     
-    enum Priority: String {
+    enum Priority: String, CaseIterable {
         case nothing = "Not Set"
         case high = "High"
         case medium = "Medium"
         case low = "Low"
+        
+        static func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in Priority.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
+        }
     }
     
-    enum Behavior: String {
+    enum Behavior: String, CaseIterable {
         case nothing = "Not Set"
         case positive = "Positive"
         case negative = "Negative"
         case destructive = "Destructive"
+        
+        static func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in Behavior.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
+        }
     }
     
-    enum `Type`: String {
+    enum Types: String, CaseIterable {
         case other = "Other"
         case functional = "Functional"
         case smoke = "Smoke"
@@ -50,16 +90,46 @@ struct Constants {
         case compatibility = "Compatibility"
         case exploratory = "Exploratory"
         case integration = "Integration"
+        
+        static func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in Types.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
+        }
     }
     
-    enum Layer: String {
+    enum Layer: String, CaseIterable {
         case e2e = "E2E"
         case api = "API"
+        
+        static func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in Layer.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
+        }
     }
     
-    enum AutomationStatus: String {
+    enum AutomationStatus: String, CaseIterable {
         case manual = "Manual"
         case automation = "Automation"
+        
+        static func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in AutomationStatus.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
+        }
     }
     
     enum APIType: String {
@@ -67,11 +137,21 @@ struct Constants {
         case post = "POST"
     }
     
-    enum APIMethods: String {
+    enum APIMethods: String, CaseIterable {
         case project = "project"
         case suites = "suite"
         case cases = "case"
         case openedCase = ""
+        
+        func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in APIMethods.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
+        }
     }
     
     static var TOKEN = ""

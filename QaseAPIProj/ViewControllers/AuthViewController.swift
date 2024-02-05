@@ -95,7 +95,7 @@ final class AuthViewController: UIViewController {
     }
     
     private func fetchProjectsJSON(_ token: String) {
-        let urlString = Constants.urlString(Constants.APIMethods.project.rawValue, nil, 100, 0)
+        guard let urlString = Constants.urlString(Constants.APIMethods.project, nil, 100, 0, nil) else { return }
         
         APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
             
@@ -129,7 +129,7 @@ final class AuthViewController: UIViewController {
     }
     
     @objc private func tapForFillingTextLb() {
-        inputTokenField.text = "7af3790a7cc66c36817cb828b30535b626361be65865d739d52c49fae7eb6346"
+        inputTokenField.text = ""
         authorizate()
     }
 }

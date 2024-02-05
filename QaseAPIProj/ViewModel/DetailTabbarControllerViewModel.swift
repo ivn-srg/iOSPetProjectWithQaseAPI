@@ -59,7 +59,7 @@ class DetailTabbarControllerViewModel {
     }
     
     private func mapTestCaseData() {
-        da.value = self.dataSource?.result
+//        dataSource.value = self.dataSource?.result
     }
     
     // MARK: - Routing
@@ -71,6 +71,7 @@ class DetailTabbarControllerViewModel {
     // MARK: - VC func
     
     func numberOfRows() -> Int {
-        dataSource?.result.entities.count ?? 0
+//        dataSource?.result.entities.count ?? 0
+        1
     }
 }

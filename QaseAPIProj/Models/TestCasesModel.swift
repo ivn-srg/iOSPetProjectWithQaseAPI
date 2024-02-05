@@ -96,7 +96,7 @@ struct TestCasesModel: Codable {
     let result: TestResult
 }
 
-struct TestCaseModel {
+struct TestCaseModel: Codable {
     let status: Bool
     let result: TestEntity
 }

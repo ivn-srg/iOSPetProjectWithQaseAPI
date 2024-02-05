@@ -9,6 +9,8 @@ import UIKit
 
 class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate {
     
+    var testCaseData: TestEntity? = nil
+    
     private lazy var viewCn: UIView = {
         let vc = UIView()
         vc.translatesAutoresizingMaskIntoConstraints = false

@@ -12,6 +12,8 @@ class DetailTabbarControllerViewModel {
     
     var isLoadingData: Observable<Bool> = Observable(false)
     var dataSource: TestCaseModel?
+    var testCase: Observable<TestEntity> = Observable(nil)
+    var caseId = 0
     
     // MARK: - Network work
     
@@ -19,13 +21,10 @@ class DetailTabbarControllerViewModel {
         if isLoadingData.value ?? true {
             return
         }
-        let limit = 100
-        var offset = 0
-        var totalCount = 0
         
         func fetchProjectsJSON(_ token: String, limit: Int?, Offset: Int?, caseId: Int?) {
             guard let urlString = Constants.urlString(.openedCase, nil, nil, nil, caseId) else { return }
-            
+            print(urlString)
             isLoadingData.value = true
             APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: TestCaseModel.self) { [weak self] (result: Result<TestCaseModel, Error>) in
                 self?.isLoadingData.value = false
@@ -34,8 +33,6 @@ class DetailTabbarControllerViewModel {
                 case .success(let jsonTestCase):
                     self?.dataSource = jsonTestCase
                     self?.mapTestCaseData()
-                    
-                    
 //                    DispatchQueue.main.async {
 //                        LoadingIndicator.stopLoading()
 //                    }
@@ -55,11 +52,11 @@ class DetailTabbarControllerViewModel {
             }
         }
         
-        fetchProjectsJSON(Constants.TOKEN, limit: limit, Offset: offset, caseId: nil)
+        fetchProjectsJSON(Constants.TOKEN, limit: nil, Offset: nil, caseId: self.caseId)
     }
     
     private func mapTestCaseData() {
-//        dataSource.value = self.dataSource?.result
+        testCase.value = self.dataSource?.result
     }
     
     // MARK: - Routing
@@ -69,9 +66,4 @@ class DetailTabbarControllerViewModel {
     }
     
     // MARK: - VC func
-    
-    func numberOfRows() -> Int {
-//        dataSource?.result.entities.count ?? 0
-        1
-    }
 }

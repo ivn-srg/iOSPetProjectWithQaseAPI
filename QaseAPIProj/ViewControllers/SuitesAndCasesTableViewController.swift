@@ -69,7 +69,7 @@ private extension SuitesAndCasesTableViewController {
     
     func setup() {
         
-        title = parentSuite == nil ? codeOfProject : self.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.parentSuite} ).first?.title
+        title = parentSuite == nil ? Constants.PROJECT_NAME : self.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.parentSuite} ).first?.title
         navigationItem.largeTitleDisplayMode = .never
         
         view.backgroundColor = .white
@@ -132,7 +132,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
             vc.suitesAndCaseData = self.suitesAndCaseData
             self.navigationController?.pushViewController(vc, animated: true)
         } else {
-            let vc = DetailTabBarController()
+            let vc = DetailTabBarController(projectId: Constants.PROJECT_NAME, caseId: filteredData[indexPath.row].id, vm: DetailTabbarControllerViewModel())
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }

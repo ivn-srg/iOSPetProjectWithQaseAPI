@@ -158,6 +158,8 @@ struct Constants {
     
     static let DOMEN = "https://api.qase.io/v1"
     
+    static var PROJECT_NAME = ""
+    
     static var urlString = {
         (APIMethod: APIMethods, codeOfProject: String?, limit: Int?, offset: Int?, caseId: Int?) -> String? in
         

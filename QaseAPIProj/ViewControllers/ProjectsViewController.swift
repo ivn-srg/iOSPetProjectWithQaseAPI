@@ -192,7 +192,8 @@ extension ProjectsViewController: UITableViewDataSource {
         suitesAndCasesCompletion = {
             let vc = SuitesAndCasesTableViewController()
             vc.suitesAndCaseData = self.suitesAndCaseData
-            vc.codeOfProject = self.projects[indexPath.row].code
+//            vc.codeOfProject = self.projects[indexPath.row].code
+            Constants.PROJECT_NAME = self.projects[indexPath.row].code
             self.navigationController?.pushViewController(vc, animated: true)
             self.suitesAndCaseData.removeAll()
         }

@@ -9,6 +9,18 @@ import UIKit
 
 class GeneralDetailCaseViewController: UIViewController {
     
+    var testCaseData: TestEntity? = nil
+    let vm: DetailTabbarControllerViewModel
+    
+    init(vm: DetailTabbarControllerViewModel) {
+        self.vm = vm
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     private lazy var viewCn: UIView = {
         let vc = UIView()
         vc.translatesAutoresizingMaskIntoConstraints = false
@@ -74,16 +86,17 @@ class GeneralDetailCaseViewController: UIViewController {
         super.viewDidLoad()
         
         setupView()
+        bindViewModel()
     }
     
     private func setupView() {
         
         descriptionlbl.text = "Description"
-        descriptionField.text = "Not set"
+        descriptionField.text = testCaseData?.description ?? "Not set"
         preconditionlbl.text = "Pre-condition"
-        preconditionField.text = "Not set"
+        preconditionField.text = testCaseData?.preconditions ?? "Not set"
         postconditionlbl.text = "Post-condition"
-        postconditionField.text = "Not set"
+        postconditionField.text = testCaseData?.postconditions ?? "Not set"
         
         view.addSubview(viewCn)
         view.addSubview(descriptionlbl)
@@ -130,4 +143,29 @@ class GeneralDetailCaseViewController: UIViewController {
             postconditionField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
         ])
     }
+    
+    func bindViewModel() {
+        vm.isLoadingData.bind { isLoading in
+            guard let isLoading = isLoading else {
+                return
+            }
+            DispatchQueue.main.async {
+                if isLoading {
+                    LoadingIndicator.startLoading()
+                } else {
+                    LoadingIndicator.stopLoading()
+                }
+            }
+        }
+        
+        vm.testCase.bind { [weak self] testCase in
+            guard let self = self,
+                  let testCase = testCase else {
+                return
+            }
+            self.testCaseData = testCase
+            self.view.setNeedsDisplay()
+        }
+    }
+    
 }

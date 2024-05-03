@@ -7,23 +7,9 @@
 
 import UIKit
 
-
-final class SuitesAndCasesTableViewController: UIViewController {
+final class SuitesAndCasesTableViewController: UIViewController, UpdateTableViewProtocol {
     
-    var codeOfProject = ""
-    var parentSuite: Int? = nil
-    var suitesAndCaseData = [SuiteAndCaseData]() {
-        didSet {
-            if parentSuite == nil {
-                filteredData = suitesAndCaseData.filter( {$0.parent_id == nil && $0.suiteId == nil} )
-                
-            } else {
-                filteredData = suitesAndCaseData.filter( {$0.parent_id == self.parentSuite || $0.suiteId == self.parentSuite} )
-            }
-        }
-    }
-    
-    var filteredData = [SuiteAndCaseData]()
+    var viewModel: SuitesAndCasesViewModel
     
     // MARK: - UI
     
@@ -56,12 +42,29 @@ final class SuitesAndCasesTableViewController: UIViewController {
     
     // MARK: - Lifecycles
     
+    init(parentSuite: Int? = nil) {
+        self.viewModel = parentSuite != nil ? SuitesAndCasesViewModel(parentSuite: parentSuite) : SuitesAndCasesViewModel()
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setup()
         
-        LoadingIndicator.stopLoading()
+        viewModel.delegate = self
+        viewModel.requestEntitiesData()
+    }
+    
+    func updateTableView() {
+        DispatchQueue.main.async {
+            self.tableVw.reloadData()
+            LoadingIndicator.stopLoading()
+        }
     }
 }
 
@@ -69,7 +72,7 @@ private extension SuitesAndCasesTableViewController {
     
     func setup() {
         
-        title = parentSuite == nil ? Constants.PROJECT_NAME : self.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.parentSuite} ).first?.title
+        title = viewModel.parentSuite == nil ? Constants.PROJECT_NAME : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite} ).first?.title
         navigationItem.largeTitleDisplayMode = .never
         
         view.backgroundColor = .white
@@ -92,7 +95,7 @@ private extension SuitesAndCasesTableViewController {
     }
     
     private func updateEmptyDataLabelVisibility() {
-        emptyDataLabel.isHidden = filteredData.count > 0
+        emptyDataLabel.isHidden = viewModel.suitesAndCaseData.count > 0
     }
 }
 
@@ -103,7 +106,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
         updateEmptyDataLabelVisibility()
-        return filteredData.count > 0 ? 1 : 0
+        return viewModel.suitesAndCaseData.count > 0 ? 1 : 0
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
@@ -111,13 +114,13 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        filteredData.count
+        viewModel.countOfRows()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: SuitesAndCasesTableViewCell.cellId, for: indexPath) as! SuitesAndCasesTableViewCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: SuitesAndCasesTableViewCell.cellId, for: indexPath) as? SuitesAndCasesTableViewCell else { return UITableViewCell() }
         
-        let dataForCell = filteredData[indexPath.row]
+        let dataForCell = viewModel.suitesAndCaseData[indexPath.row]
         
         cell.configure(with: dataForCell)
         
@@ -126,15 +129,14 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if filteredData[indexPath.row].isSuites {
-            let vc = SuitesAndCasesTableViewController()
-            vc.parentSuite = filteredData[indexPath.row].id
-            vc.suitesAndCaseData = self.suitesAndCaseData
-            self.navigationController?.pushViewController(vc, animated: true)
+        let vc: UIViewController
+        if viewModel.suitesAndCaseData[indexPath.row].isSuites {
+            vc = SuitesAndCasesTableViewController(parentSuite: viewModel.suitesAndCaseData[indexPath.row].id)
         } else {
-            let vc = DetailTabBarController(projectId: Constants.PROJECT_NAME, caseId: filteredData[indexPath.row].id, vm: DetailTabbarControllerViewModel())
-            self.navigationController?.pushViewController(vc, animated: true)
+            let viewModel = DetailTabbarControllerViewModel(caseId: viewModel.suitesAndCaseData[indexPath.row].id)
+            vc = DetailTabBarController(vm: viewModel)
         }
+        self.navigationController?.pushViewController(vc, animated: true)
     }
 }
 

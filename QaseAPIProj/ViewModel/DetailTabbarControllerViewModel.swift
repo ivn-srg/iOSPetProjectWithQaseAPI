@@ -10,53 +10,48 @@ import UIKit
 
 class DetailTabbarControllerViewModel {
     
-    var isLoadingData: Observable<Bool> = Observable(false)
     var dataSource: TestCaseModel?
-    var testCase: Observable<TestEntity> = Observable(nil)
+    var testCase: TestEntity? = nil
     var caseId = 0
+    
+    init(caseId: Int) {
+        self.caseId = caseId
+    }
     
     // MARK: - Network work
     
     func updateDataSource() {
-        if isLoadingData.value ?? true {
-            return
-        }
         
-        func fetchProjectsJSON(_ token: String, limit: Int?, Offset: Int?, caseId: Int?) {
-            guard let urlString = Constants.urlString(.openedCase, nil, nil, nil, caseId) else { return }
-            print(urlString)
-            isLoadingData.value = true
+        func fetchProjectsJSON(_ token: String, limit: Int? = nil, Offset: Int? = nil, caseId: Int?) {
+            guard let urlString = Constants.urlString(.openedCase, Constants.PROJECT_NAME, nil, nil, nil, caseId) else { return }
+            
             APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: TestCaseModel.self) { [weak self] (result: Result<TestCaseModel, Error>) in
-                self?.isLoadingData.value = false
+                
                 
                 switch result {
                 case .success(let jsonTestCase):
                     self?.dataSource = jsonTestCase
                     self?.mapTestCaseData()
-//                    DispatchQueue.main.async {
-//                        LoadingIndicator.stopLoading()
-//                    }
+                    
                 case .failure(let error):
                     if let apiError = error as? APIError, apiError == .invalidURL {
                         DispatchQueue.main.async {
                             LoadingIndicator.stopLoading()
-                            //                            self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
                         }
                     } else {
                         DispatchQueue.main.async {
                             LoadingIndicator.stopLoading()
-//                                                        self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
                         }
                     }
                 }
             }
         }
         
-        fetchProjectsJSON(Constants.TOKEN, limit: nil, Offset: nil, caseId: self.caseId)
+        fetchProjectsJSON(Constants.TOKEN, caseId: self.caseId)
     }
     
     private func mapTestCaseData() {
-        testCase.value = self.dataSource?.result
+        testCase = self.dataSource?.result
     }
     
     // MARK: - Routing

@@ -7,12 +7,12 @@
 
 import UIKit
 
-final class ProjectsViewController: UIViewController {
-    
+final class ProjectsViewController: UIViewController, UpdateTableViewProtocol, NextViewControllerPusher {
+
     var suitesAndCasesCompletion: (() -> Void)?
-    
-    var projects = [Project]()
     var suitesAndCaseData = [SuiteAndCaseData]()
+    
+    var viewModel: ProjectsViewModel
     
     // MARK: - UI
     
@@ -32,122 +32,26 @@ final class ProjectsViewController: UIViewController {
     
     // MARK: - Lifecycle
     
-    override func loadView() {
-        super.loadView()
-        setup()
+    init(totalCountOfProjects: Int) {
+        self.viewModel = ProjectsViewModel(totalCountOfProjects: totalCountOfProjects)
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-    }
-    
-    private func fetchSuitesJSON(_ token: String, projectCode: String) {
-        guard let urlString = Constants.urlString(.suites, projectCode, 100, 0, nil) else { return }
+        setup()
         
-        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
-            
-            switch result {
-            case .success(let jsonSuites):
-                DispatchQueue.main.async {
-                    self?.changeDataTypeToUniversalizeData(isSuite: true, targetUniversalList: &self!.suitesAndCaseData, suites: jsonSuites.result.entities, testCases: nil)
-                    
-                }
-                
-            case .failure(let error):
-                if let apiError = error as? APIError, apiError == .invalidURL {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
-                    }
-                }
-            }
-            
-        }
+        viewModel.delegate = self
+        viewModel.fetchProjectsJSON()
     }
     
-    private func fetchCasesJSON(_ token: String, projectCode: String) {
-        guard let urlString = Constants.urlString(.cases, projectCode, 100, 0, nil) else { return }
-        
-        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
-            
-            switch result {
-            case .success(let jsonCases):
-                self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: jsonCases.result.entities)
-                
-                DispatchQueue.main.async {
-                    self?.suitesAndCasesCompletion!()
-                }
-            case .failure(let error):
-                if let apiError = error as? APIError, apiError == .invalidURL {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
-                    }
-                }
-            }
-        }
-    }
-    
-    private func changeDataTypeToUniversalizeData(
-        isSuite: Bool,
-        targetUniversalList: inout [SuiteAndCaseData],
-        suites: [SuiteEntity]?,
-        testCases: [TestEntity]?
-    ) {
-        if isSuite {
-            guard let suites = suites else { return }
-            
-            for suite in suites {
-                let universalItem = SuiteAndCaseData(
-                    isSuite: true,
-                    id: suite.id,
-                    title: suite.title,
-                    description: suite.description,
-                    preconditions: suite.preconditions,
-                    parent_id: suite.parent_id,
-                    case_count: suite.cases_count
-                )
-                
-                targetUniversalList.append(universalItem)
-            }
-        } else {
-            guard let testCases = testCases else { return }
-            
-            for testCase in testCases {
-                let universalItem = SuiteAndCaseData(
-                    isSuite: false,
-                    id: testCase.id,
-                    title: testCase.title,
-                    description: testCase.description,
-                    preconditions: testCase.preconditions,
-                    parent_id: nil,
-                    case_count: nil,
-                    priority: testCase.priority,
-                    automation: testCase.automation,
-                    suiteId: testCase.suiteId
-                )
-                
-                targetUniversalList.append(universalItem)
-            }
-        }
-        //        }
-    }
-}
-
-private extension ProjectsViewController {
+    // MARK: - UI
     
     func setup() {
-        
         title = "Projects"
         navigationItem.largeTitleDisplayMode = .never
         
@@ -165,20 +69,38 @@ private extension ProjectsViewController {
             tableVw.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
         ])
     }
+    
+    func updateTableView() {
+        DispatchQueue.main.async {
+            self.tableVw.reloadData()
+            LoadingIndicator.stopLoading()
+        }
+    }
+    
+    // MARK: - Router
+    
+    func pushToNextVC(to item: Int? = nil) {
+        DispatchQueue.main.async {
+            if let item = item {
+                Constants.PROJECT_NAME = self.viewModel.projects[item].code
+            }
+            let vc = SuitesAndCasesTableViewController()
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
 }
 
 // MARK: - UITableViewDataSource
 
 extension ProjectsViewController: UITableViewDataSource {
     
-    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return projects.count
+        viewModel.countOfRows()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as! ProjectTableViewCell
-        let project = projects[indexPath.row]
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: ProjectTableViewCell.cellId, for: indexPath) as? ProjectTableViewCell else { return UITableViewCell() }
+        let project = viewModel.projects[indexPath.row]
         
         cell.configure(with: project)
         
@@ -186,20 +108,7 @@ extension ProjectsViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        LoadingIndicator.startLoading()
-        
-        suitesAndCasesCompletion = {
-            let vc = SuitesAndCasesTableViewController()
-            vc.suitesAndCaseData = self.suitesAndCaseData
-//            vc.codeOfProject = self.projects[indexPath.row].code
-            Constants.PROJECT_NAME = self.projects[indexPath.row].code
-            self.navigationController?.pushViewController(vc, animated: true)
-            self.suitesAndCaseData.removeAll()
-        }
-        
-        self.fetchSuitesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
-        self.fetchCasesJSON(Constants.TOKEN, projectCode: self.projects[indexPath.row].code)
+        pushToNextVC(to: indexPath.row)
     }
 }
 
@@ -209,7 +118,7 @@ extension ProjectsViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
-        cell.separatorInset = UIEdgeInsets(top: 0, left: 1/*cell.bounds.size.width*/, bottom: 2, right: -5)
+        cell.separatorInset = UIEdgeInsets(top: 0, left: 1, bottom: 2, right: -5)
         
     }
 }

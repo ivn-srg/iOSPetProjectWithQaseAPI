@@ -7,7 +7,7 @@
 
 import Foundation
 
-class SuiteAndCaseData {
+final class SuiteAndCaseData {
     let isSuites: Bool
     let id: Int
     let title: String

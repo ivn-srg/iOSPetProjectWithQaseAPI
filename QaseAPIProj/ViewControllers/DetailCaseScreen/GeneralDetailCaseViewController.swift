@@ -9,11 +9,12 @@ import UIKit
 
 class GeneralDetailCaseViewController: UIViewController {
     
-    var testCaseData: TestEntity? = nil
+    var testCaseData: TestEntity?
     let vm: DetailTabbarControllerViewModel
     
     init(vm: DetailTabbarControllerViewModel) {
         self.vm = vm
+        self.testCaseData = vm.testCase
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -86,7 +87,6 @@ class GeneralDetailCaseViewController: UIViewController {
         super.viewDidLoad()
         
         setupView()
-        bindViewModel()
     }
     
     private func setupView() {
@@ -144,28 +144,9 @@ class GeneralDetailCaseViewController: UIViewController {
         ])
     }
     
-    func bindViewModel() {
-        vm.isLoadingData.bind { isLoading in
-            guard let isLoading = isLoading else {
-                return
-            }
-            DispatchQueue.main.async {
-                if isLoading {
-                    LoadingIndicator.startLoading()
-                } else {
-                    LoadingIndicator.stopLoading()
-                }
-            }
-        }
-        
-        vm.testCase.bind { [weak self] testCase in
-            guard let self = self,
-                  let testCase = testCase else {
-                return
-            }
-            self.testCaseData = testCase
-            self.view.setNeedsDisplay()
+    @objc func updateUI() {
+        DispatchQueue.main.async {
+            self.setupView()
         }
     }
-    
 }

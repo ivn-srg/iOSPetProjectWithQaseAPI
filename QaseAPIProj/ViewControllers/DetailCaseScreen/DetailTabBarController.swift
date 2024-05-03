@@ -9,17 +9,11 @@ import UIKit
 
 class DetailTabBarController: UITabBarController {
     
-    let projectId: String
-    let caseId: Int
-    let vm: DetailTabbarControllerViewModel
-    var testCase: TestEntity? = nil
+    let viewModel: DetailTabbarControllerViewModel
+    var testCaseData: TestEntity? = nil
     
-    init(projectId: String, caseId: Int, vm: DetailTabbarControllerViewModel) {
-        self.projectId = projectId
-        self.caseId = caseId
-        self.vm = vm
-        
-        self.vm.caseId = caseId
+    init(vm: DetailTabbarControllerViewModel) {
+        self.viewModel = vm
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -41,9 +35,9 @@ class DetailTabBarController: UITabBarController {
     }
     
     func configureView() {
-        vm.updateDataSource()
+        viewModel.updateDataSource()
         
-        let generalInfoVC = GeneralDetailCaseViewController(vm: DetailTabbarControllerViewModel())
+        let generalInfoVC = GeneralDetailCaseViewController(vm: viewModel)
         let propertiesInfoVC = PropertiesDetailCaseViewController()
         let runsInfolVC = RunsDetailCaseViewController()
         let defectsInfoVC = DefectsDetailCaseViewController()
@@ -55,10 +49,8 @@ class DetailTabBarController: UITabBarController {
         
         viewControllers = [generalInfoVC, propertiesInfoVC, runsInfolVC, defectsInfoVC]
         
-        title = "\(projectId)-\(caseId)"
+        title = "\(Constants.PROJECT_NAME)-\(viewModel.caseId)"
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .white
     }
-    
-    
 }

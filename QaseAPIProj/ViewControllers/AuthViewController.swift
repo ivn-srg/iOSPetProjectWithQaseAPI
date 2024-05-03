@@ -7,12 +7,10 @@
 
 import UIKit
 
-final class AuthViewController: UIViewController {
+final class AuthViewController: UIViewController, NextViewControllerPusher {
     
     private var tapCount: Int = 0
-    
-    var projects = [Project]()
-    var statusOfResponse = false
+    private var viewModel: AuthViewModel
     
     // MARK: - UI
     
@@ -56,85 +54,28 @@ final class AuthViewController: UIViewController {
     
     // MARK: - Lifecycle
     
-    override func loadView() {
-        super.loadView()
-        setup()
+    init() {
+        self.viewModel = AuthViewModel()
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        setup()
         self.view.backgroundColor = .white
+        viewModel.delegate = self
         
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
         tapGestureRecognizer.numberOfTapsRequired = 3
         logoImg.addGestureRecognizer(tapGestureRecognizer)
         logoImg.isUserInteractionEnabled = true
-
     }
     
-    @objc private func authorizate() {
-        
-        if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
-            if !inputTokenFieldText.isEmpty {
-                
-                Constants.TOKEN = inputTokenFieldText
-                
-                LoadingIndicator.startLoading()
-                
-                DispatchQueue.global().async {
-                    self.fetchProjectsJSON(Constants.TOKEN)
-                }
-                
-            } else {
-                showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
-            }
-        } else {
-            showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
-        }
-    }
-    
-    private func fetchProjectsJSON(_ token: String) {
-        guard let urlString = Constants.urlString(Constants.APIMethods.project, nil, 100, 0, nil) else { return }
-        
-        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
-            
-            switch result {
-            case .success(let jsonProjects):
-                self?.projects = jsonProjects.result.entities
-                self?.statusOfResponse = jsonProjects.status
-                
-                DispatchQueue.main.async {
-                    LoadingIndicator.stopLoading()
-                    
-                    let vc = ProjectsViewController()
-                    vc.projects = self!.projects
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                }
-            case .failure(let error):
-                if let apiError = error as? APIError, apiError == .invalidURL {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
-                    }
-                }
-            }
-            
-        }
-    }
-    
-    @objc private func tapForFillingTextLb() {
-        inputTokenField.text = ""
-        authorizate()
-    }
-}
-
-private extension AuthViewController {
+    // MARK: - UI
     
     func setup() {
         
@@ -174,5 +115,35 @@ private extension AuthViewController {
             authButton.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
             authButton.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
         ])
+    }
+    
+    // MARK: - Router
+    
+    func pushToNextVC(to item: Int? = nil) {
+        DispatchQueue.main.async {
+            let vc = ProjectsViewController(totalCountOfProjects: self.viewModel.totalCountOfProject)
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+    
+    // MARK: - objc funcs
+    @objc private func authorizate() {
+        
+        if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
+            if !inputTokenFieldText.isEmpty {
+                Constants.TOKEN = inputTokenFieldText
+                
+                viewModel.fetchProjectsJSON()
+            } else {
+                showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
+            }
+        } else {
+            showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
+        }
+    }
+    
+    @objc private func tapForFillingTextLb() {
+        inputTokenField.text = ""
+        authorizate()
     }
 }

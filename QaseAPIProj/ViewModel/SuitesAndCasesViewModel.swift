@@ -40,9 +40,8 @@ final class SuitesAndCasesViewModel {
     }
     
     private func getTotalCountOfEntities() {
-        guard let urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.TOKEN, 1, 0, nil, nil) else { return }
-        guard let urlStringCases = Constants.urlString(.casesWithoutParent, Constants.TOKEN, 1, 0, nil, nil) else { return }
-        
+        guard let urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.PROJECT_NAME, 1, 0, nil, nil) else { return }
+        guard let urlStringCases = Constants.urlString(.casesWithoutParent, Constants.PROJECT_NAME, 1, 0, nil, nil) else { return }
         
         DispatchQueue.main.async {
             LoadingIndicator.startLoading()
@@ -76,9 +75,9 @@ final class SuitesAndCasesViewModel {
         
         repeat {
             if parentSuite != nil {
-                urlStringSuites = Constants.urlString(.suites, Constants.TOKEN, 1, 0, parentSuite, nil) ?? ""
+                urlStringSuites = Constants.urlString(.suites, Constants.PROJECT_NAME, limit, offset, parentSuite, nil) ?? ""
             } else {
-                urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.TOKEN, 1, 0, nil, nil) ?? ""
+                urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.PROJECT_NAME, limit, offset, nil, nil) ?? ""
             }
             
             APIManager.shared.fetchData(from: urlStringSuites, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
@@ -102,9 +101,9 @@ final class SuitesAndCasesViewModel {
         
         repeat {
             if let parentSuite = parentSuite {
-                urlStringCases = Constants.urlString(.cases, Constants.TOKEN, 1, 0, parentSuite, nil) ?? ""
+                urlStringCases = Constants.urlString(.cases, Constants.PROJECT_NAME, limit, offset, parentSuite, nil) ?? ""
             } else {
-                urlStringCases = Constants.urlString(.casesWithoutParent, Constants.TOKEN, 1, 0, nil, nil) ?? ""
+                urlStringCases = Constants.urlString(.casesWithoutParent, Constants.PROJECT_NAME, limit, offset, nil, nil) ?? ""
             }
             
             APIManager.shared.fetchData(from: urlStringCases, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
@@ -170,6 +169,6 @@ final class SuitesAndCasesViewModel {
     // MARK: - VC funcs
     
     func countOfRows() -> Int {
-        0
+        suitesAndCaseData.count
     }
 }

@@ -11,6 +11,7 @@ final class APIManager {
     static let shared = APIManager()
 
     func fetchData<T: Decodable>(from urlString: String, method: String, token: String, modelType: T.Type, completion: @escaping (Result<T, Error>) -> Void) {
+        
         guard let url = URL(string: urlString) else {
             completion(.failure(APIError.invalidURL))
             return
@@ -21,6 +22,7 @@ final class APIManager {
         request.addValue(token, forHTTPHeaderField: "Token")
 
         let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            print(String(data: data!, encoding: .utf8))
             if let error = error {
                 completion(.failure(error))
             } else if let data = data {

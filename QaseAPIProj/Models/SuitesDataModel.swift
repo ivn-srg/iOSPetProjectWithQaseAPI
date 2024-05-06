@@ -29,3 +29,13 @@ struct SuiteEntity: Codable {
     let parent_id: Int?
 }
 
+struct ParentSuite {
+    let id: Int
+    let title: String
+    
+    init(id: Int, title: String) {
+        self.id = id
+        self.title = title
+    }
+}
+

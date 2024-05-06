@@ -143,7 +143,7 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
             titleLbl.topAnchor.constraint(equalTo: contentStackVw.topAnchor),
             titleLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
             
-            descriptionLbl.topAnchor.constraint(equalTo: titleLbl.bottomAnchor),
+            descriptionLbl.topAnchor.constraint(equalTo: titleLbl.bottomAnchor, constant: 4),
             descriptionLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
             descriptionLbl.bottomAnchor.constraint(equalTo: contentStackVw.bottomAnchor),
         ]

@@ -7,8 +7,8 @@
 
 import UIKit
 
-final class SuitesAndCasesTableViewController: UIViewController, UpdateTableViewProtocol {
-    
+final class SuitesAndCasesTableViewController: UIViewController, UpdateTableViewProtocol, NextViewControllerPusher {
+
     var viewModel: SuitesAndCasesViewModel
     
     // MARK: - UI
@@ -26,7 +26,7 @@ final class SuitesAndCasesTableViewController: UIViewController, UpdateTableView
     private let emptyDataLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "There's nothing here yet =("
+        label.text = "There's nothing here yet 🙁"
         label.textAlignment = .center
         label.textColor = .gray
         label.numberOfLines = 0
@@ -42,7 +42,7 @@ final class SuitesAndCasesTableViewController: UIViewController, UpdateTableView
     
     // MARK: - Lifecycles
     
-    init(parentSuite: Int? = nil) {
+    init(parentSuite: ParentSuite? = nil) {
         self.viewModel = parentSuite != nil ? SuitesAndCasesViewModel(parentSuite: parentSuite) : SuitesAndCasesViewModel()
         super.init(nibName: nil, bundle: nil)
     }
@@ -66,13 +66,27 @@ final class SuitesAndCasesTableViewController: UIViewController, UpdateTableView
             LoadingIndicator.stopLoading()
         }
     }
+    
+    func pushToNextVC(to item: Int?) {
+        guard let item = item else { return }
+        let vc: UIViewController
+        let parentSuite = ParentSuite(id: viewModel.suitesAndCaseData[item].id, title: viewModel.suitesAndCaseData[item].title)
+        
+        if viewModel.suitesAndCaseData[item].isSuites {
+            vc = SuitesAndCasesTableViewController(parentSuite: parentSuite)
+        } else {
+            let viewModel = DetailTabbarControllerViewModel(caseId: viewModel.suitesAndCaseData[item].id)
+            vc = DetailTabBarController(vm: viewModel)
+        }
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
 }
 
 private extension SuitesAndCasesTableViewController {
     
     func setup() {
         
-        title = viewModel.parentSuite == nil ? Constants.PROJECT_NAME : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite} ).first?.title
+        title = viewModel.parentSuite == nil ? Constants.PROJECT_NAME : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite?.id} ).first?.title
         navigationItem.largeTitleDisplayMode = .never
         
         view.backgroundColor = .white
@@ -95,7 +109,7 @@ private extension SuitesAndCasesTableViewController {
     }
     
     private func updateEmptyDataLabelVisibility() {
-        emptyDataLabel.isHidden = viewModel.suitesAndCaseData.count > 0
+        emptyDataLabel.isHidden = viewModel.countOfRows() > 0
     }
 }
 
@@ -121,7 +135,6 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: SuitesAndCasesTableViewCell.cellId, for: indexPath) as? SuitesAndCasesTableViewCell else { return UITableViewCell() }
         
         let dataForCell = viewModel.suitesAndCaseData[indexPath.row]
-        
         cell.configure(with: dataForCell)
         
         return cell
@@ -129,14 +142,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let vc: UIViewController
-        if viewModel.suitesAndCaseData[indexPath.row].isSuites {
-            vc = SuitesAndCasesTableViewController(parentSuite: viewModel.suitesAndCaseData[indexPath.row].id)
-        } else {
-            let viewModel = DetailTabbarControllerViewModel(caseId: viewModel.suitesAndCaseData[indexPath.row].id)
-            vc = DetailTabBarController(vm: viewModel)
-        }
-        self.navigationController?.pushViewController(vc, animated: true)
+        pushToNextVC(to: indexPath.row)
     }
 }
 

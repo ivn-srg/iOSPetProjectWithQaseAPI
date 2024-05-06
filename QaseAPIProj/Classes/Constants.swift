@@ -161,7 +161,7 @@ struct Constants {
     static var PROJECT_NAME = ""
     
     static var urlString = {
-        (APIMethod: APIMethods, codeOfProject: String?, limit: Int?, offset: Int?, suite_id: Int?, caseId: Int?) -> String? in
+        (APIMethod: APIMethods, codeOfProject: String?, limit: Int?, offset: Int?, parentSuite: ParentSuite?, caseId: Int?) -> String? in
         
         switch APIMethod {
         case .project:
@@ -173,16 +173,17 @@ struct Constants {
             guard let limit = limit else { return nil }
             guard let offset = offset else { return nil }
             guard let codeOfProject = codeOfProject else { return nil }
-            guard let suite_id = suite_id else { return nil }
+            guard let parentSuite = parentSuite else { return nil }
+            guard let searchSuiteString = parentSuite.title.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else { return nil }
             
-            return "\(Constants.DOMEN)/suite/\(codeOfProject)?suite_id=\(suite_id)limit=\(limit)&offset=\(offset)"
+            return "\(Constants.DOMEN)/suite/\(codeOfProject)?search=\"\(searchSuiteString)\"&limit=\(limit)&offset=\(offset)"
         case .cases:
             guard let limit = limit else { return nil }
             guard let offset = offset else { return nil }
             guard let codeOfProject = codeOfProject else { return nil }
-            guard let suite_id = suite_id else { return nil }
+            guard let parentSuite = parentSuite else { return nil }
             
-            return "\(Constants.DOMEN)/case/\(codeOfProject)/?suite_id=\(suite_id)limit=\(limit)&offset=\(offset)"
+            return "\(Constants.DOMEN)/case/\(codeOfProject)?suite_id=\(parentSuite.id)&limit=\(limit)&offset=\(offset)"
         case .suitesWithoutParent:
             guard let limit = limit else { return nil }
             guard let offset = offset else { return nil }

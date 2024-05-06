@@ -11,22 +11,19 @@ import Foundation
 final class SuitesAndCasesViewModel {
     // MARK: - Fields
     var delegate: UpdateTableViewProtocol?
-    var parentSuite: Int?
+    var parentSuite: ParentSuite?
     private var totalCountOfSuites = 0
     private var totalCountOfCases = 0
     
     var suitesAndCaseData = [SuiteAndCaseData]() {
         didSet {
-            if parentSuite == nil {
-                suitesAndCaseData = suitesAndCaseData.filter( {$0.parent_id == nil && $0.suiteId == nil} )
-            }
             delegate?.updateTableView()
         }
     }
     
     // MARK: - lifecycle
     
-    init(delegate: UpdateTableViewProtocol? = nil, parentSuite: Int? = nil) {
+    init(delegate: UpdateTableViewProtocol? = nil, parentSuite: ParentSuite? = nil) {
         self.delegate = delegate
         self.parentSuite = parentSuite
     }
@@ -41,7 +38,7 @@ final class SuitesAndCasesViewModel {
     
     private func getTotalCountOfEntities() {
         guard let urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.PROJECT_NAME, 1, 0, nil, nil) else { return }
-        guard let urlStringCases = Constants.urlString(.casesWithoutParent, Constants.PROJECT_NAME, 1, 0, nil, nil) else { return }
+        guard let urlStringCases = Constants.urlString(parentSuite != nil ? .cases : .casesWithoutParent, Constants.PROJECT_NAME, 1, 0, parentSuite != nil ? parentSuite : nil, nil) else { return }
         
         DispatchQueue.main.async {
             LoadingIndicator.startLoading()
@@ -60,7 +57,7 @@ final class SuitesAndCasesViewModel {
         APIManager.shared.fetchData(from: urlStringCases, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
             switch result {
             case .success(let jsonCases):
-                self?.totalCountOfCases = jsonCases.result.total
+                self?.totalCountOfCases = self?.parentSuite != nil ? jsonCases.result.filtered : jsonCases.result.total
             case .failure(let error):
                 print(error)
                 break
@@ -74,18 +71,14 @@ final class SuitesAndCasesViewModel {
         var urlStringSuites = ""
         
         repeat {
-            if parentSuite != nil {
-                urlStringSuites = Constants.urlString(.suites, Constants.PROJECT_NAME, limit, offset, parentSuite, nil) ?? ""
-            } else {
-                urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.PROJECT_NAME, limit, offset, nil, nil) ?? ""
-            }
+            urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.PROJECT_NAME, limit, offset, nil, nil) ?? ""
             
             APIManager.shared.fetchData(from: urlStringSuites, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
                 
                 switch result {
                 case .success(let jsonSuites):
-                    self?.changeDataTypeToUniversalizeData(isSuite: true, targetUniversalList: &self!.suitesAndCaseData, suites: jsonSuites.result.entities, testCases: nil)
-                    
+                    let filteredSuites = self?.parentSuite != nil ? jsonSuites.result.entities.filter { $0.parent_id == self?.parentSuite?.id } : jsonSuites.result.entities.filter { $0.parent_id == nil }
+                    self?.changeDataTypeToUniversalizeData(isSuite: true, targetUniversalList: &self!.suitesAndCaseData, suites: filteredSuites, testCases: nil)
                 case .failure(let error):
                     print(error)
                 }
@@ -100,28 +93,20 @@ final class SuitesAndCasesViewModel {
         var urlStringCases = ""
         
         repeat {
-            if let parentSuite = parentSuite {
-                urlStringCases = Constants.urlString(.cases, Constants.PROJECT_NAME, limit, offset, parentSuite, nil) ?? ""
-            } else {
-                urlStringCases = Constants.urlString(.casesWithoutParent, Constants.PROJECT_NAME, limit, offset, nil, nil) ?? ""
-            }
+            urlStringCases = Constants.urlString(parentSuite != nil ? .cases : .casesWithoutParent, Constants.PROJECT_NAME, limit, offset, parentSuite != nil ? parentSuite : nil, nil) ?? ""
             
             APIManager.shared.fetchData(from: urlStringCases, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
                 
                 switch result {
                 case .success(let jsonCases):
+//                    let filteredCases = self?.parentSuite != nil ? jsonCases.result.entities.filter { $0.suiteId == self?.parentSuite?.id } : jsonCases.result.entities.filter { $0.suiteId == nil }
                     self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: jsonCases.result.entities)
-                    
                 case .failure(let error):
                     print(error)
                 }
             }
             offset += limit
         } while offset < totalCountOfCases
-        
-        DispatchQueue.main.async {
-            LoadingIndicator.stopLoading()
-        }
     }
     
     private func changeDataTypeToUniversalizeData(

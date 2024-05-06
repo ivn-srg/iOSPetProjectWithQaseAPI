@@ -18,7 +18,6 @@
 		937650C22B6CE70800B5336B /* DetailTabbarControllerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937650C12B6CE70800B5336B /* DetailTabbarControllerViewModel.swift */; };
 		937F04262AD84E3D006DDB28 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F04252AD84E3D006DDB28 /* AppDelegate.swift */; };
 		937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F04272AD84E3D006DDB28 /* SceneDelegate.swift */; };
-		937F042D2AD84E3D006DDB28 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 937F042B2AD84E3D006DDB28 /* Main.storyboard */; };
 		937F042F2AD84E3F006DDB28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 937F042E2AD84E3F006DDB28 /* Assets.xcassets */; };
 		937F04322AD84E3F006DDB28 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 937F04302AD84E3F006DDB28 /* LaunchScreen.storyboard */; };
 		9384FCDD2B4D7E37009EB478 /* SuitesDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */; };
@@ -51,7 +50,6 @@
 		937F04222AD84E3D006DDB28 /* QaseAPIProj.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QaseAPIProj.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		937F04252AD84E3D006DDB28 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		937F04272AD84E3D006DDB28 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		937F042C2AD84E3D006DDB28 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		937F042E2AD84E3F006DDB28 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		937F04312AD84E3F006DDB28 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		937F04332AD84E3F006DDB28 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -97,10 +95,10 @@
 		93748C2F2B4808BF00BE7FFB /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				93748C322B480F4400BE7FFB /* AuthViewController.swift */,
 				93F1F37D2B59879900667DB9 /* DetailCaseScreen */,
 				9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */,
 				93748C302B4808F500BE7FFB /* ProjectsViewController.swift */,
-				93748C322B480F4400BE7FFB /* AuthViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -108,10 +106,10 @@
 		93748C3E2B481C3D00BE7FFB /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */,
-				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
-				93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */,
 				934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */,
+				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
+				93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */,
+				93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -153,9 +151,6 @@
 				937F04252AD84E3D006DDB28 /* AppDelegate.swift */,
 				937F04272AD84E3D006DDB28 /* SceneDelegate.swift */,
 				93F3B1632B52C3B7007844F5 /* APIManager.swift */,
-				937F042B2AD84E3D006DDB28 /* Main.storyboard */,
-				937F042E2AD84E3F006DDB28 /* Assets.xcassets */,
-				937F04302AD84E3F006DDB28 /* LaunchScreen.storyboard */,
 				937F04332AD84E3F006DDB28 /* Info.plist */,
 			);
 			path = QaseAPIProj;
@@ -164,10 +159,10 @@
 		9395F7372B46DE970050C3F8 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */,
 				935DCFE52B51961F00F08ECF /* TestCasesModel.swift */,
 				9395F7332B46DC820050C3F8 /* ProjectDataModel.swift */,
 				93651C812B555F2100E96345 /* SuiteAndCaseData.swift */,
+				9384FCDC2B4D7E37009EB478 /* SuitesDataModel.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -175,7 +170,9 @@
 		93C7430E2B4C7B9A009F8865 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				937F042E2AD84E3F006DDB28 /* Assets.xcassets */,
 				93C7430F2B4C7BBA009F8865 /* Assets.swift */,
+				937F04302AD84E3F006DDB28 /* LaunchScreen.storyboard */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -184,10 +181,10 @@
 			isa = PBXGroup;
 			children = (
 				93F1F37B2B59876000667DB9 /* DetailTabBarController.swift */,
+				93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */,
 				93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */,
 				93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */,
 				93F1F3822B59881D00667DB9 /* RunsDetailCaseViewController.swift */,
-				93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */,
 			);
 			path = DetailCaseScreen;
 			sourceTree = "<group>";
@@ -252,7 +249,6 @@
 			files = (
 				937F04322AD84E3F006DDB28 /* LaunchScreen.storyboard in Resources */,
 				937F042F2AD84E3F006DDB28 /* Assets.xcassets in Resources */,
-				937F042D2AD84E3D006DDB28 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,14 +291,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		937F042B2AD84E3D006DDB28 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				937F042C2AD84E3D006DDB28 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		937F04302AD84E3F006DDB28 /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -445,7 +433,6 @@
 				INFOPLIST_FILE = QaseAPIProj/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -477,7 +464,6 @@
 				INFOPLIST_FILE = QaseAPIProj/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";

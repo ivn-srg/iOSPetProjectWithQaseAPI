@@ -119,7 +119,8 @@ struct Constants {
     
     enum AutomationStatus: String, CaseIterable {
         case manual = "Manual"
-        case automation = "Automation"
+        case toBeAutomated = "To be automated"
+        case automation = "Automated"
         
         static func returnAllEnumCases() -> [String] {
             var listOfCases = [String]()

@@ -9,7 +9,9 @@ import UIKit
 
 class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate {
     
-    var testCaseData: TestEntity? = nil
+    let vm: DetailTabbarControllerViewModel
+    
+    // MARK: - UI
     
     private lazy var viewCn: UIView = {
         let vc = UIView()
@@ -186,11 +188,22 @@ class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate 
         return pv
     }()
     
+    // MARK: - Lifecycles
+    
+    init(vm: DetailTabbarControllerViewModel) {
+        self.vm = vm
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupView()
-        setupTextField()
+        setupTextFields()
     }
     
     private func setupView() {
@@ -236,7 +249,8 @@ class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate 
         
         NSLayoutConstraint.activate(listOfNSLayoutConstraint)
     }
-    func setupTextField() {
+    
+    func setupTextFields() {
         let textFields = [severityTextField, statusTextField, priorityTextField, behaviorTextField, typeTextField, layerTextField, automationStatusTextField]
         let pickerViews = [severityPickerView, statusPickerView, priorityPickerView, behaviorPickerView, typePickerView, layerPickerView, automationStatusPickerView]
         
@@ -246,11 +260,29 @@ class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate 
             textFields[index].placeholder = "Select an option"
             textFields[index].borderStyle = .roundedRect
             
+            switch textFields[index] {
+            case severityTextField:
+                textFields[index].text = Constants.Severity.returnAllEnumCases()[vm.testCase?.severity ?? 0]
+            case statusTextField:
+                textFields[index].text = Constants.Status.returnAllEnumCases()[vm.testCase?.status ?? 0]
+            case priorityTextField:
+                textFields[index].text = Constants.Priority.returnAllEnumCases()[vm.testCase?.priority ?? 0]
+            case behaviorTextField:
+                textFields[index].text = Constants.Behavior.returnAllEnumCases()[vm.testCase?.behavior ?? 0]
+            case typeTextField:
+                textFields[index].text = Constants.Types.returnAllEnumCases()[vm.testCase?.type ?? 0]
+            case layerTextField:
+                textFields[index].text = Constants.Layer.returnAllEnumCases()[vm.testCase?.layer ?? 0]
+            case automationStatusTextField:
+                textFields[index].text = Constants.AutomationStatus.returnAllEnumCases()[vm.testCase?.automation ?? 0]
+            default:
+                textFields[index].text = pickerViews[index].items.first
+            }
+            
             pickerViews[index].didSelectItem = { selectedItem in
                 textFields[index].text = selectedItem
             }
             
-            // Добавь кнопку Done на клавиатуре для закрытия pickerView
             let toolbar = UIToolbar()
             toolbar.sizeToFit()
             
@@ -261,8 +293,14 @@ class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate 
         }
     }
     
-    // Метод, который вызывается при нажатии на кнопку Done
     @objc func doneButtonTapped() {
-        view.endEditing(true) // Скрыть клавиатуру
+        view.endEditing(true)
+    }
+    
+    func updateUI() {
+        DispatchQueue.main.async {
+            self.setupTextFields()
+            LoadingIndicator.stopLoading()
+        }
     }
 }

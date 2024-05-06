@@ -14,3 +14,7 @@ protocol NextViewControllerPusher: AnyObject {
 protocol UpdateTableViewProtocol: AnyObject {
     func updateTableView()
 }
+
+protocol UpdateDataInVCProtocol: AnyObject {
+    func updateUI()
+}

@@ -7,13 +7,14 @@
 
 import UIKit
 
-class DetailTabBarController: UITabBarController {
+class DetailTabBarController: UITabBarController, UpdateDataInVCProtocol {
     
     let viewModel: DetailTabbarControllerViewModel
-    var testCaseData: TestEntity? = nil
     
-    init(vm: DetailTabbarControllerViewModel) {
-        self.viewModel = vm
+    // MARK: - Lifecycle
+    
+    init(caseId: Int) {
+        self.viewModel = DetailTabbarControllerViewModel(caseId: caseId)
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -21,26 +22,19 @@ class DetailTabBarController: UITabBarController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: - Lifecycle
-    
-    override func loadView() {
-        super.loadView()
-        
-        configureView()
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        viewModel.fetchCaseDataJSON()
+        configureView()
     }
     
     func configureView() {
-        viewModel.updateDataSource()
         
-        let generalInfoVC = GeneralDetailCaseViewController(vm: viewModel)
-        let propertiesInfoVC = PropertiesDetailCaseViewController()
-        let runsInfolVC = RunsDetailCaseViewController()
-        let defectsInfoVC = DefectsDetailCaseViewController()
+        let generalInfoVC = GeneralDetailCaseViewController(vm: self.viewModel)
+        let propertiesInfoVC = PropertiesDetailCaseViewController(vm: self.viewModel)
+        let runsInfolVC = RunsDetailCaseViewController(vm: self.viewModel)
+        let defectsInfoVC = DefectsDetailCaseViewController(vm: self.viewModel)
         
         generalInfoVC.tabBarItem = UITabBarItem(title: "General", image: nil, tag: 0)
         propertiesInfoVC.tabBarItem = UITabBarItem(title: "Properties", image: nil, tag: 1)
@@ -52,5 +46,12 @@ class DetailTabBarController: UITabBarController {
         title = "\(Constants.PROJECT_NAME)-\(viewModel.caseId)"
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .white
+    }
+    
+    func updateUI() {
+        DispatchQueue.main.async {
+            self.setViewControllers(self.viewControllers, animated: true)
+            LoadingIndicator.stopLoading()
+        }
     }
 }

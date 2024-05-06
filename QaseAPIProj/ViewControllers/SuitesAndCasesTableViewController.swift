@@ -71,12 +71,12 @@ final class SuitesAndCasesTableViewController: UIViewController, UpdateTableView
         guard let item = item else { return }
         let vc: UIViewController
         let parentSuite = ParentSuite(id: viewModel.suitesAndCaseData[item].id, title: viewModel.suitesAndCaseData[item].title)
+        let caseItem = viewModel.suitesAndCaseData[item]
         
         if viewModel.suitesAndCaseData[item].isSuites {
             vc = SuitesAndCasesTableViewController(parentSuite: parentSuite)
         } else {
-            let viewModel = DetailTabbarControllerViewModel(caseId: viewModel.suitesAndCaseData[item].id)
-            vc = DetailTabBarController(vm: viewModel)
+            vc = DetailTabBarController(caseId: caseItem.id)
         }
         self.navigationController?.pushViewController(vc, animated: true)
     }

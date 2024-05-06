@@ -99,8 +99,8 @@ final class SuitesAndCasesViewModel {
                 
                 switch result {
                 case .success(let jsonCases):
-//                    let filteredCases = self?.parentSuite != nil ? jsonCases.result.entities.filter { $0.suiteId == self?.parentSuite?.id } : jsonCases.result.entities.filter { $0.suiteId == nil }
-                    self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: jsonCases.result.entities)
+                    let filteredCases = self?.parentSuite != nil ? jsonCases.result.entities.filter { $0.suiteId == self?.parentSuite?.id } : jsonCases.result.entities.filter { $0.suiteId == nil }
+                    self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: filteredCases)
                 case .failure(let error):
                     print(error)
                 }

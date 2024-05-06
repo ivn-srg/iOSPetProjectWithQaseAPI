@@ -7,14 +7,12 @@
 
 import UIKit
 
-class GeneralDetailCaseViewController: UIViewController {
+class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol {
     
-    var testCaseData: TestEntity?
     let vm: DetailTabbarControllerViewModel
     
     init(vm: DetailTabbarControllerViewModel) {
         self.vm = vm
-        self.testCaseData = vm.testCase
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -27,6 +25,24 @@ class GeneralDetailCaseViewController: UIViewController {
         vc.translatesAutoresizingMaskIntoConstraints = false
         vc.backgroundColor = .white
         return vc
+    }()
+    
+    private lazy var titlelbl: UILabel = {
+        let vc = UILabel()
+        vc.translatesAutoresizingMaskIntoConstraints = false
+        vc.font = .systemFont(ofSize: 15, weight: .bold)
+        return vc
+    }()
+    
+    private var titleField: UITextView = {
+        let decslbl = UITextView()
+        decslbl.translatesAutoresizingMaskIntoConstraints = false
+        decslbl.backgroundColor = .white
+        decslbl.isScrollEnabled = false
+        decslbl.layer.borderWidth = 1.0
+        decslbl.layer.borderColor = UIColor.gray.cgColor
+        decslbl.layer.cornerRadius = 8.0
+        return decslbl
     }()
     
     private lazy var descriptionlbl: UILabel = {
@@ -86,19 +102,20 @@ class GeneralDetailCaseViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        vm.delegate = self
         setupView()
+        updateUI()
     }
     
     private func setupView() {
-        
+        titlelbl.text = "Title"
         descriptionlbl.text = "Description"
-        descriptionField.text = testCaseData?.description ?? "Not set"
         preconditionlbl.text = "Pre-condition"
-        preconditionField.text = testCaseData?.preconditions ?? "Not set"
         postconditionlbl.text = "Post-condition"
-        postconditionField.text = testCaseData?.postconditions ?? "Not set"
         
         view.addSubview(viewCn)
+        view.addSubview(titlelbl)
+        view.addSubview(titleField)
         view.addSubview(descriptionlbl)
         view.addSubview(descriptionField)
         view.addSubview(preconditionlbl)
@@ -112,7 +129,17 @@ class GeneralDetailCaseViewController: UIViewController {
             viewCn.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             viewCn.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             
-            descriptionlbl.topAnchor.constraint(equalTo: viewCn.topAnchor, constant: 30),
+            titlelbl.topAnchor.constraint(equalTo: viewCn.topAnchor, constant: 30),
+            titlelbl.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
+            titlelbl.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
+            titlelbl.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
+            
+            titleField.topAnchor.constraint(equalTo: titlelbl.bottomAnchor, constant: 5),
+            titleField.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
+            titleField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
+            titleField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
+            
+            descriptionlbl.topAnchor.constraint(equalTo: titleField.bottomAnchor, constant: 20),
             descriptionlbl.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
             descriptionlbl.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
             descriptionlbl.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
@@ -144,9 +171,19 @@ class GeneralDetailCaseViewController: UIViewController {
         ])
     }
     
-    @objc func updateUI() {
+    func updateUI() {
         DispatchQueue.main.async {
-            self.setupView()
+            self.titleField.text = self.vm.testCase?.title ?? "Not set"
+            self.descriptionField.text = self.vm.testCase?.description ?? "Not set"
+            self.preconditionField.text = self.vm.testCase?.preconditions ?? "Not set"
+            self.postconditionField.text = self.vm.testCase?.postconditions ?? "Not set"
+            LoadingIndicator.stopLoading()
+        }
+    }
+    
+    @objc func pull2Refresh() {
+        DispatchQueue.main.async {
+            self.updateUI()
         }
     }
 }

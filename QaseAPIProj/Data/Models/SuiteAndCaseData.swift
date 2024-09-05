@@ -7,29 +7,29 @@
 
 import Foundation
 
-final class SuiteAndCaseData {
+struct SuiteAndCaseData {
     let isSuites: Bool
     let id: Int
     let title: String
-    let description: String?
+    let itemDescription: String?
     
     // if isSuite
-    let parent_id: Int?
-    let case_count: Int?
+    let parentId: Int?
+    let caseCount: Int?
     
     // if !isSuite
     let priority: Int?
     let automation: Int?
     let suiteId: Int?
     
-    required init(
+    init(
         isSuite: Bool,
         id: Int,
         title: String,
         description: String?,
         preconditions: String?,
-        parent_id: Int?,
-        case_count: Int?,
+        parentId: Int?,
+        caseCount: Int?,
         priority: Int? = nil,
         automation: Int? = nil,
         suiteId: Int? = nil
@@ -37,12 +37,23 @@ final class SuiteAndCaseData {
         self.isSuites = isSuite
         self.id = id
         self.title = title
-        self.description = description
-        self.parent_id = parent_id
-        self.case_count = case_count
+        self.itemDescription = description
+        self.parentId = parentId
+        self.caseCount = caseCount
         self.priority = priority
         self.automation = automation
         self.suiteId = suiteId
-        
+    }
+    
+    init(suiteRO: SuiteAndCaseDataRO) {
+        self.id = suiteRO.id
+        self.isSuites = suiteRO.isSuites
+        self.title = suiteRO.title
+        self.itemDescription = suiteRO.itemDescription
+        self.parentId = suiteRO.parentId
+        self.caseCount = suiteRO.caseCount
+        self.priority = suiteRO.priority
+        self.automation = suiteRO.automation
+        self.suiteId = suiteRO.suiteId
     }
 }

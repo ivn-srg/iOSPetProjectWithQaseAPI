@@ -7,7 +7,7 @@
 
 import UIKit
 
-class DetailTabBarController: UITabBarController, UpdateDataInVCProtocol {
+class DetailTabBarController: UITabBarController, UpdateDataInVCProtocol, SwipeTabbarProtocol, UITabBarControllerDelegate {
     
     let viewModel: DetailTabbarControllerViewModel
     
@@ -30,7 +30,6 @@ class DetailTabBarController: UITabBarController, UpdateDataInVCProtocol {
     }
     
     func configureView() {
-        
         let generalInfoVC = GeneralDetailCaseViewController(vm: self.viewModel)
         let propertiesInfoVC = PropertiesDetailCaseViewController(vm: self.viewModel)
         let runsInfolVC = RunsDetailCaseViewController(vm: self.viewModel)
@@ -46,6 +45,21 @@ class DetailTabBarController: UITabBarController, UpdateDataInVCProtocol {
         title = "\(Constants.PROJECT_NAME)-\(viewModel.caseId)"
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .white
+    }
+    
+    @objc func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer) {
+        guard let tabBarCont = self.tabBarController else { return }
+        guard let tabBarItems = self.tabBar.items else { return }
+        
+        if gesture.direction == .right {
+            if tabBarCont.selectedIndex < tabBarItems.count {
+                tabBarCont.selectedIndex += 1
+            }
+        } else if gesture.direction == .left {
+            if tabBarCont.selectedIndex > 0 {
+                tabBarCont.selectedIndex -= 1
+            }
+        }
     }
     
     func updateUI() {

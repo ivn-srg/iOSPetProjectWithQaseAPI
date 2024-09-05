@@ -10,15 +10,7 @@ import UIKit
 class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol {
     
     let vm: DetailTabbarControllerViewModel
-    
-    init(vm: DetailTabbarControllerViewModel) {
-        self.vm = vm
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    weak var delegate: SwipeTabbarProtocol?
     
     private lazy var viewCn: UIView = {
         let vc = UIView()
@@ -98,11 +90,27 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
         postcondlbl.layer.cornerRadius = 8.0
         return postcondlbl
     }()
+    
+    private lazy var panRecognize: UISwipeGestureRecognizer = {
+        let gestureRecognizer = UISwipeGestureRecognizer()
+        gestureRecognizer.addTarget(self, action: #selector(swipeBetweenViewsDelegate))
+        return gestureRecognizer
+    }()
+    
+    // MARK: - Lifecycle
 
+    init(vm: DetailTabbarControllerViewModel) {
+        self.vm = vm
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        vm.delegate = self
         setupView()
         updateUI()
     }
@@ -122,6 +130,7 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
         view.addSubview(preconditionField)
         view.addSubview(postconditionlbl)
         view.addSubview(postconditionField)
+        view.addGestureRecognizer(panRecognize)
         
         NSLayoutConstraint.activate([
             viewCn.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -169,6 +178,10 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
             postconditionField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
             postconditionField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
         ])
+    }
+    
+    @objc func swipeBetweenViewsDelegate() {
+        self.delegate?.swipeBetweenViews(panRecognize)
     }
     
     func updateUI() {

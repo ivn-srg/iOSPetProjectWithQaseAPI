@@ -7,8 +7,8 @@
 
 import Foundation
 
-
 final class SuitesAndCasesViewModel {
+    
     // MARK: - Fields
     var delegate: UpdateTableViewProtocol?
     var parentSuite: ParentSuite?
@@ -77,7 +77,7 @@ final class SuitesAndCasesViewModel {
                 
                 switch result {
                 case .success(let jsonSuites):
-                    let filteredSuites = self?.parentSuite != nil ? jsonSuites.result.entities.filter { $0.parent_id == self?.parentSuite?.id } : jsonSuites.result.entities.filter { $0.parent_id == nil }
+                    let filteredSuites = self?.parentSuite != nil ? jsonSuites.result.entities.filter { $0.parentId == self?.parentSuite?.id } : jsonSuites.result.entities.filter { $0.parentId == nil }
                     self?.changeDataTypeToUniversalizeData(isSuite: true, targetUniversalList: &self!.suitesAndCaseData, suites: filteredSuites, testCases: nil)
                 case .failure(let error):
                     print(error)
@@ -123,10 +123,10 @@ final class SuitesAndCasesViewModel {
                     isSuite: true,
                     id: suite.id,
                     title: suite.title,
-                    description: suite.description,
+                    description: suite.itemDescription,
                     preconditions: suite.preconditions,
-                    parent_id: suite.parent_id,
-                    case_count: suite.cases_count
+                    parentId: suite.parentId,
+                    caseCount: suite.casesCount
                 )
                 targetUniversalList.append(universalItem)
             }
@@ -140,8 +140,8 @@ final class SuitesAndCasesViewModel {
                     title: testCase.title,
                     description: testCase.description,
                     preconditions: testCase.preconditions,
-                    parent_id: nil,
-                    case_count: nil,
+                    parentId: nil,
+                    caseCount: nil,
                     priority: testCase.priority,
                     automation: testCase.automation,
                     suiteId: testCase.suiteId

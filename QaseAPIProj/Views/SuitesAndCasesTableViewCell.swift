@@ -36,7 +36,6 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
     private lazy var contentStackVw: UIStackView = {
         let stackVw = UIStackView()
         stackVw.translatesAutoresizingMaskIntoConstraints = false
-        stackVw.spacing = 8
         stackVw.axis = .vertical
         return stackVw
     }()
@@ -108,7 +107,7 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
         }
                 
         titleLbl.text = dataForCell.title
-        descriptionLbl.text = dataForCell.description
+        descriptionLbl.text = dataForCell.itemDescription
         
         self.contentView.addSubview(containerVw)
         
@@ -143,13 +142,13 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
             titleLbl.topAnchor.constraint(equalTo: contentStackVw.topAnchor),
             titleLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
             
-            descriptionLbl.topAnchor.constraint(equalTo: titleLbl.bottomAnchor, constant: 4),
+            descriptionLbl.topAnchor.constraint(equalTo: titleLbl.bottomAnchor),
             descriptionLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
             descriptionLbl.bottomAnchor.constraint(equalTo: contentStackVw.bottomAnchor),
         ]
         
-        if dataForCell.description == nil {
-            constraints.append(descriptionLbl.heightAnchor.constraint(equalToConstant: 0)) 
+        if dataForCell.itemDescription == nil {
+            constraints.append(descriptionLbl.heightAnchor.constraint(equalToConstant: 0))
         }
         
         NSLayoutConstraint.activate(constraints)

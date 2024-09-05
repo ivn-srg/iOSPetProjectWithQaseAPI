@@ -10,7 +10,7 @@ import UIKit
 
 class DetailTabbarControllerViewModel {
     
-    var delegate: UpdateDataInVCProtocol?
+    weak var delegate: UpdateDataInVCProtocol?
     var testCase: TestEntity? = nil {
         didSet {
             delegate?.updateUI()

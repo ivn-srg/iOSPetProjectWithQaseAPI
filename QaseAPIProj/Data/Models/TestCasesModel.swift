@@ -34,18 +34,13 @@ struct TestEntity: Codable {
     let tags: [String]
     
     enum CodingKeys: String, CodingKey {
-        case id, position, title, description, preconditions, postconditions, severity, priority, type, layer
+        case id, position, title, description, preconditions, postconditions, severity, priority, type, layer, steps, params, tags, links, attachments, behavior, automation, status
         case isFlaky = "is_flaky"
-        case behavior, automation, status
         case suiteId = "suite_id"
-        case links
         case customFields = "custom_fields"
-        case attachments
         case stepsType = "steps_type"
-        case steps, params
         case memberId = "member_id"
         case authorId = "author_id"
-        case tags
     }
     
     init(from decoder: Decoder) throws {

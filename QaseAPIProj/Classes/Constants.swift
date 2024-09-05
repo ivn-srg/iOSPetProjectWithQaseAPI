@@ -8,6 +8,8 @@
 import UIKit
 
 struct Constants {
+    static let fioletColor = UIColor(red: 0.31, green: 0.27, blue: 0.86, alpha: 1)
+    
     enum Severity: String, CaseIterable {
         case nothing = "Not set"
         case blocker = "Blocker"

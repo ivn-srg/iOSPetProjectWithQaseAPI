@@ -13,6 +13,7 @@ enum GeneralCaseTextFieldTypes {
 }
 
 final class GeneralCaseTextField: UIView {
+    weak var textFieldDelegate: UITextFieldDelegate?
     
     // MARK: - UI components
     private lazy var titlelbl: UILabel = {
@@ -23,7 +24,7 @@ final class GeneralCaseTextField: UIView {
         return vc
     }()
     
-    private var textField: TextFieldWithPadding = {
+    private lazy var textField: TextFieldWithPadding = {
         let decslbl = TextFieldWithPadding()
         decslbl.translatesAutoresizingMaskIntoConstraints = false
         decslbl.backgroundColor = .white
@@ -31,7 +32,10 @@ final class GeneralCaseTextField: UIView {
         decslbl.font = .systemFont(ofSize: 16)
         decslbl.layer.borderColor = UIColor.gray.cgColor
         decslbl.layer.cornerRadius = 8.0
+        decslbl.delegate = self.textFieldDelegate
         decslbl.isUserInteractionEnabled = true
+        decslbl.clearButtonMode = .whileEditing
+        decslbl.addTarget(self, action: #selector(tapOutsideTextField(textField:)), for: .touchUpOutside)
         return decslbl
     }()
     
@@ -76,6 +80,11 @@ final class GeneralCaseTextField: UIView {
     
     func updateTextFieldValue(_ value: String) {
         textField.text = value
+    }
+    
+    // MARK: - objc selectors
+    @objc func tapOutsideTextField(textField: UITextField) {
+        textField.resignFirstResponder()
     }
 }
 

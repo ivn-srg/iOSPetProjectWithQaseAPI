@@ -7,18 +7,17 @@
 
 import UIKit
 
-class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol {
+enum CheckmarkButtonState {
+    case active, inactive
+}
+
+class GeneralDetailCaseViewController: UIViewController {
     
-    let vm: DetailTabbarControllerViewModel
+    private let vm: DetailTabbarControllerViewModel
     weak var delegate: SwipeTabbarProtocol?
+    private var isDataEditing = false
     
-    private lazy var box: UIView = {
-        let uv = UIView()
-        uv.translatesAutoresizingMaskIntoConstraints = false
-        uv.isUserInteractionEnabled = true
-        return uv
-    }()
-    
+    // MARK: - UI components
     private lazy var scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.translatesAutoresizingMaskIntoConstraints = false
@@ -40,29 +39,24 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
         return sv
     }()
     
-    private lazy var titleField: GeneralCaseTextField = {
-        let lblWithTxtView = GeneralCaseTextField(
-            textType: .name,
-            textFieldValue: self.vm.testCase?.title ?? "Not set"
-        )
-        lblWithTxtView.translatesAutoresizingMaskIntoConstraints = false
-        lblWithTxtView.isUserInteractionEnabled = true
-        return lblWithTxtView
-    }()
+    private lazy var titleField = GeneralCaseTextField(
+        textType: .name,
+        textFieldValue: self.vm.testCase?.title ?? Constants.emptyText
+    )
     
     private lazy var descriptionField = GeneralCaseTextField(
         textType: .description,
-        textFieldValue: self.vm.testCase?.description ?? "Not set"
+        textFieldValue: self.vm.testCase?.description ?? Constants.emptyText
     )
     
     private lazy var preconditionField = GeneralCaseTextField(
         textType: .precondition,
-        textFieldValue: self.vm.testCase?.preconditions ?? "Not set"
+        textFieldValue: self.vm.testCase?.preconditions ?? Constants.emptyText
     )
     
     private lazy var postconditionField = GeneralCaseTextField(
         textType: .postcondition,
-        textFieldValue: self.vm.testCase?.postconditions ?? "Not set"
+        textFieldValue: self.vm.testCase?.postconditions ?? Constants.emptyText
     )
     
     private lazy var panRecognize: UISwipeGestureRecognizer = {
@@ -90,7 +84,7 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
         updateUI()
     }
     
-    // MARK: - Setup Methods
+    // MARK: - Setup Methods for UI
     private func setupView() {
         view.backgroundColor = .white
         view.addSubview(scrollView)
@@ -110,6 +104,10 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
     }
     
     private func setupCustomFields() {
+        titleField.textFieldDelegate = self
+        descriptionField.textFieldDelegate = self
+        preconditionField.textFieldDelegate = self
+        postconditionField.textFieldDelegate = self
         stackView.addArrangedSubview(titleField)
         stackView.addArrangedSubview(descriptionField)
         stackView.addArrangedSubview(preconditionField)
@@ -120,13 +118,22 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
         self.delegate?.swipeBetweenViews(panRecognize)
     }
     
+    /// method for saving changed main test case data
+    @objc func saveMainTestCaseData() {
+        if isDataEditing {
+            isDataEditing = false
+        }
+    }
+}
+
+extension GeneralDetailCaseViewController: UpdateDataInVCProtocol {
     func updateUI() {
         DispatchQueue.main.async {
             if let testCase = self.vm.testCase {
                 self.titleField.updateTextFieldValue(testCase.title)
-                self.descriptionField.updateTextFieldValue(testCase.description ?? "Not set")
-                self.preconditionField.updateTextFieldValue(testCase.preconditions ?? "Not set")
-                self.postconditionField.updateTextFieldValue(testCase.postconditions ?? "Not set")
+                self.descriptionField.updateTextFieldValue(testCase.description ?? Constants.emptyText)
+                self.preconditionField.updateTextFieldValue(testCase.preconditions ?? Constants.emptyText)
+                self.postconditionField.updateTextFieldValue(testCase.postconditions ?? Constants.emptyText)
             }
             LoadingIndicator.stopLoading()
         }
@@ -136,6 +143,18 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
         DispatchQueue.main.async {
             self.updateUI()
         }
+    }
+}
+
+extension GeneralDetailCaseViewController: UITextFieldDelegate {
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        isDataEditing = true
+        
+        return true
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
     }
 }
 

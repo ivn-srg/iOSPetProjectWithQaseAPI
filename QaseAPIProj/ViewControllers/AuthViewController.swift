@@ -34,14 +34,14 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         inf.backgroundColor = .white
         inf.textColor = .systemGray
         inf.borderStyle = .roundedRect
-        inf.layer.borderColor = Constants.fioletColor.cgColor
+        inf.layer.borderColor = AppTheme.fioletColor.cgColor
         return inf
     }()
     
     private var authButton: UIButton = {
         let ab = UIButton()
         ab.translatesAutoresizingMaskIntoConstraints = false
-        ab.backgroundColor = Constants.fioletColor
+        ab.backgroundColor = AppTheme.fioletColor
         ab.layer.cornerRadius = 12
         ab.titleLabel?.textColor = .white
         return ab

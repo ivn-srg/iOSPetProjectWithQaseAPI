@@ -12,84 +12,58 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
     let vm: DetailTabbarControllerViewModel
     weak var delegate: SwipeTabbarProtocol?
     
-    private lazy var viewCn: UIView = {
-        let vc = UIView()
-        vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.backgroundColor = .white
-        return vc
+    private lazy var box: UIView = {
+        let uv = UIView()
+        uv.translatesAutoresizingMaskIntoConstraints = false
+        uv.isUserInteractionEnabled = true
+        return uv
     }()
     
-    private lazy var titlelbl: UILabel = {
-        let vc = UILabel()
-        vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.font = .systemFont(ofSize: 15, weight: .bold)
-        return vc
+    private lazy var scrollView: UIScrollView = {
+        let sv = UIScrollView()
+        sv.translatesAutoresizingMaskIntoConstraints = false
+        sv.showsHorizontalScrollIndicator = false
+        sv.alwaysBounceVertical = true
+        sv.showsVerticalScrollIndicator = false
+        sv.isUserInteractionEnabled = true
+        return sv
     }()
     
-    private var titleField: UITextView = {
-        let decslbl = UITextView()
-        decslbl.translatesAutoresizingMaskIntoConstraints = false
-        decslbl.backgroundColor = .white
-        decslbl.isScrollEnabled = false
-        decslbl.layer.borderWidth = 1.0
-        decslbl.layer.borderColor = UIColor.gray.cgColor
-        decslbl.layer.cornerRadius = 8.0
-        return decslbl
+    private lazy var stackView: UIStackView = {
+        let sv = UIStackView()
+        sv.translatesAutoresizingMaskIntoConstraints = false
+        sv.backgroundColor = .white
+        sv.axis = .vertical
+        sv.spacing = 30
+        sv.alignment = .fill
+        sv.isUserInteractionEnabled = true
+        return sv
     }()
     
-    private lazy var descriptionlbl: UILabel = {
-        let vc = UILabel()
-        vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.font = .systemFont(ofSize: 15, weight: .bold)
-        return vc
+    private lazy var titleField: GeneralCaseTextField = {
+        let lblWithTxtView = GeneralCaseTextField(
+            textType: .name,
+            textFieldValue: self.vm.testCase?.title ?? "Not set"
+        )
+        lblWithTxtView.translatesAutoresizingMaskIntoConstraints = false
+        lblWithTxtView.isUserInteractionEnabled = true
+        return lblWithTxtView
     }()
     
-    private var descriptionField: UITextView = {
-        let decslbl = UITextView()
-        decslbl.translatesAutoresizingMaskIntoConstraints = false
-        decslbl.backgroundColor = .white
-        decslbl.isScrollEnabled = false
-        decslbl.layer.borderWidth = 1.0
-        decslbl.layer.borderColor = UIColor.gray.cgColor
-        decslbl.layer.cornerRadius = 8.0
-        return decslbl
-    }()
+    private lazy var descriptionField = GeneralCaseTextField(
+        textType: .description,
+        textFieldValue: self.vm.testCase?.description ?? "Not set"
+    )
     
-    private lazy var preconditionlbl: UILabel = {
-        let vc = UILabel()
-        vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.font = .systemFont(ofSize: 15, weight: .bold)
-        return vc
-    }()
+    private lazy var preconditionField = GeneralCaseTextField(
+        textType: .precondition,
+        textFieldValue: self.vm.testCase?.preconditions ?? "Not set"
+    )
     
-    private var preconditionField: UITextView = {
-        let precondlbl = UITextView()
-        precondlbl.translatesAutoresizingMaskIntoConstraints = false
-        precondlbl.backgroundColor = .white
-        precondlbl.isScrollEnabled = false
-        precondlbl.layer.borderWidth = 1.0
-        precondlbl.layer.borderColor = UIColor.gray.cgColor
-        precondlbl.layer.cornerRadius = 8.0
-        return precondlbl
-    }()
-    
-    private lazy var postconditionlbl: UILabel = {
-        let vc = UILabel()
-        vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.font = .systemFont(ofSize: 15, weight: .bold)
-        return vc
-    }()
-    
-    private var postconditionField: UITextView = {
-        let postcondlbl = UITextView()
-        postcondlbl.translatesAutoresizingMaskIntoConstraints = false
-        postcondlbl.backgroundColor = .white
-        postcondlbl.isScrollEnabled = false
-        postcondlbl.layer.borderWidth = 1.0
-        postcondlbl.layer.borderColor = UIColor.gray.cgColor
-        postcondlbl.layer.cornerRadius = 8.0
-        return postcondlbl
-    }()
+    private lazy var postconditionField = GeneralCaseTextField(
+        textType: .postcondition,
+        textFieldValue: self.vm.testCase?.postconditions ?? "Not set"
+    )
     
     private lazy var panRecognize: UISwipeGestureRecognizer = {
         let gestureRecognizer = UISwipeGestureRecognizer()
@@ -112,72 +86,34 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
         super.viewDidLoad()
         
         setupView()
+        setupCustomFields()
         updateUI()
     }
     
+    // MARK: - Setup Methods
     private func setupView() {
-        titlelbl.text = "Title"
-        descriptionlbl.text = "Description"
-        preconditionlbl.text = "Pre-condition"
-        postconditionlbl.text = "Post-condition"
+        view.backgroundColor = .white
+        view.addSubview(scrollView)
+        scrollView.addSubview(stackView)
         
-        view.addSubview(viewCn)
-        view.addSubview(titlelbl)
-        view.addSubview(titleField)
-        view.addSubview(descriptionlbl)
-        view.addSubview(descriptionField)
-        view.addSubview(preconditionlbl)
-        view.addSubview(preconditionField)
-        view.addSubview(postconditionlbl)
-        view.addSubview(postconditionField)
+        scrollView.snp.makeConstraints {
+            $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
+        }
+        
+        stackView.snp.makeConstraints {
+            $0.verticalEdges.equalTo(scrollView.snp.verticalEdges).inset(30)
+            $0.centerX.equalTo(scrollView.snp.centerX)
+            $0.width.equalTo(scrollView.snp.width).inset(30)
+        }
+        
         view.addGestureRecognizer(panRecognize)
-        
-        NSLayoutConstraint.activate([
-            viewCn.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            viewCn.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            viewCn.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            viewCn.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            
-            titlelbl.topAnchor.constraint(equalTo: viewCn.topAnchor, constant: 30),
-            titlelbl.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            titlelbl.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            titlelbl.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            titleField.topAnchor.constraint(equalTo: titlelbl.bottomAnchor, constant: 5),
-            titleField.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            titleField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            titleField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            descriptionlbl.topAnchor.constraint(equalTo: titleField.bottomAnchor, constant: 20),
-            descriptionlbl.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            descriptionlbl.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            descriptionlbl.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            descriptionField.topAnchor.constraint(equalTo: descriptionlbl.bottomAnchor, constant: 5),
-            descriptionField.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            descriptionField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            descriptionField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            preconditionlbl.topAnchor.constraint(equalTo: descriptionField.bottomAnchor, constant: 20),
-            preconditionlbl.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            preconditionlbl.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            preconditionlbl.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            preconditionField.topAnchor.constraint(equalTo: preconditionlbl.bottomAnchor, constant: 5),
-            preconditionField.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            preconditionField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            preconditionField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            postconditionlbl.topAnchor.constraint(equalTo: preconditionField.bottomAnchor, constant: 20),
-            postconditionlbl.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            postconditionlbl.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            postconditionlbl.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            postconditionField.topAnchor.constraint(equalTo: postconditionlbl.bottomAnchor, constant: 5),
-            postconditionField.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            postconditionField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            postconditionField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-        ])
+    }
+    
+    private func setupCustomFields() {
+        stackView.addArrangedSubview(titleField)
+        stackView.addArrangedSubview(descriptionField)
+        stackView.addArrangedSubview(preconditionField)
+        stackView.addArrangedSubview(postconditionField)
     }
     
     @objc func swipeBetweenViewsDelegate() {
@@ -186,10 +122,12 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
     
     func updateUI() {
         DispatchQueue.main.async {
-            self.titleField.text = self.vm.testCase?.title ?? "Not set"
-            self.descriptionField.text = self.vm.testCase?.description ?? "Not set"
-            self.preconditionField.text = self.vm.testCase?.preconditions ?? "Not set"
-            self.postconditionField.text = self.vm.testCase?.postconditions ?? "Not set"
+            if let testCase = self.vm.testCase {
+                self.titleField.updateTextFieldValue(testCase.title)
+                self.descriptionField.updateTextFieldValue(testCase.description ?? "Not set")
+                self.preconditionField.updateTextFieldValue(testCase.preconditions ?? "Not set")
+                self.postconditionField.updateTextFieldValue(testCase.postconditions ?? "Not set")
+            }
             LoadingIndicator.stopLoading()
         }
     }
@@ -200,3 +138,24 @@ class GeneralDetailCaseViewController: UIViewController, UpdateDataInVCProtocol 
         }
     }
 }
+
+#if canImport(SwiftUI) && DEBUG
+import SwiftUI
+
+struct ViewControllerRepresentable: UIViewControllerRepresentable {
+
+    func makeUIViewController(context: Context) -> some UIViewController {
+        return DetailTabBarController(caseId: 317)
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
+
+    }
+}
+
+struct ViewController_Preview: PreviewProvider {
+    static var previews: some View {
+        ViewControllerRepresentable()
+    }
+}
+#endif

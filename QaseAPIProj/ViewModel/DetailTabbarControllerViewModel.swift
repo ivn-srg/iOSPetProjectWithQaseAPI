@@ -13,7 +13,9 @@ class DetailTabbarControllerViewModel {
     weak var delegate: UpdateDataInVCProtocol?
     var testCase: TestEntity? = nil {
         didSet {
-            delegate?.updateUI()
+            DispatchQueue.main.async {
+                self.delegate?.updateUI()
+            }
         }
     }
     var caseId: Int
@@ -27,11 +29,14 @@ class DetailTabbarControllerViewModel {
     func fetchCaseDataJSON() {
         guard let urlString = Constants.urlString(.openedCase, Constants.PROJECT_NAME, nil, nil, nil, caseId) else { return }
         
-        DispatchQueue.main.async {
-            LoadingIndicator.startLoading()
-        }
+        LoadingIndicator.startLoading()
         
-        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: TestCaseModel.self) { [weak self] (result: Result<TestCaseModel, Error>) in
+        APIManager.shared.fetchData(
+            from: urlString,
+            method: Constants.APIType.get.rawValue,
+            token: Constants.TOKEN,
+            modelType: TestCaseModel.self
+        ) { [weak self] (result: Result<TestCaseModel, Error>) in
             
             switch result {
             case .success(let jsonTestCase):
@@ -39,10 +44,9 @@ class DetailTabbarControllerViewModel {
                 
             case .failure(let error):
                 print(error)
-                DispatchQueue.main.async {
-                    LoadingIndicator.stopLoading()
-                }
             }
+            
+            LoadingIndicator.stopLoading()
         }
     }
 }

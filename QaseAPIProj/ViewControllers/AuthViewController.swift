@@ -129,11 +129,9 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     
     // MARK: - objc funcs
     @objc private func authorizate() {
-        
         if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
             if !inputTokenFieldText.isEmpty {
                 Constants.TOKEN = inputTokenFieldText
-                
                 viewModel.fetchProjectsJSON()
             } else {
                 showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
@@ -144,7 +142,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     }
     
     @objc private func tapForFillingTextLb() {
-        inputTokenField.text = "293f3b7b7e2f91240c36ff7ab70e2f86c883fbc2d4d0d05d3a0c54dc3cd5c796"
+        inputTokenField.text = Keychain.QASE_API_KEY
         authorizate()
     }
 }

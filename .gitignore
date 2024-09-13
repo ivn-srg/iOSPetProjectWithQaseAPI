@@ -96,6 +96,6 @@ Pods
 # https://github.com/johnno1962/injectionforxcode
 
 # Keychain
-MarvelHeroesApp/API/Keychain
+QaseAPIProj/Classes/Keychain
 
 iOSInjectionProject/

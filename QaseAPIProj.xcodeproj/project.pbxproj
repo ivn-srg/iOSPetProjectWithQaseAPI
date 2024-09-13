@@ -7,10 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8F4F61392D520E50DC073C9A /* Pods_QaseAPIProj.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8B32AE48243FA9BA3F6D54E5 /* Pods_QaseAPIProj.framework */; };
 		934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */; };
+		9357F1E22C91732B00219BEC /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9357F1E12C91732B00219BEC /* Keychain.swift */; };
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
 		935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE32B518A4000F08ECF /* LoaderView.swift */; };
+		936A2B132C8A251E007F7C72 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; };
+		936A2B162C8A252E007F7C72 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B152C8A252E007F7C72 /* SnapKit */; };
+		936A2B192C8A2821007F7C72 /* GeneralCaseTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */; };
 		937085592BEB3C49002316B8 /* APIManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937085502BEB3C49002316B8 /* APIManager.swift */; };
 		9370855A2BEB3C49002316B8 /* EntitiesRO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937085512BEB3C49002316B8 /* EntitiesRO.swift */; };
 		9370855B2BEB3C49002316B8 /* RealmDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937085522BEB3C49002316B8 /* RealmDB.swift */; };
@@ -41,11 +44,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1A0A52FD08E125604D17BD99 /* Pods-QaseAPIProj.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QaseAPIProj.release.xcconfig"; path = "Target Support Files/Pods-QaseAPIProj/Pods-QaseAPIProj.release.xcconfig"; sourceTree = "<group>"; };
-		8B32AE48243FA9BA3F6D54E5 /* Pods_QaseAPIProj.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_QaseAPIProj.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropDownListPickerView.swift; sourceTree = "<group>"; };
+		9357F1E12C91732B00219BEC /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		935DCFE32B518A4000F08ECF /* LoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderView.swift; sourceTree = "<group>"; };
+		936A2B102C8A2449007F7C72 /* QaseAPIProj.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QaseAPIProj.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralCaseTextField.swift; sourceTree = "<group>"; };
 		937085502BEB3C49002316B8 /* APIManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
 		937085512BEB3C49002316B8 /* EntitiesRO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitiesRO.swift; sourceTree = "<group>"; };
 		937085522BEB3C49002316B8 /* RealmDB.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RealmDB.swift; sourceTree = "<group>"; };
@@ -57,7 +61,6 @@
 		93748C322B480F4400BE7FFB /* AuthViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewController.swift; sourceTree = "<group>"; };
 		93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectTableViewCell.swift; sourceTree = "<group>"; };
 		937650C12B6CE70800B5336B /* DetailTabbarControllerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailTabbarControllerViewModel.swift; sourceTree = "<group>"; };
-		937F04222AD84E3D006DDB28 /* QaseAPIProj.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QaseAPIProj.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		937F04252AD84E3D006DDB28 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		937F04272AD84E3D006DDB28 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		937F042E2AD84E3F006DDB28 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -75,7 +78,6 @@
 		93F1F3822B59881D00667DB9 /* RunsDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunsDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefectsDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewCell.swift; sourceTree = "<group>"; };
-		AF425AE926D5C47BDE274F66 /* Pods-QaseAPIProj.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QaseAPIProj.debug.xcconfig"; path = "Target Support Files/Pods-QaseAPIProj/Pods-QaseAPIProj.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,30 +85,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8F4F61392D520E50DC073C9A /* Pods_QaseAPIProj.framework in Frameworks */,
+				936A2B132C8A251E007F7C72 /* RealmSwift in Frameworks */,
+				936A2B162C8A252E007F7C72 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2B4FA437B2FCB4F7DCD817F1 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				AF425AE926D5C47BDE274F66 /* Pods-QaseAPIProj.debug.xcconfig */,
-				1A0A52FD08E125604D17BD99 /* Pods-QaseAPIProj.release.xcconfig */,
-			);
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		895A5CCF60B88A36C572C5CD /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				8B32AE48243FA9BA3F6D54E5 /* Pods_QaseAPIProj.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		934A36DC2B6820F9001E4F24 /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
@@ -116,6 +102,14 @@
 				93DCDF5C2BE5159500D4F365 /* SuitesAndCasesViewModel.swift */,
 			);
 			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		936A2B172C8A27BE007F7C72 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		937085532BEB3C49002316B8 /* Database */ = {
@@ -152,6 +146,7 @@
 		93748C3E2B481C3D00BE7FFB /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				936A2B172C8A27BE007F7C72 /* Components */,
 				934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */,
 				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
 				93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */,
@@ -165,6 +160,7 @@
 			children = (
 				935DCFE12B516BAA00F08ECF /* Constants.swift */,
 				93DCDF5E2BE51C2900D4F365 /* Protocols.swift */,
+				9357F1E12C91732B00219BEC /* Keychain.swift */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -173,18 +169,8 @@
 			isa = PBXGroup;
 			children = (
 				937F04242AD84E3D006DDB28 /* QaseAPIProj */,
-				937F04232AD84E3D006DDB28 /* Products */,
-				2B4FA437B2FCB4F7DCD817F1 /* Pods */,
-				895A5CCF60B88A36C572C5CD /* Frameworks */,
+				936A2B102C8A2449007F7C72 /* QaseAPIProj.app */,
 			);
-			sourceTree = "<group>";
-		};
-		937F04232AD84E3D006DDB28 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				937F04222AD84E3D006DDB28 /* QaseAPIProj.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		937F04242AD84E3D006DDB28 /* QaseAPIProj */ = {
@@ -242,11 +228,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 937F04362AD84E3F006DDB28 /* Build configuration list for PBXNativeTarget "QaseAPIProj" */;
 			buildPhases = (
-				2717C2138A95F034D2FC3810 /* [CP] Check Pods Manifest.lock */,
 				937F041E2AD84E3D006DDB28 /* Sources */,
 				937F041F2AD84E3D006DDB28 /* Frameworks */,
 				937F04202AD84E3D006DDB28 /* Resources */,
-				AE3A4894F741C7773CA5D892 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -254,7 +238,7 @@
 			);
 			name = QaseAPIProj;
 			productName = project10;
-			productReference = 937F04222AD84E3D006DDB28 /* QaseAPIProj.app */;
+			productReference = 936A2B102C8A2449007F7C72 /* QaseAPIProj.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -281,7 +265,11 @@
 				Base,
 			);
 			mainGroup = 937F04192AD84E3D006DDB28;
-			productRefGroup = 937F04232AD84E3D006DDB28 /* Products */;
+			packageReferences = (
+				936A2B112C8A251E007F7C72 /* XCRemoteSwiftPackageReference "realm-swift" */,
+				936A2B142C8A252E007F7C72 /* XCRemoteSwiftPackageReference "SnapKit" */,
+			);
+			productRefGroup = 937F04192AD84E3D006DDB28;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -301,48 +289,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		2717C2138A95F034D2FC3810 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-QaseAPIProj-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		AE3A4894F741C7773CA5D892 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-QaseAPIProj/Pods-QaseAPIProj-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-QaseAPIProj/Pods-QaseAPIProj-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-QaseAPIProj/Pods-QaseAPIProj-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		937F041E2AD84E3D006DDB28 /* Sources */ = {
@@ -369,6 +315,7 @@
 				93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */,
 				9370855D2BEB3C49002316B8 /* SuiteAndCaseData.swift in Sources */,
 				93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */,
+				936A2B192C8A2821007F7C72 /* GeneralCaseTextField.swift in Sources */,
 				9370855F2BEB3C49002316B8 /* TestCasesModel.swift in Sources */,
 				935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */,
 				93F1F37C2B59876000667DB9 /* DetailTabBarController.swift in Sources */,
@@ -377,6 +324,7 @@
 				93DCDF5B2BE4F11F00D4F365 /* AuthViewModel.swift in Sources */,
 				93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */,
 				93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */,
+				9357F1E22C91732B00219BEC /* Keychain.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -515,7 +463,6 @@
 		};
 		937F04372AD84E3F006DDB28 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = AF425AE926D5C47BDE274F66 /* Pods-QaseAPIProj.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -525,10 +472,11 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = QaseAPIProj/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -548,7 +496,6 @@
 		};
 		937F04382AD84E3F006DDB28 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1A0A52FD08E125604D17BD99 /* Pods-QaseAPIProj.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -558,10 +505,11 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = QaseAPIProj/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -601,6 +549,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		936A2B112C8A251E007F7C72 /* XCRemoteSwiftPackageReference "realm-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/realm/realm-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.53.0;
+			};
+		};
+		936A2B142C8A252E007F7C72 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		936A2B122C8A251E007F7C72 /* RealmSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 936A2B112C8A251E007F7C72 /* XCRemoteSwiftPackageReference "realm-swift" */;
+			productName = RealmSwift;
+		};
+		936A2B152C8A252E007F7C72 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 936A2B142C8A252E007F7C72 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 937F041A2AD84E3D006DDB28 /* Project object */;
 }

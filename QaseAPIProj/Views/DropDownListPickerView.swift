@@ -20,7 +20,7 @@ class DropDownListPickerView: UIPickerView, UIPickerViewDelegate, UIPickerViewDa
         pickerView.dataSource = self
     }
     
-    // MARK: UIPickerViewDelegate & UIPickerViewDataSource
+    // MARK: - UIPickerViewDelegate & UIPickerViewDataSource
     
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
         return 1

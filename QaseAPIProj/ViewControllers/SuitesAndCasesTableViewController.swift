@@ -97,15 +97,12 @@ private extension SuitesAndCasesTableViewController {
         view.addSubview(tableVw)
         tableVw.addSubview(emptyDataLabel)
         
-        NSLayoutConstraint.activate([
-            tableVw.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableVw.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            tableVw.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            tableVw.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            
-            emptyDataLabel.centerYAnchor.constraint(equalTo: tableVw.centerYAnchor),
-            emptyDataLabel.centerXAnchor.constraint(equalTo: tableVw.centerXAnchor),
-        ])
+        tableVw.snp.makeConstraints {
+            $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
+        }
+        emptyDataLabel.snp.makeConstraints {
+            $0.center.equalToSuperview()
+        }
     }
     
     private func updateEmptyDataLabelVisibility() {

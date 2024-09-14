@@ -76,28 +76,28 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
             
             switch dataForCell.priority {
                 case 1:
-                    priorityImage.image = Assets.highPriorityImage
+                    priorityImage.image = AppTheme.highPriorityImage
                     priorityImage.tintColor = .systemRed
                 case 2:
-                    priorityImage.image = Assets.mediumPriorityImage
+                    priorityImage.image = AppTheme.mediumPriorityImage
                     priorityImage.tintColor = .systemGray
                 case 3:
-                    priorityImage.image = Assets.lowPriorityImage
+                    priorityImage.image = AppTheme.lowPriorityImage
                     priorityImage.tintColor = .systemGreen
                 default:
-                    priorityImage.image = Assets.noPriorityImage
+                    priorityImage.image = AppTheme.noPriorityImage
                     priorityImage.tintColor = .systemGray
             }
             
             switch dataForCell.automation {
                 case 0:
-                    automationImage.image = Assets.notAutomationImage
+                    automationImage.image = AppTheme.notAutomationImage
                     automationImage.tintColor = .systemGray
                 case 1:
-                    automationImage.image = Assets.toBeAutomationImage
+                    automationImage.image = AppTheme.toBeAutomationImage
                     automationImage.tintColor = .systemGray
                 case 2:
-                    automationImage.image = Assets.automationImage
+                    automationImage.image = AppTheme.automationImage
                     automationImage.tintColor = .systemBlue
                 default:
                     automationImage.image = nil

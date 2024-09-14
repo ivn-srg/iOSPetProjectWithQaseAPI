@@ -61,13 +61,9 @@ final class ProjectsViewController: UIViewController, UpdateTableViewProtocol, N
         tableVw.dataSource = self
         
         view.addSubview(tableVw)
-        
-        NSLayoutConstraint.activate([
-            tableVw.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            tableVw.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            tableVw.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            tableVw.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-        ])
+        tableVw.snp.makeConstraints {
+            $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
+        }
     }
     
     func updateTableView() {

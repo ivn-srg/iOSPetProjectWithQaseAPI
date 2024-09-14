@@ -13,14 +13,6 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     private var viewModel: AuthViewModel
     
     // MARK: - UI
-    
-    private lazy var viewCn: UIView = {
-        let vc = UIView()
-        vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.backgroundColor = .white
-        return vc
-    }()
-    
     private var logoImg: UIImageView = {
         let limg = UIImageView()
         limg.translatesAutoresizingMaskIntoConstraints = false
@@ -79,43 +71,37 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     // MARK: - UI
     
     func setup() {
-        
-        logoImg.image = Assets.LogoApp
-        
+        logoImg.image = AppTheme.LogoApp
+
         inputTokenField.layer.borderWidth = 1
         inputTokenField.layer.cornerRadius = 8
         inputTokenField.layer.borderColor = UIColor.gray.cgColor
         inputTokenField.placeholder = "API Token"
-        
+
         authButton.setTitle("Next", for: .normal)
         authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
         
-        view.addSubview(viewCn)
         view.addSubview(logoImg)
         view.addSubview(inputTokenField)
         view.addSubview(authButton)
         
-        NSLayoutConstraint.activate([
-            viewCn.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            viewCn.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            viewCn.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            viewCn.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            
-            logoImg.topAnchor.constraint(equalTo: viewCn.topAnchor, constant: 30),
-            logoImg.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            logoImg.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            logoImg.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            inputTokenField.topAnchor.constraint(equalTo: logoImg.bottomAnchor, constant: 20),
-            inputTokenField.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            inputTokenField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            inputTokenField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            authButton.topAnchor.constraint(equalTo: inputTokenField.bottomAnchor, constant: 30),
-            authButton.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            authButton.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            authButton.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-        ])
+        logoImg.snp.makeConstraints {
+            $0.horizontalEdges.equalToSuperview().inset(30)
+            $0.top.equalToSuperview().offset(130)
+            $0.centerX.equalToSuperview()
+        }
+        
+        inputTokenField.snp.makeConstraints {
+            $0.horizontalEdges.equalToSuperview().inset(30)
+            $0.top.equalTo(logoImg.snp.bottom).offset(20)
+            $0.centerX.equalToSuperview()
+        }
+        
+        authButton.snp.makeConstraints {
+            $0.horizontalEdges.equalToSuperview().inset(30)
+            $0.top.equalTo(inputTokenField.snp.bottom).offset(30)
+            $0.centerX.equalToSuperview()
+        }
     }
     
     // MARK: - Router

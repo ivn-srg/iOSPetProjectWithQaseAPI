@@ -117,13 +117,6 @@ class GeneralDetailCaseViewController: UIViewController {
     @objc func swipeBetweenViewsDelegate() {
         self.delegate?.swipeBetweenViews(panRecognize)
     }
-    
-    /// method for saving changed main test case data
-    @objc func saveMainTestCaseData() {
-        if isDataEditing {
-            isDataEditing = false
-        }
-    }
 }
 
 extension GeneralDetailCaseViewController: UpdateDataInVCProtocol {
@@ -148,7 +141,7 @@ extension GeneralDetailCaseViewController: UpdateDataInVCProtocol {
 
 extension GeneralDetailCaseViewController: UITextFieldDelegate {
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        isDataEditing = true
+        vm.isTestCaseDataEditing = true
         
         return true
     }

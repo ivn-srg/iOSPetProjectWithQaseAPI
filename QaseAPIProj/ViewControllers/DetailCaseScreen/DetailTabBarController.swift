@@ -8,8 +8,17 @@
 import UIKit
 
 class DetailTabBarController: UITabBarController {
-    
+    // MARK: - Fields
     let viewModel: DetailTabbarControllerViewModel
+    
+    // MARK: - UI components
+    private lazy var saveRightBarButtonImage: UIImageView = {
+        let imageV = UIImageView()
+        imageV.image = AppTheme.checkMarkImage
+        imageV.tintColor = viewModel.isTestCaseDataEditing ? .blue : .gray
+        imageV.contentMode = .scaleAspectFit
+        return imageV
+    }()
     
     // MARK: - Lifecycle
     
@@ -33,7 +42,6 @@ class DetailTabBarController: UITabBarController {
     }
     
     // MARK: - View Configuration
-    
     func configureView() {
         let generalInfoVC = GeneralDetailCaseViewController(vm: self.viewModel)
         let propertiesInfoVC = PropertiesDetailCaseViewController(vm: self.viewModel)
@@ -50,10 +58,41 @@ class DetailTabBarController: UITabBarController {
         title = "\(Constants.PROJECT_NAME)-\(viewModel.caseId)"
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .white
+        addOrRemoveRightBarButton(tabBarController: tabBarController, navItem: navigationItem)
+    }
+    
+    // MARK: - private funcs
+    private func addOrRemoveRightBarButton(tabBarController: UITabBarController?, navItem: UINavigationItem) {
+        guard let tabBarController = tabBarController, let selectedViewController = tabBarController.selectedViewController else { return }
+        var rightBarButton: UIBarButtonItem
+        
+        navigationItem.rightBarButtonItems?.removeAll()
+        
+        switch selectedViewController {
+        case is GeneralDetailCaseViewController:
+            rightBarButton = UIBarButtonItem(
+                image: saveRightBarButtonImage.image,
+                style: .done,
+                target: self,
+                action: #selector(viewModel.saveChangedData)
+            )
+            navigationItem.rightBarButtonItems?.append(rightBarButton)
+        case is PropertiesDetailCaseViewController:
+            fallthrough
+        default:
+            rightBarButton =  UIBarButtonItem()
+        }
     }
 }
 
 extension DetailTabBarController: UITabBarControllerDelegate {
+    override func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        print("tabBarItem didSelect")
+    }
+    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
+        print("tabBarController didSelect")
+        addOrRemoveRightBarButton(tabBarController: tabBarController, navItem: navigationItem)
+    }
 }
 
 extension DetailTabBarController: UpdateDataInVCProtocol {

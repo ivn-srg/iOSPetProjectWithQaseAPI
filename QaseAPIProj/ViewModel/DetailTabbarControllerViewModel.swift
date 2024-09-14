@@ -8,8 +8,8 @@
 import Foundation
 import UIKit
 
-class DetailTabbarControllerViewModel {
-    
+final class DetailTabbarControllerViewModel {
+    // MARK: - fields
     weak var delegate: UpdateDataInVCProtocol?
     var testCase: TestEntity? = nil {
         didSet {
@@ -18,14 +18,16 @@ class DetailTabbarControllerViewModel {
             }
         }
     }
+    var changedTestCase: TestEntity?
+    var isTestCaseDataEditing = false
     var caseId: Int
     
+    // MARK: - Lifecycle
     init(caseId: Int) {
         self.caseId = caseId
     }
     
     // MARK: - Network work
-    
     func fetchCaseDataJSON() {
         guard let urlString = Constants.urlString(.openedCase, Constants.PROJECT_NAME, nil, nil, nil, caseId) else { return }
         
@@ -41,12 +43,24 @@ class DetailTabbarControllerViewModel {
             switch result {
             case .success(let jsonTestCase):
                 self?.testCase = jsonTestCase.result
+                self?.changedTestCase = self?.testCase
                 
             case .failure(let error):
                 print(error)
             }
             
             LoadingIndicator.stopLoading()
+        }
+    }
+    
+    // MARK: - objc funcs
+    @objc func saveChangedData() {
+        if isTestCaseDataEditing {
+            // TODO: - Make a network request for update test case info
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 3, execute: DispatchWorkItem(block: {
+                print("Test case data has been saved")
+            }))
+            isTestCaseDataEditing = false
         }
     }
 }

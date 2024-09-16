@@ -83,9 +83,7 @@ final class SuitesAndCasesTableViewController: UIViewController, UpdateTableView
 }
 
 private extension SuitesAndCasesTableViewController {
-    
     func setup() {
-        
         title = viewModel.parentSuite == nil ? Constants.PROJECT_NAME : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite?.id} ).first?.title
         navigationItem.largeTitleDisplayMode = .never
         

@@ -10,7 +10,7 @@ import UIKit
 
 final class DetailTabbarControllerViewModel {
     // MARK: - fields
-    weak var delegate: UpdateDataInVCProtocol?
+    weak var delegate: DetailTestCaseProtocol?
     var testCase: TestEntity? = nil {
         didSet {
             DispatchQueue.main.async {
@@ -18,7 +18,13 @@ final class DetailTabbarControllerViewModel {
             }
         }
     }
-    var changedTestCase: TestEntity?
+    var changedTestCase: TestEntity? {
+        didSet {
+            DispatchQueue.main.async {
+                self.delegate?.checkConditionAndToggleRightBarButton()
+            }
+        }
+    }
     var isTestCaseDataEditing = false
     var caseId: Int
     
@@ -52,6 +58,8 @@ final class DetailTabbarControllerViewModel {
             LoadingIndicator.stopLoading()
         }
     }
+    
+    func updateTestCaseData() {}
     
     // MARK: - objc funcs
     @objc func saveChangedData() {

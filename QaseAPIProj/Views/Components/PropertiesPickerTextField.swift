@@ -17,16 +17,16 @@ enum PropertiesCaseTextFieldTypes: String {
     case automationStatus = "Automation status"
 }
 
-final class PropertiesPickerTextField: UIView, UITextFieldDelegate {
+final class PropertiesPickerTextField: UIView {
     // MARK: - Fields
     private let textType: PropertiesCaseTextFieldTypes
+    private var testCaseViewModel: DetailTabbarControllerViewModel
     
     // MARK: - UI components
     private lazy var titleLabel: UILabel = {
         let tf = UILabel()
         tf.translatesAutoresizingMaskIntoConstraints = false
         tf.font = .systemFont(ofSize: 15, weight: .bold)
-        tf.text = "Severity"
         return tf
     }()
     
@@ -64,8 +64,9 @@ final class PropertiesPickerTextField: UIView, UITextFieldDelegate {
     }()
     
     // MARK: - Lyfecycle
-    init(textType: PropertiesCaseTextFieldTypes, textFieldValue: Int) {
+    init(textType: PropertiesCaseTextFieldTypes, textFieldValue: Int, detailCaseVM: DetailTabbarControllerViewModel) {
         self.textType = textType
+        self.testCaseViewModel = detailCaseVM
         super.init(frame: .zero)
         
         titleLabel.text = textType.rawValue
@@ -132,5 +133,34 @@ final class PropertiesPickerTextField: UIView, UITextFieldDelegate {
     
     @objc func doneButtonTapped() {
         textField.resignFirstResponder()
+    }
+}
+
+extension PropertiesPickerTextField: UITextFieldDelegate {
+    func textFieldDidEndEditing(_ textField: UITextField, reason: UITextField.DidEndEditingReason) {
+        guard let textFieldValue = textField.text, let testCase = testCaseViewModel.changedTestCase else { return }
+        switch textType {
+        case .severity:
+            let listEntities = Constants.Severity.returnAllEnumCases()
+            testCaseViewModel.changedTestCase?.severity = listEntities.firstIndex(of: textFieldValue) ?? testCase.severity
+        case .status:
+            let listEntities = Constants.Status.returnAllEnumCases()
+            testCaseViewModel.changedTestCase?.status = listEntities.firstIndex(of: textFieldValue) ?? testCase.status
+        case .priority:
+            let listEntities = Constants.Priority.returnAllEnumCases()
+            testCaseViewModel.changedTestCase?.priority = listEntities.firstIndex(of: textFieldValue) ?? testCase.priority
+        case .behavior:
+            let listEntities = Constants.Behavior.returnAllEnumCases()
+            testCaseViewModel.changedTestCase?.behavior = listEntities.firstIndex(of: textFieldValue) ?? testCase.behavior
+        case .type:
+            let listEntities = Constants.Types.returnAllEnumCases()
+            testCaseViewModel.changedTestCase?.type = listEntities.firstIndex(of: textFieldValue) ?? testCase.type
+        case .layer:
+            let listEntities = Constants.Layer.returnAllEnumCases()
+            testCaseViewModel.changedTestCase?.layer = listEntities.firstIndex(of: textFieldValue) ?? testCase.layer
+        case .automationStatus:
+            let listEntities = Constants.AutomationStatus.returnAllEnumCases()
+            testCaseViewModel.changedTestCase?.automation = listEntities.firstIndex(of: textFieldValue) ?? testCase.automation
+        }
     }
 }

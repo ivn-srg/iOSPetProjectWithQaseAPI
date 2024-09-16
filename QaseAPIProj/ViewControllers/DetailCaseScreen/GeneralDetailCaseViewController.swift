@@ -14,7 +14,7 @@ enum CheckmarkButtonState {
 class GeneralDetailCaseViewController: UIViewController {
     
     private let vm: DetailTabbarControllerViewModel
-    weak var delegate: SwipeTabbarProtocol?
+    weak var delegate: DetailTestCaseProtocol?
     private var isDataEditing = false
     
     // MARK: - UI components
@@ -115,11 +115,20 @@ class GeneralDetailCaseViewController: UIViewController {
     }
     
     @objc func swipeBetweenViewsDelegate() {
-        self.delegate?.swipeBetweenViews(panRecognize)
+        guard let delegate = self.delegate else { return }
+        delegate.swipeBetweenViews(panRecognize)
     }
 }
 
-extension GeneralDetailCaseViewController: UpdateDataInVCProtocol {
+extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
+    func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer) {
+        print("swipeBetweenViews called")
+    }
+    
+    func checkConditionAndToggleRightBarButton() {
+        print("checkConditionAndToggleRightBarButton called")
+    }
+    
     func updateUI() {
         DispatchQueue.main.async {
             if let testCase = self.vm.testCase {

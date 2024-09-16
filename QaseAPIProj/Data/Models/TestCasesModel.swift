@@ -7,21 +7,21 @@
 
 import Foundation
 
-struct TestEntity: Codable {
+struct TestEntity: Codable, Equatable {
     let id: Int
     let position: Int
-    let title: String
-    let description: String?
-    let preconditions: String?
-    let postconditions: String?
-    let severity: Int
-    let priority: Int
-    let type: Int
-    let layer: Int
-    let isFlaky: Int
-    let behavior: Int
-    let automation: Int
-    let status: Int
+    var title: String
+    var description: String?
+    var preconditions: String?
+    var postconditions: String?
+    var severity: Int
+    var priority: Int
+    var type: Int
+    var layer: Int
+    var isFlaky: Int
+    var behavior: Int
+    var automation: Int
+    var status: Int
     let suiteId: Int?
     let links: [String]
     let customFields: [String]
@@ -72,6 +72,32 @@ struct TestEntity: Codable {
         authorId = try container.decode(Int.self, forKey: .authorId)
         tags = try container.decode([String].self, forKey: .tags)
     }
+    
+    static func == (lhs: TestEntity, rhs: TestEntity) -> Bool {
+        return lhs.id == rhs.id &&
+        lhs.title == rhs.title &&
+        lhs.position == rhs.position &&
+        lhs.description == rhs.description &&
+        lhs.preconditions == rhs.preconditions &&
+        lhs.postconditions == rhs.postconditions &&
+        lhs.severity == rhs.severity &&
+        lhs.priority == rhs.priority &&
+        lhs.type == rhs.type &&
+        lhs.isFlaky == rhs.isFlaky &&
+        lhs.behavior == rhs.behavior &&
+        lhs.automation == rhs.automation &&
+        lhs.suiteId == rhs.suiteId &&
+        lhs.status == rhs.status &&
+        lhs.links == rhs.links &&
+        lhs.customFields == rhs.customFields &&
+        lhs.attachments == rhs.attachments &&
+        lhs.stepsType == rhs.stepsType &&
+        lhs.params == rhs.params &&
+        lhs.steps == rhs.steps &&
+        lhs.memberId == rhs.memberId &&
+        lhs.authorId == rhs.authorId &&
+        lhs.tags == rhs.tags
+    }
 }
 
 struct TestCasesModel: Codable {
@@ -91,7 +117,7 @@ struct TestResult: Codable {
     let entities: [TestEntity]
 }
 
-struct StepsInTestCase: Codable {
+struct StepsInTestCase: Codable, Equatable {
     let hash: String
     let position: Int
     let shared_step_hash: String?

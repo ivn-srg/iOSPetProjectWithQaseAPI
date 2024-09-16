@@ -35,38 +35,53 @@ class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate 
     
     private lazy var severityField = PropertiesPickerTextField(
         textType: .severity,
-        textFieldValue: self.vm.testCase?.severity ?? 0
+        textFieldValue: self.vm.testCase?.severity ?? 0,
+        detailCaseVM: vm
     )
     
     private lazy var statusField = PropertiesPickerTextField(
         textType: .status,
-        textFieldValue: self.vm.testCase?.status ?? 0
+        textFieldValue: self.vm.testCase?.status ?? 0,
+        detailCaseVM: vm
     )
     
     private lazy var priorityField = PropertiesPickerTextField(
         textType: .priority,
-        textFieldValue: self.vm.testCase?.priority ?? 0
+        textFieldValue: self.vm.testCase?.priority ?? 0,
+        detailCaseVM: vm
     )
     
     private lazy var behaviorField = PropertiesPickerTextField(
         textType: .behavior,
-        textFieldValue: self.vm.testCase?.behavior ?? 0
+        textFieldValue: self.vm.testCase?.behavior ?? 0,
+        detailCaseVM: vm
     )
     
     private lazy var typeField = PropertiesPickerTextField(
         textType: .type,
-        textFieldValue: self.vm.testCase?.type ?? 0
+        textFieldValue: self.vm.testCase?.type ?? 0,
+        detailCaseVM: vm
     )
     
     private lazy var layerField: PropertiesPickerTextField = PropertiesPickerTextField(
         textType: .layer,
-        textFieldValue: self.vm.testCase?.layer ?? 0
+        textFieldValue: self.vm.testCase?.layer ?? 0,
+        detailCaseVM: vm
     )
     
     private lazy var automationStatusField: PropertiesPickerTextField = PropertiesPickerTextField(
         textType: .automationStatus,
-        textFieldValue: self.vm.testCase?.automation ?? 0
+        textFieldValue: self.vm.testCase?.automation ?? 0,
+        detailCaseVM: vm
     )
+    
+    private lazy var isFlakySwitch: SwitcherWithTitle = {
+        let sw = SwitcherWithTitle(testCase: vm.changedTestCase)
+        sw.translatesAutoresizingMaskIntoConstraints = false
+        sw.isUserInteractionEnabled = true
+        sw.addSwitchTarget(self, action: #selector(changedSwitchValue(_:)), for: .valueChanged)
+        return sw
+    }()
     
     // MARK: - Lifecycles
     
@@ -105,13 +120,26 @@ class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate 
         stackView.addArrangedSubview(typeField)
         stackView.addArrangedSubview(layerField)
         stackView.addArrangedSubview(automationStatusField)
+        stackView.addArrangedSubview(isFlakySwitch)
+    }
+    
+    @objc func changedSwitchValue(_ sender: UISwitch) {
+        vm.changedTestCase?.isFlaky = sender.isOn ? 1 : 0
     }
 }
 
-extension PropertiesDetailCaseViewController: UpdateDataInVCProtocol {
+extension PropertiesDetailCaseViewController: DetailTestCaseProtocol {
+    func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer) {
+        print("swipeBetweenViews called")
+    }
+    
+    func checkConditionAndToggleRightBarButton() {
+        print("checkConditionAndToggleRightBarButton called")
+    }
+    
     func updateUI() {
         DispatchQueue.main.async {
-            if let testCase = self.vm.testCase {
+            if let testCase = self.vm.changedTestCase {
                 self.severityField.updateTextFieldValue(testCase.severity)
                 self.statusField.updateTextFieldValue(testCase.status)
                 self.priorityField.updateTextFieldValue(testCase.priority)
@@ -119,6 +147,7 @@ extension PropertiesDetailCaseViewController: UpdateDataInVCProtocol {
                 self.typeField.updateTextFieldValue(testCase.type)
                 self.layerField.updateTextFieldValue(testCase.layer)
                 self.automationStatusField.updateTextFieldValue(testCase.automation)
+                self.isFlakySwitch.updateSwitcherValue(testCase.isFlaky == 1)
             }
             LoadingIndicator.stopLoading()
         }

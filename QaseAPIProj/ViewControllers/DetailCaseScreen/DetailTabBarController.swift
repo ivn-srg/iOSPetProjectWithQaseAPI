@@ -39,49 +39,24 @@ class DetailTabBarController: UITabBarController {
         configureView()
         setupGestures()
         delegate = self
+        checkConditionAndToggleRightBarButton()
     }
     
     // MARK: - View Configuration
     func configureView() {
         let generalInfoVC = GeneralDetailCaseViewController(vm: self.viewModel)
         let propertiesInfoVC = PropertiesDetailCaseViewController(vm: self.viewModel)
-        let runsInfoVC = RunsDetailCaseViewController(vm: self.viewModel)
         let defectsInfoVC = DefectsDetailCaseViewController(vm: self.viewModel)
         
         generalInfoVC.tabBarItem = UITabBarItem(title: "General", image: nil, tag: 0)
         propertiesInfoVC.tabBarItem = UITabBarItem(title: "Properties", image: nil, tag: 1)
-        runsInfoVC.tabBarItem = UITabBarItem(title: "Runs", image: nil, tag: 2)
-        defectsInfoVC.tabBarItem = UITabBarItem(title: "Defects", image: nil, tag: 3)
+        defectsInfoVC.tabBarItem = UITabBarItem(title: "Defects", image: nil, tag: 2)
         
-        viewControllers = [generalInfoVC, propertiesInfoVC, runsInfoVC, defectsInfoVC]
+        viewControllers = [generalInfoVC, propertiesInfoVC, defectsInfoVC]
         
         title = "\(Constants.PROJECT_NAME)-\(viewModel.caseId)"
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .white
-        addOrRemoveRightBarButton(tabBarController: tabBarController, navItem: navigationItem)
-    }
-    
-    // MARK: - private funcs
-    private func addOrRemoveRightBarButton(tabBarController: UITabBarController?, navItem: UINavigationItem) {
-        guard let tabBarController = tabBarController, let selectedViewController = tabBarController.selectedViewController else { return }
-        var rightBarButton: UIBarButtonItem
-        
-        navigationItem.rightBarButtonItems?.removeAll()
-        
-        switch selectedViewController {
-        case is GeneralDetailCaseViewController:
-            rightBarButton = UIBarButtonItem(
-                image: saveRightBarButtonImage.image,
-                style: .done,
-                target: self,
-                action: #selector(viewModel.saveChangedData)
-            )
-            navigationItem.rightBarButtonItems?.append(rightBarButton)
-        case is PropertiesDetailCaseViewController:
-            fallthrough
-        default:
-            rightBarButton =  UIBarButtonItem()
-        }
     }
 }
 
@@ -91,26 +66,25 @@ extension DetailTabBarController: UITabBarControllerDelegate {
     }
     func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
         print("tabBarController didSelect")
-        addOrRemoveRightBarButton(tabBarController: tabBarController, navItem: navigationItem)
     }
 }
 
-extension DetailTabBarController: UpdateDataInVCProtocol {
+extension DetailTabBarController: DetailTestCaseProtocol {
+    // MARK: - updating UI for VCs
     func updateUI() {
         DispatchQueue.main.async {
             self.title = "\(Constants.PROJECT_NAME)-\(self.viewModel.caseId)"
             if let viewControllers = self.viewControllers {
                 for viewCN in viewControllers {
-                    guard let viewCN = viewCN as? UpdateDataInVCProtocol else { continue }
+                    guard let viewCN = viewCN as? DetailTestCaseProtocol else { continue }
                     viewCN.updateUI()
                 }
             }
             LoadingIndicator.stopLoading()
         }
     }
-}
-
-extension DetailTabBarController: SwipeTabbarProtocol {
+    
+    // MARK: - setuping gestures for VCs
     private func setupGestures() {
         let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeBetweenViews(_:)))
         swipeLeft.direction = .left
@@ -137,5 +111,24 @@ extension DetailTabBarController: SwipeTabbarProtocol {
                 }
             }
         }
+    }
+    
+    // MARK: - setuping save bar buttons into VC's navItem
+    func checkConditionAndToggleRightBarButton() {
+        let shouldShowButton = viewModel.testCase != viewModel.changedTestCase
+        
+        if shouldShowButton {
+            let rightBarButton = UIBarButtonItem(title: "Save",
+                                                 style: .plain,
+                                                 target: self,
+                                                 action: #selector(rightBarButtonTapped))
+            navigationItem.rightBarButtonItem = rightBarButton
+        } else {
+            navigationItem.rightBarButtonItem = nil
+        }
+    }
+    
+    @objc func rightBarButtonTapped() {
+        print("Кнопка нажата")
     }
 }

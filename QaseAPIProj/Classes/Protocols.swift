@@ -16,10 +16,8 @@ protocol UpdateTableViewProtocol: AnyObject {
     func updateTableView()
 }
 
-protocol UpdateDataInVCProtocol: AnyObject {
+@objc protocol DetailTestCaseProtocol: AnyObject {
     func updateUI()
-}
-
-@objc protocol SwipeTabbarProtocol: AnyObject {
     @objc func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer)
+    func checkConditionAndToggleRightBarButton()
 }

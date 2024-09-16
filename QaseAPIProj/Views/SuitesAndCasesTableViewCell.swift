@@ -13,12 +13,6 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
     
     // MARK: - UI
     
-    private lazy var containerVw: UIView = {
-        let vw = UIView()
-        vw.translatesAutoresizingMaskIntoConstraints = false
-        return vw
-    }()
-    
     private lazy var priorityImage: UIImageView = {
         let piv = UIImageView()
         piv.translatesAutoresizingMaskIntoConstraints = false
@@ -37,6 +31,8 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
         let stackVw = UIStackView()
         stackVw.translatesAutoresizingMaskIntoConstraints = false
         stackVw.axis = .vertical
+        stackVw.alignment = .fill
+        stackVw.spacing = 3
         return stackVw
     }()
     
@@ -58,22 +54,12 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
         return cLbl
     }()
     
-    private lazy var deepArrowIcon: UIImageView = {
-        let tLbl = UIImageView()
-        tLbl.translatesAutoresizingMaskIntoConstraints = false
-        return tLbl
-    }()
-    
-    
     // MARK: - lifecycles
     
     func configure(with dataForCell: SuiteAndCaseData) {
-        
-        containerVw.backgroundColor = .white
-        
-        
+        contentView.backgroundColor = .white
+
         if !dataForCell.isSuites {
-            
             switch dataForCell.priority {
                 case 1:
                     priorityImage.image = AppTheme.highPriorityImage
@@ -90,9 +76,6 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
             }
             
             switch dataForCell.automation {
-                case 0:
-                    automationImage.image = AppTheme.notAutomationImage
-                    automationImage.tintColor = .systemGray
                 case 1:
                     automationImage.image = AppTheme.toBeAutomationImage
                     automationImage.tintColor = .systemGray
@@ -100,58 +83,37 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
                     automationImage.image = AppTheme.automationImage
                     automationImage.tintColor = .systemBlue
                 default:
-                    automationImage.image = nil
+                    automationImage.image = AppTheme.notAutomationImage
+                    automationImage.tintColor = .systemGray
             }
         } else {
             accessoryType = .disclosureIndicator
         }
                 
         titleLbl.text = dataForCell.title
-        descriptionLbl.text = dataForCell.itemDescription
+        descriptionLbl.text = dataForCell.itemDescription?.replacingOccurrences(of: "\n", with: " ")
         
-        self.contentView.addSubview(containerVw)
-        
-        containerVw.addSubview(priorityImage)
-        containerVw.addSubview(automationImage)
-        containerVw.addSubview(contentStackVw)
+        contentView.addSubview(priorityImage)
+        priorityImage.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.leading.equalToSuperview().offset(!dataForCell.isSuites ? 10 : 0)
+            $0.width.equalTo(!dataForCell.isSuites ? 20 : 0)
+        }
+        contentView.addSubview(automationImage)
+        automationImage.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.leading.equalTo(priorityImage.snp.trailing).offset(!dataForCell.isSuites ? 10 : 0)
+            $0.width.equalTo(!dataForCell.isSuites ? 20 : 0)
+        }
+        contentView.addSubview(contentStackVw)
+        contentStackVw.snp.makeConstraints {
+            $0.verticalEdges.equalToSuperview().inset(8)
+            $0.leading.equalTo(automationImage.snp.trailing).offset(15)
+            $0.trailing.equalToSuperview().inset(50)
+        }
         
         contentStackVw.addArrangedSubview(titleLbl)
         contentStackVw.addArrangedSubview(descriptionLbl)
-        
-        var constraints = [
-            contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 44),
-            
-            containerVw.topAnchor.constraint(equalTo: self.contentView.topAnchor),
-            containerVw.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor),
-            containerVw.leadingAnchor.constraint(equalTo: self.contentView.leadingAnchor),
-            containerVw.trailingAnchor.constraint(equalTo: self.contentView.trailingAnchor),
-            
-            priorityImage.centerYAnchor.constraint(equalTo: containerVw.centerYAnchor),
-            priorityImage.leadingAnchor.constraint(equalTo: containerVw.leadingAnchor, constant: priorityImage.image != nil ? 15 : 0),
-            priorityImage.widthAnchor.constraint(equalToConstant: priorityImage.image != nil ? 20 : 0),
-            
-            automationImage.centerYAnchor.constraint(equalTo: containerVw.centerYAnchor),
-            automationImage.leadingAnchor.constraint(equalTo: priorityImage.trailingAnchor, constant: 10),
-            automationImage.widthAnchor.constraint(equalToConstant: 20),
-            
-            contentStackVw.topAnchor.constraint(equalTo: self.containerVw.topAnchor, constant: 8),
-            contentStackVw.bottomAnchor.constraint(equalTo: self.containerVw.bottomAnchor, constant: -8),
-            contentStackVw.leadingAnchor.constraint(equalTo: self.automationImage.trailingAnchor, constant: automationImage.image != nil ? 10 : 0),
-            contentStackVw.trailingAnchor.constraint(equalTo: self.containerVw.trailingAnchor, constant: -50),
-            
-            titleLbl.topAnchor.constraint(equalTo: contentStackVw.topAnchor),
-            titleLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
-            
-            descriptionLbl.topAnchor.constraint(equalTo: titleLbl.bottomAnchor),
-            descriptionLbl.widthAnchor.constraint(equalTo: contentStackVw.widthAnchor),
-            descriptionLbl.bottomAnchor.constraint(equalTo: contentStackVw.bottomAnchor),
-        ]
-        
-        if dataForCell.itemDescription == nil {
-            constraints.append(descriptionLbl.heightAnchor.constraint(equalToConstant: 0))
-        }
-        
-        NSLayoutConstraint.activate(constraints)
     }
     
     override func prepareForReuse() {

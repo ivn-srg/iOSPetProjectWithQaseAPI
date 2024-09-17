@@ -9,12 +9,12 @@ import UIKit
 import SnapKit
 
 enum GeneralCaseTextFieldTypes {
-    case name, description, precondition, postcondition
+    case name, description, precondition, postcondition, code
 }
 
 final class GeneralCaseTextField: UIView {
     private let textType: GeneralCaseTextFieldTypes
-    private var testCaseViewModel: DetailTabbarControllerViewModel
+    private var testCaseViewModel: DetailTabbarControllerViewModel?
     private var textViewHeightConstraint: Constraint?
     
     // MARK: - UI components
@@ -44,7 +44,7 @@ final class GeneralCaseTextField: UIView {
     
     // MARK: - Lyfecycle
     
-    init(textType: GeneralCaseTextFieldTypes, textViewValue: String, detailVM: DetailTabbarControllerViewModel) {
+    init(textType: GeneralCaseTextFieldTypes, textViewValue: String = "", detailVM: DetailTabbarControllerViewModel? = nil) {
         self.textType = textType
         self.testCaseViewModel = detailVM
         super.init(frame: .zero)
@@ -59,6 +59,8 @@ final class GeneralCaseTextField: UIView {
             title = "Pre-condition"
         case .postcondition:
             title = "Post-condition"
+        case .code:
+            title = "Project code"
         }
         
         textView.delegate = self
@@ -109,9 +111,9 @@ extension GeneralCaseTextField: UITextViewDelegate {
         let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: CGFloat.greatestFiniteMagnitude))
         let newHeight = min(size.height, maxHeight)
         
-        // Обновляем ограничение высоты
         textViewHeightConstraint?.update(offset: newHeight)
         
+        guard let testCaseViewModel = testCaseViewModel else { return }
         switch textType {
         case .name:
             testCaseViewModel.changedTestCase?.title = textView.text
@@ -121,6 +123,8 @@ extension GeneralCaseTextField: UITextViewDelegate {
             testCaseViewModel.changedTestCase?.preconditions = textView.text
         case .postcondition:
             testCaseViewModel.changedTestCase?.postconditions = textView.text
+        case .code:
+            NSLog("case code")
         }
     }
 }

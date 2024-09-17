@@ -17,6 +17,7 @@ enum AppTheme {
     static let highPriorityImage = UIImage(systemName: "arrow.up")
     static let mediumPriorityImage = UIImage(systemName: "circle")
     static let lowPriorityImage = UIImage(systemName: "arrow.down")
+    static let xmarkCircleFillImage = UIImage(systemName: "xmark.circle.fill")
     static let noPriorityImage = UIImage(systemName: "minus")
     // colors
     static let fioletColor = UIColor(red: 0.31, green: 0.27, blue: 0.86, alpha: 1)

@@ -70,7 +70,9 @@ final class ProjectsViewController: UIViewController {
     
     // MARK: - @objc funcs
     @objc func addNewProject() {
-        
+        let vc = CreatingProjectViewController(viewModel: .init())
+        vc.modalPresentationStyle = .fullScreen
+        present(vc, animated: true)
     }
 }
 

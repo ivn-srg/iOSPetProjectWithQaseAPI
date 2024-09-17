@@ -13,7 +13,9 @@ enum GeneralCaseTextFieldTypes {
 }
 
 final class GeneralCaseTextField: UIView {
-    weak var textFieldDelegate: UITextFieldDelegate?
+    private let textType: GeneralCaseTextFieldTypes
+    private var testCaseViewModel: DetailTabbarControllerViewModel
+    private var textViewHeightConstraint: Constraint?
     
     // MARK: - UI components
     private lazy var titlelbl: UILabel = {
@@ -24,24 +26,27 @@ final class GeneralCaseTextField: UIView {
         return vc
     }()
     
-    private lazy var textField: TextFieldWithPadding = {
-        let decslbl = TextFieldWithPadding()
-        decslbl.translatesAutoresizingMaskIntoConstraints = false
-        decslbl.backgroundColor = .white
-        decslbl.layer.borderWidth = 1.0
-        decslbl.font = .systemFont(ofSize: 16)
-        decslbl.layer.borderColor = UIColor.gray.cgColor
-        decslbl.layer.cornerRadius = 8.0
-        decslbl.delegate = self.textFieldDelegate
-        decslbl.isUserInteractionEnabled = true
-        decslbl.clearButtonMode = .whileEditing
-        decslbl.addTarget(self, action: #selector(tapOutsideTextField(textField:)), for: .touchUpOutside)
-        return decslbl
+    private lazy var textView: UITextView = {
+        let tv = UITextView()
+        tv.translatesAutoresizingMaskIntoConstraints = false
+        tv.backgroundColor = .white
+        tv.layer.borderWidth = 1.0
+        tv.font = .systemFont(ofSize: 16)
+        tv.layer.borderColor = UIColor.gray.cgColor
+        tv.layer.cornerRadius = 8.0
+        tv.isUserInteractionEnabled = true
+        tv.isScrollEnabled = false
+        tv.textContainerInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        tv.textContainer.lineBreakMode = .byWordWrapping
+        tv.textContainer.maximumNumberOfLines = 4
+        return tv
     }()
     
     // MARK: - Lyfecycle
     
-    init(textType: GeneralCaseTextFieldTypes, textFieldValue: String = "") {
+    init(textType: GeneralCaseTextFieldTypes, textViewValue: String, detailVM: DetailTabbarControllerViewModel) {
+        self.textType = textType
+        self.testCaseViewModel = detailVM
         super.init(frame: .zero)
         
         let title: String
@@ -56,13 +61,21 @@ final class GeneralCaseTextField: UIView {
             title = "Post-condition"
         }
         
+        textView.delegate = self
         titlelbl.text = title
-        textField.text = textFieldValue
+        textView.text = textViewValue
         configureView()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        textView.resignFirstResponder()
+    }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        textView.resignFirstResponder()
     }
     
     func configureView() {
@@ -71,38 +84,44 @@ final class GeneralCaseTextField: UIView {
             $0.top.horizontalEdges.equalToSuperview()
         }
         
-        self.addSubview(textField)
-        textField.snp.makeConstraints {
+        self.addSubview(textView)
+        textView.snp.makeConstraints {
             $0.top.equalTo(titlelbl.snp.bottom).offset(8)
-            $0.horizontalEdges.bottom.equalToSuperview()
+            $0.horizontalEdges.equalToSuperview()
+            $0.bottom.equalToSuperview().priority(.low)
+            self.textViewHeightConstraint = $0.height.equalTo(50).constraint
         }
     }
     
-    func updateTextFieldValue(_ value: String) {
-        textField.text = value
-    }
-    
-    // MARK: - objc selectors
-    @objc func tapOutsideTextField(textField: UITextField) {
-        textField.resignFirstResponder()
+    func updateTextViewValue(_ value: String) {
+        textView.text = value
     }
 }
 
-final class TextFieldWithPadding: UITextField {
-    var textPadding = UIEdgeInsets(
-        top: 10,
-        left: 10,
-        bottom: 10,
-        right: 10
-    )
-
-    override func textRect(forBounds bounds: CGRect) -> CGRect {
-        let rect = super.textRect(forBounds: bounds)
-        return rect.inset(by: textPadding)
-    }
-
-    override func editingRect(forBounds bounds: CGRect) -> CGRect {
-        let rect = super.editingRect(forBounds: bounds)
-        return rect.inset(by: textPadding)
+extension GeneralCaseTextField: UITextViewDelegate {
+    func textViewDidChange(_ textView: UITextView) {
+        let maxCharacters = 300
+        if textView.text.count > maxCharacters {
+            textView.text = String(textView.text.prefix(maxCharacters))
+        }
+        
+        let maxHeight: CGFloat = 150
+        let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: CGFloat.greatestFiniteMagnitude))
+        let newHeight = min(size.height, maxHeight)
+        
+        // Обновляем ограничение высоты
+        textViewHeightConstraint?.update(offset: newHeight)
+        
+        switch textType {
+        case .name:
+            testCaseViewModel.changedTestCase?.title = textView.text
+        case .description:
+            testCaseViewModel.changedTestCase?.description = textView.text
+        case .precondition:
+            testCaseViewModel.changedTestCase?.preconditions = textView.text
+        case .postcondition:
+            testCaseViewModel.changedTestCase?.postconditions = textView.text
+        }
     }
 }
+

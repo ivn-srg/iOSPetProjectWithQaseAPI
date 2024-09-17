@@ -138,6 +138,7 @@ struct Constants {
     enum APIType: String {
         case get = "GET"
         case post = "POST"
+        case patch = "PATCH"
     }
     
     enum APIMethods: String, CaseIterable {
@@ -163,8 +164,14 @@ struct Constants {
     
     static var PROJECT_NAME = ""
     
-    static var urlString = {
-        (APIMethod: APIMethods, codeOfProject: String?, limit: Int?, offset: Int?, parentSuite: ParentSuite?, caseId: Int?) -> String? in
+    static func getUrlString(
+        APIMethod: APIMethods,
+        codeOfProject: String?,
+        limit: Int?,
+        offset: Int?,
+        parentSuite: ParentSuite?,
+        caseId: Int?
+    ) -> String? {
         
         switch APIMethod {
         case .project:

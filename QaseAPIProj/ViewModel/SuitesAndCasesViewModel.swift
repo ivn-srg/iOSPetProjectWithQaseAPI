@@ -31,14 +31,29 @@ final class SuitesAndCasesViewModel {
     // MARK: - Network funcs
     
     func requestEntitiesData() {
+        suitesAndCaseData.removeAll()
         getTotalCountOfEntities()
         fetchSuitesJSON()
         fetchCasesJSON()
     }
     
     private func getTotalCountOfEntities() {
-        guard let urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.PROJECT_NAME, 1, 0, nil, nil) else { return }
-        guard let urlStringCases = Constants.urlString(parentSuite != nil ? .cases : .casesWithoutParent, Constants.PROJECT_NAME, 1, 0, parentSuite != nil ? parentSuite : nil, nil) else { return }
+        guard let urlStringSuites = Constants.getUrlString(
+            APIMethod: .suitesWithoutParent,
+            codeOfProject: Constants.PROJECT_NAME,
+            limit: 1,
+            offset: 0,
+            parentSuite: nil,
+            caseId: nil
+        ) else { return }
+        guard let urlStringCases = Constants.getUrlString(
+            APIMethod: parentSuite != nil ? .cases : .casesWithoutParent,
+            codeOfProject: Constants.PROJECT_NAME,
+            limit: 1,
+            offset: 0,
+            parentSuite: parentSuite != nil ? parentSuite : nil,
+            caseId: nil
+        ) else { return }
         
         DispatchQueue.main.async {
             LoadingIndicator.startLoading()
@@ -71,7 +86,14 @@ final class SuitesAndCasesViewModel {
         var urlStringSuites = ""
         
         repeat {
-            urlStringSuites = Constants.urlString(.suitesWithoutParent, Constants.PROJECT_NAME, limit, offset, nil, nil) ?? ""
+            urlStringSuites = Constants.getUrlString(
+                APIMethod: .suitesWithoutParent,
+                codeOfProject: Constants.PROJECT_NAME,
+                limit: limit,
+                offset: offset,
+                parentSuite: nil,
+                caseId: nil
+            ) ?? ""
             
             APIManager.shared.fetchData(from: urlStringSuites, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
                 
@@ -93,7 +115,14 @@ final class SuitesAndCasesViewModel {
         var urlStringCases = ""
         
         repeat {
-            urlStringCases = Constants.urlString(parentSuite != nil ? .cases : .casesWithoutParent, Constants.PROJECT_NAME, limit, offset, parentSuite != nil ? parentSuite : nil, nil) ?? ""
+            urlStringCases = Constants.getUrlString(
+                APIMethod: parentSuite != nil ? .cases : .casesWithoutParent,
+                codeOfProject: Constants.PROJECT_NAME,
+                limit: limit,
+                offset: offset,
+                parentSuite: parentSuite != nil ? parentSuite : nil,
+                caseId: nil
+            ) ?? ""
             
             APIManager.shared.fetchData(from: urlStringCases, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
                 
@@ -115,6 +144,21 @@ final class SuitesAndCasesViewModel {
         suites: [SuiteEntity]?,
         testCases: [TestEntity]?
     ) {
+        func appendElement(element: SuiteAndCaseData, to list: inout [SuiteAndCaseData]) {
+            if element.isSuites {
+                if !list.contains(where: {
+                    $0.isSuites && $0.id == element.id
+                }) {
+                    list.append(element)
+                }
+            } else {
+                if !list.contains(where: {
+                    !$0.isSuites && $0.id == element.id
+                }) {
+                    list.append(element)
+                }
+            }
+        }
         if isSuite {
             guard let suites = suites else { return }
             
@@ -128,7 +172,7 @@ final class SuitesAndCasesViewModel {
                     parentId: suite.parentId,
                     caseCount: suite.casesCount
                 )
-                targetUniversalList.append(universalItem)
+                appendElement(element: universalItem, to: &targetUniversalList)
             }
         } else {
             guard let testCases = testCases else { return }
@@ -146,7 +190,7 @@ final class SuitesAndCasesViewModel {
                     automation: testCase.automation,
                     suiteId: testCase.suiteId
                 )
-                targetUniversalList.append(universalItem)
+                appendElement(element: universalItem, to: &targetUniversalList)
             }
         }
     }

@@ -41,22 +41,26 @@ class GeneralDetailCaseViewController: UIViewController {
     
     private lazy var titleField = GeneralCaseTextField(
         textType: .name,
-        textFieldValue: self.vm.testCase?.title ?? Constants.emptyText
+        textViewValue: self.vm.testCase?.title ?? Constants.emptyText,
+        detailVM: vm
     )
     
     private lazy var descriptionField = GeneralCaseTextField(
         textType: .description,
-        textFieldValue: self.vm.testCase?.description ?? Constants.emptyText
+        textViewValue: self.vm.testCase?.description ?? Constants.emptyText,
+        detailVM: vm
     )
     
     private lazy var preconditionField = GeneralCaseTextField(
         textType: .precondition,
-        textFieldValue: self.vm.testCase?.preconditions ?? Constants.emptyText
+        textViewValue: self.vm.testCase?.preconditions ?? Constants.emptyText,
+        detailVM: vm
     )
     
     private lazy var postconditionField = GeneralCaseTextField(
         textType: .postcondition,
-        textFieldValue: self.vm.testCase?.postconditions ?? Constants.emptyText
+        textViewValue: self.vm.testCase?.postconditions ?? Constants.emptyText,
+        detailVM: vm
     )
     
     private lazy var panRecognize: UISwipeGestureRecognizer = {
@@ -88,12 +92,12 @@ class GeneralDetailCaseViewController: UIViewController {
     private func setupView() {
         view.backgroundColor = .white
         view.addSubview(scrollView)
-        scrollView.addSubview(stackView)
         
         scrollView.snp.makeConstraints {
             $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
         }
         
+        scrollView.addSubview(stackView)
         stackView.snp.makeConstraints {
             $0.verticalEdges.equalTo(scrollView.snp.verticalEdges).inset(30)
             $0.centerX.equalTo(scrollView.snp.centerX)
@@ -104,10 +108,6 @@ class GeneralDetailCaseViewController: UIViewController {
     }
     
     private func setupCustomFields() {
-        titleField.textFieldDelegate = self
-        descriptionField.textFieldDelegate = self
-        preconditionField.textFieldDelegate = self
-        postconditionField.textFieldDelegate = self
         stackView.addArrangedSubview(titleField)
         stackView.addArrangedSubview(descriptionField)
         stackView.addArrangedSubview(preconditionField)
@@ -132,10 +132,10 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
     func updateUI() {
         DispatchQueue.main.async {
             if let testCase = self.vm.testCase {
-                self.titleField.updateTextFieldValue(testCase.title)
-                self.descriptionField.updateTextFieldValue(testCase.description ?? Constants.emptyText)
-                self.preconditionField.updateTextFieldValue(testCase.preconditions ?? Constants.emptyText)
-                self.postconditionField.updateTextFieldValue(testCase.postconditions ?? Constants.emptyText)
+                self.titleField.updateTextViewValue(testCase.title)
+                self.descriptionField.updateTextViewValue(testCase.description ?? Constants.emptyText)
+                self.preconditionField.updateTextViewValue(testCase.preconditions ?? Constants.emptyText)
+                self.postconditionField.updateTextViewValue(testCase.postconditions ?? Constants.emptyText)
             }
             LoadingIndicator.stopLoading()
         }
@@ -145,18 +145,6 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
         DispatchQueue.main.async {
             self.updateUI()
         }
-    }
-}
-
-extension GeneralDetailCaseViewController: UITextFieldDelegate {
-    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        vm.isTestCaseDataEditing = true
-        
-        return true
-    }
-    
-    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
     }
 }
 

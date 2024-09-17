@@ -29,7 +29,15 @@ final class AuthViewModel {
     func fetchProjectsJSON() {
         LoadingIndicator.startLoading()
         
-        guard let urlString = Constants.urlString(Constants.APIMethods.project, nil, 1, 0, nil, nil) else { return }
+        guard let urlString = Constants.getUrlString(
+            APIMethod: .project,
+            codeOfProject: nil,
+            limit: 1,
+            offset: 0,
+            parentSuite: nil,
+            caseId: nil
+        ) else { return }
+        
         DispatchQueue.global().async {
             APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
                 

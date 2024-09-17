@@ -30,7 +30,14 @@ final class ProjectsViewModel {
     func fetchProjectsJSON() {
         LoadingIndicator.startLoading()
         
-        guard let urlString = Constants.urlString(Constants.APIMethods.project, nil, totalCountOfProjects, 0, nil, nil) else { return }
+        guard let urlString = Constants.getUrlString(
+                                            APIMethod: .project,
+                                            codeOfProject: nil,
+                                            limit: totalCountOfProjects,
+                                            offset: 0,
+                                            parentSuite: nil,
+                                            caseId: nil
+                                        ) else { return }
         APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
             
             switch result {
@@ -40,9 +47,7 @@ final class ProjectsViewModel {
                 }
             case .failure(let error):
                 print(error)
-                DispatchQueue.main.async {
-                    LoadingIndicator.stopLoading()
-                }
+                LoadingIndicator.stopLoading()
             }
         }
     }

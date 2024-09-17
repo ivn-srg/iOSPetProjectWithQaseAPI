@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class SuitesAndCasesTableViewController: UIViewController, UpdateTableViewProtocol, NextViewControllerPusher {
+final class SuitesAndCasesTableViewController: UIViewController {
 
     var viewModel: SuitesAndCasesViewModel
     
@@ -54,37 +54,20 @@ final class SuitesAndCasesTableViewController: UIViewController, UpdateTableView
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setup()
-        
         viewModel.delegate = self
+        setupTableView()
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewEntity))
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
         viewModel.requestEntitiesData()
     }
     
-    func updateTableView() {
-        DispatchQueue.main.async {
-            self.tableVw.reloadData()
-            LoadingIndicator.stopLoading()
-        }
-    }
-    
-    func pushToNextVC(to item: Int?) {
-        guard let item = item else { return }
-        let vc: UIViewController
-        let parentSuite = ParentSuite(id: viewModel.suitesAndCaseData[item].id, title: viewModel.suitesAndCaseData[item].title)
-        let caseItem = viewModel.suitesAndCaseData[item]
-        
-        if viewModel.suitesAndCaseData[item].isSuites {
-            vc = SuitesAndCasesTableViewController(parentSuite: parentSuite)
-        } else {
-            vc = DetailTabBarController(caseId: caseItem.id)
-        }
-        self.navigationController?.pushViewController(vc, animated: true)
-    }
-}
-
-private extension SuitesAndCasesTableViewController {
-    func setup() {
-        title = viewModel.parentSuite == nil ? Constants.PROJECT_NAME : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite?.id} ).first?.title
+    // MARK: - Setuping UI for tableView
+    func setupTableView() {
+        title = viewModel.parentSuite == nil ? Constants.PROJECT_NAME
+        : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite?.id} ).first?.title
         navigationItem.largeTitleDisplayMode = .never
         
         view.backgroundColor = .white
@@ -106,11 +89,41 @@ private extension SuitesAndCasesTableViewController {
     private func updateEmptyDataLabelVisibility() {
         emptyDataLabel.isHidden = viewModel.countOfRows() > 0
     }
+    
+    // MARK: - @objc funcs
+    @objc func addNewEntity() {
+        
+    }
 }
 
+// MARK: - UpdateTableViewProtocol
+extension SuitesAndCasesTableViewController: UpdateTableViewProtocol {
+    func updateTableView() {
+        DispatchQueue.main.async {
+            self.tableVw.reloadData()
+            LoadingIndicator.stopLoading()
+        }
+    }
+}
+
+// MARK: - NextViewControllerPusher
+extension SuitesAndCasesTableViewController: NextViewControllerPusher {
+    func pushToNextVC(to item: Int?) {
+        guard let item = item else { return }
+        let vc: UIViewController
+        let parentSuite = ParentSuite(id: viewModel.suitesAndCaseData[item].id, title: viewModel.suitesAndCaseData[item].title)
+        let caseItem = viewModel.suitesAndCaseData[item]
+        
+        if viewModel.suitesAndCaseData[item].isSuites {
+            vc = SuitesAndCasesTableViewController(parentSuite: parentSuite)
+        } else {
+            vc = DetailTabBarController(caseId: caseItem.id)
+        }
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+}
 
 // MARK: - Table view data source
-
 extension SuitesAndCasesTableViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {

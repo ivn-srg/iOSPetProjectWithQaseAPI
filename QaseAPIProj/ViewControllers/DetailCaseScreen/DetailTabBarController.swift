@@ -6,18 +6,22 @@
 //
 
 import UIKit
+import Foundation
 
 class DetailTabBarController: UITabBarController {
     // MARK: - Fields
     let viewModel: DetailTabbarControllerViewModel
     
     // MARK: - UI components
-    private lazy var saveRightBarButtonImage: UIImageView = {
-        let imageV = UIImageView()
-        imageV.image = AppTheme.checkMarkImage
-        imageV.tintColor = viewModel.isTestCaseDataEditing ? .blue : .gray
-        imageV.contentMode = .scaleAspectFit
-        return imageV
+    private lazy var alertController: UIAlertController = {
+        let alertC = UIAlertController(
+            title: "Data Has been saved ✅",
+            message: "Your changes for \(Constants.PROJECT_NAME)-\(viewModel.caseId) test case with successfully saved",
+            preferredStyle: .alert
+        )
+        let action = UIAlertAction(title: "OK", style: .cancel)
+        alertC.addAction(action)
+        return alertC
     }()
     
     // MARK: - Lifecycle
@@ -36,6 +40,9 @@ class DetailTabBarController: UITabBarController {
         
         viewModel.delegate = self
         viewModel.fetchCaseDataJSON()
+        viewModel.updatingFinishCallback = {
+            self.present(self.alertController, animated: true)
+        }
         configureView()
         setupGestures()
         delegate = self
@@ -122,13 +129,13 @@ extension DetailTabBarController: DetailTestCaseProtocol {
                                                  style: .plain,
                                                  target: self,
                                                  action: #selector(rightBarButtonTapped))
-            navigationItem.rightBarButtonItem = rightBarButton
+            navigationItem.setRightBarButton(rightBarButton, animated: true)
         } else {
             navigationItem.rightBarButtonItem = nil
         }
     }
     
     @objc func rightBarButtonTapped() {
-        print("Кнопка нажата")
+        viewModel.updateTestCaseData()
     }
 }

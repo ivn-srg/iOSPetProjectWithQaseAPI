@@ -128,3 +128,13 @@ struct StepsInTestCase: Codable, Equatable {
     let data: String?
     let steps: [StepsInTestCase]
 }
+
+// MARK: - response models
+struct UpdateResponseModel: Codable {
+    let status: Bool
+    let result: UpdatedTestCaseListModel
+}
+
+struct UpdatedTestCaseListModel: Codable {
+    let id: Int
+}

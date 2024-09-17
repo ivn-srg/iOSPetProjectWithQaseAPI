@@ -25,8 +25,15 @@ final class DetailTabbarControllerViewModel {
             }
         }
     }
-    var isTestCaseDataEditing = false
+    var isUploadingSuccess = false {
+        didSet {
+            DispatchQueue.main.async {
+                self.updatingFinishCallback()
+            }
+        }
+    }
     var caseId: Int
+    var updatingFinishCallback: () -> Void = {}
     
     // MARK: - Lifecycle
     init(caseId: Int) {
@@ -35,7 +42,14 @@ final class DetailTabbarControllerViewModel {
     
     // MARK: - Network work
     func fetchCaseDataJSON() {
-        guard let urlString = Constants.urlString(.openedCase, Constants.PROJECT_NAME, nil, nil, nil, caseId) else { return }
+        guard let urlString = Constants.getUrlString(
+                                            APIMethod: .openedCase,
+                                            codeOfProject: Constants.PROJECT_NAME,
+                                            limit: nil,
+                                            offset: nil,
+                                            parentSuite: nil,
+                                            caseId: caseId
+                                        ) else { return }
         
         LoadingIndicator.startLoading()
         
@@ -59,16 +73,34 @@ final class DetailTabbarControllerViewModel {
         }
     }
     
-    func updateTestCaseData() {}
-    
-    // MARK: - objc funcs
-    @objc func saveChangedData() {
-        if isTestCaseDataEditing {
-            // TODO: - Make a network request for update test case info
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 3, execute: DispatchWorkItem(block: {
-                print("Test case data has been saved")
-            }))
-            isTestCaseDataEditing = false
+    func updateTestCaseData() {
+        LoadingIndicator.startLoading()
+        guard let changedTestCase = changedTestCase else { return }
+        guard let urlString = Constants.getUrlString(
+                                            APIMethod: .openedCase,
+                                            codeOfProject: Constants.PROJECT_NAME,
+                                            limit: nil,
+                                            offset: nil,
+                                            parentSuite: nil,
+                                            caseId: testCase?.id
+                                        ) else { return }
+        APIManager.shared.updateTestCaseData(
+            newData: changedTestCase,
+            from: urlString,
+            method: Constants.APIType.patch.rawValue,
+            modelType: UpdateResponseModel.self) { [weak self] (result: Result<UpdateResponseModel, Error>) in
+            
+            switch result {
+            case .success(let jsonUpdateResult):
+                self?.isUploadingSuccess = jsonUpdateResult.status
+                self?.fetchCaseDataJSON()
+            case .failure(let error):
+                print(error)
+            }
+            LoadingIndicator.stopLoading()
         }
     }
+    
+    // MARK: - objc funcs
+    @objc func saveChangedData() {}
 }

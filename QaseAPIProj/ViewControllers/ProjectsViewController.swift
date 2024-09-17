@@ -7,15 +7,13 @@
 
 import UIKit
 
-final class ProjectsViewController: UIViewController, UpdateTableViewProtocol, NextViewControllerPusher {
+final class ProjectsViewController: UIViewController {
 
     var suitesAndCasesCompletion: (() -> Void)?
     var suitesAndCaseData = [SuiteAndCaseData]()
-    
     var viewModel: ProjectsViewModel
     
     // MARK: - UI
-    
     private lazy var tableVw: UITableView = {
         let tv = UITableView()
         tv.translatesAutoresizingMaskIntoConstraints = false
@@ -43,15 +41,19 @@ final class ProjectsViewController: UIViewController, UpdateTableViewProtocol, N
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setup()
         
+        setupTableView()
         viewModel.delegate = self
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewProject))
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
         viewModel.fetchProjectsJSON()
     }
     
     // MARK: - UI
-    
-    func setup() {
+    func setupTableView() {
         title = "Projects"
         navigationItem.largeTitleDisplayMode = .never
         
@@ -66,15 +68,24 @@ final class ProjectsViewController: UIViewController, UpdateTableViewProtocol, N
         }
     }
     
+    // MARK: - @objc funcs
+    @objc func addNewProject() {
+        
+    }
+}
+
+// MARK: - UpdateTableViewProtocol
+extension ProjectsViewController: UpdateTableViewProtocol {
     func updateTableView() {
         DispatchQueue.main.async {
             self.tableVw.reloadData()
             LoadingIndicator.stopLoading()
         }
     }
-    
-    // MARK: - Router
-    
+}
+
+// MARK: - NextViewControllerPusher
+extension ProjectsViewController: NextViewControllerPusher {
     func pushToNextVC(to item: Int? = nil) {
         DispatchQueue.main.async {
             if let item = item {
@@ -87,7 +98,6 @@ final class ProjectsViewController: UIViewController, UpdateTableViewProtocol, N
 }
 
 // MARK: - UITableViewDataSource
-
 extension ProjectsViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -109,12 +119,8 @@ extension ProjectsViewController: UITableViewDataSource {
 }
 
 // MARK: - UITableViewDelegate
-
 extension ProjectsViewController: UITableViewDelegate {
-    
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
         cell.separatorInset = UIEdgeInsets(top: 0, left: 1, bottom: 2, right: -5)
-        
     }
 }

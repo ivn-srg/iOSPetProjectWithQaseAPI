@@ -7,7 +7,7 @@
 
 import UIKit
 
-class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate {
+class PropertiesDetailCaseViewController: UIViewController {
     
     let vm: DetailTabbarControllerViewModel
     
@@ -109,7 +109,7 @@ class PropertiesDetailCaseViewController: UIViewController, UITextFieldDelegate 
         }
         
         stackView.snp.makeConstraints {
-            $0.verticalEdges.equalTo(scrollView.snp.verticalEdges).inset(30)
+            $0.top.equalTo(scrollView.snp.top).offset(30)
             $0.centerX.equalTo(scrollView.snp.centerX)
             $0.width.equalTo(scrollView.snp.width).inset(30)
         }

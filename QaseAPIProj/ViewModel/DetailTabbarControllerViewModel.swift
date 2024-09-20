@@ -21,7 +21,7 @@ final class DetailTabbarControllerViewModel {
     var changedTestCase: TestEntity? {
         didSet {
             DispatchQueue.main.async {
-                self.delegate?.checkConditionAndToggleRightBarButton()
+                self.checkDataChanged()
             }
         }
     }
@@ -34,6 +34,7 @@ final class DetailTabbarControllerViewModel {
     }
     var caseId: Int
     var updatingFinishCallback: () -> Void = {}
+    var checkDataChanged: () -> Void = {}
     
     // MARK: - Lifecycle
     init(caseId: Int) {

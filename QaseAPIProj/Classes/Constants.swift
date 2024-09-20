@@ -175,10 +175,11 @@ struct Constants {
         
         switch APIMethod {
         case .project:
-            guard let limit = limit else { return nil }
-            guard let offset = offset else { return nil }
-            
-            return "\(Constants.DOMEN)/project?limit=\(limit)&offset=\(offset)"
+            if let limit = limit, let offset = offset {
+                return "\(Constants.DOMEN)/project?limit=\(limit)&offset=\(offset)"
+            } else {
+                return "\(Constants.DOMEN)/project"
+            }
         case .suites:
             guard let limit = limit else { return nil }
             guard let offset = offset else { return nil }

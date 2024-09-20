@@ -14,7 +14,7 @@ enum GeneralCaseTextFieldTypes {
 
 final class GeneralCaseTextField: UIView {
     private let textType: GeneralCaseTextFieldTypes
-    private var testCaseViewModel: DetailTabbarControllerViewModel?
+    private var detailViewModel: Any?
     private var textViewHeightConstraint: Constraint?
     
     // MARK: - UI components
@@ -44,9 +44,9 @@ final class GeneralCaseTextField: UIView {
     
     // MARK: - Lyfecycle
     
-    init(textType: GeneralCaseTextFieldTypes, textViewValue: String = "", detailVM: DetailTabbarControllerViewModel? = nil) {
+    init(textType: GeneralCaseTextFieldTypes, textViewValue: String = "", detailVM: Any? = nil) {
         self.textType = textType
-        self.testCaseViewModel = detailVM
+        self.detailViewModel = detailVM
         super.init(frame: .zero)
         
         let title: String
@@ -113,18 +113,31 @@ extension GeneralCaseTextField: UITextViewDelegate {
         
         textViewHeightConstraint?.update(offset: newHeight)
         
-        guard let testCaseViewModel = testCaseViewModel else { return }
         switch textType {
         case .name:
-            testCaseViewModel.changedTestCase?.title = textView.text
+            if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
+                detailViewModel.changedTestCase?.title = textView.text
+            } else if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
+                detailViewModel.creatingProject.title = textView.text
+            }
         case .description:
-            testCaseViewModel.changedTestCase?.description = textView.text
+            if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
+                detailViewModel.changedTestCase?.description = textView.text
+            } else if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
+                detailViewModel.creatingProject.description = textView.text
+            }
         case .precondition:
-            testCaseViewModel.changedTestCase?.preconditions = textView.text
+            if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
+                detailViewModel.changedTestCase?.preconditions = textView.text
+            }
         case .postcondition:
-            testCaseViewModel.changedTestCase?.postconditions = textView.text
+            if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
+                detailViewModel.changedTestCase?.postconditions = textView.text
+            }
         case .code:
-            NSLog("case code")
+            if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
+                detailViewModel.creatingProject.code = textView.text
+            }
         }
     }
 }

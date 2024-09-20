@@ -43,6 +43,9 @@ class DetailTabBarController: UITabBarController {
         viewModel.updatingFinishCallback = {
             self.present(self.alertController, animated: true)
         }
+        viewModel.checkDataChanged = {
+            self.checkConditionAndToggleRightBarButton()
+        }
         configureView()
         setupGestures()
         delegate = self
@@ -119,7 +122,9 @@ extension DetailTabBarController: DetailTestCaseProtocol {
             }
         }
     }
-    
+}
+
+extension DetailTabBarController: CheckEnablingRBBProtocol {
     // MARK: - setuping save bar buttons into VC's navItem
     func checkConditionAndToggleRightBarButton() {
         let shouldShowButton = viewModel.testCase != viewModel.changedTestCase

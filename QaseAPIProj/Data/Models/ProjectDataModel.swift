@@ -46,3 +46,22 @@ struct BugReports: Codable {
 struct ProjectErrorDataModel: Codable {
     let error: String
 }
+
+// MARK: - Creating a Project
+struct CreatingProject: Codable {
+    var title: String
+    var code: String
+    var description: String
+    
+    var isEmpty: Bool {
+        self.title.isEmpty || self.code.isEmpty
+    }
+}
+struct CreateResultModel: Codable {
+    let status: Bool
+    let result: CreateResultCodeModel
+}
+
+struct CreateResultCodeModel: Codable {
+    let code: String
+}

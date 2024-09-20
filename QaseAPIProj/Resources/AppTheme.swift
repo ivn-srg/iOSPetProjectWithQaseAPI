@@ -22,3 +22,14 @@ enum AppTheme {
     // colors
     static let fioletColor = UIColor(red: 0.31, green: 0.27, blue: 0.86, alpha: 1)
 }
+
+// MARK: - Shared UI Components
+func showAlertController(on vc: UIViewController, title: String, message: String) {
+    let alert = UIAlertController(
+        title: title,
+        message: message,
+        preferredStyle: .alert
+    )
+    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    vc.present(alert, animated: true)
+}

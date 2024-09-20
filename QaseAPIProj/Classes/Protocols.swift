@@ -19,5 +19,8 @@ protocol UpdateTableViewProtocol: AnyObject {
 @objc protocol DetailTestCaseProtocol: AnyObject {
     func updateUI()
     @objc func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer)
+}
+
+protocol CheckEnablingRBBProtocol: AnyObject {
     func checkConditionAndToggleRightBarButton()
 }

@@ -35,6 +35,10 @@
 		938C47E32C9A0BC600B75BE8 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47DE2C9A0BC600B75BE8 /* AppTheme.swift */; };
 		938C47E82C9A0C0000B75BE8 /* PropertiesPickerTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47E62C9A0C0000B75BE8 /* PropertiesPickerTextField.swift */; };
 		938C47E92C9A0C0000B75BE8 /* SwitcherWithTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */; };
+		93B0454E2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */; };
+		93B045512C9E946700EE125B /* CreateTestCaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045502C9E946700EE125B /* CreateTestCaseView.swift */; };
+		93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045522C9E948B00EE125B /* CreateSuiteView.swift */; };
+		93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045542C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift */; };
 		93DCDF592BE4EC3800D4F365 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */; };
 		93DCDF5B2BE4F11F00D4F365 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5A2BE4F11F00D4F365 /* AuthViewModel.swift */; };
 		93DCDF5D2BE5159500D4F365 /* SuitesAndCasesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5C2BE5159500D4F365 /* SuitesAndCasesViewModel.swift */; };
@@ -75,6 +79,10 @@
 		938C47DE2C9A0BC600B75BE8 /* AppTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppTheme.swift; path = QaseAPIProj/Resources/AppTheme.swift; sourceTree = SOURCE_ROOT; };
 		938C47E62C9A0C0000B75BE8 /* PropertiesPickerTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertiesPickerTextField.swift; sourceTree = "<group>"; };
 		938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwitcherWithTitle.swift; sourceTree = "<group>"; };
+		93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteOrCaseViewController.swift; sourceTree = "<group>"; };
+		93B045502C9E946700EE125B /* CreateTestCaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateTestCaseView.swift; sourceTree = "<group>"; };
+		93B045522C9E948B00EE125B /* CreateSuiteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteView.swift; sourceTree = "<group>"; };
+		93B045542C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteOrCaseViewModel.swift; sourceTree = "<group>"; };
 		93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
 		93DCDF5A2BE4F11F00D4F365 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		93DCDF5C2BE5159500D4F365 /* SuitesAndCasesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesViewModel.swift; sourceTree = "<group>"; };
@@ -107,6 +115,7 @@
 				93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */,
 				93DCDF5C2BE5159500D4F365 /* SuitesAndCasesViewModel.swift */,
 				938C47DC2C9A095A00B75BE8 /* CreatingProjectViewModel.swift */,
+				93B045542C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -144,11 +153,11 @@
 		93748C2F2B4808BF00BE7FFB /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				93B0454F2C9E940800EE125B /* CreatingVC */,
 				93748C322B480F4400BE7FFB /* AuthViewController.swift */,
 				93F1F37D2B59879900667DB9 /* DetailCaseScreen */,
 				9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */,
 				93748C302B4808F500BE7FFB /* ProjectsViewController.swift */,
-				938C47DA2C9A08B300B75BE8 /* CreatingProjectViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -207,6 +216,17 @@
 				937085582BEB3C49002316B8 /* Models */,
 			);
 			path = Data;
+			sourceTree = "<group>";
+		};
+		93B0454F2C9E940800EE125B /* CreatingVC */ = {
+			isa = PBXGroup;
+			children = (
+				938C47DA2C9A08B300B75BE8 /* CreatingProjectViewController.swift */,
+				93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */,
+				93B045502C9E946700EE125B /* CreateTestCaseView.swift */,
+				93B045522C9E948B00EE125B /* CreateSuiteView.swift */,
+			);
+			path = CreatingVC;
 			sourceTree = "<group>";
 		};
 		93C7430E2B4C7B9A009F8865 /* Resources */ = {
@@ -320,13 +340,16 @@
 				9370855B2BEB3C49002316B8 /* RealmDB.swift in Sources */,
 				937650C22B6CE70800B5336B /* DetailTabbarControllerViewModel.swift in Sources */,
 				938C47E82C9A0C0000B75BE8 /* PropertiesPickerTextField.swift in Sources */,
+				93B0454E2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift in Sources */,
 				93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */,
 				934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */,
 				93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */,
 				937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */,
+				93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */,
 				93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */,
 				9370855D2BEB3C49002316B8 /* SuiteAndCaseData.swift in Sources */,
 				93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */,
+				93B045512C9E946700EE125B /* CreateTestCaseView.swift in Sources */,
 				936A2B192C8A2821007F7C72 /* GeneralCaseTextField.swift in Sources */,
 				9370855F2BEB3C49002316B8 /* TestCasesModel.swift in Sources */,
 				935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */,
@@ -335,6 +358,7 @@
 				9384FCDF2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift in Sources */,
 				93DCDF5B2BE4F11F00D4F365 /* AuthViewModel.swift in Sources */,
 				93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */,
+				93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */,
 				93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */,
 				9357F1E22C91732B00219BEC /* Keychain.swift in Sources */,
 			);

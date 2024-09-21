@@ -57,11 +57,12 @@ struct CreatingProject: Codable {
         self.title.isEmpty || self.code.isEmpty
     }
 }
-struct CreateResultModel: Codable {
+
+struct ServerResponse<T: Codable>: Codable {
     let status: Bool
-    let result: CreateResultCodeModel
+    let result: T
 }
 
-struct CreateResultCodeModel: Codable {
+struct CreateOrUpdateProjectModel: Codable {
     let code: String
 }

@@ -89,7 +89,8 @@ final class DetailTabbarControllerViewModel {
             newData: changedTestCase,
             from: urlString,
             method: Constants.APIType.patch.rawValue,
-            modelType: UpdateResponseModel.self) { [weak self] (result: Result<UpdateResponseModel, Error>) in
+            modelType: ServerResponse<CreateOrUpdateTestCaseModel>.self) {
+                [weak self] (result: Result<ServerResponse<CreateOrUpdateTestCaseModel>, Error>) in
             
             switch result {
             case .success(let jsonUpdateResult):

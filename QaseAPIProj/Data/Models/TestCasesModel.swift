@@ -130,11 +130,44 @@ struct StepsInTestCase: Codable, Equatable {
 }
 
 // MARK: - response models
-struct UpdateResponseModel: Codable {
-    let status: Bool
-    let result: UpdatedTestCaseListModel
-}
-
-struct UpdatedTestCaseListModel: Codable {
+struct CreateOrUpdateTestCaseModel: Codable {
     let id: Int
 }
+
+// MARK: - Create test case model
+struct CreatingTestCase: Codable {
+    var title: String
+    var description: String
+    var precondition: String
+    var postcondition: String
+    var severity: Int
+    var priority: Int
+    var type: Int
+    var layer: Int
+    var isFlaky: Int
+    var behavior: Int
+    var automation: Int
+    var status: Int
+    var suiteId: Int?
+    var attachment: [String]?
+    var steps: StepsInTestCase?
+    var tags: [String]?
+    
+    static var empty: CreatingTestCase {
+        return .init(
+            title: "",
+            description: "",
+            precondition: "",
+            postcondition: "",
+            severity: 0,
+            priority: 0,
+            type: 0,
+            layer: 0,
+            isFlaky: 0,
+            behavior: 0,
+            automation: 0,
+            status: 0
+        )
+    }
+}
+

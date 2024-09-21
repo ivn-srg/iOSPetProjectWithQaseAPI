@@ -143,8 +143,8 @@ struct Constants {
     
     enum APIMethods: String, CaseIterable {
         case project = "project"
-        case suites, suitesWithoutParent = "suite"
-        case cases, casesWithoutParent = "case"
+        case suites = "suite"
+        case cases = "case"
         case openedCase = ""
         
         func returnAllEnumCases() -> [String] {
@@ -181,32 +181,26 @@ struct Constants {
                 return "\(Constants.DOMEN)/project"
             }
         case .suites:
-            guard let limit = limit else { return nil }
-            guard let offset = offset else { return nil }
             guard let codeOfProject = codeOfProject else { return nil }
-            guard let parentSuite = parentSuite else { return nil }
+            guard let limit = limit, let offset = offset else {
+                return "\(Constants.DOMEN)/suite/\(codeOfProject)"
+            }
+            guard let parentSuite = parentSuite else {
+                return "\(Constants.DOMEN)/suite/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
+            }
             guard let searchSuiteString = parentSuite.title.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else { return nil }
             
             return "\(Constants.DOMEN)/suite/\(codeOfProject)?search=\"\(searchSuiteString)\"&limit=\(limit)&offset=\(offset)"
         case .cases:
-            guard let limit = limit else { return nil }
-            guard let offset = offset else { return nil }
             guard let codeOfProject = codeOfProject else { return nil }
-            guard let parentSuite = parentSuite else { return nil }
+            guard let limit = limit, let offset = offset else {
+                return "\(Constants.DOMEN)/case/\(codeOfProject)"
+            }
+            guard let parentSuite = parentSuite else {
+                return "\(Constants.DOMEN)/case/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
+            }
             
             return "\(Constants.DOMEN)/case/\(codeOfProject)?suite_id=\(parentSuite.id)&limit=\(limit)&offset=\(offset)"
-        case .suitesWithoutParent:
-            guard let limit = limit else { return nil }
-            guard let offset = offset else { return nil }
-            guard let codeOfProject = codeOfProject else { return nil }
-            
-            return "\(Constants.DOMEN)/suite/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
-        case .casesWithoutParent:
-            guard let limit = limit else { return nil }
-            guard let offset = offset else { return nil }
-            guard let codeOfProject = codeOfProject else { return nil }
-            
-            return "\(Constants.DOMEN)/case/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
         case .openedCase:
             guard let codeOfProject = codeOfProject else { return nil }
             guard let caseId = caseId else { return nil }

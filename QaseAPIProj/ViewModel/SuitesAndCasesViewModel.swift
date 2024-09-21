@@ -39,7 +39,7 @@ final class SuitesAndCasesViewModel {
     
     private func getTotalCountOfEntities() {
         guard let urlStringSuites = Constants.getUrlString(
-            APIMethod: .suitesWithoutParent,
+            APIMethod: .suites,
             codeOfProject: Constants.PROJECT_NAME,
             limit: 1,
             offset: 0,
@@ -47,11 +47,11 @@ final class SuitesAndCasesViewModel {
             caseId: nil
         ) else { return }
         guard let urlStringCases = Constants.getUrlString(
-            APIMethod: parentSuite != nil ? .cases : .casesWithoutParent,
+            APIMethod: .cases,
             codeOfProject: Constants.PROJECT_NAME,
             limit: 1,
             offset: 0,
-            parentSuite: parentSuite != nil ? parentSuite : nil,
+            parentSuite: parentSuite,
             caseId: nil
         ) else { return }
         
@@ -87,7 +87,7 @@ final class SuitesAndCasesViewModel {
         
         repeat {
             urlStringSuites = Constants.getUrlString(
-                APIMethod: .suitesWithoutParent,
+                APIMethod: .suites,
                 codeOfProject: Constants.PROJECT_NAME,
                 limit: limit,
                 offset: offset,
@@ -116,11 +116,11 @@ final class SuitesAndCasesViewModel {
         
         repeat {
             urlStringCases = Constants.getUrlString(
-                APIMethod: parentSuite != nil ? .cases : .casesWithoutParent,
+                APIMethod: .cases,
                 codeOfProject: Constants.PROJECT_NAME,
                 limit: limit,
                 offset: offset,
-                parentSuite: parentSuite != nil ? parentSuite : nil,
+                parentSuite: parentSuite,
                 caseId: nil
             ) ?? ""
             

@@ -8,8 +8,13 @@
 import UIKit
 import SnapKit
 
-enum GeneralCaseTextFieldTypes {
-    case name, description, precondition, postcondition, code
+enum GeneralCaseTextFieldTypes: String {
+    case name = "Title"
+    case description = "Description"
+    case precondition = "Precondition"
+    case postcondition = "Postcondition"
+    case code = "Project code"
+    case parentSuite = "Parent suite"
 }
 
 final class GeneralCaseTextField: UIView {
@@ -44,7 +49,7 @@ final class GeneralCaseTextField: UIView {
     
     // MARK: - Lyfecycle
     
-    init(textType: GeneralCaseTextFieldTypes, textViewValue: String = "", detailVM: Any? = nil) {
+    init(textType: GeneralCaseTextFieldTypes, textViewValue: String? = "", detailVM: Any? = nil) {
         self.textType = textType
         self.detailViewModel = detailVM
         super.init(frame: .zero)
@@ -52,15 +57,17 @@ final class GeneralCaseTextField: UIView {
         let title: String
         switch textType {
         case .name:
-            title = "Title"
+            title = GeneralCaseTextFieldTypes.name.rawValue
         case .description:
-            title = "Description"
+            title = GeneralCaseTextFieldTypes.description.rawValue
         case .precondition:
-            title = "Pre-condition"
+            title = GeneralCaseTextFieldTypes.precondition.rawValue
         case .postcondition:
-            title = "Post-condition"
+            title = GeneralCaseTextFieldTypes.postcondition.rawValue
         case .code:
-            title = "Project code"
+            title = GeneralCaseTextFieldTypes.code.rawValue
+        case .parentSuite:
+            title = GeneralCaseTextFieldTypes.parentSuite.rawValue
         }
         
         textView.delegate = self
@@ -119,26 +126,55 @@ extension GeneralCaseTextField: UITextViewDelegate {
                 detailViewModel.changedTestCase?.title = textView.text
             } else if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
                 detailViewModel.creatingProject.title = textView.text
+            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
+                if let testSuite = detailViewModel.creatingSuite {
+                    detailViewModel.creatingSuite?.title = textView.text
+                } else if let testCase = detailViewModel.creatingTestCase {
+                    detailViewModel.creatingTestCase?.title = textView.text
+                }
             }
         case .description:
             if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
                 detailViewModel.changedTestCase?.description = textView.text
             } else if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
                 detailViewModel.creatingProject.description = textView.text
+            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
+                if let testSuite = detailViewModel.creatingSuite {
+                    detailViewModel.creatingSuite?.description = textView.text
+                } else if let testCase = detailViewModel.creatingTestCase {
+                    detailViewModel.creatingTestCase?.description = textView.text
+                }
             }
         case .precondition:
             if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
                 detailViewModel.changedTestCase?.preconditions = textView.text
+            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
+                if let testSuite = detailViewModel.creatingSuite {
+                    detailViewModel.creatingSuite?.preconditions = textView.text
+                } else if let testCase = detailViewModel.creatingTestCase {
+                    detailViewModel.creatingTestCase?.precondition = textView.text
+                }
             }
         case .postcondition:
             if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
                 detailViewModel.changedTestCase?.postconditions = textView.text
+            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
+                if let testCase = detailViewModel.creatingTestCase {
+                    detailViewModel.creatingTestCase?.postcondition = textView.text
+                }
             }
         case .code:
             if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
                 detailViewModel.creatingProject.code = textView.text
             }
+        case .parentSuite:
+            if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
+                detailViewModel.creatingSuite?.parentId = Int(textView.text)
+            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
+                if let testSuite = detailViewModel.creatingSuite {
+                    detailViewModel.creatingSuite?.parentId = Int(textView.text)
+                }
+            }
         }
     }
 }
-

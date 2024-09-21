@@ -58,7 +58,8 @@ final class CreatingProjectViewModel {
             newData: creatingProject,
             from: urlString,
             method: Constants.APIType.post.rawValue,
-            modelType: CreateResultModel.self) { [weak self] (result: Result<CreateResultModel, Error>) in
+            modelType: ServerResponse<CreateOrUpdateProjectModel>.self) {
+                [weak self] (result: Result<ServerResponse<CreateOrUpdateProjectModel>, Error>) in
             
             switch result {
             case .success(let jsonUpdateResult):

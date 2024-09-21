@@ -71,3 +71,17 @@ struct ParentSuite {
     }
 }
 
+struct CreatingSuite: Codable {
+    var title: String
+    var description: String
+    var preconditions: String?
+    var parentId: Int?
+    
+    static var empty: CreatingSuite {
+        return .init(title: "", description: "")
+    }
+}
+
+struct CreateOrUpdateSuiteModel: Codable {
+    let id: Int
+}

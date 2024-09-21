@@ -151,6 +151,9 @@ extension CreatingProjectViewController: CheckEnablingRBBProtocol {
     }
     
     @objc func createNewProject() {
-        viewModel.createNewProject()
+        Task {
+            viewModel.createNewProject()
+            self.dismiss(animated: true)
+        }
     }
 }

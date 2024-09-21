@@ -92,7 +92,9 @@ final class SuitesAndCasesTableViewController: UIViewController {
     
     // MARK: - @objc funcs
     @objc func addNewEntity() {
-        
+        let vc = CreateSuiteOrCaseViewController(viewModel: .init())
+        vc.modalPresentationStyle = .fullScreen
+        present(vc, animated: true)
     }
 }
 

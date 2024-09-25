@@ -139,6 +139,7 @@ struct Constants {
         case get = "GET"
         case post = "POST"
         case patch = "PATCH"
+        case delete = "DELETE"
     }
     
     enum APIMethods: String, CaseIterable {
@@ -177,6 +178,8 @@ struct Constants {
         case .project:
             if let limit = limit, let offset = offset {
                 return "\(Constants.DOMEN)/project?limit=\(limit)&offset=\(offset)"
+            } else if let codeOfProject = codeOfProject {
+                return "\(Constants.DOMEN)/project/\(codeOfProject)"
             } else {
                 return "\(Constants.DOMEN)/project"
             }

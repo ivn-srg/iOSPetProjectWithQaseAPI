@@ -11,14 +11,14 @@ final class CreateSuiteOrCaseViewModel {
     // MARK: - Fields
     weak var delegate: CheckEnablingRBBProtocol?
     var creatingEntityIsSuite: Bool = true
-    var creatingTestCase: CreatingTestCase? {
+    var creatingTestCase: CreatingTestCase {
         didSet {
             DispatchQueue.main.async {
                 self.delegate?.checkConditionAndToggleRightBarButton()
             }
         }
     }
-    var creatingSuite: CreatingSuite? {
+    var creatingSuite: CreatingSuite {
         didSet {
             DispatchQueue.main.async {
                 self.delegate?.checkConditionAndToggleRightBarButton()
@@ -51,13 +51,9 @@ final class CreateSuiteOrCaseViewModel {
     // MARK: - Network work
     func createNewEntity() {
         LoadingIndicator.startLoading()
-        if let creatingSuite = creatingSuite, creatingEntityIsSuite {
-            isFieldsEmpty = creatingSuite.title.isEmpty
-            return
-        } else if let creatingTestCase = creatingTestCase, !creatingEntityIsSuite{
-            isFieldsEmpty = creatingTestCase.title.isEmpty
-            return
-        }
+        isFieldsEmpty = creatingEntityIsSuite ? creatingSuite.title.isEmpty : creatingTestCase.title.isEmpty
+        if isFieldsEmpty { return }
+            
         guard let urlString = Constants.getUrlString(
             APIMethod: creatingEntityIsSuite ? .suites : .cases,
             codeOfProject: Constants.PROJECT_NAME,
@@ -68,13 +64,12 @@ final class CreateSuiteOrCaseViewModel {
         ) else { return }
         
         if creatingEntityIsSuite {
-            guard let creatingSuite = creatingSuite else { return }
             APIManager.shared.createorUpdateEntity(
                 newData: creatingSuite,
                 from: urlString,
                 method: Constants.APIType.post.rawValue,
-                modelType: ServerResponse<CreateOrUpdateSuiteModel>.self) {
-                    [weak self] (result: Result<ServerResponse<CreateOrUpdateSuiteModel>, Error>) in
+                modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self) {
+                    [weak self] (result: Result<ServerResponseModel<CreateOrUpdateSuiteModel>, Error>) in
                     
                     switch result {
                     case .success(let jsonUpdateResult):
@@ -85,13 +80,12 @@ final class CreateSuiteOrCaseViewModel {
                     LoadingIndicator.stopLoading()
                 }
         } else {
-            guard let creatingTestCase = creatingTestCase else { return }
             APIManager.shared.createorUpdateEntity(
                 newData: creatingTestCase,
                 from: urlString,
                 method: Constants.APIType.post.rawValue,
-                modelType: ServerResponse<CreateOrUpdateTestCaseModel>.self) {
-                    [weak self] (result: Result<ServerResponse<CreateOrUpdateTestCaseModel>, Error>) in
+                modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self) {
+                    [weak self] (result: Result<ServerResponseModel<CreateOrUpdateTestCaseModel>, Error>) in
                     
                     switch result {
                     case .success(let jsonUpdateResult):

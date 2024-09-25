@@ -67,8 +67,6 @@ class ProjectTableViewCell: UITableViewCell {
     func configure(with project: Project) {
         let infoAboutActiveRuns = project.counts.runs.active == 0 ? "No active runs" : "\(project.counts.runs.active) active run(s)"
         
-        containerVw.backgroundColor = .white
-        
         nameLbl.text = project.title
         codeLbl.text = project.code
         testsAndSuitesLbl.text = "\(project.counts.cases) cases | \(project.counts.suites) suites | \(infoAboutActiveRuns)"

@@ -58,11 +58,6 @@ struct CreatingProject: Codable {
     }
 }
 
-struct ServerResponse<T: Codable>: Codable {
-    let status: Bool
-    let result: T
-}
-
 struct CreateOrUpdateProjectModel: Codable {
     let code: String
 }

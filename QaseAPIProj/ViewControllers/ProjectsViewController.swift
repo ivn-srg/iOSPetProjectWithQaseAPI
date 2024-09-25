@@ -71,6 +71,10 @@ final class ProjectsViewController: UIViewController {
     // MARK: - @objc funcs
     @objc func addNewProject() {
         let vc = CreatingProjectViewController(viewModel: .init())
+        vc.createdProjectCallback = {
+            LoadingIndicator.startLoading()
+            self.viewModel.fetchProjectsJSON()
+        }
         vc.modalPresentationStyle = .fullScreen
         present(vc, animated: true)
     }
@@ -124,5 +128,12 @@ extension ProjectsViewController: UITableViewDataSource {
 extension ProjectsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         cell.separatorInset = UIEdgeInsets(top: 0, left: 1, bottom: 2, right: -5)
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let swipeAction = UIContextualAction(style: .destructive, title: "Delete", handler: { action, view, completion in
+            self.viewModel.deleteProject(at: indexPath.row)
+        })
+        return UISwipeActionsConfiguration(actions: [swipeAction])
     }
 }

@@ -10,6 +10,7 @@ import UIKit
 final class CreatingProjectViewController: UIViewController {
     // MARK: - Fields
     private var viewModel: CreatingProjectViewModel
+    var createdProjectCallback: () -> Void
 
     // MARK: - UI components
     private lazy var customNavigationView: UIView = {
@@ -73,8 +74,13 @@ final class CreatingProjectViewController: UIViewController {
     private lazy var descriptionTextView = GeneralCaseTextField(textType: .description, detailVM: viewModel)
     
     // MARK: - LifeCycle
-    init(viewModel: CreatingProjectViewModel) {
+    init(viewModel: CreatingProjectViewModel, createdCallback: (() -> Void)? = nil) {
         self.viewModel = viewModel
+        if let createdCallback = createdCallback {
+            self.createdProjectCallback = createdCallback
+        } else {
+            self.createdProjectCallback = {}
+        }
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -151,9 +157,8 @@ extension CreatingProjectViewController: CheckEnablingRBBProtocol {
     }
     
     @objc func createNewProject() {
-        Task {
-            viewModel.createNewProject()
-            self.dismiss(animated: true)
-        }
+        viewModel.createNewProject()
+        dismiss(animated: true)
+        createdProjectCallback()
     }
 }

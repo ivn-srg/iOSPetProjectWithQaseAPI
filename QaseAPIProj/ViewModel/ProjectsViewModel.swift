@@ -14,9 +14,7 @@ final class ProjectsViewModel {
     let totalCountOfProjects: Int
     var projects: [Project] = [] {
         didSet {
-            if let delegate = delegate {
-                delegate.updateTableView()
-            }
+            delegate?.updateTableView()
         }
     }
     
@@ -38,7 +36,7 @@ final class ProjectsViewModel {
                                             parentSuite: nil,
                                             caseId: nil
                                         ) else { return }
-        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
+        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
             
             switch result {
             case .success(let jsonProjects):
@@ -47,8 +45,39 @@ final class ProjectsViewModel {
                 }
             case .failure(let error):
                 print(error)
-                LoadingIndicator.stopLoading()
             }
+            
+            LoadingIndicator.stopLoading()
+        }
+    }
+    
+    func deleteProject(at index: Int) {
+        LoadingIndicator.startLoading()
+        
+        guard let urlString = Constants.getUrlString(
+                                            APIMethod: .project,
+                                            codeOfProject: self.projects[index].code,
+                                            limit: nil,
+                                            offset: nil,
+                                            parentSuite: nil,
+                                            caseId: nil
+                                        ) else { return }
+        APIManager.shared.fetchData(
+            from: urlString,
+            method: Constants.APIType.delete.rawValue,
+            modelType: SharedResponseModel.self)
+        {
+            [weak self] (result: Result<SharedResponseModel, Error>) in
+            
+            switch result {
+            case .success(let jsonResult):
+                if jsonResult.status {
+                    self?.projects.remove(at: index)
+                }
+            case .failure(let error):
+                print(error)
+            }
+            LoadingIndicator.stopLoading()
         }
     }
     

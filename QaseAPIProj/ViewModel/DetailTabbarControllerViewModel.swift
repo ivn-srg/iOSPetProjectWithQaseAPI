@@ -57,7 +57,6 @@ final class DetailTabbarControllerViewModel {
         APIManager.shared.fetchData(
             from: urlString,
             method: Constants.APIType.get.rawValue,
-            token: Constants.TOKEN,
             modelType: TestCaseModel.self
         ) { [weak self] (result: Result<TestCaseModel, Error>) in
             
@@ -89,8 +88,8 @@ final class DetailTabbarControllerViewModel {
             newData: changedTestCase,
             from: urlString,
             method: Constants.APIType.patch.rawValue,
-            modelType: ServerResponse<CreateOrUpdateTestCaseModel>.self) {
-                [weak self] (result: Result<ServerResponse<CreateOrUpdateTestCaseModel>, Error>) in
+            modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self) {
+                [weak self] (result: Result<ServerResponseModel<CreateOrUpdateTestCaseModel>, Error>) in
             
             switch result {
             case .success(let jsonUpdateResult):

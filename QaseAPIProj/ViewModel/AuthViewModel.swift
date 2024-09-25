@@ -39,7 +39,11 @@ final class AuthViewModel {
         ) else { return }
         
         DispatchQueue.global().async {
-            APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
+            APIManager.shared.fetchData(
+                from: urlString,
+                method: Constants.APIType.get.rawValue,
+                modelType: ProjectDataModel.self)
+            { [weak self] (result: Result<ProjectDataModel, Error>) in
                 
                 switch result {
                 case .success(let jsonProjects):

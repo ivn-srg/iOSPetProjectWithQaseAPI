@@ -57,8 +57,6 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
     // MARK: - lifecycles
     
     func configure(with dataForCell: SuiteAndCaseData) {
-        contentView.backgroundColor = .white
-
         if !dataForCell.isSuites {
             switch dataForCell.priority {
                 case 1:

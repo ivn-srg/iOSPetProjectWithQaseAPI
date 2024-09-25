@@ -59,7 +59,11 @@ final class SuitesAndCasesViewModel {
             LoadingIndicator.startLoading()
         }
         
-        APIManager.shared.fetchData(from: urlStringSuites, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
+        APIManager.shared.fetchData(
+            from: urlStringSuites,
+            method: Constants.APIType.get.rawValue,
+            modelType: SuitesDataModel.self)
+        { [weak self] (result: Result<SuitesDataModel, Error>) in
             switch result {
             case .success(let jsonSuites):
                 self?.totalCountOfSuites = jsonSuites.result.total
@@ -69,7 +73,11 @@ final class SuitesAndCasesViewModel {
             }
         }
         
-        APIManager.shared.fetchData(from: urlStringCases, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
+        APIManager.shared.fetchData(
+            from: urlStringCases,
+            method: Constants.APIType.get.rawValue,
+            modelType: TestCasesModel.self)
+        { [weak self] (result: Result<TestCasesModel, Error>) in
             switch result {
             case .success(let jsonCases):
                 self?.totalCountOfCases = self?.parentSuite != nil ? jsonCases.result.filtered : jsonCases.result.total
@@ -95,12 +103,23 @@ final class SuitesAndCasesViewModel {
                 caseId: nil
             ) ?? ""
             
-            APIManager.shared.fetchData(from: urlStringSuites, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: SuitesDataModel.self) { [weak self] (result: Result<SuitesDataModel, Error>) in
+            APIManager.shared.fetchData(
+                from: urlStringSuites,
+                method: Constants.APIType.get.rawValue,
+                modelType: SuitesDataModel.self)
+            { [weak self] (result: Result<SuitesDataModel, Error>) in
                 
                 switch result {
                 case .success(let jsonSuites):
-                    let filteredSuites = self?.parentSuite != nil ? jsonSuites.result.entities.filter { $0.parentId == self?.parentSuite?.id } : jsonSuites.result.entities.filter { $0.parentId == nil }
-                    self?.changeDataTypeToUniversalizeData(isSuite: true, targetUniversalList: &self!.suitesAndCaseData, suites: filteredSuites, testCases: nil)
+                    let filteredSuites = self?.parentSuite != nil
+                    ? jsonSuites.result.entities.filter { $0.parentId == self?.parentSuite?.id }
+                    : jsonSuites.result.entities.filter { $0.parentId == nil }
+                    self?.changeDataTypeToUniversalizeData(
+                        isSuite: true,
+                        targetUniversalList: &self!.suitesAndCaseData,
+                        suites: filteredSuites,
+                        testCases: nil
+                    )
                 case .failure(let error):
                     print(error)
                 }
@@ -124,12 +143,23 @@ final class SuitesAndCasesViewModel {
                 caseId: nil
             ) ?? ""
             
-            APIManager.shared.fetchData(from: urlStringCases, method: Constants.APIType.get.rawValue, token: Constants.TOKEN, modelType: TestCasesModel.self) { [weak self] (result: Result<TestCasesModel, Error>) in
+            APIManager.shared.fetchData(
+                from: urlStringCases,
+                method: Constants.APIType.get.rawValue,
+                modelType: TestCasesModel.self)
+            { [weak self] (result: Result<TestCasesModel, Error>) in
                 
                 switch result {
                 case .success(let jsonCases):
-                    let filteredCases = self?.parentSuite != nil ? jsonCases.result.entities.filter { $0.suiteId == self?.parentSuite?.id } : jsonCases.result.entities.filter { $0.suiteId == nil }
-                    self?.changeDataTypeToUniversalizeData(isSuite: false, targetUniversalList: &self!.suitesAndCaseData, suites: nil, testCases: filteredCases)
+                    let filteredCases = self?.parentSuite != nil
+                    ? jsonCases.result.entities.filter { $0.suiteId == self?.parentSuite?.id }
+                    : jsonCases.result.entities.filter { $0.suiteId == nil }
+                    self?.changeDataTypeToUniversalizeData(
+                        isSuite: false,
+                        targetUniversalList: &self!.suitesAndCaseData,
+                        suites: nil,
+                        testCases: filteredCases
+                    )
                 case .failure(let error):
                     print(error)
                 }

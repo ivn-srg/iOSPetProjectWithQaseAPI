@@ -24,12 +24,12 @@ enum AppTheme {
 }
 
 // MARK: - Shared UI Components
-func showAlertController(on vc: UIViewController, title: String, message: String) {
+func showAlertController(on vc: UIViewController, title: String, message: String, handler: ((UIAlertAction) -> Void)? = nil) {
     let alert = UIAlertController(
         title: title,
         message: message,
         preferredStyle: .alert
     )
-    alert.addAction(UIAlertAction(title: "OK", style: .default))
+    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: handler))
     vc.present(alert, animated: true)
 }

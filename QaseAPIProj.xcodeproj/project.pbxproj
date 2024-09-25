@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		932447392CA484A800998B94 /* SharedResponseModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932447382CA4848C00998B94 /* SharedResponseModel.swift */; };
 		934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */; };
 		9357F1E22C91732B00219BEC /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9357F1E12C91732B00219BEC /* Keychain.swift */; };
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
@@ -51,6 +52,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		932447382CA4848C00998B94 /* SharedResponseModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedResponseModel.swift; sourceTree = "<group>"; };
 		934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropDownListPickerView.swift; sourceTree = "<group>"; };
 		9357F1E12C91732B00219BEC /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 		937085582BEB3C49002316B8 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				932447382CA4848C00998B94 /* SharedResponseModel.swift */,
 				937085542BEB3C49002316B8 /* ProjectDataModel.swift */,
 				937085552BEB3C49002316B8 /* SuiteAndCaseData.swift */,
 				937085562BEB3C49002316B8 /* SuitesDataModel.swift */,
@@ -345,6 +348,7 @@
 				934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */,
 				93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */,
 				937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */,
+				932447392CA484A800998B94 /* SharedResponseModel.swift in Sources */,
 				93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */,
 				93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */,
 				9370855D2BEB3C49002316B8 /* SuiteAndCaseData.swift in Sources */,

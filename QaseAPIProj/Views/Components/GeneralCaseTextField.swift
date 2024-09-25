@@ -127,10 +127,10 @@ extension GeneralCaseTextField: UITextViewDelegate {
             } else if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
                 detailViewModel.creatingProject.title = textView.text
             } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if let testSuite = detailViewModel.creatingSuite {
-                    detailViewModel.creatingSuite?.title = textView.text
-                } else if let testCase = detailViewModel.creatingTestCase {
-                    detailViewModel.creatingTestCase?.title = textView.text
+                if detailViewModel.creatingEntityIsSuite {
+                    detailViewModel.creatingSuite.title = textView.text
+                } else {
+                    detailViewModel.creatingTestCase.title = textView.text
                 }
             }
         case .description:
@@ -139,28 +139,28 @@ extension GeneralCaseTextField: UITextViewDelegate {
             } else if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
                 detailViewModel.creatingProject.description = textView.text
             } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if let testSuite = detailViewModel.creatingSuite {
-                    detailViewModel.creatingSuite?.description = textView.text
-                } else if let testCase = detailViewModel.creatingTestCase {
-                    detailViewModel.creatingTestCase?.description = textView.text
+                if detailViewModel.creatingEntityIsSuite {
+                    detailViewModel.creatingSuite.description = textView.text
+                } else {
+                    detailViewModel.creatingTestCase.description = textView.text
                 }
             }
         case .precondition:
             if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
                 detailViewModel.changedTestCase?.preconditions = textView.text
             } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if let testSuite = detailViewModel.creatingSuite {
-                    detailViewModel.creatingSuite?.preconditions = textView.text
-                } else if let testCase = detailViewModel.creatingTestCase {
-                    detailViewModel.creatingTestCase?.precondition = textView.text
+                if detailViewModel.creatingEntityIsSuite {
+                    detailViewModel.creatingSuite.preconditions = textView.text
+                } else {
+                    detailViewModel.creatingTestCase.precondition = textView.text
                 }
             }
         case .postcondition:
             if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
                 detailViewModel.changedTestCase?.postconditions = textView.text
             } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if let testCase = detailViewModel.creatingTestCase {
-                    detailViewModel.creatingTestCase?.postcondition = textView.text
+                if detailViewModel.creatingEntityIsSuite {
+                    detailViewModel.creatingTestCase.postcondition = textView.text
                 }
             }
         case .code:
@@ -169,10 +169,10 @@ extension GeneralCaseTextField: UITextViewDelegate {
             }
         case .parentSuite:
             if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                detailViewModel.creatingSuite?.parentId = Int(textView.text)
+                detailViewModel.creatingSuite.parentId = Int(textView.text)
             } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if let testSuite = detailViewModel.creatingSuite {
-                    detailViewModel.creatingSuite?.parentId = Int(textView.text)
+                if detailViewModel.creatingEntityIsSuite{
+                    detailViewModel.creatingSuite.parentId = Int(textView.text)
                 }
             }
         }

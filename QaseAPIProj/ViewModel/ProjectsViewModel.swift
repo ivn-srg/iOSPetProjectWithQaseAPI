@@ -36,17 +36,13 @@ final class ProjectsViewModel {
                                             parentSuite: nil,
                                             caseId: nil
                                         ) else { return }
-        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
-            
-            switch result {
-            case .success(let jsonProjects):
-                if jsonProjects.status {
-                    self?.projects = jsonProjects.result.entities
-                }
-            case .failure(let error):
-                print(error)
-            }
-            
+        Task {
+            let projectListResult = try await APIManager.shared.fetchDataNew(
+                from: urlString,
+                method: Constants.APIType.get.rawValue,
+                modelType: ProjectDataModel.self
+            )
+            projects = projectListResult.result.entities
             LoadingIndicator.stopLoading()
         }
     }
@@ -62,20 +58,14 @@ final class ProjectsViewModel {
                                             parentSuite: nil,
                                             caseId: nil
                                         ) else { return }
-        APIManager.shared.fetchData(
-            from: urlString,
-            method: Constants.APIType.delete.rawValue,
-            modelType: SharedResponseModel.self)
-        {
-            [weak self] (result: Result<SharedResponseModel, Error>) in
-            
-            switch result {
-            case .success(let jsonResult):
-                if jsonResult.status {
-                    self?.projects.remove(at: index)
-                }
-            case .failure(let error):
-                print(error)
+        Task {
+            let deletingResult = try await APIManager.shared.fetchDataNew(
+                from: urlString,
+                method: Constants.APIType.delete.rawValue,
+                modelType: SharedResponseModel.self
+            )
+            if deletingResult.status {
+                projects.remove(at: index)
             }
             LoadingIndicator.stopLoading()
         }

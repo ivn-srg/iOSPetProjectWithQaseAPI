@@ -14,18 +14,16 @@ final class AuthViewModel {
     var totalCountOfProject = 0
     var authStatus: Bool? = nil {
         didSet {
-            if let delegate = delegate {
-                delegate.pushToNextVC(to: nil)
-            }
+            delegate?.pushToNextVC(to: nil)
         }
     }
     
     // MARK: - lifecycle
-    
     init(delegate: NextViewControllerPusher? = nil) {
         self.delegate = delegate
     }
     
+    // MARK: - Network work
     func fetchProjectsJSON() {
         LoadingIndicator.startLoading()
         
@@ -38,24 +36,15 @@ final class AuthViewModel {
             caseId: nil
         ) else { return }
         
-        DispatchQueue.global().async {
-            APIManager.shared.fetchData(
+        Task {
+            let projectData = try await APIManager.shared.fetchDataNew(
                 from: urlString,
                 method: Constants.APIType.get.rawValue,
-                modelType: ProjectDataModel.self)
-            { [weak self] (result: Result<ProjectDataModel, Error>) in
-                
-                switch result {
-                case .success(let jsonProjects):
-                    self?.totalCountOfProject = jsonProjects.result.total
-                    self?.authStatus = jsonProjects.status ? true : false
-                case .failure(let error):
-                    print(error)
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                    }
-                }
-            }
+                modelType: ProjectDataModel.self
+            )
+            totalCountOfProject = projectData.result.total
+            authStatus = projectData.status
+            LoadingIndicator.stopLoading()
         }
     }
 }

@@ -9,9 +9,10 @@
 /* Begin PBXBuildFile section */
 		932447392CA484A800998B94 /* SharedResponseModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932447382CA4848C00998B94 /* SharedResponseModel.swift */; };
 		934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */; };
-		9357F1E22C91732B00219BEC /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9357F1E12C91732B00219BEC /* Keychain.swift */; };
+		9357F1E22C91732B00219BEC /* KeychainLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9357F1E12C91732B00219BEC /* KeychainLocal.swift */; };
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
 		935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE32B518A4000F08ECF /* LoaderView.swift */; };
+		93634B322CAD5902004D86A0 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93634B312CAD58F3004D86A0 /* AuthManager.swift */; };
 		936A2B132C8A251E007F7C72 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; };
 		936A2B162C8A252E007F7C72 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B152C8A252E007F7C72 /* SnapKit */; };
 		936A2B192C8A2821007F7C72 /* GeneralCaseTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */; };
@@ -54,9 +55,10 @@
 /* Begin PBXFileReference section */
 		932447382CA4848C00998B94 /* SharedResponseModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedResponseModel.swift; sourceTree = "<group>"; };
 		934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropDownListPickerView.swift; sourceTree = "<group>"; };
-		9357F1E12C91732B00219BEC /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		9357F1E12C91732B00219BEC /* KeychainLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainLocal.swift; sourceTree = "<group>"; };
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		935DCFE32B518A4000F08ECF /* LoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderView.swift; sourceTree = "<group>"; };
+		93634B312CAD58F3004D86A0 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		936A2B102C8A2449007F7C72 /* QaseAPIProj.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QaseAPIProj.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralCaseTextField.swift; sourceTree = "<group>"; };
 		937085502BEB3C49002316B8 /* APIManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
@@ -180,9 +182,10 @@
 		937650C32B6CE7C800B5336B /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				93634B312CAD58F3004D86A0 /* AuthManager.swift */,
 				935DCFE12B516BAA00F08ECF /* Constants.swift */,
 				93DCDF5E2BE51C2900D4F365 /* Protocols.swift */,
-				9357F1E12C91732B00219BEC /* Keychain.swift */,
+				9357F1E12C91732B00219BEC /* KeychainLocal.swift */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -363,8 +366,9 @@
 				93DCDF5B2BE4F11F00D4F365 /* AuthViewModel.swift in Sources */,
 				93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */,
 				93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */,
+				93634B322CAD5902004D86A0 /* AuthManager.swift in Sources */,
 				93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */,
-				9357F1E22C91732B00219BEC /* Keychain.swift in Sources */,
+				9357F1E22C91732B00219BEC /* KeychainLocal.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

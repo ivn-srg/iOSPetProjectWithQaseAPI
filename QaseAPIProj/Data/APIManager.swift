@@ -10,6 +10,38 @@ import Foundation
 final class APIManager {
     static let shared = APIManager()
 
+    func fetchDataNew<T: Decodable>(
+        from urlString: String,
+        method: String,
+        modelType: T.Type
+    ) async throws -> T {
+        guard let url = URL(string: urlString) else {
+            throw APIError.invalidURL
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.addValue(Constants.TOKEN, forHTTPHeaderField: "Token")
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            let result = try JSONDecoder().decode(modelType, from: data)
+            return result
+        } catch let error as DecodingError {
+            throw APIError.parsingError(error)
+        } catch let error as URLError {
+            switch error.code {
+            case .notConnectedToInternet:
+                throw APIError.noInternetConnection
+            case .timedOut:
+                throw APIError.timeout
+            default:
+                throw APIError.otherNetworkError(error)
+            }
+        } catch {
+            throw APIError.otherNetworkError(error)
+        }
+    }
+    
     func fetchData<T: Decodable>(
         from urlString: String,
         method: String,
@@ -30,8 +62,7 @@ final class APIManager {
                 completion(.failure(error))
             } else if let data = data {
                 do {
-                    let decoder = JSONDecoder()
-                    let result = try decoder.decode(modelType, from: data)
+                    let result = try JSONDecoder().decode(modelType, from: data)
                     completion(.success(result))
                 } catch {
                     completion(.failure(error))
@@ -160,5 +191,5 @@ final class APIManager {
 }
 
 enum APIError: Error {
-    case invalidURL
+    case invalidURL, parsingError(Error), noInternetConnection, timeout, otherNetworkError(Error)
 }

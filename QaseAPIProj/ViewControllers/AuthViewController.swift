@@ -128,7 +128,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     }
     
     @objc private func tapForFillingTextLb() {
-        inputTokenField.text = Keychain.QASE_API_KEY
+        inputTokenField.text = KeychainLocal.QASE_API_KEY
         authorizate()
     }
 }

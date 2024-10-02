@@ -55,36 +55,21 @@ final class SuitesAndCasesViewModel {
             caseId: nil
         ) else { return }
         
-        DispatchQueue.main.async {
-            LoadingIndicator.startLoading()
-        }
+        LoadingIndicator.startLoading()
         
-        APIManager.shared.fetchData(
-            from: urlStringSuites,
-            method: Constants.APIType.get.rawValue,
-            modelType: SuitesDataModel.self)
-        { [weak self] (result: Result<SuitesDataModel, Error>) in
-            switch result {
-            case .success(let jsonSuites):
-                self?.totalCountOfSuites = jsonSuites.result.total
-            case .failure(let error):
-                print(error)
-                break
-            }
-        }
-        
-        APIManager.shared.fetchData(
-            from: urlStringCases,
-            method: Constants.APIType.get.rawValue,
-            modelType: TestCasesModel.self)
-        { [weak self] (result: Result<TestCasesModel, Error>) in
-            switch result {
-            case .success(let jsonCases):
-                self?.totalCountOfCases = self?.parentSuite != nil ? jsonCases.result.filtered : jsonCases.result.total
-            case .failure(let error):
-                print(error)
-                break
-            }
+        Task {
+            async let countOfSuites = APIManager.shared.fetchDataNew(
+                from: urlStringSuites,
+                method: Constants.APIType.get.rawValue,
+                modelType: SuitesDataModel.self
+            )
+            async let countOfTestCases = APIManager.shared.fetchDataNew(
+                from: urlStringCases,
+                method: Constants.APIType.get.rawValue,
+                modelType: TestCasesModel.self
+            )
+            totalCountOfSuites = try await countOfSuites.result.total
+            totalCountOfCases = try await parentSuite != nil ? countOfTestCases.result.filtered : countOfTestCases.result.total
         }
     }
     
@@ -103,26 +88,22 @@ final class SuitesAndCasesViewModel {
                 caseId: nil
             ) ?? ""
             
-            APIManager.shared.fetchData(
-                from: urlStringSuites,
-                method: Constants.APIType.get.rawValue,
-                modelType: SuitesDataModel.self)
-            { [weak self] (result: Result<SuitesDataModel, Error>) in
+            Task {
+                let suitesResult = try await APIManager.shared.fetchDataNew(
+                    from: urlStringSuites,
+                    method: Constants.APIType.get.rawValue,
+                    modelType: SuitesDataModel.self
+                )
                 
-                switch result {
-                case .success(let jsonSuites):
-                    let filteredSuites = self?.parentSuite != nil
-                    ? jsonSuites.result.entities.filter { $0.parentId == self?.parentSuite?.id }
-                    : jsonSuites.result.entities.filter { $0.parentId == nil }
-                    self?.changeDataTypeToUniversalizeData(
-                        isSuite: true,
-                        targetUniversalList: &self!.suitesAndCaseData,
-                        suites: filteredSuites,
-                        testCases: nil
-                    )
-                case .failure(let error):
-                    print(error)
-                }
+                let filteredSuites = parentSuite != nil
+                ? suitesResult.result.entities.filter { $0.parentId == parentSuite?.id }
+                : suitesResult.result.entities.filter { $0.parentId == nil }
+                changeDataTypeToUniversalizeData(
+                    isSuite: true,
+                    targetUniversalList: &suitesAndCaseData,
+                    suites: filteredSuites,
+                    testCases: nil
+                )
             }
             offset += limit
         } while offset < totalCountOfSuites
@@ -143,26 +124,21 @@ final class SuitesAndCasesViewModel {
                 caseId: nil
             ) ?? ""
             
-            APIManager.shared.fetchData(
-                from: urlStringCases,
-                method: Constants.APIType.get.rawValue,
-                modelType: TestCasesModel.self)
-            { [weak self] (result: Result<TestCasesModel, Error>) in
-                
-                switch result {
-                case .success(let jsonCases):
-                    let filteredCases = self?.parentSuite != nil
-                    ? jsonCases.result.entities.filter { $0.suiteId == self?.parentSuite?.id }
-                    : jsonCases.result.entities.filter { $0.suiteId == nil }
-                    self?.changeDataTypeToUniversalizeData(
-                        isSuite: false,
-                        targetUniversalList: &self!.suitesAndCaseData,
-                        suites: nil,
-                        testCases: filteredCases
-                    )
-                case .failure(let error):
-                    print(error)
-                }
+            Task {
+                let testCasesResult = try await APIManager.shared.fetchDataNew(
+                    from: urlStringCases,
+                    method: Constants.APIType.get.rawValue,
+                    modelType: TestCasesModel.self
+                )
+                let filteredCases = parentSuite != nil
+                ? testCasesResult.result.entities.filter { $0.suiteId == parentSuite?.id }
+                : testCasesResult.result.entities.filter { $0.suiteId == nil }
+                changeDataTypeToUniversalizeData(
+                    isSuite: false,
+                    targetUniversalList: &suitesAndCaseData,
+                    suites: nil,
+                    testCases: filteredCases
+                )
             }
             offset += limit
         } while offset < totalCountOfCases
@@ -226,7 +202,6 @@ final class SuitesAndCasesViewModel {
     }
     
     // MARK: - VC funcs
-    
     func countOfRows() -> Int {
         suitesAndCaseData.count
     }

@@ -54,21 +54,13 @@ final class DetailTabbarControllerViewModel {
         
         LoadingIndicator.startLoading()
         
-        APIManager.shared.fetchData(
-            from: urlString,
-            method: Constants.APIType.get.rawValue,
-            modelType: TestCaseModel.self
-        ) { [weak self] (result: Result<TestCaseModel, Error>) in
-            
-            switch result {
-            case .success(let jsonTestCase):
-                self?.testCase = jsonTestCase.result
-                self?.changedTestCase = self?.testCase
-                
-            case .failure(let error):
-                print(error)
-            }
-            
+        Task {
+            let testCaseResult = try await APIManager.shared.fetchDataNew(
+                from: urlString,
+                method: Constants.APIType.get.rawValue,
+                modelType: TestCaseModel.self)
+            testCase = testCaseResult.result
+            changedTestCase = testCase
             LoadingIndicator.stopLoading()
         }
     }
@@ -84,6 +76,7 @@ final class DetailTabbarControllerViewModel {
                                             parentSuite: nil,
                                             caseId: testCase?.id
                                         ) else { return }
+        
         APIManager.shared.updateTestCaseData(
             newData: changedTestCase,
             from: urlString,

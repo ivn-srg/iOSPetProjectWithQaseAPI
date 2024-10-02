@@ -137,7 +137,6 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
                 self.preconditionField.updateTextViewValue(testCase.preconditions ?? Constants.emptyText)
                 self.postconditionField.updateTextViewValue(testCase.postconditions ?? Constants.emptyText)
             }
-            LoadingIndicator.stopLoading()
         }
     }
     

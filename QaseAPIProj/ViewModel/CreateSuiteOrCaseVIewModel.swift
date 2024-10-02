@@ -50,7 +50,6 @@ final class CreateSuiteOrCaseViewModel {
     
     // MARK: - Network work
     func createNewEntity() {
-        LoadingIndicator.startLoading()
         isFieldsEmpty = creatingEntityIsSuite ? creatingSuite.title.isEmpty : creatingTestCase.title.isEmpty
         if isFieldsEmpty { return }
             
@@ -62,39 +61,27 @@ final class CreateSuiteOrCaseViewModel {
             parentSuite: nil,
             caseId: nil
         ) else { return }
+        LoadingIndicator.startLoading()
         
-        if creatingEntityIsSuite {
-            APIManager.shared.createorUpdateEntity(
-                newData: creatingSuite,
-                from: urlString,
-                method: Constants.APIType.post.rawValue,
-                modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self) {
-                    [weak self] (result: Result<ServerResponseModel<CreateOrUpdateSuiteModel>, Error>) in
-                    
-                    switch result {
-                    case .success(let jsonUpdateResult):
-                        self?.isEntityWasCreated = jsonUpdateResult.status
-                    case .failure(let error):
-                        print(error)
-                    }
-                    LoadingIndicator.stopLoading()
-                }
-        } else {
-            APIManager.shared.createorUpdateEntity(
-                newData: creatingTestCase,
-                from: urlString,
-                method: Constants.APIType.post.rawValue,
-                modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self) {
-                    [weak self] (result: Result<ServerResponseModel<CreateOrUpdateTestCaseModel>, Error>) in
-                    
-                    switch result {
-                    case .success(let jsonUpdateResult):
-                        self?.isEntityWasCreated = jsonUpdateResult.status
-                    case .failure(let error):
-                        print(error)
-                    }
-                    LoadingIndicator.stopLoading()
-                }
+        Task {
+            if creatingEntityIsSuite {
+                let response = try await APIManager.shared.createorUpdateEntity(
+                    newData: creatingSuite,
+                    from: urlString,
+                    method: Constants.APIType.post.rawValue,
+                    modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self
+                )
+                isEntityWasCreated = response.status
+            } else {
+                let response = try await APIManager.shared.createorUpdateEntity(
+                    newData: creatingTestCase,
+                    from: urlString,
+                    method: Constants.APIType.post.rawValue,
+                    modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
+                )
+                isEntityWasCreated = response.status
+            }
+            LoadingIndicator.stopLoading()
         }
     }
 }

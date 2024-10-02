@@ -31,10 +31,12 @@ final class SuitesAndCasesViewModel {
     // MARK: - Network funcs
     
     func requestEntitiesData() {
+        LoadingIndicator.startLoading()
         suitesAndCaseData.removeAll()
         getTotalCountOfEntities()
         fetchSuitesJSON()
         fetchCasesJSON()
+        LoadingIndicator.stopLoading()
     }
     
     private func getTotalCountOfEntities() {
@@ -55,15 +57,13 @@ final class SuitesAndCasesViewModel {
             caseId: nil
         ) else { return }
         
-        LoadingIndicator.startLoading()
-        
         Task {
-            async let countOfSuites = APIManager.shared.fetchDataNew(
+            async let countOfSuites = APIManager.shared.fetchData(
                 from: urlStringSuites,
                 method: Constants.APIType.get.rawValue,
                 modelType: SuitesDataModel.self
             )
-            async let countOfTestCases = APIManager.shared.fetchDataNew(
+            async let countOfTestCases = APIManager.shared.fetchData(
                 from: urlStringCases,
                 method: Constants.APIType.get.rawValue,
                 modelType: TestCasesModel.self
@@ -89,7 +89,7 @@ final class SuitesAndCasesViewModel {
             ) ?? ""
             
             Task {
-                let suitesResult = try await APIManager.shared.fetchDataNew(
+                let suitesResult = try await APIManager.shared.fetchData(
                     from: urlStringSuites,
                     method: Constants.APIType.get.rawValue,
                     modelType: SuitesDataModel.self
@@ -125,7 +125,7 @@ final class SuitesAndCasesViewModel {
             ) ?? ""
             
             Task {
-                let testCasesResult = try await APIManager.shared.fetchDataNew(
+                let testCasesResult = try await APIManager.shared.fetchData(
                     from: urlStringCases,
                     method: Constants.APIType.get.rawValue,
                     modelType: TestCasesModel.self

@@ -72,7 +72,6 @@ final class ProjectsViewController: UIViewController {
     @objc func addNewProject() {
         let vc = CreatingProjectViewController(viewModel: .init())
         vc.createdProjectCallback = {
-            LoadingIndicator.startLoading()
             self.viewModel.fetchProjectsJSON()
         }
         vc.modalPresentationStyle = .fullScreen
@@ -85,7 +84,6 @@ extension ProjectsViewController: UpdateTableViewProtocol {
     func updateTableView() {
         DispatchQueue.main.async {
             self.tableVw.reloadData()
-            LoadingIndicator.stopLoading()
         }
     }
 }

@@ -90,7 +90,6 @@ extension DetailTabBarController: DetailTestCaseProtocol {
                     viewCN.updateUI()
                 }
             }
-            LoadingIndicator.stopLoading()
         }
     }
     

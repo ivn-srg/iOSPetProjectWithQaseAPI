@@ -103,7 +103,6 @@ extension SuitesAndCasesTableViewController: UpdateTableViewProtocol {
     func updateTableView() {
         DispatchQueue.main.async {
             self.tableVw.reloadData()
-            LoadingIndicator.stopLoading()
         }
     }
 }

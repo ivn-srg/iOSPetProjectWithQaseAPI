@@ -25,8 +25,6 @@ final class AuthViewModel {
     
     // MARK: - Network work
     func fetchProjectsJSON() {
-        LoadingIndicator.startLoading()
-        
         guard let urlString = Constants.getUrlString(
             APIMethod: .project,
             codeOfProject: nil,
@@ -35,9 +33,10 @@ final class AuthViewModel {
             parentSuite: nil,
             caseId: nil
         ) else { return }
+        LoadingIndicator.startLoading()
         
         Task {
-            let projectData = try await APIManager.shared.fetchDataNew(
+            let projectData = try await APIManager.shared.fetchData(
                 from: urlString,
                 method: Constants.APIType.get.rawValue,
                 modelType: ProjectDataModel.self

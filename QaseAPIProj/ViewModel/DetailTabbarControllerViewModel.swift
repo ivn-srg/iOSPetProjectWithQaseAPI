@@ -51,11 +51,10 @@ final class DetailTabbarControllerViewModel {
                                             parentSuite: nil,
                                             caseId: caseId
                                         ) else { return }
-        
         LoadingIndicator.startLoading()
         
         Task {
-            let testCaseResult = try await APIManager.shared.fetchDataNew(
+            let testCaseResult = try await APIManager.shared.fetchData(
                 from: urlString,
                 method: Constants.APIType.get.rawValue,
                 modelType: TestCaseModel.self)
@@ -66,7 +65,6 @@ final class DetailTabbarControllerViewModel {
     }
     
     func updateTestCaseData() {
-        LoadingIndicator.startLoading()
         guard let changedTestCase = changedTestCase else { return }
         guard let urlString = Constants.getUrlString(
                                             APIMethod: .openedCase,
@@ -76,21 +74,17 @@ final class DetailTabbarControllerViewModel {
                                             parentSuite: nil,
                                             caseId: testCase?.id
                                         ) else { return }
+        LoadingIndicator.startLoading()
         
-        APIManager.shared.updateTestCaseData(
-            newData: changedTestCase,
-            from: urlString,
-            method: Constants.APIType.patch.rawValue,
-            modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self) {
-                [weak self] (result: Result<ServerResponseModel<CreateOrUpdateTestCaseModel>, Error>) in
-            
-            switch result {
-            case .success(let jsonUpdateResult):
-                self?.isUploadingSuccess = jsonUpdateResult.status
-                self?.fetchCaseDataJSON()
-            case .failure(let error):
-                print(error)
-            }
+        Task {
+            let response = try await APIManager.shared.createorUpdateEntity(
+                newData: changedTestCase,
+                from: urlString,
+                method: Constants.APIType.patch.rawValue,
+                modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
+            )
+            isUploadingSuccess = response.status
+            fetchCaseDataJSON()
             LoadingIndicator.stopLoading()
         }
     }

@@ -149,7 +149,6 @@ extension PropertiesDetailCaseViewController: DetailTestCaseProtocol {
                 self.automationStatusField.updateTextFieldValue(testCase.automation)
                 self.isFlakySwitch.updateSwitcherValue(testCase.isFlaky == 1)
             }
-            LoadingIndicator.stopLoading()
         }
     }
     

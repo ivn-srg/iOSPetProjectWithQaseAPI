@@ -41,7 +41,6 @@ final class CreatingProjectViewModel {
     
     // MARK: - Network work
     func createNewProject() {
-        LoadingIndicator.startLoading()
         if creatingProject.isEmpty {
             isFieldsEmpty = true
             return
@@ -54,19 +53,16 @@ final class CreatingProjectViewModel {
                                             parentSuite: nil,
                                             caseId: nil
                                         ) else { return }
-        APIManager.shared.createorUpdateEntity(
-            newData: creatingProject,
-            from: urlString,
-            method: Constants.APIType.post.rawValue,
-            modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self) {
-                [weak self] (result: Result<ServerResponseModel<CreateOrUpdateProjectModel>, Error>) in
-            
-            switch result {
-            case .success(let jsonUpdateResult):
-                self?.isEntityWasCreated = jsonUpdateResult.status
-            case .failure(let error):
-                print(error)
-            }
+        LoadingIndicator.startLoading()
+        
+        Task {
+            let response = try await APIManager.shared.createorUpdateEntity(
+                newData: creatingProject,
+                from: urlString,
+                method: Constants.APIType.post.rawValue,
+                modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
+            )
+            isEntityWasCreated = response.status
             LoadingIndicator.stopLoading()
         }
     }

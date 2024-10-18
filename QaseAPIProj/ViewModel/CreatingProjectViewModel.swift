@@ -45,7 +45,7 @@ final class CreatingProjectViewModel {
             isFieldsEmpty = true
             return
         }
-        guard let urlString = Constants.getUrlString(
+        guard let urlString = apiManager.formUrlString(
                                             APIMethod: .project,
                                             codeOfProject: nil,
                                             limit: nil,
@@ -56,10 +56,10 @@ final class CreatingProjectViewModel {
         LoadingIndicator.startLoading()
         
         Task {
-            let response = try await APIManager.shared.createorUpdateEntity(
-                newData: creatingProject,
+            let response = try await apiManager.performRequest(
+                with: creatingProject,
                 from: urlString,
-                method: Constants.APIType.post.rawValue,
+                method: .post,
                 modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
             )
             isEntityWasCreated = response.status

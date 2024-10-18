@@ -93,7 +93,7 @@ extension ProjectsViewController: NextViewControllerPusher {
     func pushToNextVC(to item: Int? = nil) {
         DispatchQueue.main.async {
             if let item = item {
-                Constants.PROJECT_NAME = self.viewModel.projects[item].code
+                PROJECT_NAME = self.viewModel.projects[item].code
             }
             let vc = SuitesAndCasesTableViewController()
             self.navigationController?.pushViewController(vc, animated: true)

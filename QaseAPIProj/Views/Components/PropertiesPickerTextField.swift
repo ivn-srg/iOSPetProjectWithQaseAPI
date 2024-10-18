@@ -44,19 +44,19 @@ final class PropertiesPickerTextField: UIView {
         let pickerValueItems: [String]
         switch textType {
         case .severity:
-            pickerValueItems = Constants.Severity.returnAllEnumCases()
+            pickerValueItems = Severity.returnAllEnumCases()
         case .status:
-            pickerValueItems = Constants.Status.returnAllEnumCases()
+            pickerValueItems = Status.returnAllEnumCases()
         case .priority:
-            pickerValueItems = Constants.Priority.returnAllEnumCases()
+            pickerValueItems = Priority.returnAllEnumCases()
         case .behavior:
-            pickerValueItems = Constants.Behavior.returnAllEnumCases()
+            pickerValueItems = Behavior.returnAllEnumCases()
         case .type:
-            pickerValueItems = Constants.Types.returnAllEnumCases()
+            pickerValueItems = Types.returnAllEnumCases()
         case .layer:
-            pickerValueItems = Constants.Layer.returnAllEnumCases()
+            pickerValueItems = Layer.returnAllEnumCases()
         case .automationStatus:
-            pickerValueItems = Constants.AutomationStatus.returnAllEnumCases()
+            pickerValueItems = AutomationStatus.returnAllEnumCases()
         }
         let pv = GenericPickerView<String>(items: pickerValueItems)
         pv.translatesAutoresizingMaskIntoConstraints = false
@@ -111,19 +111,19 @@ final class PropertiesPickerTextField: UIView {
     private func convertIntValueToString(typeField: PropertiesCaseTextFieldTypes, _ value: Int) -> String {
         switch typeField {
         case .severity:
-            return Constants.Severity.returnAllEnumCases()[value]
+            return Severity.returnAllEnumCases()[value]
         case .status:
-            return Constants.Status.returnAllEnumCases()[value]
+            return Status.returnAllEnumCases()[value]
         case .priority:
-            return Constants.Priority.returnAllEnumCases()[value]
+            return Priority.returnAllEnumCases()[value]
         case .behavior:
-            return Constants.Behavior.returnAllEnumCases()[value]
+            return Behavior.returnAllEnumCases()[value]
         case .type:
-            return Constants.Types.returnAllEnumCases()[value]
+            return Types.returnAllEnumCases()[value]
         case .layer:
-            return Constants.Layer.returnAllEnumCases()[value]
+            return Layer.returnAllEnumCases()[value]
         case .automationStatus:
-            return Constants.AutomationStatus.returnAllEnumCases()[value]
+            return AutomationStatus.returnAllEnumCases()[value]
         }
     }
     
@@ -141,25 +141,25 @@ extension PropertiesPickerTextField: UITextFieldDelegate {
         guard let textFieldValue = textField.text, let testCase = testCaseViewModel.changedTestCase else { return }
         switch textType {
         case .severity:
-            let listEntities = Constants.Severity.returnAllEnumCases()
+            let listEntities = Severity.returnAllEnumCases()
             testCaseViewModel.changedTestCase?.severity = listEntities.firstIndex(of: textFieldValue) ?? testCase.severity
         case .status:
-            let listEntities = Constants.Status.returnAllEnumCases()
+            let listEntities = Status.returnAllEnumCases()
             testCaseViewModel.changedTestCase?.status = listEntities.firstIndex(of: textFieldValue) ?? testCase.status
         case .priority:
-            let listEntities = Constants.Priority.returnAllEnumCases()
+            let listEntities = Priority.returnAllEnumCases()
             testCaseViewModel.changedTestCase?.priority = listEntities.firstIndex(of: textFieldValue) ?? testCase.priority
         case .behavior:
-            let listEntities = Constants.Behavior.returnAllEnumCases()
+            let listEntities = Behavior.returnAllEnumCases()
             testCaseViewModel.changedTestCase?.behavior = listEntities.firstIndex(of: textFieldValue) ?? testCase.behavior
         case .type:
-            let listEntities = Constants.Types.returnAllEnumCases()
+            let listEntities = Types.returnAllEnumCases()
             testCaseViewModel.changedTestCase?.type = listEntities.firstIndex(of: textFieldValue) ?? testCase.type
         case .layer:
-            let listEntities = Constants.Layer.returnAllEnumCases()
+            let listEntities = Layer.returnAllEnumCases()
             testCaseViewModel.changedTestCase?.layer = listEntities.firstIndex(of: textFieldValue) ?? testCase.layer
         case .automationStatus:
-            let listEntities = Constants.AutomationStatus.returnAllEnumCases()
+            let listEntities = AutomationStatus.returnAllEnumCases()
             testCaseViewModel.changedTestCase?.automation = listEntities.firstIndex(of: textFieldValue) ?? testCase.automation
         }
     }

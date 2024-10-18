@@ -11,7 +11,7 @@ class DropDownListPickerView: UIPickerView, UIPickerViewDelegate, UIPickerViewDa
     
 //    let viewModel: DropDownListPickerViewModel
     
-    var data = [Constants.Severity.blocker.rawValue, Constants.Severity.critical.rawValue]
+    var data = [Severity.blocker.rawValue, Severity.critical.rawValue]
     var textField = UITextField()
     var pickerView = UIPickerView()
     

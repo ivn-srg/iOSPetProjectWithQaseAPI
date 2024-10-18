@@ -16,7 +16,7 @@ class DetailTabBarController: UITabBarController {
     private lazy var alertController: UIAlertController = {
         let alertC = UIAlertController(
             title: "Data Has been saved ✅",
-            message: "Your changes for \(Constants.PROJECT_NAME)-\(viewModel.caseId) test case with successfully saved",
+            message: "Your changes for \(PROJECT_NAME)-\(viewModel.caseId) test case with successfully saved",
             preferredStyle: .alert
         )
         let action = UIAlertAction(title: "OK", style: .cancel)
@@ -64,7 +64,7 @@ class DetailTabBarController: UITabBarController {
         
         viewControllers = [generalInfoVC, propertiesInfoVC, defectsInfoVC]
         
-        title = "\(Constants.PROJECT_NAME)-\(viewModel.caseId)"
+        title = "\(PROJECT_NAME)-\(viewModel.caseId)"
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .white
     }
@@ -83,7 +83,7 @@ extension DetailTabBarController: DetailTestCaseProtocol {
     // MARK: - updating UI for VCs
     func updateUI() {
         DispatchQueue.main.async {
-            self.title = "\(Constants.PROJECT_NAME)-\(self.viewModel.caseId)"
+            self.title = "\(PROJECT_NAME)-\(self.viewModel.caseId)"
             if let viewControllers = self.viewControllers {
                 for viewCN in viewControllers {
                     guard let viewCN = viewCN as? DetailTestCaseProtocol else { continue }

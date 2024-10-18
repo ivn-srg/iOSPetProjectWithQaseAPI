@@ -117,7 +117,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     @objc private func authorizate() {
         if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
             if !inputTokenFieldText.isEmpty {
-                Constants.TOKEN = inputTokenFieldText
+                TOKEN = inputTokenFieldText
                 viewModel.fetchProjectsJSON()
             } else {
                 showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")

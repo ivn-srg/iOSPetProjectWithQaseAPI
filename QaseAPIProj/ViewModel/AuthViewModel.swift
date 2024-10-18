@@ -25,7 +25,7 @@ final class AuthViewModel {
     
     // MARK: - Network work
     func fetchProjectsJSON() {
-        guard let urlString = Constants.getUrlString(
+        guard let urlString = apiManager.formUrlString(
             APIMethod: .project,
             codeOfProject: nil,
             limit: 1,
@@ -36,9 +36,9 @@ final class AuthViewModel {
         LoadingIndicator.startLoading()
         
         Task {
-            let projectData = try await APIManager.shared.fetchData(
+            let projectData = try await apiManager.performRequest(
                 from: urlString,
-                method: Constants.APIType.get.rawValue,
+                method: .get,
                 modelType: ProjectDataModel.self
             )
             totalCountOfProject = projectData.result.total

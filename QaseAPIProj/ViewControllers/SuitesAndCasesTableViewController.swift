@@ -66,7 +66,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
     
     // MARK: - Setuping UI for tableView
     func setupTableView() {
-        title = viewModel.parentSuite == nil ? Constants.PROJECT_NAME
+        title = viewModel.parentSuite == nil ? PROJECT_NAME
         : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite?.id} ).first?.title
         navigationItem.largeTitleDisplayMode = .never
         

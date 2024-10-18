@@ -7,208 +7,135 @@
 
 import UIKit
 
-struct Constants {
-    static let emptyText = "Not set"
+let emptyText = "Not set"
+
+enum Severity: String, CaseIterable {
+    case nothing = "Not set"
+    case blocker = "Blocker"
+    case critical = "Critical"
+    case major = "Major"
+    case normal = "Normal"
+    case minor = "Minor"
+    case trivial = "Trivial"
     
-    enum Severity: String, CaseIterable {
-        case nothing = "Not set"
-        case blocker = "Blocker"
-        case critical = "Critical"
-        case major = "Major"
-        case normal = "Normal"
-        case minor = "Minor"
-        case trivial = "Trivial"
+    static func returnAllEnumCases() -> [String] {
+        var listOfCases = [String]()
         
-        static func returnAllEnumCases() -> [String] {
-            var listOfCases = [String]()
-            
-            for caseValue in Severity.allCases {
-                listOfCases.append(caseValue.rawValue)
-            }
-            
-            return listOfCases
+        for caseValue in Severity.allCases {
+            listOfCases.append(caseValue.rawValue)
         }
-    }
-    
-    enum Status: String, CaseIterable {
-        case actual = "Actual"
-        case draft = "Draft"
-        case deprecated = "Deprecated"
         
-        static func returnAllEnumCases() -> [String] {
-            var listOfCases = [String]()
-            
-            for caseValue in Status.allCases {
-                listOfCases.append(caseValue.rawValue)
-            }
-            
-            return listOfCases
-        }
-    }
-    
-    enum Priority: String, CaseIterable {
-        case nothing = "Not Set"
-        case high = "High"
-        case medium = "Medium"
-        case low = "Low"
-        
-        static func returnAllEnumCases() -> [String] {
-            var listOfCases = [String]()
-            
-            for caseValue in Priority.allCases {
-                listOfCases.append(caseValue.rawValue)
-            }
-            
-            return listOfCases
-        }
-    }
-    
-    enum Behavior: String, CaseIterable {
-        case nothing = "Not Set"
-        case positive = "Positive"
-        case negative = "Negative"
-        case destructive = "Destructive"
-        
-        static func returnAllEnumCases() -> [String] {
-            var listOfCases = [String]()
-            
-            for caseValue in Behavior.allCases {
-                listOfCases.append(caseValue.rawValue)
-            }
-            
-            return listOfCases
-        }
-    }
-    
-    enum Types: String, CaseIterable {
-        case other = "Other"
-        case functional = "Functional"
-        case smoke = "Smoke"
-        case regression = "Regression"
-        case security = "Security"
-        case utility = "Utility"
-        case perfomance = "Perfomance"
-        case accertance = "Accertance"
-        case compatibility = "Compatibility"
-        case exploratory = "Exploratory"
-        case integration = "Integration"
-        
-        static func returnAllEnumCases() -> [String] {
-            var listOfCases = [String]()
-            
-            for caseValue in Types.allCases {
-                listOfCases.append(caseValue.rawValue)
-            }
-            
-            return listOfCases
-        }
-    }
-    
-    enum Layer: String, CaseIterable {
-        case e2e = "E2E"
-        case api = "API"
-        
-        static func returnAllEnumCases() -> [String] {
-            var listOfCases = [String]()
-            
-            for caseValue in Layer.allCases {
-                listOfCases.append(caseValue.rawValue)
-            }
-            
-            return listOfCases
-        }
-    }
-    
-    enum AutomationStatus: String, CaseIterable {
-        case manual = "Manual"
-        case toBeAutomated = "To be automated"
-        case automation = "Automated"
-        
-        static func returnAllEnumCases() -> [String] {
-            var listOfCases = [String]()
-            
-            for caseValue in AutomationStatus.allCases {
-                listOfCases.append(caseValue.rawValue)
-            }
-            
-            return listOfCases
-        }
-    }
-    
-    enum APIType: String {
-        case get = "GET"
-        case post = "POST"
-        case patch = "PATCH"
-        case delete = "DELETE"
-    }
-    
-    enum APIMethods: String, CaseIterable {
-        case project = "project"
-        case suites = "suite"
-        case cases = "case"
-        case openedCase = ""
-        
-        func returnAllEnumCases() -> [String] {
-            var listOfCases = [String]()
-            
-            for caseValue in APIMethods.allCases {
-                listOfCases.append(caseValue.rawValue)
-            }
-            
-            return listOfCases
-        }
-    }
-    
-    static var TOKEN = ""
-    
-    static let DOMEN = "https://api.qase.io/v1"
-    
-    static var PROJECT_NAME = ""
-    
-    static func getUrlString(
-        APIMethod: APIMethods,
-        codeOfProject: String?,
-        limit: Int?,
-        offset: Int?,
-        parentSuite: ParentSuite?,
-        caseId: Int?
-    ) -> String? {
-        
-        switch APIMethod {
-        case .project:
-            if let limit = limit, let offset = offset {
-                return "\(Constants.DOMEN)/project?limit=\(limit)&offset=\(offset)"
-            } else if let codeOfProject = codeOfProject {
-                return "\(Constants.DOMEN)/project/\(codeOfProject)"
-            } else {
-                return "\(Constants.DOMEN)/project"
-            }
-        case .suites:
-            guard let codeOfProject = codeOfProject else { return nil }
-            guard let limit = limit, let offset = offset else {
-                return "\(Constants.DOMEN)/suite/\(codeOfProject)"
-            }
-            guard let parentSuite = parentSuite else {
-                return "\(Constants.DOMEN)/suite/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
-            }
-            guard let searchSuiteString = parentSuite.title.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else { return nil }
-            
-            return "\(Constants.DOMEN)/suite/\(codeOfProject)?search=\"\(searchSuiteString)\"&limit=\(limit)&offset=\(offset)"
-        case .cases:
-            guard let codeOfProject = codeOfProject else { return nil }
-            guard let limit = limit, let offset = offset else {
-                return "\(Constants.DOMEN)/case/\(codeOfProject)"
-            }
-            guard let parentSuite = parentSuite else {
-                return "\(Constants.DOMEN)/case/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
-            }
-            
-            return "\(Constants.DOMEN)/case/\(codeOfProject)?suite_id=\(parentSuite.id)&limit=\(limit)&offset=\(offset)"
-        case .openedCase:
-            guard let codeOfProject = codeOfProject else { return nil }
-            guard let caseId = caseId else { return nil }
-            
-            return "\(Constants.DOMEN)/case/\(codeOfProject)/\(caseId)"
-        }
+        return listOfCases
     }
 }
+
+enum Status: String, CaseIterable {
+    case actual = "Actual"
+    case draft = "Draft"
+    case deprecated = "Deprecated"
+    
+    static func returnAllEnumCases() -> [String] {
+        var listOfCases = [String]()
+        
+        for caseValue in Status.allCases {
+            listOfCases.append(caseValue.rawValue)
+        }
+        
+        return listOfCases
+    }
+}
+
+enum Priority: String, CaseIterable {
+    case nothing = "Not Set"
+    case high = "High"
+    case medium = "Medium"
+    case low = "Low"
+    
+    static func returnAllEnumCases() -> [String] {
+        var listOfCases = [String]()
+        
+        for caseValue in Priority.allCases {
+            listOfCases.append(caseValue.rawValue)
+        }
+        
+        return listOfCases
+    }
+}
+
+enum Behavior: String, CaseIterable {
+    case nothing = "Not Set"
+    case positive = "Positive"
+    case negative = "Negative"
+    case destructive = "Destructive"
+    
+    static func returnAllEnumCases() -> [String] {
+        var listOfCases = [String]()
+        
+        for caseValue in Behavior.allCases {
+            listOfCases.append(caseValue.rawValue)
+        }
+        
+        return listOfCases
+    }
+}
+
+enum Types: String, CaseIterable {
+    case other = "Other"
+    case functional = "Functional"
+    case smoke = "Smoke"
+    case regression = "Regression"
+    case security = "Security"
+    case utility = "Utility"
+    case perfomance = "Perfomance"
+    case accertance = "Accertance"
+    case compatibility = "Compatibility"
+    case exploratory = "Exploratory"
+    case integration = "Integration"
+    
+    static func returnAllEnumCases() -> [String] {
+        var listOfCases = [String]()
+        
+        for caseValue in Types.allCases {
+            listOfCases.append(caseValue.rawValue)
+        }
+        
+        return listOfCases
+    }
+}
+
+enum Layer: String, CaseIterable {
+    case e2e = "E2E"
+    case api = "API"
+    
+    static func returnAllEnumCases() -> [String] {
+        var listOfCases = [String]()
+        
+        for caseValue in Layer.allCases {
+            listOfCases.append(caseValue.rawValue)
+        }
+        
+        return listOfCases
+    }
+}
+
+enum AutomationStatus: String, CaseIterable {
+    case manual = "Manual"
+    case toBeAutomated = "To be automated"
+    case automation = "Automated"
+    
+    static func returnAllEnumCases() -> [String] {
+        var listOfCases = [String]()
+        
+        for caseValue in AutomationStatus.allCases {
+            listOfCases.append(caseValue.rawValue)
+        }
+        
+        return listOfCases
+    }
+}
+
+var TOKEN = ""
+
+var PROJECT_NAME = ""
+
+let apiManager = APIManager.shared

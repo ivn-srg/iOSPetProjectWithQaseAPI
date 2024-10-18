@@ -53,9 +53,9 @@ final class CreateSuiteOrCaseViewModel {
         isFieldsEmpty = creatingEntityIsSuite ? creatingSuite.title.isEmpty : creatingTestCase.title.isEmpty
         if isFieldsEmpty { return }
             
-        guard let urlString = Constants.getUrlString(
+        guard let urlString = apiManager.formUrlString(
             APIMethod: creatingEntityIsSuite ? .suites : .cases,
-            codeOfProject: Constants.PROJECT_NAME,
+            codeOfProject: PROJECT_NAME,
             limit: nil,
             offset: nil,
             parentSuite: nil,
@@ -65,18 +65,18 @@ final class CreateSuiteOrCaseViewModel {
         
         Task {
             if creatingEntityIsSuite {
-                let response = try await APIManager.shared.createorUpdateEntity(
-                    newData: creatingSuite,
+                let response = try await apiManager.performRequest(
+                    with: creatingSuite,
                     from: urlString,
-                    method: Constants.APIType.post.rawValue,
+                    method: .post,
                     modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self
                 )
                 isEntityWasCreated = response.status
             } else {
-                let response = try await APIManager.shared.createorUpdateEntity(
-                    newData: creatingTestCase,
+                let response = try await apiManager.performRequest(
+                    with: creatingTestCase,
                     from: urlString,
-                    method: Constants.APIType.post.rawValue,
+                    method: .post,
                     modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
                 )
                 isEntityWasCreated = response.status

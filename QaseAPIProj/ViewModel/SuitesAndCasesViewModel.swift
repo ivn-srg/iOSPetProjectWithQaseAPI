@@ -40,17 +40,17 @@ final class SuitesAndCasesViewModel {
     }
     
     private func getTotalCountOfEntities() {
-        guard let urlStringSuites = Constants.getUrlString(
+        guard let urlStringSuites = apiManager.formUrlString(
             APIMethod: .suites,
-            codeOfProject: Constants.PROJECT_NAME,
+            codeOfProject: PROJECT_NAME,
             limit: 1,
             offset: 0,
             parentSuite: nil,
             caseId: nil
         ) else { return }
-        guard let urlStringCases = Constants.getUrlString(
+        guard let urlStringCases = apiManager.formUrlString(
             APIMethod: .cases,
-            codeOfProject: Constants.PROJECT_NAME,
+            codeOfProject: PROJECT_NAME,
             limit: 1,
             offset: 0,
             parentSuite: parentSuite,
@@ -58,14 +58,14 @@ final class SuitesAndCasesViewModel {
         ) else { return }
         
         Task {
-            async let countOfSuites = APIManager.shared.fetchData(
+            async let countOfSuites = apiManager.performRequest(
                 from: urlStringSuites,
-                method: Constants.APIType.get.rawValue,
+                method: .get,
                 modelType: SuitesDataModel.self
             )
-            async let countOfTestCases = APIManager.shared.fetchData(
+            async let countOfTestCases = apiManager.performRequest(
                 from: urlStringCases,
-                method: Constants.APIType.get.rawValue,
+                method: .get,
                 modelType: TestCasesModel.self
             )
             totalCountOfSuites = try await countOfSuites.result.total
@@ -79,9 +79,9 @@ final class SuitesAndCasesViewModel {
         var urlStringSuites = ""
         
         repeat {
-            urlStringSuites = Constants.getUrlString(
+            urlStringSuites = apiManager.formUrlString(
                 APIMethod: .suites,
-                codeOfProject: Constants.PROJECT_NAME,
+                codeOfProject: PROJECT_NAME,
                 limit: limit,
                 offset: offset,
                 parentSuite: nil,
@@ -89,9 +89,9 @@ final class SuitesAndCasesViewModel {
             ) ?? ""
             
             Task {
-                let suitesResult = try await APIManager.shared.fetchData(
+                let suitesResult = try await apiManager.performRequest(
                     from: urlStringSuites,
-                    method: Constants.APIType.get.rawValue,
+                    method: .get,
                     modelType: SuitesDataModel.self
                 )
                 
@@ -115,9 +115,9 @@ final class SuitesAndCasesViewModel {
         var urlStringCases = ""
         
         repeat {
-            urlStringCases = Constants.getUrlString(
+            urlStringCases = apiManager.formUrlString(
                 APIMethod: .cases,
-                codeOfProject: Constants.PROJECT_NAME,
+                codeOfProject: PROJECT_NAME,
                 limit: limit,
                 offset: offset,
                 parentSuite: parentSuite,
@@ -125,9 +125,9 @@ final class SuitesAndCasesViewModel {
             ) ?? ""
             
             Task {
-                let testCasesResult = try await APIManager.shared.fetchData(
+                let testCasesResult = try await apiManager.performRequest(
                     from: urlStringCases,
-                    method: Constants.APIType.get.rawValue,
+                    method: .get,
                     modelType: TestCasesModel.self
                 )
                 let filteredCases = parentSuite != nil

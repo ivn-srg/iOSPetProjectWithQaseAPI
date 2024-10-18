@@ -26,7 +26,7 @@ final class ProjectsViewModel {
     }
     
     func fetchProjectsJSON() {
-        guard let urlString = Constants.getUrlString(
+        guard let urlString = apiManager.formUrlString(
                                             APIMethod: .project,
                                             codeOfProject: nil,
                                             limit: totalCountOfProjects,
@@ -37,9 +37,9 @@ final class ProjectsViewModel {
         LoadingIndicator.startLoading()
         
         Task {
-            let projectListResult = try await APIManager.shared.fetchData(
+            let projectListResult = try await apiManager.performRequest(
                 from: urlString,
-                method: Constants.APIType.get.rawValue,
+                method: .get,
                 modelType: ProjectDataModel.self
             )
             projects = projectListResult.result.entities
@@ -48,7 +48,7 @@ final class ProjectsViewModel {
     }
     
     func deleteProject(at index: Int) {
-        guard let urlString = Constants.getUrlString(
+        guard let urlString = apiManager.formUrlString(
                                             APIMethod: .project,
                                             codeOfProject: self.projects[index].code,
                                             limit: nil,
@@ -59,9 +59,9 @@ final class ProjectsViewModel {
         LoadingIndicator.startLoading()
         
         Task {
-            let deletingResult = try await APIManager.shared.fetchData(
+            let deletingResult = try await apiManager.performRequest(
                 from: urlString,
-                method: Constants.APIType.delete.rawValue,
+                method: .delete,
                 modelType: SharedResponseModel.self
             )
             if deletingResult.status {

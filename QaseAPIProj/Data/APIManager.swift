@@ -7,65 +7,56 @@
 
 import Foundation
 
-final class APIManager {
+protocol NetworkManager: AnyObject {
+    func performRequest<T: Decodable>(
+        with data: any Encodable,
+        from urlString: String,
+        method: HTTPMethod,
+        modelType: T.Type
+    ) async throws -> T
+    
+    func makeHTTPRequest<T: Decodable>(
+        for request: URLRequest,
+        codableModelType: T.Type
+    ) async throws -> T
+}
+
+final class APIManager: NetworkManager {
     static let shared = APIManager()
-
-    func fetchData<T: Decodable>(
+    
+    let DOMEN = "https://api.qase.io/v1"
+    
+    func performRequest<T: Decodable>(
+        with data: any Encodable = Optional<Data>.none,
         from urlString: String,
-        method: String,
+        method: HTTPMethod,
         modelType: T.Type
     ) async throws -> T {
         guard let url = URL(string: urlString) else { throw APIError.invalidURL }
         
         var request = URLRequest(url: url)
-        request.httpMethod = method
-        request.addValue(Constants.TOKEN, forHTTPHeaderField: "Token")
+        request.httpMethod = method.rawValue
+        request.addValue(TOKEN, forHTTPHeaderField: "Token")
         
-        return try await makeHTTPRequest(for: request, codableModelType: modelType)
-    }
-    
-    func createorUpdateEntity<T: Decodable, U: Encodable>(
-        newData: U,
-        from urlString: String,
-        method: String,
-        modelType: T.Type
-    ) async throws -> T {
-        guard let url = URL(string: urlString) else { throw APIError.invalidURL }
-
-        let jsonData: Data
-        do {
-            jsonData = try JSONEncoder().encode(newData)
-        } catch let error as EncodingError {
-            throw APIError.serializationError(error)
+        if !(data is Optional<Data>) {
+            let jsonData: Data
+            do {
+                jsonData = try JSONEncoder().encode(data)
+            } catch let error as EncodingError {
+                throw APIError.serializationError(error)
+            }
+            request.httpBody = jsonData
+            request.addValue("application/json", forHTTPHeaderField: "content-type")
         }
-        var request = URLRequest(url: url)
-        request.httpMethod = method
-        request.addValue(Constants.TOKEN, forHTTPHeaderField: "Token")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = jsonData
+        
+        if method == .delete || method == .get {
+            request.addValue("application/json", forHTTPHeaderField: "accept")
+        }
         
         return try await makeHTTPRequest(for: request, codableModelType: modelType)
     }
     
-    func deleteEntity<T: Decodable>(
-        from urlString: String,
-        method: String,
-        modelType: T.Type
-    ) async throws -> T {
-        guard let url = URL(string: urlString) else { throw APIError.invalidURL }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = method
-        request.timeoutInterval = 10
-        request.allHTTPHeaderFields = [
-          "accept": "application/json",
-          "content-type": "application/json"
-        ]
-        
-        return try await makeHTTPRequest(for: request, codableModelType: modelType)
-    }
-    
-    private func makeHTTPRequest<T: Decodable>(
+    internal func makeHTTPRequest<T: Decodable>(
         for request: URLRequest,
         codableModelType: T.Type
     ) async throws -> T {
@@ -88,8 +79,81 @@ final class APIManager {
             throw APIError.otherNetworkError(error)
         }
     }
+    
+    func formUrlString(
+        APIMethod: APIEndpoint,
+        codeOfProject: String?,
+        limit: Int?,
+        offset: Int?,
+        parentSuite: ParentSuite?,
+        caseId: Int?
+    ) -> String? {
+        
+        switch APIMethod {
+        case .project:
+            if let limit = limit, let offset = offset {
+                return "\(DOMEN)/project?limit=\(limit)&offset=\(offset)"
+            } else if let codeOfProject = codeOfProject {
+                return "\(DOMEN)/project/\(codeOfProject)"
+            } else {
+                return "\(DOMEN)/project"
+            }
+        case .suites:
+            guard let codeOfProject = codeOfProject else { return nil }
+            guard let limit = limit, let offset = offset else {
+                return "\(DOMEN)/suite/\(codeOfProject)"
+            }
+            guard let parentSuite = parentSuite else {
+                return "\(DOMEN)/suite/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
+            }
+            guard
+                let searchSuiteString = parentSuite.title.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
+            else { return nil }
+            
+            return "\(DOMEN)/suite/\(codeOfProject)?search=\"\(searchSuiteString)\"&limit=\(limit)&offset=\(offset)"
+        case .cases:
+            guard let codeOfProject = codeOfProject else { return nil }
+            guard let limit = limit, let offset = offset else {
+                return "\(DOMEN)/case/\(codeOfProject)"
+            }
+            guard let parentSuite = parentSuite else {
+                return "\(DOMEN)/case/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
+            }
+            
+            return "\(DOMEN)/case/\(codeOfProject)?suite_id=\(parentSuite.id)&limit=\(limit)&offset=\(offset)"
+        case .openedCase:
+            guard let codeOfProject = codeOfProject else { return nil }
+            guard let caseId = caseId else { return nil }
+            
+            return "\(DOMEN)/case/\(codeOfProject)/\(caseId)"
+        }
+    }
 }
 
 enum APIError: Error {
     case invalidURL, parsingError(Error), serializationError(Error), noInternetConnection, timeout, otherNetworkError(Error)
+}
+
+enum HTTPMethod: String {
+    case get = "GET"
+    case post = "POST"
+    case patch = "PATCH"
+    case delete = "DELETE"
+}
+
+enum APIEndpoint: String, CaseIterable {
+    case project = "project"
+    case suites = "suite"
+    case cases = "case"
+    case openedCase = ""
+    
+    func returnAllEnumCases() -> [String] {
+        var listOfCases = [String]()
+        
+        for caseValue in APIEndpoint.allCases {
+            listOfCases.append(caseValue.rawValue)
+        }
+        
+        return listOfCases
+    }
 }

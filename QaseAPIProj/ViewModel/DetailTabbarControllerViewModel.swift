@@ -43,9 +43,9 @@ final class DetailTabbarControllerViewModel {
     
     // MARK: - Network work
     func fetchCaseDataJSON() {
-        guard let urlString = Constants.getUrlString(
+        guard let urlString = apiManager.formUrlString(
                                             APIMethod: .openedCase,
-                                            codeOfProject: Constants.PROJECT_NAME,
+                                            codeOfProject: PROJECT_NAME,
                                             limit: nil,
                                             offset: nil,
                                             parentSuite: nil,
@@ -54,9 +54,9 @@ final class DetailTabbarControllerViewModel {
         LoadingIndicator.startLoading()
         
         Task {
-            let testCaseResult = try await APIManager.shared.fetchData(
+            let testCaseResult = try await apiManager.performRequest(
                 from: urlString,
-                method: Constants.APIType.get.rawValue,
+                method: .get,
                 modelType: TestCaseModel.self)
             testCase = testCaseResult.result
             changedTestCase = testCase
@@ -66,9 +66,9 @@ final class DetailTabbarControllerViewModel {
     
     func updateTestCaseData() {
         guard let changedTestCase = changedTestCase else { return }
-        guard let urlString = Constants.getUrlString(
+        guard let urlString = apiManager.formUrlString(
                                             APIMethod: .openedCase,
-                                            codeOfProject: Constants.PROJECT_NAME,
+                                            codeOfProject: PROJECT_NAME,
                                             limit: nil,
                                             offset: nil,
                                             parentSuite: nil,
@@ -77,10 +77,10 @@ final class DetailTabbarControllerViewModel {
         LoadingIndicator.startLoading()
         
         Task {
-            let response = try await APIManager.shared.createorUpdateEntity(
-                newData: changedTestCase,
+            let response = try await apiManager.performRequest(
+                with: changedTestCase,
                 from: urlString,
-                method: Constants.APIType.patch.rawValue,
+                method: .patch,
                 modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
             )
             isUploadingSuccess = response.status

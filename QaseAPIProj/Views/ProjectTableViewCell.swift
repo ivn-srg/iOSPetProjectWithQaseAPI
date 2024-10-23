@@ -12,13 +12,6 @@ class ProjectTableViewCell: UITableViewCell {
     static let cellId = "ProjectTableViewCell"
     
     // MARK: - UI
-    
-    private lazy var containerVw: UIView = {
-        let vw = UIView()
-        vw.translatesAutoresizingMaskIntoConstraints = false
-        return vw
-    }()
-    
     private lazy var leftContainerVw: UIView = {
         let lvw = UIView()
         lvw.translatesAutoresizingMaskIntoConstraints = false
@@ -40,7 +33,6 @@ class ProjectTableViewCell: UITableViewCell {
         nameLbl.translatesAutoresizingMaskIntoConstraints = false
         nameLbl.font = .systemFont(ofSize: 18, weight: .bold)
         nameLbl.numberOfLines = 0
-        nameLbl.textColor = .black
         return nameLbl
     }()
     
@@ -58,31 +50,28 @@ class ProjectTableViewCell: UITableViewCell {
         tLbl.translatesAutoresizingMaskIntoConstraints = false
         tLbl.font = .systemFont(ofSize: 12, weight: .regular)
         tLbl.numberOfLines = 0
-        tLbl.textColor = .black
         return tLbl
     }()
     
     // MARK: - lifecycles
     
     func configure(with project: Project) {
-        let infoAboutActiveRuns = project.counts.runs.active == 0 ? "No active runs" : "\(project.counts.runs.active) active run(s)"
+        let infoAboutActiveRuns = project.counts.runs.active == 0 
+        ? "No active runs"
+        : "\(project.counts.runs.active) active run(s)"
         
         nameLbl.text = project.title
         codeLbl.text = project.code
         testsAndSuitesLbl.text = "\(project.counts.cases) cases | \(project.counts.suites) suites | \(infoAboutActiveRuns)"
         
-        self.contentView.addSubview(containerVw)
-        
-        containerVw.addSubview(contentStackVw)
-        containerVw.addSubview(leftContainerVw)
+        contentView.backgroundColor = AppTheme.bgSecondaryColor
+        contentView.addSubview(contentStackVw)
+        contentView.addSubview(leftContainerVw)
         
         contentStackVw.addArrangedSubview(nameLbl)
         contentStackVw.addArrangedSubview(codeLbl)
         contentStackVw.addArrangedSubview(testsAndSuitesLbl)
         
-        containerVw.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-        }
         leftContainerVw.snp.makeConstraints {
             $0.verticalEdges.equalToSuperview().inset(6)
             $0.leading.equalToSuperview().offset(8)

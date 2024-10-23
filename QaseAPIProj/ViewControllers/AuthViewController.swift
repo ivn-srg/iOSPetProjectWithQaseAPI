@@ -24,11 +24,10 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     private var inputTokenField: UITextField = {
         let inf = TextFieldWithPadding()
         inf.translatesAutoresizingMaskIntoConstraints = false
-        inf.backgroundColor = .white
+        inf.backgroundColor = AppTheme.bgSecondaryColor
         inf.textColor = AppTheme.fioletColor
-        inf.borderStyle = .roundedRect
         inf.layer.borderWidth = 1
-        inf.layer.cornerRadius = 8
+        inf.layer.cornerRadius = 12
         inf.layer.borderColor = UIColor.gray.cgColor
         inf.placeholder = "Input your API Token"
         inf.delegate = inf
@@ -69,7 +68,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     
     // MARK: - UI
     func setup() {
-        view.backgroundColor = .white
+        view.backgroundColor = AppTheme.bgPrimaryColor
         view.addSubview(logoImg)
         view.addSubview(inputTokenField)
         view.addSubview(authButton)

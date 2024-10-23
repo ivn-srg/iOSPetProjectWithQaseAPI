@@ -34,7 +34,7 @@ final class GeneralCaseTextField: UIView {
     private lazy var textView: UITextView = {
         let tv = UITextView()
         tv.translatesAutoresizingMaskIntoConstraints = false
-        tv.backgroundColor = .white
+        tv.backgroundColor = AppTheme.bgSecondaryColor
         tv.layer.borderWidth = 1.0
         tv.font = .systemFont(ofSize: 16)
         tv.layer.borderColor = UIColor.gray.cgColor

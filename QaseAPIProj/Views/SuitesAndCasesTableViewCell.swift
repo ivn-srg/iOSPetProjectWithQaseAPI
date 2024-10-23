@@ -41,7 +41,6 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
         nameLbl.translatesAutoresizingMaskIntoConstraints = false
         nameLbl.font = .systemFont(ofSize: 14, weight: .bold)
         nameLbl.numberOfLines = 2
-        nameLbl.textColor = .black
         return nameLbl
     }()
     

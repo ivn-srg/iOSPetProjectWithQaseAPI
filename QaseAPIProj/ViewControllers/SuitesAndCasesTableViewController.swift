@@ -16,7 +16,6 @@ final class SuitesAndCasesTableViewController: UIViewController {
     private lazy var tableVw: UITableView = {
         let tv = UITableView()
         tv.translatesAutoresizingMaskIntoConstraints = false
-        tv.backgroundColor = .white
         tv.rowHeight = UITableView.automaticDimension
         tv.estimatedRowHeight = 44
         tv.register(SuitesAndCasesTableViewCell.self, forCellReuseIdentifier: SuitesAndCasesTableViewCell.cellId)
@@ -60,10 +59,9 @@ final class SuitesAndCasesTableViewController: UIViewController {
     
     // MARK: - Setuping UI for tableView
     func setupTableView() {
+        view.backgroundColor = AppTheme.bgPrimaryColor
         title = viewModel.parentSuite == nil ? PROJECT_NAME
         : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite?.id} ).first?.title
-        
-        view.backgroundColor = .white
         
         tableVw.delegate = self
         tableVw.dataSource = self

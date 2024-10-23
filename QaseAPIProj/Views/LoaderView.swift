@@ -21,7 +21,7 @@ class LoadingIndicator {
         let indicator = UIActivityIndicatorView(style: .large)
         indicator.color = .systemBlue
         indicator.layer.cornerRadius = 12
-        indicator.backgroundColor = .white
+        indicator.backgroundColor = AppTheme.bgSecondaryColor
         indicator.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
         return indicator
     }()

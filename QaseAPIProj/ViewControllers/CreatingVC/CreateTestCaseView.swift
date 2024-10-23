@@ -45,7 +45,6 @@ final class CreateTestCaseView: UIView {
     private lazy var stackView: UIStackView = {
         let sv = UIStackView()
         sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.backgroundColor = .white
         sv.axis = .vertical
         sv.spacing = 30
         sv.alignment = .fill
@@ -65,7 +64,6 @@ final class CreateTestCaseView: UIView {
     }
     
     func configureView() {
-        self.backgroundColor = .white
         let emptyLabel = UILabel()
         emptyLabel.text = "Empty test uiview"
         emptyLabel.font = .systemFont(ofSize: 20)

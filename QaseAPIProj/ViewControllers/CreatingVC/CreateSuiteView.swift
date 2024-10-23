@@ -34,7 +34,6 @@ final class CreateSuiteView: UIView {
     private lazy var stackView: UIStackView = {
         let sv = UIStackView()
         sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.backgroundColor = .white
         sv.axis = .vertical
         sv.spacing = 30
         sv.alignment = .fill
@@ -61,7 +60,6 @@ final class CreateSuiteView: UIView {
     }
     
     func configureView() {
-        self.backgroundColor = .white
         
         self.addSubview(scrollView)
         scrollView.snp.makeConstraints {

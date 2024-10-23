@@ -20,7 +20,11 @@ enum AppTheme {
     static let xmarkCircleFillImage = UIImage(systemName: "xmark.circle.fill")
     static let noPriorityImage = UIImage(systemName: "minus")
     // colors
-    static let fioletColor = UIColor(red: 0.31, green: 0.27, blue: 0.86, alpha: 1)
+    static let fioletColor = UIColor(named: "primary") ?? UIColor.purple
+    static let bgPrimaryColor = UIColor(named: "primaryBackground") ?? UIColor.white
+    static let bgSecondaryColor = UIColor(named: "secondaryBackground") ?? UIColor.white
+    static let bgThirdthColor = UIColor(named: "thirdthBackground") ?? UIColor.white
+    static let textColor = UIColor(named: "text") ?? UIColor.white
 }
 
 // MARK: - Shared UI Components

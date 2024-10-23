@@ -33,7 +33,7 @@ final class PropertiesPickerTextField: UIView {
     private lazy var textField: UITextField = {
         let tf = UITextField()
         tf.translatesAutoresizingMaskIntoConstraints = false
-        tf.backgroundColor = .white
+        tf.backgroundColor = AppTheme.bgSecondaryColor
         tf.layer.borderWidth = 1.0
         tf.layer.borderColor = UIColor.gray.cgColor
         tf.layer.cornerRadius = 8.0

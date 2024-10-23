@@ -61,7 +61,6 @@ final class CreatingProjectViewController: UIViewController {
     private lazy var stackView: UIStackView = {
         let sv = UIStackView()
         sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.backgroundColor = .white
         sv.axis = .vertical
         sv.spacing = 30
         sv.alignment = .fill
@@ -107,8 +106,8 @@ final class CreatingProjectViewController: UIViewController {
     
     // MARK: - other block
     private func setupView() {
+        view.backgroundColor = AppTheme.bgPrimaryColor
         titleLabel.text = "Creating new project"
-        view.backgroundColor = .white
         
         view.addSubview(customNavigationView)
         customNavigationView.addSubview(closeButton)

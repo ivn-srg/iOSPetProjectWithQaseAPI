@@ -65,8 +65,6 @@ class DetailTabBarController: UITabBarController {
         viewControllers = [generalInfoVC, propertiesInfoVC, defectsInfoVC]
         
         title = "\(PROJECT_NAME)-\(viewModel.caseId)"
-        navigationItem.largeTitleDisplayMode = .never
-        view.backgroundColor = .white
     }
 }
 

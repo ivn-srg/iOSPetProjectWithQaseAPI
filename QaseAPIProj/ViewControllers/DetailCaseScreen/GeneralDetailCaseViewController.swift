@@ -31,7 +31,6 @@ class GeneralDetailCaseViewController: UIViewController {
     private lazy var stackView: UIStackView = {
         let sv = UIStackView()
         sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.backgroundColor = .white
         sv.axis = .vertical
         sv.spacing = 30
         sv.alignment = .fill
@@ -90,7 +89,6 @@ class GeneralDetailCaseViewController: UIViewController {
     
     // MARK: - Setup Methods for UI
     private func setupView() {
-        view.backgroundColor = .white
         view.addSubview(scrollView)
         
         scrollView.snp.makeConstraints {

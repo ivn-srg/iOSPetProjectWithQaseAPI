@@ -17,8 +17,8 @@ final class ProjectsViewController: UIViewController {
     private lazy var tableVw: UITableView = {
         let tv = UITableView()
         tv.translatesAutoresizingMaskIntoConstraints = false
-        tv.backgroundColor = .white
         tv.register(ProjectTableViewCell.self, forCellReuseIdentifier: ProjectTableViewCell.cellId)
+        tv.backgroundColor = .clear
         return tv
     }()
     
@@ -39,6 +39,7 @@ final class ProjectsViewController: UIViewController {
         setupTableView()
         viewModel.delegate = self
         
+        view.backgroundColor = AppTheme.bgPrimaryColor
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .add,
             target: self,
@@ -54,9 +55,6 @@ final class ProjectsViewController: UIViewController {
     // MARK: - UI
     func setupTableView() {
         title = "Projects"
-        navigationItem.largeTitleDisplayMode = .never
-        
-        view.backgroundColor = .white
         
         tableVw.delegate = self
         tableVw.dataSource = self

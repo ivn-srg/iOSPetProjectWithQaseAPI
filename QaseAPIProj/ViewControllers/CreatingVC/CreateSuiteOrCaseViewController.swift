@@ -109,8 +109,8 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     
     // MARK: - other block
     private func setupView() {
+        view.backgroundColor = AppTheme.bgPrimaryColor
         titleLabel.text = "Creating new entity"
-        view.backgroundColor = .white
         
         view.addSubview(customNavigationView)
         customNavigationView.addSubview(closeButton)

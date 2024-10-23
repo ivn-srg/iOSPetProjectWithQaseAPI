@@ -22,12 +22,6 @@ final class ProjectsViewController: UIViewController {
         return tv
     }()
     
-    func showErrorAlert(titleAlert: String, messageAlert: String) {
-        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
-    }
-    
     // MARK: - Lifecycle
     
     init(totalCountOfProjects: Int) {
@@ -44,7 +38,12 @@ final class ProjectsViewController: UIViewController {
         
         setupTableView()
         viewModel.delegate = self
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewProject))
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .add,
+            target: self,
+            action: #selector(addNewProject)
+        )
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -129,9 +128,9 @@ extension ProjectsViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let swipeAction = UIContextualAction(style: .destructive, title: "Delete", handler: { action, view, completion in
+        let swipeAction = UIContextualAction(style: .destructive, title: "Delete") { action, view, completion in
             self.viewModel.deleteProject(at: indexPath.row)
-        })
+        }
         return UISwipeActionsConfiguration(actions: [swipeAction])
     }
 }

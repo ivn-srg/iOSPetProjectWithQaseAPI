@@ -8,7 +8,6 @@
 import UIKit
 
 final class AuthViewController: UIViewController, NextViewControllerPusher {
-    
     private var tapCount: Int = 0
     private var viewModel: AuthViewModel
     
@@ -17,16 +16,22 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         let limg = UIImageView()
         limg.translatesAutoresizingMaskIntoConstraints = false
         limg.contentMode = .scaleAspectFit
+        limg.image = AppTheme.LogoApp
+        limg.isUserInteractionEnabled = true
         return limg
     }()
     
     private var inputTokenField: UITextField = {
-        let inf = UITextField()
+        let inf = TextFieldWithPadding()
         inf.translatesAutoresizingMaskIntoConstraints = false
         inf.backgroundColor = .white
-        inf.textColor = .systemGray
+        inf.textColor = AppTheme.fioletColor
         inf.borderStyle = .roundedRect
-        inf.layer.borderColor = AppTheme.fioletColor.cgColor
+        inf.layer.borderWidth = 1
+        inf.layer.cornerRadius = 8
+        inf.layer.borderColor = UIColor.gray.cgColor
+        inf.placeholder = "Input your API Token"
+        inf.delegate = inf
         return inf
     }()
     
@@ -36,14 +41,10 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         ab.backgroundColor = AppTheme.fioletColor
         ab.layer.cornerRadius = 12
         ab.titleLabel?.textColor = .white
+        ab.setTitle("Next", for: .normal)
+        ab.addTarget(AuthViewController.self, action: #selector(authorizate), for: .touchUpInside)
         return ab
     }()
-    
-    func showErrorAlert(titleAlert: String, messageAlert: String) {
-        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
-    }
     
     // MARK: - Lifecycle
     
@@ -59,28 +60,16 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     override func viewDidLoad() {
         super.viewDidLoad()
         setup()
-        self.view.backgroundColor = .white
         viewModel.delegate = self
         
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
         tapGestureRecognizer.numberOfTapsRequired = 3
         logoImg.addGestureRecognizer(tapGestureRecognizer)
-        logoImg.isUserInteractionEnabled = true
     }
     
     // MARK: - UI
-    
     func setup() {
-        logoImg.image = AppTheme.LogoApp
-
-        inputTokenField.layer.borderWidth = 1
-        inputTokenField.layer.cornerRadius = 8
-        inputTokenField.layer.borderColor = UIColor.gray.cgColor
-        inputTokenField.placeholder = "API Token"
-
-        authButton.setTitle("Next", for: .normal)
-        authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
-        
+        view.backgroundColor = .white
         view.addSubview(logoImg)
         view.addSubview(inputTokenField)
         view.addSubview(authButton)
@@ -115,15 +104,23 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     
     // MARK: - objc funcs
     @objc private func authorizate() {
-        if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
-            if !inputTokenFieldText.isEmpty {
-                TOKEN = inputTokenFieldText
-                viewModel.fetchProjectsJSON()
-            } else {
-                showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
+        if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputTokenFieldText.isEmpty {
+            TOKEN = inputTokenFieldText
+            do {
+                try viewModel.fetchProjectsJSON()
+            } catch {
+                UIAlertController.showErrorAlert(
+                    on: self,
+                    title: String(localized: "errorTitle"),
+                    message: error.localizedDescription
+                )
             }
         } else {
-            showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
+            UIAlertController.showErrorAlert(
+                on: self,
+                title: "Incorrect input",
+                message: "Input the API Token for authorization on Qase service"
+            )
         }
     }
     

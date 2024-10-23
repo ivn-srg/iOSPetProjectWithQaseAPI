@@ -24,7 +24,7 @@ final class AuthViewModel {
     }
     
     // MARK: - Network work
-    func fetchProjectsJSON() {
+    func fetchProjectsJSON() throws {
         guard let urlString = apiManager.formUrlString(
             APIMethod: .project,
             codeOfProject: nil,

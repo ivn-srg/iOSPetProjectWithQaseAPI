@@ -98,6 +98,7 @@ final class SuitesAndCasesViewModel {
                 let filteredSuites = parentSuite != nil
                 ? suitesResult.result.entities.filter { $0.parentId == parentSuite?.id }
                 : suitesResult.result.entities.filter { $0.parentId == nil }
+                
                 changeDataTypeToUniversalizeData(
                     isSuite: true,
                     targetUniversalList: &suitesAndCaseData,
@@ -133,6 +134,7 @@ final class SuitesAndCasesViewModel {
                 let filteredCases = parentSuite != nil
                 ? testCasesResult.result.entities.filter { $0.suiteId == parentSuite?.id }
                 : testCasesResult.result.entities.filter { $0.suiteId == nil }
+                
                 changeDataTypeToUniversalizeData(
                     isSuite: false,
                     targetUniversalList: &suitesAndCaseData,

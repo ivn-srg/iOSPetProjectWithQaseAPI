@@ -96,6 +96,6 @@ Pods
 # https://github.com/johnno1962/injectionforxcode
 
 # Keychain
-QaseAPIProj/Classes/Keychain
+QaseAPIProj/Classes/KeychainLocal
 
 iOSInjectionProject/

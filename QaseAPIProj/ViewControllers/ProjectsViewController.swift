@@ -9,9 +9,9 @@ import UIKit
 
 final class ProjectsViewController: UIViewController {
 
-    var suitesAndCasesCompletion: (() -> Void)?
+    var suitesAndCasesCompletion: (() -> Void)? = {}
     var suitesAndCaseData = [SuiteAndCaseData]()
-    var viewModel: ProjectsViewModel
+    var viewModel: ProjectsViewModel = .init()
     
     // MARK: - UI
     private lazy var tableVw: UITableView = {
@@ -23,16 +23,6 @@ final class ProjectsViewController: UIViewController {
     }()
     
     // MARK: - Lifecycle
-    
-    init(totalCountOfProjects: Int) {
-        self.viewModel = ProjectsViewModel(totalCountOfProjects: totalCountOfProjects)
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -49,7 +39,9 @@ final class ProjectsViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
-        viewModel.fetchProjectsJSON()
+        executeWithErrorHandling {
+            try viewModel.fetchProjectsJSON()
+        }
     }
     
     // MARK: - UI
@@ -69,7 +61,9 @@ final class ProjectsViewController: UIViewController {
     @objc func addNewProject() {
         let vc = CreatingProjectViewController(viewModel: .init())
         vc.createdProjectCallback = {
-            self.viewModel.fetchProjectsJSON()
+            self.executeWithErrorHandling {
+                try self.viewModel.fetchProjectsJSON()
+            }
         }
         vc.modalPresentationStyle = .fullScreen
         present(vc, animated: true)

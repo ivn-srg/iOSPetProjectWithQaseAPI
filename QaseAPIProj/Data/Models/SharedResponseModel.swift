@@ -13,3 +13,13 @@ struct ServerResponseModel<T: Codable>: Codable {
     let status: Bool
     let result: T
 }
+
+struct ResponseWithErrorModel: Codable {
+    let status: Bool
+    let errorMessage: String
+    let errorFields: [ErrorField]
+}
+
+struct ErrorField: Codable {
+    let field, error: String
+}

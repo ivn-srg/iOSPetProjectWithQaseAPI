@@ -62,8 +62,14 @@ final class APIManager: NetworkManager {
     ) async throws -> T {
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
-            let result = try JSONDecoder().decode(codableModelType, from: data)
-            return result
+            do {
+                let result = try JSONDecoder().decode(codableModelType, from: data)
+                return result
+            } catch {
+                let errorModel = try JSONDecoder().decode(ResponseWithErrorModel.self, from: data)
+                let errorMessage = StringError(errorModel.errorMessage)
+                throw APIError.parsingError(errorMessage)
+            }
         } catch let error as DecodingError {
             throw APIError.parsingError(error)
         } catch let error as URLError {
@@ -155,5 +161,19 @@ enum APIEndpoint: String, CaseIterable {
         }
         
         return listOfCases
+    }
+}
+
+struct StringError: Error {
+    let message: String
+    
+    init(_ message: String) {
+        self.message = message
+    }
+}
+
+extension StringError: LocalizedError {
+    var errorDescription: String? {
+        return message
     }
 }

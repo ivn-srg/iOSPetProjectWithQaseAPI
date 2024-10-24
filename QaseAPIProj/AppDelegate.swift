@@ -13,12 +13,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-    
         window = UIWindow()
-        let mainVC = AuthViewController()
-        let navigationController = UINavigationController(rootViewController: mainVC)
+        let mainVC: UIViewController
         
-        window?.rootViewController = navigationController
+        if AuthManager.shared.isUserLoggedIn(), let token = KeychainService.shared.getToken() {
+            TOKEN = token
+            mainVC = ProjectsViewController()
+        } else {
+            mainVC = AuthViewController()
+        }
+        
+        window?.rootViewController = UINavigationController(rootViewController: mainVC)
         window?.makeKeyAndVisible()
         return true
     }

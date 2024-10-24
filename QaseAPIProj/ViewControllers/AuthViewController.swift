@@ -9,7 +9,6 @@ import UIKit
 
 final class AuthViewController: UIViewController, NextViewControllerPusher {
     private var tapCount: Int = 0
-    private var viewModel: AuthViewModel
     
     // MARK: - UI
     private var logoImg: UIImageView = {
@@ -41,29 +40,18 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         ab.layer.cornerRadius = 12
         ab.titleLabel?.textColor = .white
         ab.setTitle("Next", for: .normal)
-        ab.addTarget(AuthViewController.self, action: #selector(authorizate), for: .touchUpInside)
         return ab
     }()
     
     // MARK: - Lifecycle
-    
-    init() {
-        self.viewModel = AuthViewModel()
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         setup()
-        viewModel.delegate = self
         
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
         tapGestureRecognizer.numberOfTapsRequired = 3
         logoImg.addGestureRecognizer(tapGestureRecognizer)
+        authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
     }
     
     // MARK: - UI
@@ -96,17 +84,17 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     
     func pushToNextVC(to item: Int? = nil) {
         DispatchQueue.main.async {
-            let vc = ProjectsViewController(totalCountOfProjects: self.viewModel.totalCountOfProject)
+            let vc = ProjectsViewController()
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }
     
     // MARK: - objc funcs
     @objc private func authorizate() {
-        if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputTokenFieldText.isEmpty {
-            TOKEN = inputTokenFieldText
+        if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputToken.isEmpty {
             do {
-                try viewModel.fetchProjectsJSON()
+                try AuthManager.shared.loggedIn(token: inputToken)
+                pushToNextVC()
             } catch {
                 UIAlertController.showErrorAlert(
                     on: self,

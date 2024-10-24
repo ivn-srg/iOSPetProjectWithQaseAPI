@@ -10,8 +10,8 @@ import Foundation
 
 final class ProjectsViewModel {
     // MARK: - Fields
-    var delegate: UpdateTableViewProtocol?
-    let totalCountOfProjects: Int
+    weak var delegate: UpdateTableViewProtocol?
+    var totalCountOfProjects: Int = 0
     var projects: [Project] = [] {
         didSet {
             delegate?.updateTableView()
@@ -19,24 +19,42 @@ final class ProjectsViewModel {
     }
     
     // MARK: - lifecycle
+    init() {}
     
-    init(delegate: UpdateTableViewProtocol? = nil, totalCountOfProjects: Int) {
-        self.delegate = delegate
-        self.totalCountOfProjects = totalCountOfProjects
+    // MARK: - Network funcs
+    func fetchTotalCountOfProjects() async throws {
+        guard let urlString = apiManager.formUrlString(
+            APIMethod: .project,
+            codeOfProject: nil,
+            limit: 1,
+            offset: 0,
+            parentSuite: nil,
+            caseId: nil
+        ) else { return }
+        
+        let projectData = try await apiManager.performRequest(
+            from: urlString,
+            method: .get,
+            modelType: ProjectDataModel.self
+        )
+        totalCountOfProjects = projectData.result.total
     }
     
-    func fetchProjectsJSON() {
-        guard let urlString = apiManager.formUrlString(
-                                            APIMethod: .project,
-                                            codeOfProject: nil,
-                                            limit: totalCountOfProjects,
-                                            offset: 0,
-                                            parentSuite: nil,
-                                            caseId: nil
-                                        ) else { return }
+    func fetchProjectsJSON() throws {
         LoadingIndicator.startLoading()
-        
         Task {
+            try await fetchTotalCountOfProjects()
+            
+            guard let urlString = apiManager.formUrlString(
+                APIMethod: .project,
+                codeOfProject: nil,
+                limit: totalCountOfProjects,
+                offset: 0,
+                parentSuite: nil,
+                caseId: nil
+            ) else { return }
+            
+            
             let projectListResult = try await apiManager.performRequest(
                 from: urlString,
                 method: .get,
@@ -72,7 +90,6 @@ final class ProjectsViewModel {
     }
     
     // MARK: - VC funcs
-    
     func countOfRows() -> Int {
         projects.count
     }

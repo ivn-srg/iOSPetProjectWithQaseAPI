@@ -13,16 +13,6 @@ class DetailTabBarController: UITabBarController {
     let viewModel: DetailTabbarControllerViewModel
     
     // MARK: - UI components
-    private lazy var alertController: UIAlertController = {
-        let alertC = UIAlertController(
-            title: "Data Has been saved ✅",
-            message: "Your changes for \(PROJECT_NAME)-\(viewModel.caseId) test case with successfully saved",
-            preferredStyle: .alert
-        )
-        let action = UIAlertAction(title: "OK", style: .cancel)
-        alertC.addAction(action)
-        return alertC
-    }()
     
     // MARK: - Lifecycle
     
@@ -41,7 +31,10 @@ class DetailTabBarController: UITabBarController {
         viewModel.delegate = self
         viewModel.fetchCaseDataJSON()
         viewModel.updatingFinishCallback = {
-            self.present(self.alertController, animated: true)
+            UIAlertController.showSimpleAlert(
+                on: self, title: "Data Has been saved ✅",
+                message: "Your changes for \(PROJECT_NAME)-\(self.viewModel.caseId) test case with successfully saved"
+            )
         }
         viewModel.checkDataChanged = {
             self.checkConditionAndToggleRightBarButton()

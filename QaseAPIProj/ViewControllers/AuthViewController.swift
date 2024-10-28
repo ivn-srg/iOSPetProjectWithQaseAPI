@@ -84,7 +84,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     
     func pushToNextVC(to item: Int? = nil) {
         DispatchQueue.main.async {
-            let vc = ProjectsViewController()
+            let vc = MainTabbarViewController()
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }
@@ -94,16 +94,16 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputToken.isEmpty {
             do {
                 try AuthManager.shared.loggedIn(token: inputToken)
-                pushToNextVC()
+//                pushToNextVC()
             } catch {
-                UIAlertController.showErrorAlert(
+                UIAlertController.showSimpleAlert(
                     on: self,
                     title: String(localized: "errorTitle"),
                     message: error.localizedDescription
                 )
             }
         } else {
-            UIAlertController.showErrorAlert(
+            UIAlertController.showSimpleAlert(
                 on: self,
                 title: "Incorrect input",
                 message: "Input the API Token for authorization on Qase service"

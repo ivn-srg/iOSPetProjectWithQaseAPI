@@ -46,7 +46,7 @@ final class ProjectsViewController: UIViewController {
     
     // MARK: - UI
     func setupTableView() {
-        title = "Projects"
+        title = "Repository".localized
         
         tableVw.delegate = self
         tableVw.dataSource = self

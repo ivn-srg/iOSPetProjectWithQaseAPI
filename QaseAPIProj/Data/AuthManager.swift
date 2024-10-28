@@ -33,11 +33,15 @@ final class AuthManager {
     func loggedIn(token: String?) throws {
         guard let token = token else {
             try keychain.deleteToken()
+            TOKEN = ""
             userDefaults.set(false, forKey: authStatusKey)
+            NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
             return
         }
         try keychain.saveToken(token: token)
+        TOKEN = token
         userDefaults.set(true, forKey: authStatusKey)
+        NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
     }
     
     func logout() throws {

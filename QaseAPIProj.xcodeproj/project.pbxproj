@@ -14,6 +14,7 @@
 		9357F1E22C91732B00219BEC /* KeychainLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9357F1E12C91732B00219BEC /* KeychainLocal.swift */; };
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
 		935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE32B518A4000F08ECF /* LoaderView.swift */; };
+		935F2BA52CCFC73800546162 /* Ext+LocalizableString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935F2BA42CCFC73800546162 /* Ext+LocalizableString.swift */; };
 		936A2B132C8A251E007F7C72 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; };
 		936A2B162C8A252E007F7C72 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B152C8A252E007F7C72 /* SnapKit */; };
 		936A2B192C8A2821007F7C72 /* GeneralCaseTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */; };
@@ -43,6 +44,11 @@
 		93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045522C9E948B00EE125B /* CreateSuiteView.swift */; };
 		93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045542C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift */; };
 		93B23D0A2CC9259400FA7509 /* Ext+UIAlertController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B23D092CC9259400FA7509 /* Ext+UIAlertController.swift */; };
+		93BCD2472CD00CF900C6D6EE /* ButtonWithLeadingImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BCD2462CD00CF900C6D6EE /* ButtonWithLeadingImage.swift */; };
+		93C8095C2CCBCA23006BCCC9 /* MainTabbarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */; };
+		93C8095E2CCBDEB9006BCCC9 /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095D2CCBDEB9006BCCC9 /* ProfileViewController.swift */; };
+		93C809602CCC0ED8006BCCC9 /* RootViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095F2CCC0ECD006BCCC9 /* RootViewController.swift */; };
+		93C809622CCC0FC8006BCCC9 /* Ext+NotificationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C809612CCC0FB9006BCCC9 /* Ext+NotificationName.swift */; };
 		93CA94732CCA752300D99517 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CA94722CCA751800D99517 /* AuthManager.swift */; };
 		93CA94762CCA8A3900D99517 /* Ext+UIViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CA94752CCA8A2D00D99517 /* Ext+UIViewController.swift */; };
 		93DCDF592BE4EC3800D4F365 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */; };
@@ -63,6 +69,7 @@
 		9357F1E12C91732B00219BEC /* KeychainLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainLocal.swift; sourceTree = "<group>"; };
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		935DCFE32B518A4000F08ECF /* LoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderView.swift; sourceTree = "<group>"; };
+		935F2BA42CCFC73800546162 /* Ext+LocalizableString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+LocalizableString.swift"; sourceTree = "<group>"; };
 		936A2B102C8A2449007F7C72 /* QaseAPIProj.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QaseAPIProj.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralCaseTextField.swift; sourceTree = "<group>"; };
 		937085502BEB3C49002316B8 /* APIManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
@@ -92,6 +99,11 @@
 		93B045522C9E948B00EE125B /* CreateSuiteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteView.swift; sourceTree = "<group>"; };
 		93B045542C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteOrCaseViewModel.swift; sourceTree = "<group>"; };
 		93B23D092CC9259400FA7509 /* Ext+UIAlertController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+UIAlertController.swift"; sourceTree = "<group>"; };
+		93BCD2462CD00CF900C6D6EE /* ButtonWithLeadingImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonWithLeadingImage.swift; sourceTree = "<group>"; };
+		93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabbarViewController.swift; sourceTree = "<group>"; };
+		93C8095D2CCBDEB9006BCCC9 /* ProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
+		93C8095F2CCC0ECD006BCCC9 /* RootViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewController.swift; sourceTree = "<group>"; };
+		93C809612CCC0FB9006BCCC9 /* Ext+NotificationName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+NotificationName.swift"; sourceTree = "<group>"; };
 		93CA94722CCA751800D99517 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		93CA94752CCA8A2D00D99517 /* Ext+UIViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+UIViewController.swift"; sourceTree = "<group>"; };
 		93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
@@ -136,6 +148,7 @@
 				938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */,
 				936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */,
 				931E89C22CC930FD006A41C7 /* TextFieldWithPadding.swift */,
+				93BCD2462CD00CF900C6D6EE /* ButtonWithLeadingImage.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -164,11 +177,14 @@
 		93748C2F2B4808BF00BE7FFB /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				93C8095F2CCC0ECD006BCCC9 /* RootViewController.swift */,
 				93B0454F2C9E940800EE125B /* CreatingVC */,
 				93748C322B480F4400BE7FFB /* AuthViewController.swift */,
 				93F1F37D2B59879900667DB9 /* DetailCaseScreen */,
 				9384FCDE2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift */,
 				93748C302B4808F500BE7FFB /* ProjectsViewController.swift */,
+				93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */,
+				93C8095D2CCBDEB9006BCCC9 /* ProfileViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -256,8 +272,10 @@
 		93CA94742CCA8A1C00D99517 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				93C809612CCC0FB9006BCCC9 /* Ext+NotificationName.swift */,
 				93CA94752CCA8A2D00D99517 /* Ext+UIViewController.swift */,
 				93B23D092CC9259400FA7509 /* Ext+UIAlertController.swift */,
+				935F2BA42CCFC73800546162 /* Ext+LocalizableString.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -315,7 +333,6 @@
 			knownRegions = (
 				en,
 				Base,
-				ru,
 			);
 			mainGroup = 937F04192AD84E3D006DDB28;
 			packageReferences = (
@@ -352,16 +369,19 @@
 				937085592BEB3C49002316B8 /* APIManager.swift in Sources */,
 				93CA94732CCA752300D99517 /* AuthManager.swift in Sources */,
 				938C47E92C9A0C0000B75BE8 /* SwitcherWithTitle.swift in Sources */,
+				93C8095C2CCBCA23006BCCC9 /* MainTabbarViewController.swift in Sources */,
 				93DCDF5D2BE5159500D4F365 /* SuitesAndCasesViewModel.swift in Sources */,
 				93B23D0A2CC9259400FA7509 /* Ext+UIAlertController.swift in Sources */,
 				9370855C2BEB3C49002316B8 /* ProjectDataModel.swift in Sources */,
 				9370855A2BEB3C49002316B8 /* EntitiesRO.swift in Sources */,
 				938C47E32C9A0BC600B75BE8 /* AppTheme.swift in Sources */,
 				935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */,
+				93BCD2472CD00CF900C6D6EE /* ButtonWithLeadingImage.swift in Sources */,
 				931E89C32CC930FD006A41C7 /* TextFieldWithPadding.swift in Sources */,
 				93DCDF592BE4EC3800D4F365 /* ProjectsViewModel.swift in Sources */,
 				938C47DB2C9A08B300B75BE8 /* CreatingProjectViewController.swift in Sources */,
 				938C47DD2C9A095A00B75BE8 /* CreatingProjectViewModel.swift in Sources */,
+				93C809602CCC0ED8006BCCC9 /* RootViewController.swift in Sources */,
 				93F1F3852B59882C00667DB9 /* DefectsDetailCaseViewController.swift in Sources */,
 				93748C312B4808F500BE7FFB /* ProjectsViewController.swift in Sources */,
 				937F04262AD84E3D006DDB28 /* AppDelegate.swift in Sources */,
@@ -386,10 +406,13 @@
 				93F1F37C2B59876000667DB9 /* DetailTabBarController.swift in Sources */,
 				9370855E2BEB3C49002316B8 /* SuitesDataModel.swift in Sources */,
 				9384FCDF2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift in Sources */,
+				93C809622CCC0FC8006BCCC9 /* Ext+NotificationName.swift in Sources */,
 				93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */,
 				93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */,
+				93C8095E2CCBDEB9006BCCC9 /* ProfileViewController.swift in Sources */,
 				93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */,
 				9357F1E22C91732B00219BEC /* KeychainLocal.swift in Sources */,
+				935F2BA52CCFC73800546162 /* Ext+LocalizableString.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -412,6 +435,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -476,6 +500,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";

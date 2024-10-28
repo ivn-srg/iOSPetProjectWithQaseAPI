@@ -8,7 +8,7 @@
 import UIKit
 
 extension UIAlertController {
-    static func showErrorAlert(
+    static func showSimpleAlert(
         on viewController: UIViewController,
         title: String = String(localized: "errorTitle"),
         message: String

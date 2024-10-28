@@ -13,7 +13,7 @@ extension UIViewController {
         do {
             try action()
         } catch {
-            UIAlertController.showErrorAlert(on: self, message: error.localizedDescription)
+            UIAlertController.showSimpleAlert(on: self, message: error.localizedDescription)
         }
     }
 }

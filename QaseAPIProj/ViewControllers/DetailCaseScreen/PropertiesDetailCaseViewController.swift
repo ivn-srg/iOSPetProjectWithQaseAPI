@@ -34,43 +34,36 @@ class PropertiesDetailCaseViewController: UIViewController {
     
     private lazy var severityField = PropertiesPickerTextField(
         textType: .severity,
-        textFieldValue: self.vm.testCase?.severity ?? 0,
         detailCaseVM: vm
     )
     
     private lazy var statusField = PropertiesPickerTextField(
         textType: .status,
-        textFieldValue: self.vm.testCase?.status ?? 0,
         detailCaseVM: vm
     )
     
     private lazy var priorityField = PropertiesPickerTextField(
         textType: .priority,
-        textFieldValue: self.vm.testCase?.priority ?? 0,
         detailCaseVM: vm
     )
     
     private lazy var behaviorField = PropertiesPickerTextField(
         textType: .behavior,
-        textFieldValue: self.vm.testCase?.behavior ?? 0,
         detailCaseVM: vm
     )
     
     private lazy var typeField = PropertiesPickerTextField(
         textType: .type,
-        textFieldValue: self.vm.testCase?.type ?? 0,
         detailCaseVM: vm
     )
     
     private lazy var layerField: PropertiesPickerTextField = PropertiesPickerTextField(
         textType: .layer,
-        textFieldValue: self.vm.testCase?.layer ?? 0,
         detailCaseVM: vm
     )
     
     private lazy var automationStatusField: PropertiesPickerTextField = PropertiesPickerTextField(
         textType: .automationStatus,
-        textFieldValue: self.vm.testCase?.automation ?? 0,
         detailCaseVM: vm
     )
     
@@ -139,13 +132,13 @@ extension PropertiesDetailCaseViewController: DetailTestCaseProtocol {
     func updateUI() {
         DispatchQueue.main.async {
             if let testCase = self.vm.changedTestCase {
-                self.severityField.updateTextFieldValue(testCase.severity)
-                self.statusField.updateTextFieldValue(testCase.status)
-                self.priorityField.updateTextFieldValue(testCase.priority)
-                self.behaviorField.updateTextFieldValue(testCase.behavior)
-                self.typeField.updateTextFieldValue(testCase.type)
-                self.layerField.updateTextFieldValue(testCase.layer)
-                self.automationStatusField.updateTextFieldValue(testCase.automation)
+                self.severityField.updateValue()
+                self.statusField.updateValue()
+                self.priorityField.updateValue()
+                self.behaviorField.updateValue()
+                self.typeField.updateValue()
+                self.layerField.updateValue()
+                self.automationStatusField.updateValue()
                 self.isFlakySwitch.updateSwitcherValue(testCase.isFlaky == 1)
             }
         }

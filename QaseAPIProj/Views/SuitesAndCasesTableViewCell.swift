@@ -59,28 +59,28 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
         if !dataForCell.isSuites {
             switch dataForCell.priority {
                 case 1:
-                    priorityImage.image = AppTheme.highPriorityImage
+                    priorityImage.image = AppTheme.chevronUpImage
                     priorityImage.tintColor = .systemRed
                 case 2:
-                    priorityImage.image = AppTheme.mediumPriorityImage
+                    priorityImage.image = AppTheme.circleImage
                     priorityImage.tintColor = .systemGray
                 case 3:
-                    priorityImage.image = AppTheme.lowPriorityImage
+                    priorityImage.image = AppTheme.chevronDownImage
                     priorityImage.tintColor = .systemGreen
                 default:
-                    priorityImage.image = AppTheme.noPriorityImage
+                    priorityImage.image = AppTheme.minusImage
                     priorityImage.tintColor = .systemGray
             }
             
             switch dataForCell.automation {
                 case 1:
-                    automationImage.image = AppTheme.toBeAutomationImage
+                    automationImage.image = AppTheme.personWithGearshapeImage
                     automationImage.tintColor = .systemGray
                 case 2:
-                    automationImage.image = AppTheme.automationImage
+                    automationImage.image = AppTheme.gearshapeFillImage
                     automationImage.tintColor = .systemBlue
                 default:
-                    automationImage.image = AppTheme.notAutomationImage
+                    automationImage.image = AppTheme.handRaisedImage
                     automationImage.tintColor = .systemGray
             }
         } else {

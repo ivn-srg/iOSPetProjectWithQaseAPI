@@ -30,6 +30,7 @@ final class ButtonWithLeadingImage: UIView {
         let titleButton = UILabel()
         titleButton.translatesAutoresizingMaskIntoConstraints = false
         titleButton.text = title
+        titleButton.textColor = .red
         titleButton.textAlignment = .center
         return titleButton
     }()

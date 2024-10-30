@@ -11,6 +11,13 @@ final class ProfileViewController: UIViewController {
     // MARK: - Fields
     
     // MARK: - UI components
+    private lazy var screenTitle: UILabel = {
+        let title = UILabel()
+        title.font = .systemFont(ofSize: 18, weight: .bold)
+        title.text = "Profile".localized
+        return title
+    }()
+    
     private lazy var exitButton: ButtonWithLeadingImage = {
         let exitBtn = ButtonWithLeadingImage(
             leadingImage: AppTheme.exitImage,
@@ -26,7 +33,6 @@ final class ProfileViewController: UIViewController {
         
         return exitBtn
     }()
-    
     
     // MARK: - LifeCycle
     init() {
@@ -44,10 +50,16 @@ final class ProfileViewController: UIViewController {
     // MARK: - other block
     private func setupConstraints() {
         view.addSubview(exitButton)
+        view.addSubview(screenTitle)
         
         exitButton.snp.makeConstraints {
             $0.center.equalToSuperview()
             $0.width.equalToSuperview().inset(30)
+        }
+        
+        screenTitle.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.centerX.equalToSuperview()
         }
     }
     

@@ -40,3 +40,7 @@ extension IdenticalEntitiesProtocol {
     var code: String { return "" }
     var parentId: Int? { return nil }
 }
+
+protocol MenuDataSource {
+    static var dataSource: [MenuItem] { get }
+}

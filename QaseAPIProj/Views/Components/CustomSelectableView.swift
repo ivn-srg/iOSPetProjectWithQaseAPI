@@ -119,7 +119,7 @@ final class CustomSelectableView: UIButton {
         textLbl.snp.makeConstraints {
             $0.verticalEdges.equalToSuperview().inset(15)
             $0.leading.equalToSuperview().inset(15)
-            $0.trailing.equalTo(trailingImage.snp.leading).inset(10)
+            $0.trailing.equalTo(trailingImage.snp.leading)
         }
     }
     

@@ -15,6 +15,7 @@ class PropertiesDetailCaseViewController: UIViewController {
     private lazy var scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.translatesAutoresizingMaskIntoConstraints = false
+        sv.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
         sv.showsHorizontalScrollIndicator = false
         sv.alwaysBounceVertical = true
         sv.showsVerticalScrollIndicator = false
@@ -28,7 +29,6 @@ class PropertiesDetailCaseViewController: UIViewController {
         sv.axis = .vertical
         sv.spacing = 30
         sv.alignment = .fill
-        sv.isUserInteractionEnabled = true
         return sv
     }()
     
@@ -57,21 +57,19 @@ class PropertiesDetailCaseViewController: UIViewController {
         detailCaseVM: vm
     )
     
-    private lazy var layerField: PropertiesPickerTextField = PropertiesPickerTextField(
+    private lazy var layerField = PropertiesPickerTextField(
         textType: .layer,
         detailCaseVM: vm
     )
     
-    private lazy var automationStatusField: PropertiesPickerTextField = PropertiesPickerTextField(
+    private lazy var automationStatusField = PropertiesPickerTextField(
         textType: .automationStatus,
         detailCaseVM: vm
     )
     
     private lazy var isFlakySwitch: SwitcherWithTitle = {
-        let sw = SwitcherWithTitle(testCase: vm.changedTestCase)
+        let sw = SwitcherWithTitle(testCaseVM: vm)
         sw.translatesAutoresizingMaskIntoConstraints = false
-        sw.isUserInteractionEnabled = true
-        sw.addSwitchTarget(self, action: #selector(changedSwitchValue(_:)), for: .valueChanged)
         return sw
     }()
     
@@ -97,13 +95,20 @@ class PropertiesDetailCaseViewController: UIViewController {
         scrollView.addSubview(stackView)
         
         scrollView.snp.makeConstraints {
-            $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.horizontalEdges.equalTo(view.safeAreaLayoutGuide.snp.horizontalEdges)
+            if let tabBarController = tabBarController {
+                let xPosition = view.frame.minY - tabBarController.tabBar.frame.height
+                $0.bottom.equalTo(xPosition)
+            } else {
+                $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
+            }
         }
         
         stackView.snp.makeConstraints {
-            $0.top.equalTo(scrollView.snp.top).offset(30)
-            $0.centerX.equalTo(scrollView.snp.centerX)
-            $0.width.equalTo(scrollView.snp.width).inset(30)
+            $0.top.equalToSuperview().offset(30)
+            $0.centerX.bottom.equalToSuperview()
+            $0.width.equalToSuperview().inset(30)
         }
         stackView.addArrangedSubview(severityField)
         stackView.addArrangedSubview(statusField)
@@ -113,10 +118,14 @@ class PropertiesDetailCaseViewController: UIViewController {
         stackView.addArrangedSubview(layerField)
         stackView.addArrangedSubview(automationStatusField)
         stackView.addArrangedSubview(isFlakySwitch)
-    }
-    
-    @objc func changedSwitchValue(_ sender: UISwitch) {
-        vm.changedTestCase?.isFlaky = sender.isOn ? 1 : 0
+        isFlakySwitch.snp.makeConstraints {
+            $0.height.equalTo(40)
+        }
+        
+        isFlakySwitch.switchValueChanged = { [weak self] isOn in
+            self?.vm.changedTestCase?.isFlaky = isOn ? 1 : 0
+            print("BooleanObject state: \(isOn)")
+        }
     }
 }
 
@@ -139,7 +148,7 @@ extension PropertiesDetailCaseViewController: DetailTestCaseProtocol {
                 self.typeField.updateValue()
                 self.layerField.updateValue()
                 self.automationStatusField.updateValue()
-                self.isFlakySwitch.updateSwitcherValue(testCase.isFlaky == 1)
+                self.isFlakySwitch.configure(with: testCase.isFlaky == 1)
             }
         }
     }

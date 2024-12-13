@@ -23,10 +23,10 @@ final class RootViewController: UIViewController {
     }
     
     func updateRootViewController() {
-        let isUserLoggedIn = AuthManager.shared.isUserLoggedIn()
-        let token = KeychainService.shared.getToken()
+        let authManager = AuthManager.shared
+        let isUserLoggedIn = authManager.isUserLoggedIn()
+        let token = authManager.getAuthToken()
         
-        // Выбираем нужный контроллер
         let newViewController: UIViewController
         if let token = token, !token.isEmpty, isUserLoggedIn {
             newViewController = MainTabbarViewController()
@@ -34,7 +34,6 @@ final class RootViewController: UIViewController {
             newViewController = AuthViewController()
         }
         
-        // Меняем текущий корневой контроллер
         if let currentVC = currentViewController {
             currentVC.willMove(toParent: nil)
             currentVC.view.removeFromSuperview()

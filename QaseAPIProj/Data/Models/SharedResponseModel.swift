@@ -15,9 +15,10 @@ struct ServerResponseModel<T: Codable>: Codable {
 }
 
 struct ResponseWithErrorModel: Codable {
-    let status: Bool
-    let errorMessage: String
-    let errorFields: [ErrorField]
+    let status: Bool?
+    let errorMessage: String?
+    let errorFields: [ErrorField]?
+    let error: String?
 }
 
 struct ErrorField: Codable {

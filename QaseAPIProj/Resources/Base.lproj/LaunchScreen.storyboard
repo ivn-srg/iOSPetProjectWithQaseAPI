@@ -29,6 +29,8 @@
                         <constraints>
                             <constraint firstItem="3mQ-hs-nAs" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="44a-UK-cpR"/>
                             <constraint firstItem="3mQ-hs-nAs" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="200" id="MgZ-ZA-hi1"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="3mQ-hs-nAs" secondAttribute="trailing" constant="16" id="NkO-qq-Q3F"/>
+                            <constraint firstItem="3mQ-hs-nAs" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="WzJ-f9-RwB"/>
                         </constraints>
                     </view>
                 </viewController>

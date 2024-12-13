@@ -151,4 +151,3 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
         return UITableView.automaticDimension
     }
 }
-

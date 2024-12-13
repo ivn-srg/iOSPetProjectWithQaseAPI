@@ -30,6 +30,13 @@ final class AuthManager {
         userDefaults.bool(forKey: authStatusKey)
     }
     
+    func getAuthToken() -> String? {
+        guard let authToken = keychain.getToken() else { return nil }
+        
+        TOKEN = TOKEN.isEmpty ? authToken : TOKEN
+        return authToken
+    }
+    
     func loggedIn(token: String?) throws {
         guard let token = token else {
             try keychain.deleteToken()
@@ -49,7 +56,7 @@ final class AuthManager {
     }
 }
 
-final class KeychainService {
+private class KeychainService {
     static let shared = KeychainService()
     private let key = "authToken"
     private let server = APIManager.shared.DOMEN

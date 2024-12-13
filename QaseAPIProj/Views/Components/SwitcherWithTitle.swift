@@ -9,6 +9,8 @@ import UIKit
 
 class SwitcherWithTitle: UIView {
     // MARK: - Fields
+    var switchValueChanged: ((Bool) -> Void)?
+    private var testCaseViewModel: DetailTabbarControllerViewModel
     
     // MARK: - UI components
     private lazy var titlelbl: UILabel = {
@@ -20,20 +22,22 @@ class SwitcherWithTitle: UIView {
     }()
     
     private lazy var switcher: UISwitch = {
-        let isFS = UISwitch()
-        isFS.translatesAutoresizingMaskIntoConstraints = false
-        isFS.isUserInteractionEnabled = true
-        return isFS
+        let swtch = UISwitch()
+        swtch.translatesAutoresizingMaskIntoConstraints = false
+        swtch.onTintColor = AppTheme.fioletColor
+        return swtch
     }()
     
     // MARK: - Lyfecycle
     
-    init(testCase: TestEntity?) {
+    init(testCaseVM: DetailTabbarControllerViewModel) {
+        self.testCaseViewModel = testCaseVM
         super.init(frame: .zero)
         
         titlelbl.text = "Is Flaky"
-        switcher.isOn = testCase?.isFlaky == 1
+        switcher.isOn = testCaseViewModel.testCase?.isFlaky == 1
         configureView()
+        setupActions()
     }
     
     required init?(coder: NSCoder) {
@@ -54,11 +58,16 @@ class SwitcherWithTitle: UIView {
         }
     }
     
-    func updateSwitcherValue(_ value: Bool) {
-        switcher.setOn(value, animated: true)
+    private func setupActions() {
+        switcher.addTarget(self, action: #selector(switchValueDidChange(_:)), for: .valueChanged)
     }
     
-    func addSwitchTarget(_ target: Any?, action: Selector, for event: UIControl.Event) {
-        switcher.addTarget(target, action: action, for: event)
+    // MARK: - Actions
+    @objc private func switchValueDidChange(_ sender: UISwitch) {
+        switchValueChanged?(sender.isOn)
+    }
+    
+    func configure(with isOn: Bool) {
+        switcher.isOn = isOn
     }
 }

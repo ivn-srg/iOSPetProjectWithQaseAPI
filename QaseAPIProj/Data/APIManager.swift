@@ -67,7 +67,7 @@ final class APIManager: NetworkManager {
                 return result
             } catch {
                 let errorModel = try JSONDecoder().decode(ResponseWithErrorModel.self, from: data)
-                let errorMessage = StringError(errorModel.errorMessage)
+                let errorMessage = StringError(errorModel.errorMessage ?? errorModel.error)
                 throw APIError.parsingError(errorMessage)
             }
         } catch let error as DecodingError {
@@ -165,9 +165,9 @@ enum APIEndpoint: String, CaseIterable {
 }
 
 struct StringError: Error {
-    let message: String
+    let message: String?
     
-    init(_ message: String) {
+    init(_ message: String?) {
         self.message = message
     }
 }

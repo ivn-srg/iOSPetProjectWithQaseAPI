@@ -15,53 +15,53 @@ enum AppTheme {
     static let personWithGearshapeImage = UIImage(systemName: "person.2.badge.gearshape.fill")
     static let gearshapeFillImage = UIImage(systemName: "gearshape.fill")
     static let chevronUpImage: UIImage? = {
-        let image = UIImage(systemName: "arrow.up")
-        image?.withTintColor(.red, renderingMode: .alwaysOriginal)
-        return image
+        UIImage(systemName: "arrow.up")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
     static let circleImage = UIImage(systemName: "circle")
     static let chevronDownImage: UIImage? = {
-        let image = UIImage(systemName: "arrow.down")
-        image?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
-        return image
+        UIImage(systemName: "arrow.down")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
     }()
-    static let xmarkCircleFillImage = UIImage(systemName: "xmark.circle.fill")
+    static let xmarkCircleFillImage = UIImage(systemName: "xmark.circle.fill")?.withRenderingMode(.alwaysTemplate)
     static let minusImage = UIImage(systemName: "minus")
     static let exitImage: UIImage? = {
-        let image = UIImage(systemName: "rectangle.portrait.and.arrow.right")
-        image?.withTintColor(.red, renderingMode: .alwaysOriginal)
-        return image
+        UIImage(systemName: "rectangle.portrait.and.arrow.right")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
     static let listBulletImage = UIImage(systemName: "list.bullet.rectangle.fill")
     static let personImage = UIImage(systemName: "person.crop.circle.fill")
     static let nosignImage: UIImage? = {
-        let image = UIImage(systemName: "nosign")
-        image?.withTintColor(.red, renderingMode: .alwaysOriginal)
-        return image
+        UIImage(systemName: "nosign")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
     static let chevronDoubleUpImage: UIImage? = {
-        let image = UIImage(systemName: "chevron.up.2")
-        image?.withTintColor(.red, renderingMode: .alwaysOriginal)
-        return image
+        UIImage(systemName: "chevron.up.2")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
     static let chevronDoubleDownImage = UIImage(systemName: "chevron.down.2")
     static let arrowUpImage: UIImage? = {
-        let image = UIImage(systemName: "arrow.up")
-        image?.withTintColor(.red, renderingMode: .alwaysOriginal)
-        return image
+        UIImage(systemName: "arrow.up")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
     static let arrowDownImage: UIImage? = {
-        let image = UIImage(systemName: "arrow.down")
-        image?.withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
-        return image
+        UIImage(systemName: "arrow.down")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
     }()
     static let computerImage = UIImage(systemName: "desktopcomputer")
     static let gearDoubleFillImage = UIImage(systemName: "gearshape.2.fill")
     static let apiImage = UIImage(systemName: "externaldrive.connected.to.line.below.fill")
     static let gearshapeImage: UIImage? = {
-        let image = UIImage(systemName: "gearshape.fill")
-        image?.withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
-        return image
+        UIImage(systemName: "gearshape.fill")?
+            .withRenderingMode(.alwaysTemplate)
+            .withTintColor(.blue, renderingMode: .alwaysOriginal)
     }()
     
     // colors

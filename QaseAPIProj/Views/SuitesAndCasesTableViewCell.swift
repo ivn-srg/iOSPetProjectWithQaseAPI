@@ -57,32 +57,41 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
     
     func configure(with dataForCell: SuiteAndCaseData) {
         if !dataForCell.isSuites {
+            var image: UIImage? = .init()
+            var color: UIColor = .init()
+            
             switch dataForCell.priority {
                 case 1:
-                    priorityImage.image = AppTheme.chevronUpImage
-                    priorityImage.tintColor = .systemRed
+                    image = AppTheme.chevronUpImage
+                    color = .systemRed
                 case 2:
-                    priorityImage.image = AppTheme.circleImage
-                    priorityImage.tintColor = .systemGray
+                    image = AppTheme.circleImage
+                    color = .systemGray
                 case 3:
-                    priorityImage.image = AppTheme.chevronDownImage
-                    priorityImage.tintColor = .systemGreen
+                    image = AppTheme.chevronDownImage
+                    color = .systemGreen
                 default:
-                    priorityImage.image = AppTheme.minusImage
-                    priorityImage.tintColor = .systemGray
+                    image = AppTheme.minusImage
+                    color = .systemGray
             }
+            
+            priorityImage.image = image
+            priorityImage.tintColor = color
             
             switch dataForCell.automation {
                 case 1:
-                    automationImage.image = AppTheme.personWithGearshapeImage
-                    automationImage.tintColor = .systemGray
+                    image = AppTheme.personWithGearshapeImage
+                    color = .systemGray
                 case 2:
-                    automationImage.image = AppTheme.gearshapeFillImage
-                    automationImage.tintColor = .systemBlue
+                    image = AppTheme.gearshapeFillImage
+                    color = .systemBlue
                 default:
-                    automationImage.image = AppTheme.handRaisedImage
-                    automationImage.tintColor = .systemGray
+                    image = AppTheme.handRaisedImage
+                    color = .systemGray
             }
+            
+            automationImage.image = image
+            automationImage.tintColor = color
         } else {
             accessoryType = .disclosureIndicator
         }
@@ -121,5 +130,9 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
         descriptionLbl.text = ""
         priorityImage.image = nil
         automationImage.image = nil
+        
+        priorityImage.snp.removeConstraints()
+        automationImage.snp.removeConstraints()
+        contentStackVw.snp.removeConstraints()
     }
 }

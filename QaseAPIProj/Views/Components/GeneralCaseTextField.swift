@@ -15,6 +15,10 @@ enum GeneralCaseTextFieldTypes: String {
     case postcondition = "Postcondition"
     case code = "Project code"
     case parentSuite = "Parent suite"
+    
+    var localized: String {
+        self.rawValue.localized
+    }
 }
 
 final class GeneralCaseTextField: UIView {
@@ -57,17 +61,17 @@ final class GeneralCaseTextField: UIView {
         let title: String
         switch textType {
         case .name:
-            title = GeneralCaseTextFieldTypes.name.rawValue
+            title = GeneralCaseTextFieldTypes.name.localized
         case .description:
-            title = GeneralCaseTextFieldTypes.description.rawValue
+            title = GeneralCaseTextFieldTypes.description.localized
         case .precondition:
-            title = GeneralCaseTextFieldTypes.precondition.rawValue
+            title = GeneralCaseTextFieldTypes.precondition.localized
         case .postcondition:
-            title = GeneralCaseTextFieldTypes.postcondition.rawValue
+            title = GeneralCaseTextFieldTypes.postcondition.localized
         case .code:
-            title = GeneralCaseTextFieldTypes.code.rawValue
+            title = GeneralCaseTextFieldTypes.code.localized
         case .parentSuite:
-            title = GeneralCaseTextFieldTypes.parentSuite.rawValue
+            title = GeneralCaseTextFieldTypes.parentSuite.localized
         }
         
         textView.delegate = self

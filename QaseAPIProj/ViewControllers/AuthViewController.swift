@@ -98,7 +98,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
             } catch {
                 UIAlertController.showSimpleAlert(
                     on: self,
-                    title: String(localized: "errorTitle"),
+                    title: "errorTitle".localized,
                     message: error.localizedDescription
                 )
             }

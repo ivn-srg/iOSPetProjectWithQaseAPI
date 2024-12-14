@@ -31,8 +31,8 @@ final class APIManager: NetworkManager {
         from urlString: String,
         method: HTTPMethod,
         modelType: T.Type
-    ) async throws -> T {
-        guard let url = URL(string: urlString) else { throw APIError.invalidURL }
+    ) async throws(APIError) -> T {
+        guard let url = URL(string: urlString) else { throw .invalidURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
@@ -42,11 +42,11 @@ final class APIManager: NetworkManager {
             let jsonData: Data
             do {
                 jsonData = try JSONEncoder().encode(data)
-            } catch let error as EncodingError {
-                throw APIError.serializationError(error)
+                request.httpBody = jsonData
+                request.addValue("application/json", forHTTPHeaderField: "content-type")
+            } catch {
+                throw .serializationError(error.localizedDescription)
             }
-            request.httpBody = jsonData
-            request.addValue("application/json", forHTTPHeaderField: "content-type")
         }
         
         if method == .delete || method == .get {
@@ -59,7 +59,9 @@ final class APIManager: NetworkManager {
     internal func makeHTTPRequest<T: Decodable>(
         for request: URLRequest,
         codableModelType: T.Type
-    ) async throws -> T {
+    ) async throws(APIError) -> T {
+        var errorMessage = ""
+        
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
             do {
@@ -67,22 +69,17 @@ final class APIManager: NetworkManager {
                 return result
             } catch {
                 let errorModel = try JSONDecoder().decode(ResponseWithErrorModel.self, from: data)
-                let errorMessage = StringError(errorModel.errorMessage ?? errorModel.error)
-                throw APIError.parsingError(errorMessage)
+                
+                errorMessage = errorModel.errorMessage != nil
+                ? errorModel.errorMessage!
+                : errorModel.error != nil ? errorModel.error! : ""
             }
+            throw APIError.parsingError(errorMessage)
         } catch let error as DecodingError {
-            throw APIError.parsingError(error)
-        } catch let error as URLError {
-            switch error.code {
-            case .notConnectedToInternet:
-                throw APIError.noInternetConnection
-            case .timedOut:
-                throw APIError.timeout
-            default:
-                throw APIError.otherNetworkError(error)
-            }
+            throw .parsingError(error.errorDescription ?? error.localizedDescription)
         } catch {
-            throw APIError.otherNetworkError(error)
+            guard errorMessage.isEmpty else { throw .parsingError(errorMessage) }
+            throw .otherNetworkError(error.localizedDescription)
         }
     }
     
@@ -137,7 +134,8 @@ final class APIManager: NetworkManager {
 }
 
 enum APIError: Error {
-    case invalidURL, parsingError(Error), serializationError(Error), noInternetConnection, timeout, otherNetworkError(Error)
+    case invalidURL, parsingError(String), serializationError(String),
+         noInternetConnection, timeout, otherNetworkError(String)
 }
 
 enum HTTPMethod: String {
@@ -161,19 +159,5 @@ enum APIEndpoint: String, CaseIterable {
         }
         
         return listOfCases
-    }
-}
-
-struct StringError: Error {
-    let message: String?
-    
-    init(_ message: String?) {
-        self.message = message
-    }
-}
-
-extension StringError: LocalizedError {
-    var errorDescription: String? {
-        return message
     }
 }

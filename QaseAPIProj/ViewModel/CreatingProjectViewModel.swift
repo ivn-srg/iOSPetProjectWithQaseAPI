@@ -36,11 +36,11 @@ final class CreatingProjectViewModel {
     
     // MARK: - LifeCycle
     init() {
-        self.creatingProject = CreatingProject(title: "", code: "", description: "")
+        self.creatingProject = .init()
     }
     
     // MARK: - Network work
-    func createNewProject() {
+    func createNewProject() async throws {
         if creatingProject.isEmpty {
             isFieldsEmpty = true
             return
@@ -55,15 +55,13 @@ final class CreatingProjectViewModel {
                                         ) else { return }
         LoadingIndicator.startLoading()
         
-        Task {
-            let response = try await apiManager.performRequest(
-                with: creatingProject,
-                from: urlString,
-                method: .post,
-                modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
-            )
-            isEntityWasCreated = response.status
-            LoadingIndicator.stopLoading()
-        }
+        let response = try await apiManager.performRequest(
+            with: creatingProject,
+            from: urlString,
+            method: .post,
+            modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
+        )
+        isEntityWasCreated = response.status
+        LoadingIndicator.stopLoading()
     }
 }

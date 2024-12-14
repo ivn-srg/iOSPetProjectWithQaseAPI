@@ -56,6 +56,12 @@ struct CreatingProject: Codable {
     var isEmpty: Bool {
         self.title.isEmpty || self.code.isEmpty
     }
+    
+    init() {
+        self.title = ""
+        self.code = ""
+        self.description = ""
+    }
 }
 
 struct CreateOrUpdateProjectModel: Codable {

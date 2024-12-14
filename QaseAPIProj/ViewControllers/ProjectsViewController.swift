@@ -28,6 +28,7 @@ final class ProjectsViewController: UIViewController {
         
         setupTableView()
         viewModel.delegate = self
+        configureRefreshControl()
         
         view.backgroundColor = AppTheme.bgPrimaryColor
         navigationItem.rightBarButtonItem = UIBarButtonItem(
@@ -40,7 +41,7 @@ final class ProjectsViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         executeWithErrorHandling {
-            try viewModel.fetchProjectsJSON()
+            try self.viewModel.fetchProjectsJSON()
         }
     }
     
@@ -57,14 +58,14 @@ final class ProjectsViewController: UIViewController {
         }
     }
     
-    // MARK: - @objc funcs
+    // MARK: - @objc func for navigation
     @objc func addNewProject() {
-        let vc = CreatingProjectViewController(viewModel: .init())
-        vc.createdProjectCallback = {
+        let vc = CreatingProjectViewController(viewModel: .init()) {
             self.executeWithErrorHandling {
                 try self.viewModel.fetchProjectsJSON()
             }
         }
+        vc.parentVC = self
         vc.modalPresentationStyle = .fullScreen
         present(vc, animated: true)
     }
@@ -82,7 +83,7 @@ extension ProjectsViewController: UpdateTableViewProtocol {
 // MARK: - NextViewControllerPusher
 extension ProjectsViewController: NextViewControllerPusher {
     func pushToNextVC(to item: Int? = nil) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             if let item = item {
                 PROJECT_NAME = self.viewModel.projects[item].code
             }
@@ -120,9 +121,34 @@ extension ProjectsViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let swipeAction = UIContextualAction(style: .destructive, title: "Delete") { action, view, completion in
-            self.viewModel.deleteProject(at: indexPath.row)
+        let swipeAction = UIContextualAction(style: .destructive, title: "Delete".localized) { _, _, _ in
+            UIAlertController.showConfirmAlert(
+                on: self,
+                title: "Confirmation".localized,
+                message: "confirmMessage".localized
+            ) { _ in
+                self.viewModel.deleteProject(at: indexPath.row)
+            }
         }
         return UISwipeActionsConfiguration(actions: [swipeAction])
+    }
+}
+
+extension ProjectsViewController {
+    func configureRefreshControl() {
+        tableVw.refreshControl = UIRefreshControl()
+        tableVw.refreshControl?.addTarget(self,
+                                          action: #selector(handleRefreshControl),
+                                          for: .valueChanged)
+    }
+    
+    @objc func handleRefreshControl() {
+        executeWithErrorHandling {
+            try self.viewModel.fetchProjectsJSON()
+        }
+        
+        DispatchQueue.main.async {
+            self.tableVw.refreshControl?.endRefreshing()
+        }
     }
 }

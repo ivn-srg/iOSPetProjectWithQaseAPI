@@ -22,24 +22,6 @@ final class ProjectsViewModel {
     init() {}
     
     // MARK: - Network funcs
-    func fetchTotalCountOfProjects() async throws {
-        guard let urlString = apiManager.formUrlString(
-            APIMethod: .project,
-            codeOfProject: nil,
-            limit: 1,
-            offset: 0,
-            parentSuite: nil,
-            caseId: nil
-        ) else { return }
-        
-        let projectData = try await apiManager.performRequest(
-            from: urlString,
-            method: .get,
-            modelType: ProjectDataModel.self
-        )
-        totalCountOfProjects = projectData.result.total
-    }
-    
     func fetchProjectsJSON() throws {
         LoadingIndicator.startLoading()
         Task {
@@ -87,6 +69,25 @@ final class ProjectsViewModel {
             }
             LoadingIndicator.stopLoading()
         }
+    }
+    
+    // MARK: - private funcs
+    private func fetchTotalCountOfProjects() async throws {
+        guard let urlString = apiManager.formUrlString(
+            APIMethod: .project,
+            codeOfProject: nil,
+            limit: 1,
+            offset: 0,
+            parentSuite: nil,
+            caseId: nil
+        ) else { return }
+        
+        let projectData = try await apiManager.performRequest(
+            from: urlString,
+            method: .get,
+            modelType: ProjectDataModel.self
+        )
+        totalCountOfProjects = projectData.result.total
     }
     
     // MARK: - VC funcs

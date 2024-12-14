@@ -10,6 +10,7 @@ import UIKit
 final class CreatingProjectViewController: UIViewController {
     // MARK: - Fields
     private var viewModel: CreatingProjectViewModel
+    weak var parentVC: UIViewController?
     var createdProjectCallback: () -> Void
 
     // MARK: - UI components
@@ -41,7 +42,7 @@ final class CreatingProjectViewController: UIViewController {
     private lazy var createButton: UIButton = {
         let uib = UIButton(type: .system)
         uib.translatesAutoresizingMaskIntoConstraints = false
-        uib.setTitle("Create", for: .normal)
+        uib.setTitle("Create".localized, for: .normal)
         uib.isEnabled = false
         uib.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
         uib.addTarget(self, action: #selector(createNewProject), for: .touchUpInside)
@@ -75,11 +76,13 @@ final class CreatingProjectViewController: UIViewController {
     // MARK: - LifeCycle
     init(viewModel: CreatingProjectViewModel, createdCallback: (() -> Void)? = nil) {
         self.viewModel = viewModel
+        
         if let createdCallback = createdCallback {
             self.createdProjectCallback = createdCallback
         } else {
             self.createdProjectCallback = {}
         }
+        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -94,12 +97,12 @@ final class CreatingProjectViewController: UIViewController {
         viewModel.emptyFieldsClosure = {
             showAlertController(
                 on: self,
-                title: "Not enough",
-                message: "Probably you didn't fill all fields, check it, please"
+                title: "Not enough".localized,
+                message: "Probably you didn't fill all fields, check it, please".localized
             )
         }
         viewModel.creatingFinishCallback = {
-            showAlertController(on: self, title: "Success", message: "Your project was created successfully")
+            showAlertController(on: self, title: "Success".localized, message: "Your project was created successfully".localized)
         }
         setupView()
     }
@@ -107,7 +110,7 @@ final class CreatingProjectViewController: UIViewController {
     // MARK: - other block
     private func setupView() {
         view.backgroundColor = AppTheme.bgPrimaryColor
-        titleLabel.text = "Creating new project"
+        titleLabel.text = "Creating project".localized
         
         view.addSubview(customNavigationView)
         customNavigationView.addSubview(closeButton)
@@ -156,7 +159,9 @@ extension CreatingProjectViewController: CheckEnablingRBBProtocol {
     }
     
     @objc func createNewProject() {
-        viewModel.createNewProject()
+        executeWithErrorHandling(presentingViewController: parentVC) {
+            try await self.viewModel.createNewProject()
+        }
         dismiss(animated: true)
         createdProjectCallback()
     }

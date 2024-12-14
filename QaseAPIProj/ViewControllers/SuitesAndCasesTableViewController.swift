@@ -92,7 +92,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
 // MARK: - UpdateTableViewProtocol
 extension SuitesAndCasesTableViewController: UpdateTableViewProtocol {
     func updateTableView() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.tableVw.reloadData()
         }
     }

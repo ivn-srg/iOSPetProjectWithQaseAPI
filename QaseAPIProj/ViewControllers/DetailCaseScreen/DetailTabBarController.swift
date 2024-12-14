@@ -73,7 +73,7 @@ extension DetailTabBarController: UITabBarControllerDelegate {
 extension DetailTabBarController: DetailTestCaseProtocol {
     // MARK: - updating UI for VCs
     func updateUI() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.title = "\(PROJECT_NAME)-\(self.viewModel.caseId)"
             if let viewControllers = self.viewControllers {
                 for viewCN in viewControllers {

@@ -83,7 +83,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     // MARK: - Router
     
     func pushToNextVC(to item: Int? = nil) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             let vc = MainTabbarViewController()
             self.navigationController?.pushViewController(vc, animated: true)
         }

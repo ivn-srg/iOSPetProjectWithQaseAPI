@@ -42,14 +42,14 @@ class LoadingIndicator {
     }
     
     static func startLoading() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             shared.overlayView.isHidden = false
             shared.activityIndicator.startAnimating()
         }
     }
     
     static func stopLoading() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             shared.overlayView.isHidden = true
             shared.activityIndicator.stopAnimating()
         }

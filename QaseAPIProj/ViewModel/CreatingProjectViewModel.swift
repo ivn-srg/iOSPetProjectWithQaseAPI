@@ -12,21 +12,21 @@ final class CreatingProjectViewModel {
     weak var delegate: CheckEnablingRBBProtocol?
     var creatingProject: CreatingProject {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.delegate?.checkConditionAndToggleRightBarButton()
             }
         }
     }
     var isFieldsEmpty = false {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.emptyFieldsClosure()
             }
         }
     }
     var isEntityWasCreated = false {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.creatingFinishCallback()
             }
         }

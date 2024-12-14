@@ -13,28 +13,28 @@ final class CreateSuiteOrCaseViewModel {
     var creatingEntityIsSuite: Bool = true
     var creatingTestCase: CreatingTestCase {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.delegate?.checkConditionAndToggleRightBarButton()
             }
         }
     }
     var creatingSuite: CreatingSuite {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.delegate?.checkConditionAndToggleRightBarButton()
             }
         }
     }
     var isFieldsEmpty = false {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.emptyFieldsClosure()
             }
         }
     }
     var isEntityWasCreated = false {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.creatingFinishCallback()
             }
         }

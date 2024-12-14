@@ -74,7 +74,7 @@ final class ProjectsViewController: UIViewController {
 // MARK: - UpdateTableViewProtocol
 extension ProjectsViewController: UpdateTableViewProtocol {
     func updateTableView() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.tableVw.reloadData()
         }
     }
@@ -147,7 +147,7 @@ extension ProjectsViewController {
             try self.viewModel.fetchProjectsJSON()
         }
         
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.tableVw.refreshControl?.endRefreshing()
         }
     }

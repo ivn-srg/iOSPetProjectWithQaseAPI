@@ -128,7 +128,7 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
     }
     
     func updateUI() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             if let testCase = self.vm.testCase {
                 self.titleField.updateTextViewValue(testCase.title)
                 self.descriptionField.updateTextViewValue(testCase.description ?? emptyText)
@@ -139,7 +139,7 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
     }
     
     @objc func pull2Refresh() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.updateUI()
         }
     }

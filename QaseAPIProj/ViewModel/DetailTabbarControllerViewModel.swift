@@ -13,21 +13,21 @@ final class DetailTabbarControllerViewModel {
     weak var delegate: DetailTestCaseProtocol?
     var testCase: TestEntity? = nil {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.delegate?.updateUI()
             }
         }
     }
     var changedTestCase: TestEntity? {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.checkDataChanged()
             }
         }
     }
     var isUploadingSuccess = false {
         didSet {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.updatingFinishCallback()
             }
         }

@@ -25,7 +25,7 @@ extension UIAlertController {
         handler: @escaping (UIAlertAction) -> Void
     ) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(.init(title: "Cancel".localized, style: .default))
+        alert.addAction(.init(title: "Cancel".localized, style: .cancel))
         alert.addAction(.init(title: "OK", style: .destructive, handler: handler))
         viewController.present(alert, animated: true)
     }

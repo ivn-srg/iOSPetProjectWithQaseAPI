@@ -139,7 +139,7 @@ extension PropertiesDetailCaseViewController: DetailTestCaseProtocol {
     }
     
     func updateUI() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             if let testCase = self.vm.changedTestCase {
                 self.severityField.updateValue()
                 self.statusField.updateValue()
@@ -154,7 +154,7 @@ extension PropertiesDetailCaseViewController: DetailTestCaseProtocol {
     }
     
     @objc func pull2Refresh() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.updateUI()
         }
     }

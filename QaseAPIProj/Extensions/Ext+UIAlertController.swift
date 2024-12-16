@@ -22,11 +22,12 @@ extension UIAlertController {
         on viewController: UIViewController,
         title: String,
         message: String,
-        handler: @escaping (UIAlertAction) -> Void
+        completionHandler: @escaping (UIAlertAction) -> Void,
+        cancelCompetionHandler: @escaping (UIAlertAction) -> Void
     ) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(.init(title: "Cancel".localized, style: .cancel))
-        alert.addAction(.init(title: "OK", style: .destructive, handler: handler))
+        alert.addAction(.init(title: "Cancel".localized, style: .cancel, handler: cancelCompetionHandler))
+        alert.addAction(.init(title: "OK", style: .destructive, handler: completionHandler))
         viewController.present(alert, animated: true)
     }
 }

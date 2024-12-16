@@ -65,7 +65,9 @@ struct ParentSuite {
     let id: Int
     let title: String
     
-    init(id: Int, title: String) {
+    init?(id: Int?, title: String) {
+        guard let id else { return nil }
+        
         self.id = id
         self.title = title
     }

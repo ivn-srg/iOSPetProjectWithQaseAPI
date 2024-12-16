@@ -36,7 +36,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
     // MARK: - Lifecycles
     
     init(parentSuite: ParentSuite? = nil) {
-        self.viewModel = parentSuite != nil ? SuitesAndCasesViewModel(parentSuite: parentSuite) : SuitesAndCasesViewModel()
+        viewModel = parentSuite != nil ? SuitesAndCasesViewModel(parentSuite: parentSuite) : SuitesAndCasesViewModel()
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -49,12 +49,15 @@ final class SuitesAndCasesTableViewController: UIViewController {
         
         viewModel.delegate = self
         setupTableView()
+        configureRefreshControls()
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewEntity))
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
-        viewModel.requestEntitiesData()
+        executeWithErrorHandling {
+            try await self.viewModel.requestEntitiesData()
+        }
     }
     
     // MARK: - Setuping UI for tableView
@@ -149,5 +152,61 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
 extension SuitesAndCasesTableViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableView.automaticDimension
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let swipeAction = UIContextualAction(style: .destructive, title: "Delete".localized) { [weak self] _, _, completionHandler in
+            guard let self = self else { return }
+            let entity = viewModel.suitesAndCaseData[indexPath.row]
+            let entityName = entity.isSuites ? "Test suite" : "Test case"
+            let composedMessage = String(format: "confirmMessage".localized, entityName.localized.lowercased())
+            
+            UIAlertController.showConfirmAlert(
+                on: self,
+                title: "Confirmation".localized,
+                message: composedMessage) { _ in
+                    self.executeWithErrorHandling {
+                        try self.viewModel.deleteEntity(at: indexPath.row)
+                    }
+                    completionHandler(true)
+                } cancelCompetionHandler: { _ in
+                    completionHandler(false)
+                }
+        }
+        swipeAction.image = UIImage(systemName: "trash")
+        return UISwipeActionsConfiguration(actions: [swipeAction])
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if viewModel.suitesAndCaseData.count - indexPath.row == 1 && !viewModel.isLoading {
+            guard let activityIndicator = tableVw.tableFooterView as? UIActivityIndicatorView else { return }
+            activityIndicator.startAnimating()
+            
+            executeWithErrorHandling {
+                try await self.viewModel.requestEntitiesData(place: .continuos)
+            }
+            activityIndicator.stopAnimating()
+        }
+    }
+}
+
+extension SuitesAndCasesTableViewController {
+    func configureRefreshControls() {
+        tableVw.refreshControl = UIRefreshControl()
+        tableVw.refreshControl?.addTarget(self,
+                                          action: #selector(handleRefreshControl),
+                                          for: .valueChanged)
+        
+        
+        let activityIndicatorView = UIActivityIndicatorView(style: .medium)
+        tableVw.tableFooterView = activityIndicatorView
+    }
+    
+    @objc func handleRefreshControl() {
+        executeWithErrorHandling {
+            try await self.viewModel.requestEntitiesData()
+        }
+        
+        tableVw.refreshControl?.endRefreshing()
     }
 }

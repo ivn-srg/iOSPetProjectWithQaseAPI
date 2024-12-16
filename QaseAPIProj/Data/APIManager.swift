@@ -86,10 +86,11 @@ final class APIManager: NetworkManager {
     func formUrlString(
         APIMethod: APIEndpoint,
         codeOfProject: String?,
-        limit: Int?,
-        offset: Int?,
-        parentSuite: ParentSuite?,
-        caseId: Int?
+        limit: Int? = nil,
+        offset: Int? = nil,
+        parentSuite: ParentSuite? = nil,
+        suiteId: Int? = nil,
+        caseId: Int? = nil
     ) -> String? {
         
         switch APIMethod {
@@ -104,7 +105,11 @@ final class APIManager: NetworkManager {
         case .suites:
             guard let codeOfProject = codeOfProject else { return nil }
             guard let limit = limit, let offset = offset else {
-                return "\(DOMEN)/suite/\(codeOfProject)"
+                if let suiteId = suiteId {
+                    return "\(DOMEN)/suite/\(codeOfProject)/\(suiteId)"
+                } else {
+                    return "\(DOMEN)/suite/\(codeOfProject)"
+                }
             }
             guard let parentSuite = parentSuite else {
                 return "\(DOMEN)/suite/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
@@ -117,7 +122,11 @@ final class APIManager: NetworkManager {
         case .cases:
             guard let codeOfProject = codeOfProject else { return nil }
             guard let limit = limit, let offset = offset else {
-                return "\(DOMEN)/case/\(codeOfProject)"
+                if let caseId = caseId {
+                    return "\(DOMEN)/case/\(codeOfProject)/\(caseId)"
+                } else {
+                    return "\(DOMEN)/case/\(codeOfProject)"
+                }
             }
             guard let parentSuite = parentSuite else {
                 return "\(DOMEN)/case/\(codeOfProject)?limit=\(limit)&offset=\(offset)"

@@ -198,6 +198,10 @@ enum AutomationStatus: String, CaseIterable, MenuDataSource {
     ]
 }
 
+enum PlaceOfRequest {
+    case start, continuos, refresh
+}
+
 var TOKEN = ""
 
 var PROJECT_NAME = ""

@@ -10,7 +10,6 @@ import UIKit
 final class ProjectsViewController: UIViewController {
 
     var suitesAndCasesCompletion: (() -> Void)? = {}
-    var suitesAndCaseData = [SuiteAndCaseData]()
     var viewModel: ProjectsViewModel = .init()
     
     // MARK: - UI
@@ -75,7 +74,7 @@ final class ProjectsViewController: UIViewController {
 extension ProjectsViewController: UpdateTableViewProtocol {
     func updateTableView() {
         Task { @MainActor in
-            self.tableVw.reloadData()
+            tableVw.reloadData()
         }
     }
 }
@@ -118,18 +117,38 @@ extension ProjectsViewController: UITableViewDataSource {
 extension ProjectsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         cell.separatorInset = UIEdgeInsets(top: 0, left: 1, bottom: 2, right: -5)
+        
+        if viewModel.projects.count - indexPath.row <= 5 {
+            let activityIndicatorView = UIActivityIndicatorView(style: .medium)
+            tableVw.tableFooterView = activityIndicatorView
+            activityIndicatorView.startAnimating()
+            
+            executeWithErrorHandling {
+                try self.viewModel.fetchProjectsJSON()
+            }
+            activityIndicatorView.stopAnimating()
+        }
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let swipeAction = UIContextualAction(style: .destructive, title: "Delete".localized) { _, _, _ in
+        let swipeAction = UIContextualAction(style: .destructive, title: "Delete".localized) { [weak self] _, _, completionHandler in
+            guard let self = self else { return }
+            let codeOfProject = viewModel.projects[indexPath.row].code
+            let composedMessage = String(format: "confirmMessage".localized, "Project".localized.lowercased(), codeOfProject)
+            
             UIAlertController.showConfirmAlert(
                 on: self,
                 title: "Confirmation".localized,
-                message: "confirmMessage".localized
-            ) { _ in
-                self.viewModel.deleteProject(at: indexPath.row)
-            }
+                message: composedMessage) { _ in
+                    self.executeWithErrorHandling {
+                        try self.viewModel.deleteProject(at: indexPath.row)
+                    }
+                    completionHandler(true)
+                } cancelCompetionHandler: { _ in
+                    completionHandler(false)
+                }
         }
+        swipeAction.image = UIImage(systemName: "trash")
         return UISwipeActionsConfiguration(actions: [swipeAction])
     }
 }

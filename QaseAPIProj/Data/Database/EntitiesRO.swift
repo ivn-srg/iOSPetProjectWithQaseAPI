@@ -13,7 +13,7 @@ import RealmSwift
 final class ProjectRO: Object {
     @Persisted var title: String
     @Persisted var code: String
-    @Persisted var counts: CountsOfProjectRO
+    @Persisted var counts: CountsOfProjectRO?
     
     override public static func primaryKey() -> String? {
         "code"
@@ -31,10 +31,12 @@ final class CountsOfProjectRO: EmbeddedObject {
     @Persisted var cases: Int
     @Persisted var suites: Int
     @Persisted var milestones: Int
-    @Persisted var runs: TestRunsRO
-    @Persisted var defects: BugReportsRO
+    @Persisted var runs: TestRunsRO?
+    @Persisted var defects: BugReportsRO?
             
-    convenience init(countsOfProjectData: CountsOfProject) {
+    convenience init?(countsOfProjectData: CountsOfProject?) {
+        guard let countsOfProjectData = countsOfProjectData else { return nil }
+        
         self.init()
         self.cases = countsOfProjectData.cases
         self.suites = countsOfProjectData.suites
@@ -48,7 +50,9 @@ final class TestRunsRO: EmbeddedObject {
     @Persisted var total: Int
     @Persisted var active: Int
             
-    convenience init(testRunsData: TestRuns) {
+    convenience init?(testRunsData: TestRuns?) {
+        guard let testRunsData = testRunsData else { return nil }
+        
         self.init()
         self.total = testRunsData.total
         self.active = testRunsData.active
@@ -59,7 +63,9 @@ final class BugReportsRO: EmbeddedObject {
     @Persisted var total: Int
     @Persisted var open: Int
     
-    convenience init(defectsData: BugReports) {
+    convenience init?(defectsData: BugReports?) {
+        guard let defectsData = defectsData else { return nil }
+        
         self.init()
         self.total = defectsData.total
         self.open = defectsData.open
@@ -83,14 +89,17 @@ final class SuiteAndCaseDataRO: Object {
     @Persisted var automation: Int?
     @Persisted var suiteId: Int?
     
+    @Persisted var uniqueKey: String
+    
     override public static func primaryKey() -> String? {
-        "id"
+        "uniqueKey"
     }
     
     convenience init(entitiesData: SuiteAndCaseData) {
         self.init()
         self.id = entitiesData.id
         self.isSuites = entitiesData.isSuites
+        self.uniqueKey = "\(id)_\(isSuites)"
         self.title = entitiesData.title
         self.itemDescription = entitiesData.itemDescription
         self.parentId = entitiesData.parentId
@@ -158,11 +167,23 @@ final class TestEntityRO: Object {
 final class StepsInTestCaseRO: EmbeddedObject {
     @Persisted var testCaseHash: String
     @Persisted var position: Int
-    @Persisted var shared_step_hash: String?
-    @Persisted var shared_step_nested_hash: String?
+    @Persisted var sharedStepHash: String?
+    @Persisted var sharedStepNestedHash: String?
     @Persisted var attachments: List<Int>
     @Persisted var action: String?
-    @Persisted var expected_result: String?
+    @Persisted var expectedResult: String?
     @Persisted var data: String?
-    @Persisted var steps: List<StepsInTestCaseRO>
+    @Persisted var steps: List<String>
+}
+
+
+extension RealmSwift.List {
+    convenience init(array: [Element]) {
+        self.init()
+        self.append(objectsIn: array)
+    }
+    
+    var toArray: [Element] {
+        return Array(self)
+    }
 }

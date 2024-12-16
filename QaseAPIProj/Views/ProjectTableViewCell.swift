@@ -56,13 +56,24 @@ class ProjectTableViewCell: UITableViewCell {
     // MARK: - lifecycles
     
     func configure(with project: Project) {
-        let infoAboutActiveRuns = project.counts.runs.active == 0 
-        ? "No active runs"
-        : "\(project.counts.runs.active) active run(s)"
+        let infoAboutActiveRuns: String
+        let textForLbl: String
+        
+        if let projectCounts = project.counts {
+            if let projectTestRuns = projectCounts.runs {
+                infoAboutActiveRuns = projectTestRuns.active == 0
+                ? "No active runs"
+                : "\(projectTestRuns.active) active run(s)"
+            } else { infoAboutActiveRuns =  "No active runs" }
+            textForLbl = "\(projectCounts.cases) cases | \(projectCounts.suites) suites | \(infoAboutActiveRuns)"
+        } else {
+            infoAboutActiveRuns = "No active runs"
+            textForLbl = ""
+        }
         
         nameLbl.text = project.title
         codeLbl.text = project.code
-        testsAndSuitesLbl.text = "\(project.counts.cases) cases | \(project.counts.suites) suites | \(infoAboutActiveRuns)"
+        testsAndSuitesLbl.text = textForLbl
         
         contentView.backgroundColor = AppTheme.bgSecondaryColor
         contentView.addSubview(contentStackVw)

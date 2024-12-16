@@ -7,7 +7,7 @@
 
 import UIKit
 
-class LoadingIndicator {
+final class LoadingIndicator {
     static let shared = LoadingIndicator()
     
     private let overlayView: UIView = {

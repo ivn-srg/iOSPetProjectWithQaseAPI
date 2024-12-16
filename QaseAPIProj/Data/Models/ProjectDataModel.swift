@@ -22,25 +22,55 @@ struct ProjectsResult: Codable {
 struct Project: Codable {
     let title: String
     let code: String
-    let counts: CountsOfProject
+    let counts: CountsOfProject?
+    
+    init(realmObject: ProjectRO) {
+        title = realmObject.title
+        code = realmObject.code
+        counts = CountsOfProject(realmObject: realmObject.counts)
+    }
 }
 
 struct CountsOfProject: Codable {
     let cases: Int
     let suites: Int
     let milestones: Int
-    let runs: TestRuns
-    let defects: BugReports
+    let runs: TestRuns?
+    let defects: BugReports?
+    
+    init?(realmObject: CountsOfProjectRO?) {
+        guard let realmObject = realmObject else { return nil }
+        
+        cases = realmObject.cases
+        suites = realmObject.suites
+        milestones = realmObject.milestones
+        runs = TestRuns(realmObject: realmObject.runs)
+        defects = BugReports(realmObject: realmObject.defects)
+    }
 }
 
 struct TestRuns: Codable {
     let total: Int
     let active: Int
+    
+    init?(realmObject: TestRunsRO?) {
+        guard let realmObject = realmObject else { return nil }
+        
+        total = realmObject.total
+        active = realmObject.active
+    }
 }
 
 struct BugReports: Codable {
     let total: Int
     let open: Int
+    
+    init?(realmObject: BugReportsRO?) {
+        guard let realmObject = realmObject else { return nil }
+        
+        total = realmObject.total
+        open = realmObject.open
+    }
 }
 
 struct ProjectErrorDataModel: Codable {

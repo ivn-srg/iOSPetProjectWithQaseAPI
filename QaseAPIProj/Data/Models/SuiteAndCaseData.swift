@@ -22,6 +22,10 @@ struct SuiteAndCaseData {
     let automation: Int?
     let suiteId: Int?
     
+    var uniqueKey: String {
+        "\(id)_\(isSuites)"
+    }
+    
     init(
         isSuite: Bool,
         id: Int,

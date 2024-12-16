@@ -29,13 +29,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Are you really want to delete %s %s?"
+            "value" : "Are you really want to delete %@ %@?"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Вы действительно хотите удалить %s %s?"
+            "value" : "Вы действительно хотите удалить %@ %@?"
           }
         }
       }
@@ -224,6 +224,17 @@
         }
       }
     },
+    "Project" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проект"
+          }
+        }
+      }
+    },
     "Project code" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -281,6 +292,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Успешно"
+          }
+        }
+      }
+    },
+    "Test case" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тест кейс"
+          }
+        }
+      }
+    },
+    "Test suite" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Набор тест кейсов"
           }
         }
       }

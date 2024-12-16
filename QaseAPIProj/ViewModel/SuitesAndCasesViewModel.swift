@@ -10,16 +10,19 @@ import Foundation
 final class SuitesAndCasesViewModel {
     
     // MARK: - Fields
-    var delegate: UpdateTableViewProtocol?
+    weak var delegate: UpdateTableViewProtocol?
     var parentSuite: ParentSuite?
-    private var totalCountOfSuites = 0
-    private var totalCountOfCases = 0
-    
+    var isLoading = false
     var suitesAndCaseData = [SuiteAndCaseData]() {
         didSet {
             delegate?.updateTableView()
         }
     }
+    private let realmDb = RealmManager.shared
+    private var totalCountOfSuites = 0
+    private var totalCountOfCases = 0
+    private var countOfFetchedCases = 0
+    private var hasMoreCases = true
     
     // MARK: - lifecycle
     
@@ -30,63 +33,93 @@ final class SuitesAndCasesViewModel {
     
     // MARK: - Network funcs
     
-    func requestEntitiesData() {
-        LoadingIndicator.startLoading()
-        suitesAndCaseData.removeAll()
-        getTotalCountOfEntities()
-        fetchSuitesJSON()
-        fetchCasesJSON()
-        LoadingIndicator.stopLoading()
+    func requestEntitiesData(place: PlaceOfRequest = .start) async throws(APIError) {
+        switch place {
+        case .start, .refresh:
+            await MainActor.run {
+                LoadingIndicator.startLoading()
+            }
+            
+            resetPaginationArgs()
+            suitesAndCaseData.removeAll()
+            try getTotalCountOfSuites()
+            try fetchSuitesJSON()
+            try fetchCasesJSON()
+            
+            await MainActor.run {
+                LoadingIndicator.stopLoading()
+            }
+        case .continuos:
+            try fetchCasesJSON()
+        }
     }
     
-    private func getTotalCountOfEntities() {
+    func deleteEntity(at index: Int) throws(APIError) {
+        let entity = suitesAndCaseData[index]
+        guard let urlString = apiManager.formUrlString(
+            APIMethod: entity.isSuites ? .suites : .cases,
+            codeOfProject: PROJECT_NAME,
+            suiteId: entity.isSuites ? entity.id : nil,
+            caseId: !entity.isSuites ? entity.id : nil
+        )
+        else { throw .invalidURL }
+        
+        Task { @MainActor in
+            LoadingIndicator.startLoading()
+        }
+        
+        Task {
+            let deletingResult = try await apiManager.performRequest(
+                from: urlString,
+                method: .delete,
+                modelType: SharedResponseModel.self
+            )
+            if deletingResult.status {
+                suitesAndCaseData.remove(at: index)
+            }
+            
+            await MainActor.run {
+                LoadingIndicator.stopLoading()
+            }
+        }
+    }
+    
+    // MARK: - private funcs
+    
+    private func getTotalCountOfSuites() throws(APIError) {
         guard let urlStringSuites = apiManager.formUrlString(
             APIMethod: .suites,
             codeOfProject: PROJECT_NAME,
             limit: 1,
-            offset: 0,
-            parentSuite: nil,
-            caseId: nil
-        ) else { return }
-        guard let urlStringCases = apiManager.formUrlString(
-            APIMethod: .cases,
-            codeOfProject: PROJECT_NAME,
-            limit: 1,
-            offset: 0,
-            parentSuite: parentSuite,
-            caseId: nil
-        ) else { return }
+            offset: 0
+        ) else { throw .invalidURL }
         
         Task {
-            async let countOfSuites = apiManager.performRequest(
+            let countOfSuites = try await apiManager.performRequest(
                 from: urlStringSuites,
                 method: .get,
                 modelType: SuitesDataModel.self
             )
-            async let countOfTestCases = apiManager.performRequest(
-                from: urlStringCases,
-                method: .get,
-                modelType: TestCasesModel.self
-            )
-            totalCountOfSuites = try await countOfSuites.result.total
-            totalCountOfCases = try await parentSuite != nil ? countOfTestCases.result.filtered : countOfTestCases.result.total
+            totalCountOfSuites = countOfSuites.result.total
         }
     }
     
-    private func fetchSuitesJSON() {
-        let limit = 100
+    private func fetchSuitesJSON() throws(APIError) {
+        let limit = 50
         var offset = 0
-        var urlStringSuites = ""
+        
+        if let testSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites) {
+            suitesAndCaseData.append(contentsOf: testSuites)
+            return
+        }
         
         repeat {
-            urlStringSuites = apiManager.formUrlString(
+            guard let urlStringSuites = apiManager.formUrlString(
                 APIMethod: .suites,
                 codeOfProject: PROJECT_NAME,
                 limit: limit,
-                offset: offset,
-                parentSuite: nil,
-                caseId: nil
-            ) ?? ""
+                offset: offset
+            ) else { throw .invalidURL }
             
             Task {
                 let suitesResult = try await apiManager.performRequest(
@@ -96,10 +129,10 @@ final class SuitesAndCasesViewModel {
                 )
                 
                 let filteredSuites = parentSuite != nil
-                ? suitesResult.result.entities.filter { $0.parentId == parentSuite?.id }
+                ? suitesResult.result.entities.filter { $0.parentId == parentSuite!.id }
                 : suitesResult.result.entities.filter { $0.parentId == nil }
                 
-                changeDataTypeToUniversalizeData(
+                changeDataTypeToUniversalData(
                     isSuite: true,
                     targetUniversalList: &suitesAndCaseData,
                     suites: filteredSuites,
@@ -110,43 +143,53 @@ final class SuitesAndCasesViewModel {
         } while offset < totalCountOfSuites
     }
     
-    private func fetchCasesJSON() {
-        let limit = 100
-        var offset = 0
-        var urlStringCases = ""
+    private func fetchCasesJSON() throws(APIError) {
+        let limit = 50
+        guard let urlStringCases = apiManager.formUrlString(
+            APIMethod: .cases,
+            codeOfProject: PROJECT_NAME,
+            limit: limit,
+            offset: countOfFetchedCases,
+            parentSuite: parentSuite
+        ) else { throw .invalidURL }
         
-        repeat {
-            urlStringCases = apiManager.formUrlString(
-                APIMethod: .cases,
-                codeOfProject: PROJECT_NAME,
-                limit: limit,
-                offset: offset,
-                parentSuite: parentSuite,
-                caseId: nil
-            ) ?? ""
-            
+        if let testCases = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .cases) {
+            suitesAndCaseData.append(contentsOf: testCases)
+            return
+        }
+        
+        if hasMoreCases && !isLoading {
             Task {
+                isLoading = true
                 let testCasesResult = try await apiManager.performRequest(
                     from: urlStringCases,
                     method: .get,
                     modelType: TestCasesModel.self
                 )
-                let filteredCases = parentSuite != nil
-                ? testCasesResult.result.entities.filter { $0.suiteId == parentSuite?.id }
-                : testCasesResult.result.entities.filter { $0.suiteId == nil }
                 
-                changeDataTypeToUniversalizeData(
+                let filteredSuites = parentSuite == nil
+                ? testCasesResult.result.entities.filter { $0.suiteId == nil }
+                : testCasesResult.result.entities
+                
+                totalCountOfCases = totalCountOfCases == 0
+                ? testCasesResult.result.total
+                : totalCountOfCases
+                
+                changeDataTypeToUniversalData(
                     isSuite: false,
                     targetUniversalList: &suitesAndCaseData,
                     suites: nil,
-                    testCases: filteredCases
+                    testCases: filteredSuites
                 )
+                
+                countOfFetchedCases += limit
+                hasMoreCases = countOfFetchedCases < totalCountOfCases
+                isLoading = false
             }
-            offset += limit
-        } while offset < totalCountOfCases
+        }
     }
     
-    private func changeDataTypeToUniversalizeData(
+    private func changeDataTypeToUniversalData(
         isSuite: Bool,
         targetUniversalList: inout [SuiteAndCaseData],
         suites: [SuiteEntity]?,
@@ -168,7 +211,7 @@ final class SuitesAndCasesViewModel {
             }
         }
         if isSuite {
-            guard let suites = suites else { return }
+            guard let suites = suites, !suites.isEmpty else { return }
             
             for suite in suites {
                 let universalItem = SuiteAndCaseData(
@@ -180,10 +223,12 @@ final class SuitesAndCasesViewModel {
                     parentId: suite.parentId,
                     caseCount: suite.casesCount
                 )
+                
                 appendElement(element: universalItem, to: &targetUniversalList)
+                let _ = realmDb.saveTestEntity(universalItem)
             }
         } else {
-            guard let testCases = testCases else { return }
+            guard let testCases = testCases, !testCases.isEmpty else { return }
             
             for testCase in testCases {
                 let universalItem = SuiteAndCaseData(
@@ -198,9 +243,18 @@ final class SuitesAndCasesViewModel {
                     automation: testCase.automation,
                     suiteId: testCase.suiteId
                 )
+                
                 appendElement(element: universalItem, to: &targetUniversalList)
+                let _ = realmDb.saveTestEntity(universalItem)
             }
         }
+    }
+    
+    private func resetPaginationArgs() {
+        totalCountOfSuites = 0
+        totalCountOfCases = 0
+        countOfFetchedCases = 0
+        hasMoreCases = true
     }
     
     // MARK: - VC funcs

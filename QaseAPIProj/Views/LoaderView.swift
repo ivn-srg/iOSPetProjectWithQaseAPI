@@ -7,7 +7,7 @@
 
 import UIKit
 
-class LoadingIndicator {
+final class LoadingIndicator {
     static let shared = LoadingIndicator()
     
     private let overlayView: UIView = {
@@ -21,7 +21,7 @@ class LoadingIndicator {
         let indicator = UIActivityIndicatorView(style: .large)
         indicator.color = .systemBlue
         indicator.layer.cornerRadius = 12
-        indicator.backgroundColor = .white
+        indicator.backgroundColor = AppTheme.bgSecondaryColor
         indicator.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
         return indicator
     }()
@@ -42,73 +42,16 @@ class LoadingIndicator {
     }
     
     static func startLoading() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             shared.overlayView.isHidden = false
             shared.activityIndicator.startAnimating()
         }
     }
     
     static func stopLoading() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             shared.overlayView.isHidden = true
             shared.activityIndicator.stopAnimating()
         }
     }
 }
-
-
-//class LoaderView: UIView {
-//    
-//    private var progView: UIActivityIndicatorView = {
-//        let pv = UIActivityIndicatorView(style: .large)
-//        pv.translatesAutoresizingMaskIntoConstraints = false
-//        pv.layer.borderColor = UIColor(.gray).cgColor
-//        pv.layer.borderWidth = 1
-//        pv.layer.cornerRadius = 12
-//        pv.backgroundColor = .white
-//        pv.color = .systemBlue
-//        return pv
-//    }()
-//    
-//    private var textLoader: UILabel = {
-//        let tl = UILabel()
-//        tl.translatesAutoresizingMaskIntoConstraints = false
-//        tl.text = "Loading..."
-//        return tl
-//    }()
-//    
-//    private var darkView: UIView = {
-//        let dw = UIView()
-//        dw.translatesAutoresizingMaskIntoConstraints = false
-//        dw.backgroundColor = UIColor(white: 0, alpha: 0.5)
-//        dw.isHidden = true
-//        return dw
-//    }()
-//    
-//    func configureView(superView: UIView) {
-//        superView.addSubview(darkView)
-//        
-//        NSLayoutConstraint.activate([
-//            darkView.topAnchor.constraint(equalTo: superView.topAnchor),
-//            darkView.bottomAnchor.constraint(equalTo: superView.bottomAnchor),
-//            darkView.leadingAnchor.constraint(equalTo: superView.leadingAnchor),
-//            darkView.trailingAnchor.constraint(equalTo: superView.trailingAnchor),
-//            
-//            progView.centerYAnchor.constraint(equalTo: darkView.centerYAnchor),
-//            progView.centerXAnchor.constraint(equalTo: darkView.centerXAnchor),
-//            progView.widthAnchor.constraint(equalToConstant: 100),
-//            progView.heightAnchor.constraint(equalToConstant: 100),
-//        ])
-//    }
-//    
-//    func showLoader() {
-//        self.darkView.isHidden = false
-//        progView.startAnimating()
-//    }
-//    
-//    func hideLoader() {
-//        self.darkView.isHidden = true
-//        self.progView.stopAnimating()
-//    }
-//    
-//}

@@ -105,11 +105,13 @@ extension SuitesAndCasesTableViewController: UpdateTableViewProtocol {
 extension SuitesAndCasesTableViewController: NextViewControllerPusher {
     func pushToNextVC(to item: Int?) {
         guard let item = item else { return }
+        
         let vc: UIViewController
-        let parentSuite = ParentSuite(id: viewModel.suitesAndCaseData[item].id, title: viewModel.suitesAndCaseData[item].title)
+        let testEntityItem = viewModel.suitesAndCaseData[item]
+        let parentSuite = ParentSuite(id: testEntityItem.id, title: testEntityItem.title, codeOfProject: PROJECT_NAME)
         let caseItem = viewModel.suitesAndCaseData[item]
         
-        if viewModel.suitesAndCaseData[item].isSuites {
+        if testEntityItem.isSuites {
             vc = SuitesAndCasesTableViewController(parentSuite: parentSuite)
         } else {
             vc = DetailTabBarController(caseId: caseItem.id)

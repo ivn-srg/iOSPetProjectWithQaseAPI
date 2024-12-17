@@ -31,7 +31,7 @@ final class RealmManager {
     static let shared = RealmManager()
     
     private init() {
-        setupRealm()
+//        setupRealm()
     }
     
     private var realm: Realm?
@@ -55,6 +55,10 @@ final class RealmManager {
             }
         }
     }
+    
+    func dropDataBase() {
+        realm?.deleteAll()
+    }
 }
 
 extension RealmManager {
@@ -74,7 +78,7 @@ extension RealmManager: HeroDAO {
             
             for project in projects {
                 try realm.write {
-                    realm.add(ProjectRO(projectData: project), update: .all)
+                    realm.add(ProjectRO(projectData: project), update: .modified)
                 }
             }
         } catch {
@@ -114,7 +118,7 @@ extension RealmManager: HeroDAO {
             let realm = try Realm()
             
             try realm.write {
-                realm.add(SuiteAndCaseDataRO(entitiesData: entity), update: .all)
+                realm.add(SuiteAndCaseDataRO(entitiesData: entity, codeOfProject: PROJECT_NAME), update: .modified)
             }
         } catch {
             return false
@@ -125,22 +129,38 @@ extension RealmManager: HeroDAO {
     func getTestEntities(by parentSuite: ParentSuite? = nil, testEntitiesType: TargetTestEntities = .all) -> [SuiteAndCaseData]? {
         do {
             let realm = try Realm()
-            
-            let realmObjects: [SuiteAndCaseDataRO]
+            var realmObjects = realm.objects(SuiteAndCaseDataRO.self).filter("codeOfProject == %@", PROJECT_NAME)
             
             switch testEntitiesType {
             case .all:
-                realmObjects = realm.objects(SuiteAndCaseDataRO.self).filter { entity in
-                    entity.isSuites ? entity.parentId == parentSuite?.id : entity.suiteId == parentSuite?.id
+                if let parentSuite = parentSuite {
+                    realmObjects = realmObjects.filter(
+                        "isSuites == true AND parentId == %@ OR isSuites == false AND suiteId == %@",
+                        parentSuite.id, parentSuite.id
+                    )
+                } else {
+                    realmObjects = realmObjects.filter("(isSuites == true AND parentId == nil) OR (isSuites == false AND suiteId == nil)")
                 }
             case .cases:
-                realmObjects = realm.objects(SuiteAndCaseDataRO.self).filter { entity in
-                    entity.suiteId == parentSuite?.id
+                let filterString: String
+                
+                if let parentSuite = parentSuite {
+                    filterString = "isSuites == false AND suiteId == \(parentSuite.id)"
+                } else {
+                    filterString = "isSuites == false AND suiteId == nil"
                 }
+                
+                realmObjects = realmObjects.filter(filterString)
             case .suites:
-                realmObjects = realm.objects(SuiteAndCaseDataRO.self).filter { entity in
-                    entity.parentId == parentSuite?.id
+                let filterString: String
+                
+                if let parentSuite = parentSuite {
+                    filterString = "isSuites == true AND parentId == \(parentSuite.id)"
+                } else {
+                    filterString = "isSuites == true AND parentId == nil"
                 }
+                
+                realmObjects = realmObjects.filter(filterString)
             }
             
             return realmObjects.map { SuiteAndCaseData(suiteRO: $0) }
@@ -169,7 +189,7 @@ extension RealmManager: HeroDAO {
             let realm = try Realm()
             
             try realm.write {
-                realm.add(TestEntityRO(testCaseData: testCase), update: .all)
+                realm.add(TestEntityRO(testCaseData: testCase), update: .modified)
             }
         } catch {
             return false

@@ -28,8 +28,8 @@ final class ProjectsViewModel {
         if hasMoreData {
             LoadingIndicator.startLoading()
             Task {
-                if place == .start, let projects = realmDb.getProjects(), !projects.isEmpty {
-                    self.projects = projects
+                if place == .start && projects.isEmpty, let cashedProjects = realmDb.getProjects(), !cashedProjects.isEmpty {
+                    self.projects.append(contentsOf: cashedProjects)
                     LoadingIndicator.stopLoading()
                     return
                 }

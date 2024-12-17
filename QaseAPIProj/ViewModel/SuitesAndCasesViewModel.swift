@@ -33,7 +33,7 @@ final class SuitesAndCasesViewModel {
     
     // MARK: - Network funcs
     
-    func requestEntitiesData(place: PlaceOfRequest = .start) async throws(APIError) {
+    func requestEntitiesData(place: PlaceOfRequest = .start) async throws {
         switch place {
         case .start, .refresh:
             await MainActor.run {
@@ -42,7 +42,6 @@ final class SuitesAndCasesViewModel {
             
             resetPaginationArgs()
             suitesAndCaseData.removeAll()
-            try getTotalCountOfSuites()
             try fetchSuitesJSON()
             try fetchCasesJSON()
             
@@ -85,33 +84,34 @@ final class SuitesAndCasesViewModel {
     }
     
     // MARK: - private funcs
-    
-    private func getTotalCountOfSuites() throws(APIError) {
-        guard let urlStringSuites = apiManager.formUrlString(
-            APIMethod: .suites,
-            codeOfProject: PROJECT_NAME,
-            limit: 1,
-            offset: 0
-        ) else { throw .invalidURL }
-        
-        Task {
-            let countOfSuites = try await apiManager.performRequest(
-                from: urlStringSuites,
-                method: .get,
-                modelType: SuitesDataModel.self
-            )
-            totalCountOfSuites = countOfSuites.result.total
-        }
-    }
-    
-    private func fetchSuitesJSON() throws(APIError) {
-        let limit = 50
-        var offset = 0
-        
-        if let testSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites) {
+    private func fetchSuitesJSON() throws {
+        if suitesAndCaseData.isEmpty,
+            let testSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites),
+            !testSuites.isEmpty {
             suitesAndCaseData.append(contentsOf: testSuites)
             return
         }
+        
+        let _ = try {
+            guard let urlStringSuites = apiManager.formUrlString(
+                APIMethod: .suites,
+                codeOfProject: PROJECT_NAME,
+                limit: 1,
+                offset: 0
+            ) else { throw APIError.invalidURL }
+            
+            Task {
+                let countOfSuites = try await apiManager.performRequest(
+                    from: urlStringSuites,
+                    method: .get,
+                    modelType: SuitesDataModel.self
+                )
+                totalCountOfSuites = countOfSuites.result.total
+            }
+        }()
+        
+        let limit = 50
+        var offset = 0
         
         repeat {
             guard let urlStringSuites = apiManager.formUrlString(
@@ -119,7 +119,7 @@ final class SuitesAndCasesViewModel {
                 codeOfProject: PROJECT_NAME,
                 limit: limit,
                 offset: offset
-            ) else { throw .invalidURL }
+            ) else { throw APIError.invalidURL }
             
             Task {
                 let suitesResult = try await apiManager.performRequest(
@@ -153,8 +153,11 @@ final class SuitesAndCasesViewModel {
             parentSuite: parentSuite
         ) else { throw .invalidURL }
         
-        if let testCases = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .cases) {
+        if hasMoreCases,
+            let testCases = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .cases),
+            !testCases.isEmpty {
             suitesAndCaseData.append(contentsOf: testCases)
+            hasMoreCases = false
             return
         }
         

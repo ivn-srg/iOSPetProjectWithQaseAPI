@@ -79,6 +79,7 @@ final class SuiteAndCaseDataRO: Object {
     @Persisted var id: Int
     @Persisted var title: String
     @Persisted var itemDescription: String?
+    @Persisted var codeOfProject: String?
     
     // if isSuite
     @Persisted var parentId: Int?
@@ -95,8 +96,9 @@ final class SuiteAndCaseDataRO: Object {
         "uniqueKey"
     }
     
-    convenience init(entitiesData: SuiteAndCaseData) {
+    convenience init(entitiesData: SuiteAndCaseData, codeOfProject: String? = nil) {
         self.init()
+        
         self.id = entitiesData.id
         self.isSuites = entitiesData.isSuites
         self.uniqueKey = "\(id)_\(isSuites)"
@@ -107,6 +109,7 @@ final class SuiteAndCaseDataRO: Object {
         self.priority = entitiesData.priority
         self.automation = entitiesData.automation
         self.suiteId = entitiesData.suiteId
+        self.codeOfProject = codeOfProject
     }
 }
 

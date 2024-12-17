@@ -35,6 +35,7 @@ final class DetailTabbarControllerViewModel {
     var caseId: Int
     var updatingFinishCallback: () -> Void = {}
     var checkDataChanged: () -> Void = {}
+    private let realmDb = RealmManager.shared
     
     // MARK: - Lifecycle
     init(caseId: Int) {
@@ -43,6 +44,14 @@ final class DetailTabbarControllerViewModel {
     
     // MARK: - Network work
     func fetchCaseDataJSON() {
+        if let cashedTestCase = realmDb.getTestCase(by: caseId) {
+            testCase = cashedTestCase
+            changedTestCase = testCase
+            
+            LoadingIndicator.stopLoading()
+            return
+        }
+        
         guard let urlString = apiManager.formUrlString(
                                             APIMethod: .openedCase,
                                             codeOfProject: PROJECT_NAME,
@@ -58,8 +67,11 @@ final class DetailTabbarControllerViewModel {
                 from: urlString,
                 method: .get,
                 modelType: TestCaseModel.self)
+            
+            let _ = realmDb.saveTestCase(testCaseResult.result)
             testCase = testCaseResult.result
             changedTestCase = testCase
+            
             LoadingIndicator.stopLoading()
         }
     }
@@ -83,12 +95,11 @@ final class DetailTabbarControllerViewModel {
                 method: .patch,
                 modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
             )
+            
             isUploadingSuccess = response.status
+            let _ = realmDb.saveTestCase(changedTestCase)
             fetchCaseDataJSON()
             LoadingIndicator.stopLoading()
         }
     }
-    
-    // MARK: - objc funcs
-    @objc func saveChangedData() {}
 }

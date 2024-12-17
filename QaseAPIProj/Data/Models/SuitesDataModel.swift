@@ -64,12 +64,14 @@ struct SuiteEntity: Codable {
 struct ParentSuite {
     let id: Int
     let title: String
+    let codeOfProject: String
     
-    init?(id: Int?, title: String) {
+    init?(id: Int?, title: String, codeOfProject: String) {
         guard let id else { return nil }
         
         self.id = id
         self.title = title
+        self.codeOfProject = codeOfProject
     }
 }
 

@@ -151,7 +151,7 @@ import SwiftUI
 struct ViewControllerRepresentable: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> some UIViewController {
-        return DetailTabBarController(caseId: 317)
+        return TestCaseViewController(caseId: 317)
     }
 
     func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {

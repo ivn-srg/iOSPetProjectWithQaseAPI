@@ -114,7 +114,7 @@ extension SuitesAndCasesTableViewController: NextViewControllerPusher {
         if testEntityItem.isSuites {
             vc = SuitesAndCasesTableViewController(parentSuite: parentSuite)
         } else {
-            vc = DetailTabBarController(caseId: caseItem.id)
+            vc = TestCaseViewController(caseId: caseItem.id)
         }
         self.navigationController?.pushViewController(vc, animated: true)
     }

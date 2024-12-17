@@ -15,11 +15,9 @@ class PropertiesDetailCaseViewController: UIViewController {
     private lazy var scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
         sv.showsHorizontalScrollIndicator = false
         sv.alwaysBounceVertical = true
         sv.showsVerticalScrollIndicator = false
-        sv.isUserInteractionEnabled = true
         return sv
     }()
     
@@ -95,20 +93,14 @@ class PropertiesDetailCaseViewController: UIViewController {
         scrollView.addSubview(stackView)
         
         scrollView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.horizontalEdges.equalTo(view.safeAreaLayoutGuide.snp.horizontalEdges)
-            if let tabBarController = tabBarController {
-                let xPosition = view.frame.minY - tabBarController.tabBar.frame.height
-                $0.bottom.equalTo(xPosition)
-            } else {
-                $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
-            }
+            $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
         }
         
         stackView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(30)
-            $0.centerX.bottom.equalToSuperview()
+            $0.top.equalToSuperview().offset(20)
+            $0.centerX.equalToSuperview()
             $0.width.equalToSuperview().inset(30)
+            $0.bottom.equalToSuperview().inset(40)
         }
         stackView.addArrangedSubview(severityField)
         stackView.addArrangedSubview(statusField)

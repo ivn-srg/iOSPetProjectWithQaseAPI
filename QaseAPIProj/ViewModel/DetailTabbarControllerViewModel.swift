@@ -14,21 +14,21 @@ final class DetailTabbarControllerViewModel {
     var testCase: TestEntity? = nil {
         didSet {
             Task { @MainActor in
-                self.delegate?.updateUI()
+                delegate?.updateUI()
             }
         }
     }
     var changedTestCase: TestEntity? {
         didSet {
             Task { @MainActor in
-                self.checkDataChanged()
+                checkDataChanged()
             }
         }
     }
     var isUploadingSuccess = false {
         didSet {
             Task { @MainActor in
-                self.updatingFinishCallback()
+                updatingFinishCallback()
             }
         }
     }

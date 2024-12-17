@@ -51,6 +51,17 @@
         }
       }
     },
+    "Creating entity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Создать сущность"
+          }
+        }
+      }
+    },
     "Creating project" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -58,6 +69,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Создание проекта"
+          }
+        }
+      }
+    },
+    "Data has been saved ✅" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Данные были успешно сохранены ✅"
+          }
+        }
+      }
+    },
+    "Defects" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дефекты"
           }
         }
       }
@@ -131,6 +164,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выйти"
+          }
+        }
+      }
+    },
+    "General" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Основное"
           }
         }
       }
@@ -257,6 +301,17 @@
         }
       }
     },
+    "Properties" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Свойства"
+          }
+        }
+      }
+    },
     "Repository" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -270,6 +325,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Репозиторий"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить"
           }
         }
       }
@@ -329,13 +395,24 @@
         }
       }
     },
-    "Unknown Error" : {
+    "Your changes for %@-%@ test case with successfully saved" : {
       "extractionState" : "manual",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Неизвестная ошибка"
+            "value" : "Твои данные для тест кейса %@-%@ были успешно сохранены"
+          }
+        }
+      }
+    },
+    "Your entity was created successfully" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы успешно создали тестовую сущность"
           }
         }
       }

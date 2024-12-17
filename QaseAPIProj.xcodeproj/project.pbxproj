@@ -40,6 +40,8 @@
 		938C47E32C9A0BC600B75BE8 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47DE2C9A0BC600B75BE8 /* AppTheme.swift */; };
 		938C47E82C9A0C0000B75BE8 /* PropertiesPickerTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47E62C9A0C0000B75BE8 /* PropertiesPickerTextField.swift */; };
 		938C47E92C9A0C0000B75BE8 /* SwitcherWithTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */; };
+		939175222D11A8A600AA38A4 /* TestCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939175212D11A8A600AA38A4 /* TestCaseViewController.swift */; };
+		939175232D12045800AA38A4 /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		93B0454E2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */; };
 		93B045512C9E946700EE125B /* CreateTestCaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045502C9E946700EE125B /* CreateTestCaseView.swift */; };
 		93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045522C9E948B00EE125B /* CreateSuiteView.swift */; };
@@ -55,12 +57,25 @@
 		93DCDF592BE4EC3800D4F365 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */; };
 		93DCDF5D2BE5159500D4F365 /* SuitesAndCasesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5C2BE5159500D4F365 /* SuitesAndCasesViewModel.swift */; };
 		93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5E2BE51C2900D4F365 /* Protocols.swift */; };
-		93F1F37C2B59876000667DB9 /* DetailTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37B2B59876000667DB9 /* DetailTabBarController.swift */; };
 		93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */; };
 		93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */; };
 		93F1F3852B59882C00667DB9 /* DefectsDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */; };
 		93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		939175242D12045800AA38A4 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				939175232D12045800AA38A4 /* RealmSwift in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		93195E7B2CD2717F00DD4299 /* CustomSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSelectableView.swift; sourceTree = "<group>"; };
@@ -96,6 +111,7 @@
 		938C47DE2C9A0BC600B75BE8 /* AppTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppTheme.swift; path = QaseAPIProj/Resources/AppTheme.swift; sourceTree = SOURCE_ROOT; };
 		938C47E62C9A0C0000B75BE8 /* PropertiesPickerTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertiesPickerTextField.swift; sourceTree = "<group>"; };
 		938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwitcherWithTitle.swift; sourceTree = "<group>"; };
+		939175212D11A8A600AA38A4 /* TestCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCaseViewController.swift; sourceTree = "<group>"; };
 		93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteOrCaseViewController.swift; sourceTree = "<group>"; };
 		93B045502C9E946700EE125B /* CreateTestCaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateTestCaseView.swift; sourceTree = "<group>"; };
 		93B045522C9E948B00EE125B /* CreateSuiteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteView.swift; sourceTree = "<group>"; };
@@ -111,7 +127,6 @@
 		93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
 		93DCDF5C2BE5159500D4F365 /* SuitesAndCasesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesViewModel.swift; sourceTree = "<group>"; };
 		93DCDF5E2BE51C2900D4F365 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
-		93F1F37B2B59876000667DB9 /* DetailTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailTabBarController.swift; sourceTree = "<group>"; };
 		93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefectsDetailCaseViewController.swift; sourceTree = "<group>"; };
@@ -286,7 +301,7 @@
 		93F1F37D2B59879900667DB9 /* DetailCaseScreen */ = {
 			isa = PBXGroup;
 			children = (
-				93F1F37B2B59876000667DB9 /* DetailTabBarController.swift */,
+				939175212D11A8A600AA38A4 /* TestCaseViewController.swift */,
 				93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */,
 				93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */,
 				93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */,
@@ -304,6 +319,7 @@
 				937F041E2AD84E3D006DDB28 /* Sources */,
 				937F041F2AD84E3D006DDB28 /* Frameworks */,
 				937F04202AD84E3D006DDB28 /* Resources */,
+				939175242D12045800AA38A4 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -407,7 +423,7 @@
 				936A2B192C8A2821007F7C72 /* GeneralCaseTextField.swift in Sources */,
 				9370855F2BEB3C49002316B8 /* TestCasesModel.swift in Sources */,
 				935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */,
-				93F1F37C2B59876000667DB9 /* DetailTabBarController.swift in Sources */,
+				939175222D11A8A600AA38A4 /* TestCaseViewController.swift in Sources */,
 				9370855E2BEB3C49002316B8 /* SuitesDataModel.swift in Sources */,
 				9384FCDF2B4D7FC0009EB478 /* SuitesAndCasesTableViewController.swift in Sources */,
 				93C809622CCC0FC8006BCCC9 /* Ext+NotificationName.swift in Sources */,

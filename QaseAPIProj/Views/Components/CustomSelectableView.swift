@@ -103,9 +103,9 @@ final class CustomSelectableView: UIButton {
         
         textLbl.text = convertIntValueToMenuItem(originalIntValue ?? 0)?.title
         
-        layer.cornerRadius = 12
+        layer.cornerRadius = 10
         layer.borderWidth = 1
-        layer.borderColor = UIColor.label.cgColor
+        layer.borderColor = UIColor.gray.cgColor
         backgroundColor = AppTheme.bgSecondaryColor
         
         addSubview(textLbl)

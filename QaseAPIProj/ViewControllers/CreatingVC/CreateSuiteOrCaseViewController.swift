@@ -10,6 +10,10 @@ import UIKit
 enum CreatingEntitySelect: String {
     case suite = "Suite"
     case testCase = "Test case"
+    
+    var localized: String {
+        self.rawValue.localized
+    }
 }
 
 final class CreateSuiteOrCaseViewController: UIViewController {
@@ -37,7 +41,7 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     private lazy var titleLabel: UILabel = {
         let title = UILabel()
         title.translatesAutoresizingMaskIntoConstraints = false
-        title.font = .systemFont(ofSize: 20, weight: .bold)
+        title.font = .systemFont(ofSize: 18, weight: .bold)
         title.numberOfLines = 1
         return title
     }()
@@ -45,15 +49,15 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     private lazy var createButton: UIButton = {
         let uib = UIButton(type: .system)
         uib.translatesAutoresizingMaskIntoConstraints = false
-        uib.setTitle("Create", for: .normal)
+        uib.setTitle("Create".localized, for: .normal)
         uib.isEnabled = false
-        uib.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
+        uib.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         uib.addTarget(self, action: #selector(createNewEntity), for: .touchUpInside)
         return uib
     }()
     
     private lazy var segmentControll: UISegmentedControl = {
-        let segmentItems = [CreatingEntitySelect.suite.rawValue, CreatingEntitySelect.testCase.rawValue]
+        let segmentItems = [CreatingEntitySelect.suite.localized, CreatingEntitySelect.testCase.localized]
         let segment = UISegmentedControl(items: segmentItems)
         segment.isUserInteractionEnabled = true
         segment.translatesAutoresizingMaskIntoConstraints = false
@@ -65,14 +69,13 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     private lazy var suiteView: UIView = {
         let av = CreateSuiteView(linkedViewModel: viewModel)
         av.translatesAutoresizingMaskIntoConstraints = false
-        av.isUserInteractionEnabled = true
         return av
     }()
     
     private lazy var testCaseView: UIView = {
         let av = CreateTestCaseView(linkedViewModel: viewModel)
         av.translatesAutoresizingMaskIntoConstraints = false
-        av.isUserInteractionEnabled = true
+        av.isHidden = true
         return av
     }()
     
@@ -93,14 +96,14 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         viewModel.emptyFieldsClosure = {
             showAlertController(
                 on: self,
-                title: "Not enough",
-                message: "Probably you didn't fill all fields, check it, please")
+                title: "Not enough".localized,
+                message: "Probably you didn't fill all fields, check it, please".localized)
         }
         viewModel.creatingFinishCallback = {
             showAlertController(
                 on: self,
-                title: "Success",
-                message: "Your entity was created successfully") { _ in
+                title: "Success".localized,
+                message: "Your entity was created successfully".localized) { _ in
                     self.dismiss(animated: true)
                 }
         }
@@ -110,7 +113,7 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     // MARK: - other block
     private func setupView() {
         view.backgroundColor = AppTheme.bgPrimaryColor
-        titleLabel.text = "Creating new entity"
+        titleLabel.text = "Creating new entity".localized
         
         view.addSubview(customNavigationView)
         customNavigationView.addSubview(closeButton)

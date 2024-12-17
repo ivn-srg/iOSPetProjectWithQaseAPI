@@ -24,13 +24,12 @@ enum GeneralCaseTextFieldTypes: String {
 final class GeneralCaseTextField: UIView {
     private let textType: GeneralCaseTextFieldTypes
     private var detailViewModel: Any?
-    private var textViewHeightConstraint: Constraint?
     
     // MARK: - UI components
     private lazy var titlelbl: UILabel = {
         let vc = UILabel()
         vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.font = .systemFont(ofSize: 20, weight: .bold)
+        vc.font = .systemFont(ofSize: 17, weight: .bold)
         vc.numberOfLines = 0
         return vc
     }()
@@ -39,15 +38,14 @@ final class GeneralCaseTextField: UIView {
         let tv = UITextView()
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.backgroundColor = AppTheme.bgSecondaryColor
-        tv.layer.borderWidth = 1.0
+        tv.layer.borderWidth = 1
         tv.font = .systemFont(ofSize: 16)
         tv.layer.borderColor = UIColor.gray.cgColor
-        tv.layer.cornerRadius = 8.0
-        tv.isUserInteractionEnabled = true
+        tv.layer.cornerRadius = 10
         tv.isScrollEnabled = false
         tv.textContainerInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         tv.textContainer.lineBreakMode = .byWordWrapping
-        tv.textContainer.maximumNumberOfLines = 4
+        tv.textContainer.maximumNumberOfLines = 0
         return tv
     }()
     
@@ -102,27 +100,25 @@ final class GeneralCaseTextField: UIView {
             $0.top.equalTo(titlelbl.snp.bottom).offset(8)
             $0.horizontalEdges.equalToSuperview()
             $0.bottom.equalToSuperview().priority(.low)
-            self.textViewHeightConstraint = $0.height.equalTo(50).constraint
+//            self.textViewHeightConstraint = $0.height.equalTo(50).constraint
         }
     }
     
     func updateTextViewValue(_ value: String) {
         textView.text = value
+        setNeedsLayout()
     }
 }
 
 extension GeneralCaseTextField: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
-        let maxCharacters = 300
+        let maxCharacters = 500
         if textView.text.count > maxCharacters {
             textView.text = String(textView.text.prefix(maxCharacters))
         }
         
-        let maxHeight: CGFloat = 150
+        let maxHeight: CGFloat = 300
         let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: CGFloat.greatestFiniteMagnitude))
-        let newHeight = min(size.height, maxHeight)
-        
-        textViewHeightConstraint?.update(offset: newHeight)
         
         switch textType {
         case .name:

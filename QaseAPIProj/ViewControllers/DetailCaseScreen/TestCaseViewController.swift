@@ -45,8 +45,11 @@ class TestCaseViewController: UIViewController {
         viewModel.fetchCaseDataJSON()
         viewModel.updatingFinishCallback = {
             UIAlertController.showSimpleAlert(
-                on: self, title: "Data Has been saved ✅",
-                message: "Your changes for \(PROJECT_NAME)-\(self.viewModel.caseId) test case with successfully saved"
+                on: self, title: "Data has been saved ✅".localized,
+                message: String(
+                    format: "Your changes for %@-%@ test case with successfully saved".localized,
+                    PROJECT_NAME, self.viewModel.caseId
+                )
             )
         }
         viewModel.checkDataChanged = {
@@ -62,18 +65,26 @@ class TestCaseViewController: UIViewController {
     
     // MARK: - View Configuration
     func setupTopTabBar() {
-        tabbar.items = [
+        let tabbarItems = [
             UITabBarItem(title: "General".localized, image: nil, tag: 0),
             UITabBarItem(title: "Properties".localized, image: nil, tag: 1),
             UITabBarItem(title: "Defects".localized, image: nil, tag: 2)
         ]
+        tabbar.items = tabbarItems.map {
+            $0.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -6)
+            $0.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 15)], for: .normal)
+            return $0
+        }
+        
+        tabbar.backgroundColor = AppTheme.bgPrimaryColor
+        tabbar.barTintColor = AppTheme.bgPrimaryColor
         tabbar.selectedItem = tabbar.items?.first
         
         view.addSubview(tabbar)
         tabbar.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
             $0.horizontalEdges.equalTo(view.safeAreaLayoutGuide.snp.horizontalEdges)
-            $0.height.equalTo(20)
+            $0.height.equalTo(30)
         }
     }
     
@@ -113,11 +124,10 @@ class TestCaseViewController: UIViewController {
             currentChild.removeFromParent()
         }
     }
-}
-
-extension TestCaseViewController: UITabBarDelegate {
-    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
-        print("tabBarItem didSelect")
+    
+    private func changeCurrentView(to item: UITabBarItem?) {
+        guard let item = item else { return }
+        
         removeCurrentViewController()
         switch item.tag {
         case 0:
@@ -130,13 +140,17 @@ extension TestCaseViewController: UITabBarDelegate {
             break
         }
     }
-    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
-        print("tabBarController didSelect")
+}
+
+// MARK: - UITabBarDelegate
+extension TestCaseViewController: UITabBarDelegate {
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        changeCurrentView(to: item)
     }
 }
 
+// MARK: - DetailTestCaseProtocol
 extension TestCaseViewController: DetailTestCaseProtocol {
-    // MARK: - updating UI for VCs
     func updateUI() {
         Task { @MainActor in
             title = "\(PROJECT_NAME)-\(self.viewModel.caseId)"
@@ -160,19 +174,24 @@ extension TestCaseViewController: DetailTestCaseProtocol {
     
     @objc func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer) {
         let tabsCount = viewControllers.count
-//        if gesture.direction == .right {
-//            if selectedIndex > 0 {
-//                selectedIndex -= 1
-//            } else if selectedIndex == 0 {
-//                selectedIndex = tabsCount - 1
-//            }
-//        } else if gesture.direction == .left {
-//            if selectedIndex < tabsCount - 1 {
-//                selectedIndex += 1
-//            } else if selectedIndex == tabsCount - 1 {
-//                selectedIndex = 0
-//            }
-//        }
+        
+        if let selectedItem = tabbar.selectedItem, let tabbarItems = tabbar.items {
+            if gesture.direction == .right {
+                if selectedItem.tag > 0 {
+                    tabbar.selectedItem = tabbarItems[selectedItem.tag - 1]
+                } else if selectedItem.tag == 0 {
+                    tabbar.selectedItem = tabbarItems[tabsCount - 1]
+                }
+                changeCurrentView(to: tabbar.selectedItem)
+            } else if gesture.direction == .left {
+                if selectedItem.tag < tabsCount - 1 {
+                    tabbar.selectedItem = tabbarItems[selectedItem.tag + 1]
+                } else if selectedItem.tag == tabsCount - 1 {
+                    tabbar.selectedItem = tabbarItems[0]
+                }
+                changeCurrentView(to: tabbar.selectedItem)
+            }
+        }
     }
 }
 
@@ -182,7 +201,7 @@ extension TestCaseViewController: CheckEnablingRBBProtocol {
         let shouldShowButton = viewModel.testCase != viewModel.changedTestCase
         
         if shouldShowButton {
-            let rightBarButton = UIBarButtonItem(title: "Save",
+            let rightBarButton = UIBarButtonItem(title: "Save".localized,
                                                  style: .plain,
                                                  target: self,
                                                  action: #selector(rightBarButtonTapped))

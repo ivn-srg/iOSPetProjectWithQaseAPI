@@ -10,13 +10,13 @@ import UIKit
 class SwitcherWithTitle: UIView {
     // MARK: - Fields
     var switchValueChanged: ((Bool) -> Void)?
-    private var testCaseViewModel: DetailTabbarControllerViewModel
+    private var testCaseViewModel: DetailTabbarControllerViewModel?
     
     // MARK: - UI components
     private lazy var titlelbl: UILabel = {
         let vc = UILabel()
         vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.font = .systemFont(ofSize: 20, weight: .bold)
+        vc.font = .systemFont(ofSize: 16, weight: .bold)
         vc.numberOfLines = 0
         return vc
     }()
@@ -30,12 +30,12 @@ class SwitcherWithTitle: UIView {
     
     // MARK: - Lyfecycle
     
-    init(testCaseVM: DetailTabbarControllerViewModel) {
+    init(title: String, testCaseVM: DetailTabbarControllerViewModel?) {
         self.testCaseViewModel = testCaseVM
         super.init(frame: .zero)
         
-        titlelbl.text = "Is Flaky"
-        switcher.isOn = testCaseViewModel.testCase?.isFlaky == 1
+        titlelbl.text = title
+        switcher.isOn = testCaseViewModel != nil ? testCaseViewModel!.testCase?.isFlaky == 1 : false
         configureView()
         setupActions()
     }

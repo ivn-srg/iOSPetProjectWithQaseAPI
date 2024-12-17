@@ -66,7 +66,7 @@ class PropertiesDetailCaseViewController: UIViewController {
     )
     
     private lazy var isFlakySwitch: SwitcherWithTitle = {
-        let sw = SwitcherWithTitle(testCaseVM: vm)
+        let sw = SwitcherWithTitle(title: "Is Flaky".localized, testCaseVM: vm)
         sw.translatesAutoresizingMaskIntoConstraints = false
         return sw
     }()

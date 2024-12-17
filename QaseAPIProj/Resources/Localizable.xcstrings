@@ -1,6 +1,72 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Accertance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приёмка"
+          }
+        }
+      }
+    },
+    "Actual" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Актуальный"
+          }
+        }
+      }
+    },
+    "Automated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Автоматизированный"
+          }
+        }
+      }
+    },
+    "Automation status" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Статус автоматизации"
+          }
+        }
+      }
+    },
+    "Behavior" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поведение"
+          }
+        }
+      }
+    },
+    "Blocker" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Блокер"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8,6 +74,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмена"
+          }
+        }
+      }
+    },
+    "Compatibility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Совместимость"
           }
         }
       }
@@ -73,6 +150,17 @@
         }
       }
     },
+    "Critical" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Критичный"
+          }
+        }
+      }
+    },
     "Data has been saved ✅" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -106,6 +194,17 @@
         }
       }
     },
+    "Deprecated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Устаревший"
+          }
+        }
+      }
+    },
     "Description" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -113,6 +212,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Описание"
+          }
+        }
+      }
+    },
+    "Destructive" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Деструктивный"
+          }
+        }
+      }
+    },
+    "Draft" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Черновик"
           }
         }
       }
@@ -168,6 +289,28 @@
         }
       }
     },
+    "Exploratory" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Исследование"
+          }
+        }
+      }
+    },
+    "Functional" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Функциональное"
+          }
+        }
+      }
+    },
     "General" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -175,6 +318,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Основное"
+          }
+        }
+      }
+    },
+    "High" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Высокий"
+          }
+        }
+      }
+    },
+    "Integration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интеграционное"
           }
         }
       }
@@ -196,6 +361,105 @@
         }
       }
     },
+    "Is Flaky" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Есть вложенность"
+          }
+        }
+      }
+    },
+    "Layer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Слой"
+          }
+        }
+      }
+    },
+    "Low" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Низкий"
+          }
+        }
+      }
+    },
+    "Major" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Важный"
+          }
+        }
+      }
+    },
+    "Manual" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ручное"
+          }
+        }
+      }
+    },
+    "Medium" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Средний"
+          }
+        }
+      }
+    },
+    "Minor" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Минорный"
+          }
+        }
+      }
+    },
+    "Negative" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Негативный"
+          }
+        }
+      }
+    },
+    "Normal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нормальный"
+          }
+        }
+      }
+    },
     "Not enough" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -207,6 +471,28 @@
         }
       }
     },
+    "Not set" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не заполнено"
+          }
+        }
+      }
+    },
+    "Other" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другой"
+          }
+        }
+      }
+    },
     "Parent suite" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -214,6 +500,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Владеющий набор тест кейсов"
+          }
+        }
+      }
+    },
+    "Perfomance" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Производительность"
+          }
+        }
+      }
+    },
+    "Positive" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Позитивный"
           }
         }
       }
@@ -236,6 +544,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Предусловие"
+          }
+        }
+      }
+    },
+    "Priority" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приоритет"
           }
         }
       }
@@ -312,6 +631,17 @@
         }
       }
     },
+    "Regression" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регресс"
+          }
+        }
+      }
+    },
     "Repository" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -340,6 +670,39 @@
         }
       }
     },
+    "Security" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Безопасность"
+          }
+        }
+      }
+    },
+    "Severity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Серьёзность"
+          }
+        }
+      }
+    },
+    "Smoke" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дымовое"
+          }
+        }
+      }
+    },
     "Something went wrong" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -347,6 +710,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Что-то пошло не так"
+          }
+        }
+      }
+    },
+    "Status" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Статус"
           }
         }
       }
@@ -391,6 +765,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Заголовок"
+          }
+        }
+      }
+    },
+    "To be automated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Будет автоматизировано"
+          }
+        }
+      }
+    },
+    "Trivial" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тривиальный"
+          }
+        }
+      }
+    },
+    "Type" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тип"
+          }
+        }
+      }
+    },
+    "Utility" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Полезность"
           }
         }
       }

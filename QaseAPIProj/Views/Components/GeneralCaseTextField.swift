@@ -29,7 +29,7 @@ final class GeneralCaseTextField: UIView {
     private lazy var titlelbl: UILabel = {
         let vc = UILabel()
         vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.font = .systemFont(ofSize: 17, weight: .bold)
+        vc.font = .systemFont(ofSize: 16, weight: .bold)
         vc.numberOfLines = 0
         return vc
     }()

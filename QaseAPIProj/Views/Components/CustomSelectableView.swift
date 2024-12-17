@@ -12,8 +12,10 @@ final class CustomSelectableView: UIButton {
     private var selectableValue: MenuItem?
     private var dataSource = [MenuItem]()
     private let textFieldType: PropertiesCaseTextFieldTypes
-    private var testCaseViewModel: DetailTabbarControllerViewModel
+    private var testCaseViewModel: DetailTabbarControllerViewModel?
     private var originalIntValue: Int? {
+        guard let testCaseViewModel = testCaseViewModel else { return nil }
+        
         switch textFieldType {
         case .severity:
             return testCaseViewModel.testCase?.severity
@@ -50,34 +52,36 @@ final class CustomSelectableView: UIButton {
     // MARK: - Lyfecycle
     init(
         textFieldType: PropertiesCaseTextFieldTypes,
-        detailCaseVM: DetailTabbarControllerViewModel
+        detailCaseVM: DetailTabbarControllerViewModel?
     ) {
         self.textFieldType = textFieldType
         self.testCaseViewModel = detailCaseVM
         super.init(frame: .zero)
         
+        let testCase = testCaseViewModel?.testCase
+        
         switch textFieldType {
         case .severity:
             self.dataSource = Severity.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.severity)
+            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.severity : 0)
         case .status:
             self.dataSource = Status.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.status)
+            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.status : 0)
         case .priority:
             self.dataSource = Priority.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.priority)
+            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.priority : 0)
         case .behavior:
             self.dataSource = Behavior.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.behavior)
+            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.behavior : 0)
         case .type:
             self.dataSource = Types.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.type)
+            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.type : 0)
         case .layer:
             self.dataSource = Layer.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.layer)
+            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.layer : 0)
         case .automationStatus:
             self.dataSource = AutomationStatus.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.automation)
+            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.automation : 0)
         }
         
         configureView()
@@ -156,7 +160,10 @@ final class CustomSelectableView: UIButton {
     }
     
     func updateTestCaseData() {
-        guard let testCase = testCaseViewModel.changedTestCase else { return }
+        guard let testCaseViewModel = testCaseViewModel,
+              let testCase = testCaseViewModel.changedTestCase
+        else { return }
+        
         switch textFieldType {
         case .severity:
             testCaseViewModel.changedTestCase?.severity = selectableValue?.id ?? testCase.severity
@@ -176,6 +183,8 @@ final class CustomSelectableView: UIButton {
     }
     
     func updateSelectedValue() {
+        guard let testCaseViewModel = testCaseViewModel else { return }
+        
         switch textFieldType {
         case .severity:
             selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.severity)

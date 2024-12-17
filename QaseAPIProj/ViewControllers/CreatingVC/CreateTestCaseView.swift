@@ -8,23 +8,23 @@
 import UIKit
 import SnapKit
 
-enum CreateCaseTextFieldType: String {
+enum CreateCaseTextFieldType: String, CaseIterable {
     case title = "Title"
     case description = "Description"
-    case preconditions = "Preconditions"
-    case postconditions = "Postconditions"
+    case preconditions = "Precondition"
+    case postconditions = "Postcondition"
     case severity = "Severity"
     case priority = "Priority"
     case type = "Type"
     case layer = "Layer"
     case isFlaky = "Is Flaky"
     case behavior = "Behavior"
-    case automation = "Automation"
+    case automation = "Automation status"
     case status = "Status"
-    case suiteId = "Suite"
-    case attachments = "Attachments"
-    case steps = "Steps"
-    case tags = "Tags"
+    case suiteId = "Parent suite"
+//    case attachments = "Attachments"
+//    case steps = "Steps"
+//    case tags = "Tags"
 }
 
 final class CreateTestCaseView: UIView {
@@ -38,7 +38,6 @@ final class CreateTestCaseView: UIView {
         sv.showsHorizontalScrollIndicator = false
         sv.alwaysBounceVertical = true
         sv.showsVerticalScrollIndicator = false
-        sv.isUserInteractionEnabled = true
         return sv
     }()
     
@@ -48,7 +47,6 @@ final class CreateTestCaseView: UIView {
         sv.axis = .vertical
         sv.spacing = 30
         sv.alignment = .fill
-        sv.isUserInteractionEnabled = true
         return sv
     }()
     
@@ -64,10 +62,6 @@ final class CreateTestCaseView: UIView {
     }
     
     func configureView() {
-        let emptyLabel = UILabel()
-        emptyLabel.text = "Empty test uiview"
-        emptyLabel.font = .systemFont(ofSize: 20)
-        
         self.addSubview(scrollView)
         scrollView.snp.makeConstraints {
             $0.edges.equalToSuperview()
@@ -77,6 +71,24 @@ final class CreateTestCaseView: UIView {
             $0.verticalEdges.equalToSuperview().inset(30)
             $0.centerX.width.equalToSuperview()
         }
-        stackView.addArrangedSubview(emptyLabel)
+        
+        CreateCaseTextFieldType.allCases.forEach {
+            switch $0 {
+            case .title, .description, .preconditions, .postconditions, .suiteId:
+                guard let textFieldType = GeneralCaseTextFieldTypes(rawValue: $0.rawValue) else { return }
+                let textField = GeneralCaseTextField(textType: textFieldType, detailVM: linkedViewModel)
+                stackView.addArrangedSubview(textField)
+            case .severity, .status, .priority, .behavior, .type, .layer, .automation:
+                guard let menuFieldType = PropertiesCaseTextFieldTypes(rawValue: $0.rawValue) else { return }
+                let menuField = PropertiesPickerTextField(textType: menuFieldType, detailCaseVM: nil)
+                stackView.addArrangedSubview(menuField)
+            case .isFlaky:
+                let switcher = SwitcherWithTitle(title: "Is Flaky".localized,testCaseVM: nil)
+                stackView.addArrangedSubview(switcher)
+                switcher.snp.makeConstraints {
+                    $0.height.equalTo(40)
+                }
+            }
+        }
     }
 }

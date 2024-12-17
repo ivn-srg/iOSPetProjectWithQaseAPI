@@ -30,9 +30,7 @@ final class RealmManager {
     
     static let shared = RealmManager()
     
-    private init() {
-//        setupRealm()
-    }
+    private init() {}
     
     private var realm: Realm?
 

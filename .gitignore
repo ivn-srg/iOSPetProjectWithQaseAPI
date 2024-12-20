@@ -7,6 +7,8 @@ xcuserdata/
 *.xcuserdata
 *.xcuserdate
 *.xcbkptlist
+*.xcworkspacedata
+*.xcuserstate
 
 ## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
 *.xcscmblueprint
@@ -96,6 +98,6 @@ Pods
 # https://github.com/johnno1962/injectionforxcode
 
 # Keychain
-QaseAPIProj/Classes/KeychainLocal
+QaseAPIProj/Classes/KeychainLocal.swift
 
 iOSInjectionProject/

@@ -100,7 +100,7 @@ final class SuiteAndCaseDataRO: Object {
         self.init()
         
         self.id = entitiesData.id
-        self.isSuites = entitiesData.isSuites
+        self.isSuites = entitiesData.isSuite
         self.uniqueKey = "\(id)_\(isSuites)"
         self.title = entitiesData.title
         self.itemDescription = entitiesData.itemDescription

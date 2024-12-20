@@ -8,7 +8,7 @@
 import Foundation
 
 struct SuiteAndCaseData {
-    let isSuites: Bool
+    let isSuite: Bool
     let id: Int
     let title: String
     let itemDescription: String?
@@ -23,22 +23,16 @@ struct SuiteAndCaseData {
     let suiteId: Int?
     
     var uniqueKey: String {
-        "\(id)_\(isSuites)"
+        "\(id)_\(isSuite)"
     }
     
     init(
-        isSuite: Bool,
-        id: Int,
-        title: String,
-        description: String?,
-        preconditions: String?,
-        parentId: Int?,
-        caseCount: Int?,
-        priority: Int? = nil,
-        automation: Int? = nil,
-        suiteId: Int? = nil
+        isSuite: Bool, id: Int,
+        title: String,  description: String?, parentId: Int?,
+        caseCount: Int?, priority: Int? = nil,
+        automation: Int? = nil, suiteId: Int? = nil
     ) {
-        self.isSuites = isSuite
+        self.isSuite = isSuite
         self.id = id
         self.title = title
         self.itemDescription = description
@@ -50,14 +44,41 @@ struct SuiteAndCaseData {
     }
     
     init(suiteRO: SuiteAndCaseDataRO) {
-        self.id = suiteRO.id
-        self.isSuites = suiteRO.isSuites
-        self.title = suiteRO.title
-        self.itemDescription = suiteRO.itemDescription
-        self.parentId = suiteRO.parentId
-        self.caseCount = suiteRO.caseCount
-        self.priority = suiteRO.priority
-        self.automation = suiteRO.automation
-        self.suiteId = suiteRO.suiteId
+        self.init(
+            isSuite: suiteRO.isSuites,
+            id: suiteRO.id,
+            title: suiteRO.title,
+            description: suiteRO.itemDescription,
+            parentId: suiteRO.parentId,
+            caseCount: suiteRO.caseCount,
+            priority: suiteRO.priority,
+            automation: suiteRO.automation,
+            suiteId: suiteRO.suiteId
+        )
+    }
+    
+    init(suite: SuiteEntity) {
+        self.init(
+            isSuite: true,
+            id: suite.id,
+            title: suite.title,
+            description: suite.itemDescription,
+            parentId: suite.parentId,
+            caseCount: suite.casesCount
+        )
+    }
+    
+    init(testCase: TestEntity) {
+        self.init(
+            isSuite: false,
+            id: testCase.id,
+            title: testCase.title,
+            description: testCase.description,
+            parentId: nil,
+            caseCount: nil,
+            priority: testCase.priority,
+            automation: testCase.automation,
+            suiteId: testCase.suiteId
+        )
     }
 }

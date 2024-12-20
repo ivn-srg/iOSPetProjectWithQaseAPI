@@ -61,7 +61,7 @@ final class CreatingProjectViewModel {
             method: .post,
             modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
         )
-        isEntityWasCreated = response.status
+        isEntityWasCreated = response.status.value
         LoadingIndicator.stopLoading()
     }
 }

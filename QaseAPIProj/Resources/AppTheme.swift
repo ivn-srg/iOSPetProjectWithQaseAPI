@@ -63,6 +63,7 @@ enum AppTheme {
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.blue, renderingMode: .alwaysOriginal)
     }()
+    static let trashImage = UIImage(systemName: "trash")
     
     // colors
     static let fioletColor = UIColor(named: "primary") ?? UIColor.purple

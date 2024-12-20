@@ -83,7 +83,7 @@ final class CreateTestCaseView: UIView {
                 let menuField = PropertiesPickerTextField(textType: menuFieldType, detailCaseVM: nil)
                 stackView.addArrangedSubview(menuField)
             case .isFlaky:
-                let switcher = SwitcherWithTitle(title: "Is Flaky".localized,testCaseVM: nil)
+                let switcher = SwitcherWithTitle(title: "Is Flaky".localized, testCaseVM: nil)
                 stackView.addArrangedSubview(switcher)
                 switcher.snp.makeConstraints {
                     $0.height.equalTo(40)

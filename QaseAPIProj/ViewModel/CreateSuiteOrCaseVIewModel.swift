@@ -10,78 +10,78 @@ import Foundation
 final class CreateSuiteOrCaseViewModel {
     // MARK: - Fields
     weak var delegate: CheckEnablingRBBProtocol?
-    var creatingEntityIsSuite: Bool = true
+    var creatingEntityIsSuite = true
     var creatingTestCase: CreatingTestCase {
         didSet {
             Task { @MainActor in
-                self.delegate?.checkConditionAndToggleRightBarButton()
+                delegate?.checkConditionAndToggleRightBarButton()
             }
         }
     }
     var creatingSuite: CreatingSuite {
         didSet {
             Task { @MainActor in
-                self.delegate?.checkConditionAndToggleRightBarButton()
+                delegate?.checkConditionAndToggleRightBarButton()
             }
         }
     }
     var isFieldsEmpty = false {
         didSet {
-            Task { @MainActor in
-                self.emptyFieldsClosure()
+            if isFieldsEmpty {
+                Task { @MainActor in emptyFieldsClosure() }
             }
         }
     }
     var isEntityWasCreated = false {
         didSet {
-            Task { @MainActor in
-                self.creatingFinishCallback()
+            if isEntityWasCreated {
+                Task { @MainActor in creatingFinishCallback() }
             }
         }
     }
     var creatingFinishCallback: () -> Void = {}
     var emptyFieldsClosure: () -> Void = {}
     
+    let parentSuiteId: Int
+    
     // MARK: - LifeCycle
-    init() {
-        self.creatingSuite = CreatingSuite.empty
-        self.creatingTestCase = CreatingTestCase.empty
+    init(parentSuiteId: Int? = 0) {
+        if let parentSuiteId = parentSuiteId {
+            self.parentSuiteId = parentSuiteId
+        } else { self.parentSuiteId = 0 }
+        creatingSuite = CreatingSuite.empty
+        creatingTestCase = CreatingTestCase.empty
     }
     
     // MARK: - Network work
-    func createNewEntity() {
+    func createNewEntity() async throws(APIError) {
         isFieldsEmpty = creatingEntityIsSuite ? creatingSuite.title.isEmpty : creatingTestCase.title.isEmpty
         if isFieldsEmpty { return }
             
         guard let urlString = apiManager.formUrlString(
             APIMethod: creatingEntityIsSuite ? .suites : .cases,
-            codeOfProject: PROJECT_NAME,
-            limit: nil,
-            offset: nil,
-            parentSuite: nil,
-            caseId: nil
-        ) else { return }
+            codeOfProject: PROJECT_NAME
+        ) else { throw .invalidURL }
+        
         LoadingIndicator.startLoading()
         
-        Task {
-            if creatingEntityIsSuite {
-                let response = try await apiManager.performRequest(
-                    with: creatingSuite,
-                    from: urlString,
-                    method: .post,
-                    modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self
-                )
-                isEntityWasCreated = response.status
-            } else {
-                let response = try await apiManager.performRequest(
-                    with: creatingTestCase,
-                    from: urlString,
-                    method: .post,
-                    modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
-                )
-                isEntityWasCreated = response.status
-            }
-            LoadingIndicator.stopLoading()
+        if creatingEntityIsSuite {
+            let response = try await apiManager.performRequest(
+                with: creatingSuite,
+                from: urlString,
+                method: .post,
+                modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self
+            )
+            isEntityWasCreated = response.status.value
+        } else {
+            let response = try await apiManager.performRequest(
+                with: creatingTestCase,
+                from: urlString,
+                method: .post,
+                modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
+            )
+            isEntityWasCreated = response.status.value
         }
+        LoadingIndicator.stopLoading()
     }
 }

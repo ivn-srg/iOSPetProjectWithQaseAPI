@@ -25,7 +25,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
     private let emptyDataLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "There's nothing here yet 🙁"
+        label.text = "There's nothing here yet 🙁".localized
         label.textAlignment = .center
         label.textColor = .gray
         label.numberOfLines = 0
@@ -64,7 +64,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
     func setupTableView() {
         view.backgroundColor = AppTheme.bgPrimaryColor
         title = viewModel.parentSuite == nil ? PROJECT_NAME
-        : self.viewModel.suitesAndCaseData.filter( {$0.isSuites && $0.id == self.viewModel.parentSuite?.id} ).first?.title
+        : self.viewModel.suitesAndCaseData.filter( {$0.isSuite && $0.id == self.viewModel.parentSuite?.id} ).first?.title
         
         tableVw.delegate = self
         tableVw.dataSource = self
@@ -86,7 +86,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
     
     // MARK: - @objc funcs
     @objc func addNewEntity() {
-        let vc = CreateSuiteOrCaseViewController(viewModel: .init())
+        let vc = CreateSuiteOrCaseViewController(viewModel: .init(parentSuiteId: viewModel.parentSuite?.id))
         vc.modalPresentationStyle = .fullScreen
         present(vc, animated: true)
     }
@@ -96,7 +96,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
 extension SuitesAndCasesTableViewController: UpdateTableViewProtocol {
     func updateTableView() {
         Task { @MainActor in
-            self.tableVw.reloadData()
+            tableVw.reloadData()
         }
     }
 }
@@ -111,7 +111,7 @@ extension SuitesAndCasesTableViewController: NextViewControllerPusher {
         let parentSuite = ParentSuite(id: testEntityItem.id, title: testEntityItem.title, codeOfProject: PROJECT_NAME)
         let caseItem = viewModel.suitesAndCaseData[item]
         
-        if testEntityItem.isSuites {
+        if testEntityItem.isSuite {
             vc = SuitesAndCasesTableViewController(parentSuite: parentSuite)
         } else {
             vc = TestCaseViewController(caseId: caseItem.id)
@@ -160,7 +160,7 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
         let swipeAction = UIContextualAction(style: .destructive, title: "Delete".localized) { [weak self] _, _, completionHandler in
             guard let self = self else { return }
             let entity = viewModel.suitesAndCaseData[indexPath.row]
-            let entityName = entity.isSuites ? "Test suite" : "Test case"
+            let entityName = entity.isSuite ? "Test suite".localized : "Test case".localized
             let composedMessage = String(format: "confirmMessage".localized, entityName.localized.lowercased())
             
             UIAlertController.showConfirmAlert(
@@ -175,12 +175,12 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
                     completionHandler(false)
                 }
         }
-        swipeAction.image = UIImage(systemName: "trash")
+        swipeAction.image = AppTheme.trashImage
         return UISwipeActionsConfiguration(actions: [swipeAction])
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if viewModel.suitesAndCaseData.count - indexPath.row == 1 && !viewModel.isLoading {
+        if viewModel.suitesAndCaseData.count - indexPath.row <= 3 && !viewModel.isLoading {
             guard let activityIndicator = tableVw.tableFooterView as? UIActivityIndicatorView else { return }
             activityIndicator.startAnimating()
             

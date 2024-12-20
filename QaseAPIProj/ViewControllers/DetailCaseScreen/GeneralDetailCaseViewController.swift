@@ -40,25 +40,25 @@ class GeneralDetailCaseViewController: UIViewController {
     
     private lazy var titleField = GeneralCaseTextField(
         textType: .name,
-        textViewValue: self.vm.testCase?.title ?? emptyText,
+        textViewValue: self.vm.testCase?.title ?? Constants.EMPTY_TEXT,
         detailVM: vm
     )
     
     private lazy var descriptionField = GeneralCaseTextField(
         textType: .description,
-        textViewValue: self.vm.testCase?.description ?? emptyText,
+        textViewValue: self.vm.testCase?.description ?? Constants.EMPTY_TEXT,
         detailVM: vm
     )
     
     private lazy var preconditionField = GeneralCaseTextField(
         textType: .precondition,
-        textViewValue: self.vm.testCase?.preconditions ?? emptyText,
+        textViewValue: self.vm.testCase?.preconditions ?? Constants.EMPTY_TEXT,
         detailVM: vm
     )
     
     private lazy var postconditionField = GeneralCaseTextField(
         textType: .postcondition,
-        textViewValue: self.vm.testCase?.postconditions ?? emptyText,
+        textViewValue: self.vm.testCase?.postconditions ?? Constants.EMPTY_TEXT,
         detailVM: vm
     )
     
@@ -131,9 +131,9 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
         Task { @MainActor in
             if let testCase = self.vm.testCase {
                 self.titleField.updateTextViewValue(testCase.title)
-                self.descriptionField.updateTextViewValue(testCase.description ?? emptyText)
-                self.preconditionField.updateTextViewValue(testCase.preconditions ?? emptyText)
-                self.postconditionField.updateTextViewValue(testCase.postconditions ?? emptyText)
+                self.descriptionField.updateTextViewValue(testCase.description ?? Constants.EMPTY_TEXT)
+                self.preconditionField.updateTextViewValue(testCase.preconditions ?? Constants.EMPTY_TEXT)
+                self.postconditionField.updateTextViewValue(testCase.postconditions ?? Constants.EMPTY_TEXT)
             }
         }
     }

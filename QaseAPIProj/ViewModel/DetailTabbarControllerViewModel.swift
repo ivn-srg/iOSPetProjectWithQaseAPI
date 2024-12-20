@@ -96,7 +96,7 @@ final class DetailTabbarControllerViewModel {
                 modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
             )
             
-            isUploadingSuccess = response.status
+            isUploadingSuccess = response.status.value
             let _ = realmDb.saveTestCase(changedTestCase)
             fetchCaseDataJSON()
             LoadingIndicator.stopLoading()

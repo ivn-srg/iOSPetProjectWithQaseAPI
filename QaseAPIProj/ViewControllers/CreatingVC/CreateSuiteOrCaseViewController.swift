@@ -8,7 +8,7 @@
 import UIKit
 
 enum CreatingEntitySelect: String {
-    case suite = "Suite"
+    case suite = "Test suite"
     case testCase = "Test case"
     
     var localized: String {
@@ -113,7 +113,7 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     // MARK: - other block
     private func setupView() {
         view.backgroundColor = AppTheme.bgPrimaryColor
-        titleLabel.text = "Creating new entity".localized
+        titleLabel.text = "Creating entity".localized
         
         view.addSubview(customNavigationView)
         customNavigationView.addSubview(closeButton)
@@ -177,6 +177,8 @@ extension CreateSuiteOrCaseViewController: CheckEnablingRBBProtocol {
     }
     
     @objc func createNewEntity() {
-        viewModel.createNewEntity()
+        executeWithErrorHandling {
+            try await self.viewModel.createNewEntity()
+        }
     }
 }

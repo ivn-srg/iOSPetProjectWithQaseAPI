@@ -56,7 +56,7 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
     // MARK: - lifecycles
     
     func configure(with dataForCell: SuiteAndCaseData) {
-        if !dataForCell.isSuites {
+        if !dataForCell.isSuite {
             var image: UIImage? = .init()
             var color: UIColor = .init()
             
@@ -102,15 +102,17 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
         contentView.addSubview(priorityImage)
         priorityImage.snp.makeConstraints {
             $0.centerY.equalToSuperview()
-            $0.leading.equalToSuperview().offset(!dataForCell.isSuites ? 10 : 0)
-            $0.width.equalTo(!dataForCell.isSuites ? 20 : 0)
+            $0.leading.equalToSuperview().offset(!dataForCell.isSuite ? 10 : 0)
+            $0.width.equalTo(!dataForCell.isSuite ? 20 : 0)
         }
+        
         contentView.addSubview(automationImage)
         automationImage.snp.makeConstraints {
             $0.centerY.equalToSuperview()
-            $0.leading.equalTo(priorityImage.snp.trailing).offset(!dataForCell.isSuites ? 10 : 0)
-            $0.width.equalTo(!dataForCell.isSuites ? 20 : 0)
+            $0.leading.equalTo(priorityImage.snp.trailing).offset(!dataForCell.isSuite ? 10 : 0)
+            $0.width.equalTo(!dataForCell.isSuite ? 20 : 0)
         }
+        
         contentView.addSubview(contentStackVw)
         contentStackVw.snp.makeConstraints {
             $0.verticalEdges.equalToSuperview().inset(8)

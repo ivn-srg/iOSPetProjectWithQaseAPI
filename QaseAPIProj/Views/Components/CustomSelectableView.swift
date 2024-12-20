@@ -90,7 +90,6 @@ final class CustomSelectableView: UIButton {
             UIAction(
                 title: $0.title,
                 image: $0.image,
-                identifier: UIAction.Identifier("\($0.id)"),
                 handler: handleMenuItemTapped
             )
         }

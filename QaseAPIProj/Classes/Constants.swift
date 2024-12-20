@@ -7,9 +7,6 @@
 
 import UIKit
 
-let emptyText = "Not set"
-
-
 struct MenuItem {
     var id: Int
     var title: String
@@ -229,6 +226,11 @@ enum AutomationStatus: String, CaseIterable, MenuDataSource {
 
 enum PlaceOfRequest {
     case start, continuos, refresh
+}
+
+struct Constants {
+    static let LIMIT_OF_REQUEST = 50
+    static let EMPTY_TEXT = "Not set".localized
 }
 
 var TOKEN = ""

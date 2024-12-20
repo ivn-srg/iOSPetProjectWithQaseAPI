@@ -148,7 +148,7 @@ extension ProjectsViewController: UITableViewDelegate {
                     completionHandler(false)
                 }
         }
-        swipeAction.image = UIImage(systemName: "trash")
+        swipeAction.image = AppTheme.trashImage
         return UISwipeActionsConfiguration(actions: [swipeAction])
     }
 }

@@ -51,7 +51,7 @@ final class GeneralCaseTextField: UIView {
     
     // MARK: - Lyfecycle
     
-    init(textType: GeneralCaseTextFieldTypes, textViewValue: String? = "", detailVM: Any? = nil) {
+    init(textType: GeneralCaseTextFieldTypes, textViewValue: String = "", detailVM: Any? = nil) {
         self.textType = textType
         self.detailViewModel = detailVM
         super.init(frame: .zero)
@@ -70,11 +70,17 @@ final class GeneralCaseTextField: UIView {
             title = GeneralCaseTextFieldTypes.code.localized
         case .parentSuite:
             title = GeneralCaseTextFieldTypes.parentSuite.localized
+            textView.text = if let detailVM = detailVM as? CreateSuiteOrCaseViewModel {
+                "\(detailVM.parentSuiteId)"
+            } else {
+                textViewValue
+            }
         }
         
         textView.delegate = self
         titlelbl.text = title
-        textView.text = textViewValue
+        textView.text = textView.text.isEmpty ? textViewValue : textView.text
+        
         configureView()
     }
     
@@ -116,9 +122,6 @@ extension GeneralCaseTextField: UITextViewDelegate {
         if textView.text.count > maxCharacters {
             textView.text = String(textView.text.prefix(maxCharacters))
         }
-        
-        let maxHeight: CGFloat = 300
-        let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: CGFloat.greatestFiniteMagnitude))
         
         switch textType {
         case .name:
@@ -169,10 +172,10 @@ extension GeneralCaseTextField: UITextViewDelegate {
             }
         case .parentSuite:
             if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                detailViewModel.creatingSuite.parentId = Int(textView.text)
+                detailViewModel.creatingSuite.parent_id = Int(textView.text) ?? 0
             } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
                 if detailViewModel.creatingEntityIsSuite{
-                    detailViewModel.creatingSuite.parentId = Int(textView.text)
+                    detailViewModel.creatingSuite.parent_id = Int(textView.text) ?? 0
                 }
             }
         }

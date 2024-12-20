@@ -78,11 +78,11 @@ struct ParentSuite {
 struct CreatingSuite: Codable {
     var title: String
     var description: String
-    var preconditions: String?
-    var parentId: Int?
+    var preconditions: String
+    var parent_id: Int
     
     static var empty: CreatingSuite {
-        return .init(title: "", description: "")
+        return .init(title: "", description: "", preconditions: "", parent_id: 0)
     }
 }
 

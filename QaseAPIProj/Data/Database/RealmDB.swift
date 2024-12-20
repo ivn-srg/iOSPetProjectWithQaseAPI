@@ -13,17 +13,17 @@ enum TargetTestEntities {
 }
 
 protocol HeroDAO {
-    func saveProjects(_ projects: [Project]) -> (Bool)
+    func saveProjects(_ projects: [Project]) -> Bool
     func getProjects() -> [Project]?
-    func deleteProject(_ project: Project) -> (Bool)
+    func deleteProject(_ project: Project) -> Bool
     
-    func saveTestEntity(_ entities: SuiteAndCaseData) -> (Bool)
+    func saveTestEntities(_ entities: [SuiteAndCaseData]) -> Bool
     func getTestEntities(by parentSuite: ParentSuite?, testEntitiesType: TargetTestEntities) -> [SuiteAndCaseData]?
-    func deleteEntity(_ entity: SuiteAndCaseData) -> (Bool)
+    func deleteEntity(_ entity: SuiteAndCaseData) -> Bool
     
-    func saveTestCase(_ testCase: TestEntity) -> (Bool)
+    func saveTestCase(_ testCase: TestEntity) -> Bool
     func getTestCase(by id: Int) -> TestEntity?
-    func deleteTestCase(_ testCase: TestEntity) -> (Bool)
+    func deleteTestCase(_ testCase: TestEntity) -> Bool
 }
 
 final class RealmManager {
@@ -111,12 +111,14 @@ extension RealmManager: HeroDAO {
         }
     }
     
-    func saveTestEntity(_ entity: SuiteAndCaseData) -> Bool {
+    func saveTestEntities(_ entities: [SuiteAndCaseData]) -> Bool {
         do {
             let realm = try Realm()
             
-            try realm.write {
-                realm.add(SuiteAndCaseDataRO(entitiesData: entity, codeOfProject: PROJECT_NAME), update: .modified)
+            for entity in entities {
+                try realm.write {
+                    realm.add(SuiteAndCaseDataRO(entitiesData: entity, codeOfProject: PROJECT_NAME), update: .modified)
+                }
             }
         } catch {
             return false

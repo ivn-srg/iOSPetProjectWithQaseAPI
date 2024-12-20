@@ -9,7 +9,7 @@ import Foundation
 
 protocol NetworkManager: AnyObject {
     func performRequest<T: Decodable>(
-        with data: any Encodable,
+        with data: Encodable?,
         from urlString: String,
         method: HTTPMethod,
         modelType: T.Type
@@ -27,7 +27,7 @@ final class APIManager: NetworkManager {
     let DOMEN = "https://api.qase.io/v1"
     
     func performRequest<T: Decodable>(
-        with data: any Encodable = Optional<Data>.none,
+        with data: Encodable? = nil,
         from urlString: String,
         method: HTTPMethod,
         modelType: T.Type
@@ -38,7 +38,7 @@ final class APIManager: NetworkManager {
         request.httpMethod = method.rawValue
         request.addValue(TOKEN, forHTTPHeaderField: "Token")
         
-        if !(data is Optional<Data>) {
+        if let data = data {
             let jsonData: Data
             do {
                 jsonData = try JSONEncoder().encode(data)
@@ -56,7 +56,7 @@ final class APIManager: NetworkManager {
         return try await makeHTTPRequest(for: request, codableModelType: modelType)
     }
     
-    internal func makeHTTPRequest<T: Decodable>(
+    func makeHTTPRequest<T: Decodable>(
         for request: URLRequest,
         codableModelType: T.Type
     ) async throws(APIError) -> T {
@@ -72,7 +72,7 @@ final class APIManager: NetworkManager {
                 
                 errorMessage = errorModel.errorMessage != nil
                 ? errorModel.errorMessage!
-                : errorModel.error != nil ? errorModel.error! : ""
+                : errorModel.message != nil ? errorModel.message! : ""
             }
             throw APIError.parsingError(errorMessage)
         } catch let error as DecodingError {

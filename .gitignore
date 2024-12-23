@@ -5,10 +5,8 @@
 ## User settings
 xcuserdata/
 *.xcuserdata
-*.xcuserdate
 *.xcbkptlist
-QaseAPIProj / project.xcworkspace
-UserInterfaceState.xcuserstate
+*.xcuserstate
 
 ## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
 *.xcscmblueprint
@@ -62,7 +60,7 @@ playground.xcworkspace
 # Pods/
 #
 # Add this line if you want to avoid checking in source code from the Xcode workspace
-# *.xcworkspace
+*.xcworkspace
 
 # Carthage
 #

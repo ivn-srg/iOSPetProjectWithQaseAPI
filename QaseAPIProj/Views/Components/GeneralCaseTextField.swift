@@ -8,22 +8,10 @@
 import UIKit
 import SnapKit
 
-enum GeneralCaseTextFieldTypes: String {
-    case name = "Title"
-    case description = "Description"
-    case precondition = "Precondition"
-    case postcondition = "Postcondition"
-    case code = "Project code"
-    case parentSuite = "Parent suite"
-    
-    var localized: String {
-        self.rawValue.localized
-    }
-}
 
 final class GeneralCaseTextField: UIView {
-    private let textType: GeneralCaseTextFieldTypes
-    private var detailViewModel: Any?
+    private let textType: FieldType
+    private var detailViewModel: UpdatableEntityProtocol?
     
     // MARK: - UI components
     private lazy var titlelbl: UILabel = {
@@ -51,35 +39,18 @@ final class GeneralCaseTextField: UIView {
     
     // MARK: - Lyfecycle
     
-    init(textType: GeneralCaseTextFieldTypes, textViewValue: String = "", detailVM: Any? = nil) {
+    init(textType: FieldType, textViewValue: String? = "", detailVM: UpdatableEntityProtocol? = nil) {
         self.textType = textType
         self.detailViewModel = detailVM
         super.init(frame: .zero)
         
-        let title: String
-        switch textType {
-        case .name:
-            title = GeneralCaseTextFieldTypes.name.localized
-        case .description:
-            title = GeneralCaseTextFieldTypes.description.localized
-        case .precondition:
-            title = GeneralCaseTextFieldTypes.precondition.localized
-        case .postcondition:
-            title = GeneralCaseTextFieldTypes.postcondition.localized
-        case .code:
-            title = GeneralCaseTextFieldTypes.code.localized
-        case .parentSuite:
-            title = GeneralCaseTextFieldTypes.parentSuite.localized
-            textView.text = if let detailVM = detailVM as? CreateSuiteOrCaseViewModel {
-                "\(detailVM.parentSuiteId)"
-            } else {
-                textViewValue
-            }
-        }
-        
         textView.delegate = self
-        titlelbl.text = title
-        textView.text = textView.text.isEmpty ? textViewValue : textView.text
+        titlelbl.text = textType.localized
+        textView.text = if let detailVM = detailVM as? CreateSuiteOrCaseViewModel, textType == .parentSuite {
+            "\(detailVM.parentSuiteId)"
+        } else {
+            textView.text.isEmpty ? textViewValue : textView.text
+        }
         
         configureView()
     }
@@ -106,13 +77,11 @@ final class GeneralCaseTextField: UIView {
             $0.top.equalTo(titlelbl.snp.bottom).offset(8)
             $0.horizontalEdges.equalToSuperview()
             $0.bottom.equalToSuperview().priority(.low)
-//            self.textViewHeightConstraint = $0.height.equalTo(50).constraint
         }
     }
     
-    func updateTextViewValue(_ value: String) {
+    func updateTextViewValue(_ value: String?) {
         textView.text = value
-        setNeedsLayout()
     }
 }
 
@@ -124,60 +93,23 @@ extension GeneralCaseTextField: UITextViewDelegate {
         }
         
         switch textType {
-        case .name:
-            if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
-                detailViewModel.changedTestCase?.title = textView.text
-            } else if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
-                detailViewModel.creatingProject.title = textView.text
-            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if detailViewModel.creatingEntityIsSuite {
-                    detailViewModel.creatingSuite.title = textView.text
-                } else {
-                    detailViewModel.creatingTestCase.title = textView.text
-                }
-            }
-        case .description:
-            if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
-                detailViewModel.changedTestCase?.description = textView.text
-            } else if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
-                detailViewModel.creatingProject.description = textView.text
-            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if detailViewModel.creatingEntityIsSuite {
-                    detailViewModel.creatingSuite.description = textView.text
-                } else {
-                    detailViewModel.creatingTestCase.description = textView.text
-                }
-            }
-        case .precondition:
-            if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
-                detailViewModel.changedTestCase?.preconditions = textView.text
-            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if detailViewModel.creatingEntityIsSuite {
-                    detailViewModel.creatingSuite.preconditions = textView.text
-                } else {
-                    detailViewModel.creatingTestCase.precondition = textView.text
-                }
-            }
-        case .postcondition:
-            if let detailViewModel = detailViewModel as? DetailTabbarControllerViewModel {
-                detailViewModel.changedTestCase?.postconditions = textView.text
-            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if detailViewModel.creatingEntityIsSuite {
-                    detailViewModel.creatingTestCase.postcondition = textView.text
-                }
-            }
-        case .code:
-            if let detailViewModel = detailViewModel as? CreatingProjectViewModel {
-                detailViewModel.creatingProject.code = textView.text
+        case .title, .description, .precondition, .postcondition, .code:
+            switch textType {
+            case .title:
+                detailViewModel?.updateValue(for: .title, value: textView.text)
+            case .description:
+                detailViewModel?.updateValue(for: .description, value: textView.text)
+            case .precondition:
+                detailViewModel?.updateValue(for: .precondition, value: textView.text)
+            case .postcondition:
+                detailViewModel?.updateValue(for: .postcondition, value: textView.text)
+            case .code:
+                detailViewModel?.updateValue(for: .code, value: textView.text)
+            default: break
             }
         case .parentSuite:
-            if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                detailViewModel.creatingSuite.parent_id = Int(textView.text) ?? 0
-            } else if let detailViewModel = detailViewModel as? CreateSuiteOrCaseViewModel {
-                if detailViewModel.creatingEntityIsSuite{
-                    detailViewModel.creatingSuite.parent_id = Int(textView.text) ?? 0
-                }
-            }
+            detailViewModel?.updateValue(for: .parentSuite, value: Int(textView.text) ?? 0)
+        default: break
         }
     }
 }

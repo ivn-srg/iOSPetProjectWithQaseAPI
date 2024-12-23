@@ -61,33 +61,34 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
             var color: UIColor = .init()
             
             switch dataForCell.priority {
-                case 1:
-                    image = AppTheme.chevronUpImage
-                    color = .systemRed
-                case 2:
-                    image = AppTheme.circleImage
-                    color = .systemGray
-                case 3:
-                    image = AppTheme.chevronDownImage
-                    color = .systemGreen
-                default:
-                    image = AppTheme.minusImage
-                    color = .systemGray
+            case .high:
+                image = AppTheme.chevronUpImage
+                color = .systemRed
+            case .medium:
+                image = AppTheme.circleImage
+                color = .systemGray
+            case .low:
+                image = AppTheme.chevronDownImage
+                color = .systemGreen
+            default:
+                image = AppTheme.minusImage
+                color = .systemGray
             }
             
             priorityImage.image = image
             priorityImage.tintColor = color
             
+            
             switch dataForCell.automation {
-                case 1:
-                    image = AppTheme.personWithGearshapeImage
-                    color = .systemGray
-                case 2:
-                    image = AppTheme.gearshapeFillImage
-                    color = .systemBlue
-                default:
-                    image = AppTheme.handRaisedImage
-                    color = .systemGray
+            case .toBeAutomated:
+                image = AppTheme.personWithGearshapeImage
+                color = .systemGray
+            case .automation:
+                image = AppTheme.gearshapeFillImage
+                color = .systemBlue
+            default:
+                image = AppTheme.handRaisedImage
+                color = .systemGray
             }
             
             automationImage.image = image

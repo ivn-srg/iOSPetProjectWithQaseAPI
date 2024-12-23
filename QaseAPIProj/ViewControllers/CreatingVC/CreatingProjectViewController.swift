@@ -69,7 +69,7 @@ final class CreatingProjectViewController: UIViewController {
         return sv
     }()
     
-    private lazy var titleTextView = GeneralCaseTextField(textType: .name, detailVM: viewModel)
+    private lazy var titleTextView = GeneralCaseTextField(textType: .title, detailVM: viewModel)
     private lazy var codeTextView = GeneralCaseTextField(textType: .code, detailVM: viewModel)
     private lazy var descriptionTextView = GeneralCaseTextField(textType: .description, detailVM: viewModel)
     
@@ -140,7 +140,7 @@ final class CreatingProjectViewController: UIViewController {
         stackView.snp.makeConstraints {
             $0.verticalEdges.equalToSuperview().inset(30)
             $0.centerX.equalToSuperview()
-            $0.width.equalToSuperview().inset(30)
+            $0.width.equalToSuperview().inset(AppTheme.horizontalPadding)
         }
         stackView.addArrangedSubview(titleTextView)
         stackView.addArrangedSubview(descriptionTextView)

@@ -7,24 +7,10 @@
 
 import UIKit
 
-enum PropertiesCaseTextFieldTypes: String {
-    case severity = "Severity"
-    case status = "Status"
-    case priority = "Priority"
-    case behavior = "Behavior"
-    case type = "Type"
-    case layer = "Layer"
-    case automationStatus = "Automation status"
-    
-    var localized: String {
-        self.rawValue.localized
-    }
-}
-
 final class PropertiesPickerTextField: UIView {
     // MARK: - Fields
-    private let textType: PropertiesCaseTextFieldTypes
-    private var testCaseViewModel: DetailTabbarControllerViewModel?
+    private let textType: FieldType
+    private var testCaseViewModel: UpdatableEntityProtocol?
     
     // MARK: - UI components
     private lazy var titleLabel: UILabel = {
@@ -37,7 +23,7 @@ final class PropertiesPickerTextField: UIView {
     private lazy var textField = CustomSelectableView(textFieldType: textType, detailCaseVM: testCaseViewModel)
     
     // MARK: - Lyfecycle
-    init(textType: PropertiesCaseTextFieldTypes, detailCaseVM: DetailTabbarControllerViewModel?) {
+    init(textType: FieldType, detailCaseVM: UpdatableEntityProtocol?) {
         self.textType = textType
         self.testCaseViewModel = detailCaseVM
         super.init(frame: .zero)

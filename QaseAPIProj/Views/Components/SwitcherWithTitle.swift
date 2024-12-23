@@ -10,7 +10,7 @@ import UIKit
 class SwitcherWithTitle: UIView {
     // MARK: - Fields
     var switchValueChanged: ((Bool) -> Void)?
-    private var testCaseViewModel: DetailTabbarControllerViewModel?
+    private var viewModel: UpdatableEntityProtocol?
     
     // MARK: - UI components
     private lazy var titlelbl: UILabel = {
@@ -30,12 +30,12 @@ class SwitcherWithTitle: UIView {
     
     // MARK: - Lyfecycle
     
-    init(title: String, testCaseVM: DetailTabbarControllerViewModel?) {
-        self.testCaseViewModel = testCaseVM
+    init(title: String, testCaseVM: UpdatableEntityProtocol?) {
+        self.viewModel = testCaseVM
         super.init(frame: .zero)
         
         titlelbl.text = title
-        switcher.isOn = testCaseViewModel != nil ? testCaseViewModel!.testCase?.isFlaky == 1 : false
+        switcher.isOn = viewModel != nil ? viewModel!.testCase?.isFlaky == 1 : false
         configureView()
         setupActions()
     }

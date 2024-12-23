@@ -41,7 +41,7 @@ final class CreateSuiteView: UIView {
         return sv
     }()
     
-    private lazy var titleTextView = GeneralCaseTextField(textType: .name, detailVM: linkedViewModel)
+    private lazy var titleTextView = GeneralCaseTextField(textType: .title, detailVM: linkedViewModel)
     private lazy var descriptionTextView = GeneralCaseTextField(textType: .description, detailVM: linkedViewModel)
     private lazy var preconditionsTextView = GeneralCaseTextField(textType: .precondition, detailVM: linkedViewModel)
     private lazy var parentSuiteTextView = GeneralCaseTextField(textType: .parentSuite, detailVM: linkedViewModel)

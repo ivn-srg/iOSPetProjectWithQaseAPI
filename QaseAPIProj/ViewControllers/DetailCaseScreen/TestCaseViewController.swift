@@ -42,12 +42,14 @@ class TestCaseViewController: UIViewController {
         super.viewDidLoad()
         
         viewModel.delegate = self
-        viewModel.fetchCaseDataJSON()
+        executeWithErrorHandling {
+            try await self.viewModel.fetchCaseDataJSON()
+        }
         viewModel.updatingFinishCallback = {
             UIAlertController.showSimpleAlert(
                 on: self, title: "Data has been saved ✅".localized,
                 message: String(
-                    format: "Your changes for %@-%@ test case with successfully saved".localized,
+                    format: "Your changes for %@-%d test case with successfully saved".localized,
                     PROJECT_NAME, self.viewModel.caseId
                 )
             )
@@ -65,11 +67,17 @@ class TestCaseViewController: UIViewController {
     
     // MARK: - View Configuration
     func setupTopTabBar() {
+        let generalInfoVC = GeneralDetailCaseViewController(vm: viewModel)
+        let propertiesInfoVC = PropertiesDetailCaseViewController(vm: viewModel)
+        let defectsInfoVC = DefectsDetailCaseViewController(vm: viewModel)
+        viewControllers = [generalInfoVC, propertiesInfoVC, defectsInfoVC]
+        
         let tabbarItems = [
             UITabBarItem(title: "General".localized, image: nil, tag: 0),
             UITabBarItem(title: "Properties".localized, image: nil, tag: 1),
             UITabBarItem(title: "Defects".localized, image: nil, tag: 2)
         ]
+        
         tabbar.items = tabbarItems.map {
             $0.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -6)
             $0.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 15)], for: .normal)
@@ -89,11 +97,6 @@ class TestCaseViewController: UIViewController {
     }
     
     func configureView() {
-        let generalInfoVC = GeneralDetailCaseViewController(vm: viewModel)
-        let propertiesInfoVC = PropertiesDetailCaseViewController(vm: viewModel)
-        let defectsInfoVC = DefectsDetailCaseViewController(vm: viewModel)
-        viewControllers = [generalInfoVC, propertiesInfoVC, defectsInfoVC]
-        
         view.addSubview(containerView)
         containerView.snp.makeConstraints {
             $0.top.equalTo(tabbar.snp.bottom)
@@ -105,7 +108,7 @@ class TestCaseViewController: UIViewController {
     }
     
     private func setupInitialViewController() {
-        let firstVC = GeneralDetailCaseViewController(vm: viewModel)
+        guard let firstVC = viewControllers.first else { return }
         addChildVC(firstVC)
     }
     
@@ -153,10 +156,10 @@ extension TestCaseViewController: UITabBarDelegate {
 extension TestCaseViewController: DetailTestCaseProtocol {
     func updateUI() {
         Task { @MainActor in
-            title = "\(PROJECT_NAME)-\(self.viewModel.caseId)"
-            for viewCN in viewControllers {
-                guard let viewCN = viewCN as? DetailTestCaseProtocol else { continue }
-                viewCN.updateUI()
+            title = "\(PROJECT_NAME)-\(viewModel.caseId)"
+            for viewC in viewControllers {
+                guard let viewC = viewC as? DetailTestCaseProtocol else { continue }
+                viewC.updateUI()
             }
         }
     }
@@ -165,11 +168,11 @@ extension TestCaseViewController: DetailTestCaseProtocol {
     private func setupGestures() {
         let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeBetweenViews(_:)))
         swipeLeft.direction = .left
-        self.view.addGestureRecognizer(swipeLeft)
+        view.addGestureRecognizer(swipeLeft)
         
         let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipeBetweenViews(_:)))
         swipeRight.direction = .right
-        self.view.addGestureRecognizer(swipeRight)
+        view.addGestureRecognizer(swipeRight)
     }
     
     @objc func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer) {
@@ -212,6 +215,8 @@ extension TestCaseViewController: CheckEnablingRBBProtocol {
     }
     
     @objc func rightBarButtonTapped() {
-        viewModel.updateTestCaseData()
+        executeWithErrorHandling {
+            try await self.viewModel.updateTestCaseData()
+        }
     }
 }

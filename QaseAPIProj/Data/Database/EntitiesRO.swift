@@ -106,8 +106,8 @@ final class SuiteAndCaseDataRO: Object {
         self.itemDescription = entitiesData.itemDescription
         self.parentId = entitiesData.parentId
         self.caseCount = entitiesData.caseCount
-        self.priority = entitiesData.priority
-        self.automation = entitiesData.automation
+        self.priority = entitiesData.priority?.menuItem.id
+        self.automation = entitiesData.automation?.menuItem.id
         self.suiteId = entitiesData.suiteId
         self.codeOfProject = codeOfProject
     }
@@ -153,14 +153,14 @@ final class TestEntityRO: Object {
         self.itemDescription = testCaseData.description
         self.preconditions = testCaseData.preconditions
         self.postconditions = testCaseData.postconditions
-        self.severity = testCaseData.severity
-        self.priority = testCaseData.priority
-        self.type = testCaseData.type
-        self.layer = testCaseData.layer
+        self.severity = testCaseData.severity.menuItem.id
+        self.priority = testCaseData.priority.menuItem.id
+        self.type = testCaseData.type.menuItem.id
+        self.layer = testCaseData.layer.menuItem.id
         self.isFlaky = testCaseData.isFlaky
-        self.behavior = testCaseData.behavior
-        self.automation = testCaseData.automation
-        self.status = testCaseData.status
+        self.behavior = testCaseData.behavior.menuItem.id
+        self.automation = testCaseData.automation.menuItem.id
+        self.status = testCaseData.status.menuItem.id
         self.suiteId = testCaseData.suiteId
         self.memberId = testCaseData.memberId
         self.authorId = testCaseData.authorId

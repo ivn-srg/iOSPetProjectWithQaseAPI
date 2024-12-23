@@ -18,8 +18,8 @@ struct SuiteAndCaseData {
     let caseCount: Int?
     
     // if !isSuite
-    let priority: Int?
-    let automation: Int?
+    let priority: Priority?
+    let automation: AutomationStatus?
     let suiteId: Int?
     
     var uniqueKey: String {
@@ -29,8 +29,8 @@ struct SuiteAndCaseData {
     init(
         isSuite: Bool, id: Int,
         title: String,  description: String?, parentId: Int?,
-        caseCount: Int?, priority: Int? = nil,
-        automation: Int? = nil, suiteId: Int? = nil
+        caseCount: Int?, priority: Priority? = nil,
+        automation: AutomationStatus? = nil, suiteId: Int? = nil
     ) {
         self.isSuite = isSuite
         self.id = id
@@ -51,8 +51,8 @@ struct SuiteAndCaseData {
             description: suiteRO.itemDescription,
             parentId: suiteRO.parentId,
             caseCount: suiteRO.caseCount,
-            priority: suiteRO.priority,
-            automation: suiteRO.automation,
+            priority: Priority(suiteRO.priority ?? 0),
+            automation: AutomationStatus(suiteRO.automation ?? 0),
             suiteId: suiteRO.suiteId
         )
     }

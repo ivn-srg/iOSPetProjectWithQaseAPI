@@ -79,8 +79,10 @@ final class SuitesAndCasesViewModel {
                 method: .delete,
                 modelType: SharedResponseModel.self
             )
+            
             if deletingResult.status {
-                suitesAndCaseData.remove(at: index)
+                let deletedEntity = suitesAndCaseData.remove(at: index)
+                let _ = realmDb.deleteEntity(deletedEntity)
             }
             
             await MainActor.run {

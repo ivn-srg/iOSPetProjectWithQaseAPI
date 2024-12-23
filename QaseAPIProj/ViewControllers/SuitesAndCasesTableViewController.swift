@@ -137,13 +137,15 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: SuitesAndCasesTableViewCell.cellId, for: indexPath) as? SuitesAndCasesTableViewCell else { return UITableViewCell() }
+        guard let cell = tableView.dequeueReusableCell(
+            withIdentifier: SuitesAndCasesTableViewCell.cellId,
+            for: indexPath) as? SuitesAndCasesTableViewCell
+        else { return UITableViewCell() }
         
         let dataForCell = viewModel.suitesAndCaseData[indexPath.row]
         cell.configure(with: dataForCell)
         
         return cell
-        
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -151,6 +153,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
     }
 }
 
+// MARK: - Table view delegate
 extension SuitesAndCasesTableViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableView.automaticDimension
@@ -161,7 +164,7 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
             guard let self = self else { return }
             let entity = viewModel.suitesAndCaseData[indexPath.row]
             let entityName = entity.isSuite ? "Test suite".localized : "Test case".localized
-            let composedMessage = String(format: "confirmMessage".localized, entityName.localized.lowercased())
+            let composedMessage = String(format: "confirmMessage".localized, entityName.localized.lowercased(), "")
             
             UIAlertController.showConfirmAlert(
                 on: self,

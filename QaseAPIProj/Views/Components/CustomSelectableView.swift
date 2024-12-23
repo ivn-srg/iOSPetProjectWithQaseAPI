@@ -11,26 +11,27 @@ final class CustomSelectableView: UIButton {
     // MARK: - Fields
     private var selectableValue: MenuItem?
     private var dataSource = [MenuItem]()
-    private let textFieldType: PropertiesCaseTextFieldTypes
-    private var testCaseViewModel: DetailTabbarControllerViewModel?
-    private var originalIntValue: Int? {
+    private let textFieldType: FieldType
+    private var testCaseViewModel: UpdatableEntityProtocol?
+    private var fieldValue: MenuItem? {
         guard let testCaseViewModel = testCaseViewModel else { return nil }
         
         switch textFieldType {
         case .severity:
-            return testCaseViewModel.testCase?.severity
+            return testCaseViewModel.testCase?.severity.menuItem
         case .status:
-            return testCaseViewModel.testCase?.status
+            return testCaseViewModel.testCase?.status.menuItem
         case .priority:
-            return testCaseViewModel.testCase?.priority
+            return testCaseViewModel.testCase?.priority.menuItem
         case .behavior:
-            return testCaseViewModel.testCase?.behavior
+            return testCaseViewModel.testCase?.behavior.menuItem
         case .type:
-            return testCaseViewModel.testCase?.type
+            return testCaseViewModel.testCase?.type.menuItem
         case .layer:
-            return testCaseViewModel.testCase?.layer
-        case .automationStatus:
-            return testCaseViewModel.testCase?.automation
+            return testCaseViewModel.testCase?.layer.menuItem
+        case .automation:
+            return testCaseViewModel.testCase?.automation.menuItem
+        default: return nil
         }
     }
     
@@ -51,8 +52,8 @@ final class CustomSelectableView: UIButton {
     
     // MARK: - Lyfecycle
     init(
-        textFieldType: PropertiesCaseTextFieldTypes,
-        detailCaseVM: DetailTabbarControllerViewModel?
+        textFieldType: FieldType,
+        detailCaseVM: UpdatableEntityProtocol?
     ) {
         self.textFieldType = textFieldType
         self.testCaseViewModel = detailCaseVM
@@ -62,36 +63,53 @@ final class CustomSelectableView: UIButton {
         
         switch textFieldType {
         case .severity:
-            self.dataSource = Severity.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.severity : 0)
+            dataSource = Severity.dataSource
+            selectableValue = testCase != nil ? testCase!.severity.menuItem : MenuItem()
         case .status:
-            self.dataSource = Status.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.status : 0)
+            dataSource = Status.dataSource
+            selectableValue = testCase != nil ? testCase!.status.menuItem : MenuItem()
         case .priority:
-            self.dataSource = Priority.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.priority : 0)
+            dataSource = Priority.dataSource
+            selectableValue = testCase != nil ? testCase!.priority.menuItem : MenuItem()
         case .behavior:
-            self.dataSource = Behavior.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.behavior : 0)
+            dataSource = Behavior.dataSource
+            selectableValue = testCase != nil ? testCase!.behavior.menuItem : MenuItem()
         case .type:
-            self.dataSource = Types.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.type : 0)
+            dataSource = Types.dataSource
+            selectableValue = testCase != nil ? testCase!.type.menuItem : MenuItem()
         case .layer:
-            self.dataSource = Layer.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.layer : 0)
-        case .automationStatus:
-            self.dataSource = AutomationStatus.dataSource
-            self.selectableValue = convertIntValueToMenuItem(testCase != nil ? testCase!.automation : 0)
+            dataSource = Layer.dataSource
+            selectableValue = testCase != nil ? testCase!.layer.menuItem : MenuItem()
+        case .automation:
+            dataSource = AutomationStatus.dataSource
+            selectableValue = testCase != nil ? testCase!.automation.menuItem : MenuItem()
+        default: break
         }
         
         configureView()
         
-        let actionList = dataSource.map {
+        let actionList = dataSource.map { item in
             UIAction(
-                title: $0.title,
-                image: $0.image,
-                handler: handleMenuItemTapped
-            )
+                title: item.title,
+                image: item.image
+            ) { action in
+                if self.selectableValue == nil {
+                    self.selectableValue = MenuItem(
+                        id: item.id,
+                        title: action.title,
+                        image: action.image
+                    )
+                } else {
+                    self.selectableValue?.id = item.id
+                    self.selectableValue?.title = action.title
+                    self.selectableValue?.image = action.image
+                }
+                
+                self.textLbl.text = action.title
+                self.trailingImage.image = action.image
+                
+                self.updateTestCaseData()
+            }
         }
         menu = UIMenu(title: "", children: actionList)
         showsMenuAsPrimaryAction = true
@@ -104,7 +122,7 @@ final class CustomSelectableView: UIButton {
     private func configureView() {
         translatesAutoresizingMaskIntoConstraints = false
         
-        textLbl.text = convertIntValueToMenuItem(originalIntValue ?? 0)?.title
+        textLbl.text = fieldValue?.title
         
         layer.cornerRadius = 10
         layer.borderWidth = 1
@@ -126,58 +144,82 @@ final class CustomSelectableView: UIButton {
         }
     }
     
-    private func convertIntValueToMenuItem(_ value: Int?) -> MenuItem? {
-        guard let value = value else { return nil }
-        
-        switch textFieldType {
-        case .severity:
-            return Severity.dataSource.first(where: { $0.id == value })
-        case .status:
-            return Status.dataSource.first(where: { $0.id == value })
-        case .priority:
-            return Priority.dataSource.first(where: { $0.id == value })
-        case .behavior:
-            return Behavior.dataSource.first(where: { $0.id == value })
-        case .type:
-            return Types.dataSource.first(where: { $0.id == value })
-        case .layer:
-            return Layer.dataSource.first(where: { $0.id == value })
-        case .automationStatus:
-            return AutomationStatus.dataSource.first(where: { $0.id == value })
-        }
-    }
-    
-    private func handleMenuItemTapped(_ action: UIAction) {
-        selectableValue?.id = Int(action.identifier.rawValue) ?? 0
-        selectableValue?.title = action.title
-        selectableValue?.image = action.image
-        
-        textLbl.text = action.title
-        trailingImage.image = action.image
-        
-        updateTestCaseData()
-    }
-    
     func updateTestCaseData() {
-        guard let testCaseViewModel = testCaseViewModel,
-              let testCase = testCaseViewModel.changedTestCase
-        else { return }
+        guard let testCaseViewModel = testCaseViewModel else { return }
+        let testCase = testCaseViewModel.testCase
         
         switch textFieldType {
         case .severity:
-            testCaseViewModel.changedTestCase?.severity = selectableValue?.id ?? testCase.severity
+            let selectedValue = if selectableValue != nil {
+                selectableValue
+            } else if let testCase = testCase {
+                testCase.severity.menuItem
+            } else {
+                Severity.nothing.menuItem
+            }
+            
+            testCaseViewModel.updateValue(for: .severity, value: selectedValue)
         case .status:
-            testCaseViewModel.changedTestCase?.status = selectableValue?.id ?? testCase.status
+            let selectedValue = if selectableValue != nil {
+                selectableValue
+            } else if let testCase = testCase {
+                testCase.status.menuItem
+            } else {
+                Status.actual.menuItem
+            }
+            
+            testCaseViewModel.updateValue(for: .status, value: selectedValue)
         case .priority:
-            testCaseViewModel.changedTestCase?.priority = selectableValue?.id ?? testCase.priority
+            let selectedValue = if selectableValue != nil {
+                selectableValue
+            } else if let testCase = testCase {
+                testCase.priority.menuItem
+            } else {
+                Priority.nothing.menuItem
+            }
+            
+            testCaseViewModel.updateValue(for: .priority, value: selectedValue)
         case .behavior:
-            testCaseViewModel.changedTestCase?.behavior = selectableValue?.id ?? testCase.behavior
+            let selectedValue = if selectableValue != nil {
+                selectableValue
+            } else if let testCase = testCase {
+                testCase.behavior.menuItem
+            } else {
+                Behavior.positive.menuItem
+            }
+            
+            testCaseViewModel.updateValue(for: .behavior, value: selectedValue)
         case .type:
-            testCaseViewModel.changedTestCase?.type = selectableValue?.id ?? testCase.type
+            let selectedValue = if selectableValue != nil {
+                selectableValue
+            } else if let testCase = testCase {
+                testCase.type.menuItem
+            } else {
+                Types.other.menuItem
+            }
+            
+            testCaseViewModel.updateValue(for: .type, value: selectedValue)
         case .layer:
-            testCaseViewModel.changedTestCase?.layer = selectableValue?.id ?? testCase.layer
-        case .automationStatus:
-            testCaseViewModel.changedTestCase?.automation = selectableValue?.id ?? testCase.automation
+            let selectedValue = if selectableValue != nil {
+                selectableValue
+            } else if let testCase = testCase {
+                testCase.layer.menuItem
+            } else {
+                Layer.e2e.menuItem
+            }
+            
+            testCaseViewModel.updateValue(for: .layer, value: selectedValue)
+        case .automation:
+            let selectedValue = if selectableValue != nil {
+                selectableValue
+            } else if let testCase = testCase {
+                testCase.automation.menuItem
+            } else {
+                AutomationStatus.manual.menuItem
+            }
+            
+            testCaseViewModel.updateValue(for: .automation, value: selectedValue)
+        default: break
         }
     }
     
@@ -186,19 +228,20 @@ final class CustomSelectableView: UIButton {
         
         switch textFieldType {
         case .severity:
-            selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.severity)
+            selectableValue = testCaseViewModel.testCase?.severity.menuItem
         case .status:
-            selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.status)
+            selectableValue = testCaseViewModel.testCase?.status.menuItem
         case .priority:
-            selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.priority)
+            selectableValue = testCaseViewModel.testCase?.priority.menuItem
         case .behavior:
-            selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.behavior)
+            selectableValue = testCaseViewModel.testCase?.behavior.menuItem
         case .type:
-            selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.type)
+            selectableValue = testCaseViewModel.testCase?.type.menuItem
         case .layer:
-            selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.layer)
-        case .automationStatus:
-            selectableValue = convertIntValueToMenuItem(testCaseViewModel.testCase?.automation)
+            selectableValue = testCaseViewModel.testCase?.layer.menuItem
+        case .automation:
+            selectableValue = testCaseViewModel.testCase?.automation.menuItem
+        default: break
         }
     }
 }

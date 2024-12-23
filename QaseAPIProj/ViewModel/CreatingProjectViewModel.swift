@@ -61,7 +61,22 @@ final class CreatingProjectViewModel {
             method: .post,
             modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
         )
-        isEntityWasCreated = response.status.value
+        isEntityWasCreated = response.status?.value ?? false
         LoadingIndicator.stopLoading()
+    }
+}
+
+extension CreatingProjectViewModel: UpdatableEntityProtocol {
+    func updateValue<T>(for field: FieldType, value: T) {
+        guard let value = value as? String else { return }
+        switch field {
+        case .title:
+            creatingProject.title = value
+        case .description:
+            creatingProject.description = value
+        case .code:
+            creatingProject.code = value
+        default: break
+        }
     }
 }

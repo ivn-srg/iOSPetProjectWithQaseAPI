@@ -7,11 +7,7 @@
 
 import UIKit
 
-enum CheckmarkButtonState {
-    case active, inactive
-}
-
-class GeneralDetailCaseViewController: UIViewController {
+final class GeneralDetailCaseViewController: UIViewController {
     
     private let vm: DetailTabbarControllerViewModel
     weak var delegate: DetailTestCaseProtocol?
@@ -24,7 +20,6 @@ class GeneralDetailCaseViewController: UIViewController {
         sv.showsHorizontalScrollIndicator = false
         sv.alwaysBounceVertical = true
         sv.showsVerticalScrollIndicator = false
-        sv.isUserInteractionEnabled = true
         return sv
     }()
     
@@ -34,31 +29,30 @@ class GeneralDetailCaseViewController: UIViewController {
         sv.axis = .vertical
         sv.spacing = 30
         sv.alignment = .fill
-        sv.isUserInteractionEnabled = true
         return sv
     }()
     
     private lazy var titleField = GeneralCaseTextField(
-        textType: .name,
-        textViewValue: self.vm.testCase?.title ?? Constants.EMPTY_TEXT,
+        textType: .title,
+        textViewValue: vm.testCase?.title,
         detailVM: vm
     )
     
     private lazy var descriptionField = GeneralCaseTextField(
         textType: .description,
-        textViewValue: self.vm.testCase?.description ?? Constants.EMPTY_TEXT,
+        textViewValue: vm.testCase?.description,
         detailVM: vm
     )
     
     private lazy var preconditionField = GeneralCaseTextField(
         textType: .precondition,
-        textViewValue: self.vm.testCase?.preconditions ?? Constants.EMPTY_TEXT,
+        textViewValue: vm.testCase?.preconditions,
         detailVM: vm
     )
     
     private lazy var postconditionField = GeneralCaseTextField(
         textType: .postcondition,
-        textViewValue: self.vm.testCase?.postconditions ?? Constants.EMPTY_TEXT,
+        textViewValue: vm.testCase?.postconditions,
         detailVM: vm
     )
     
@@ -97,9 +91,8 @@ class GeneralDetailCaseViewController: UIViewController {
         
         scrollView.addSubview(stackView)
         stackView.snp.makeConstraints {
-            $0.verticalEdges.equalTo(scrollView.snp.verticalEdges).inset(30)
-            $0.centerX.equalTo(scrollView.snp.centerX)
-            $0.width.equalTo(scrollView.snp.width).inset(30)
+            $0.verticalEdges.equalTo(scrollView.contentLayoutGuide.snp.verticalEdges).inset(20)
+            $0.horizontalEdges.equalTo(scrollView.frameLayoutGuide.snp.horizontalEdges).inset(20)
         }
         
         view.addGestureRecognizer(panRecognize)
@@ -113,7 +106,7 @@ class GeneralDetailCaseViewController: UIViewController {
     }
     
     @objc func swipeBetweenViewsDelegate() {
-        guard let delegate = self.delegate else { return }
+        guard let delegate = delegate else { return }
         delegate.swipeBetweenViews(panRecognize)
     }
 }
@@ -129,18 +122,18 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
     
     func updateUI() {
         Task { @MainActor in
-            if let testCase = self.vm.testCase {
-                self.titleField.updateTextViewValue(testCase.title)
-                self.descriptionField.updateTextViewValue(testCase.description ?? Constants.EMPTY_TEXT)
-                self.preconditionField.updateTextViewValue(testCase.preconditions ?? Constants.EMPTY_TEXT)
-                self.postconditionField.updateTextViewValue(testCase.postconditions ?? Constants.EMPTY_TEXT)
+            if let testCase = vm.testCase {
+                titleField.updateTextViewValue(testCase.title)
+                descriptionField.updateTextViewValue(testCase.description)
+                preconditionField.updateTextViewValue(testCase.preconditions)
+                postconditionField.updateTextViewValue(testCase.postconditions)
             }
         }
     }
     
     @objc func pull2Refresh() {
         Task { @MainActor in
-            self.updateUI()
+            updateUI()
         }
     }
 }

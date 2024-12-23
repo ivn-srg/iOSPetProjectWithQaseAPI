@@ -66,11 +66,14 @@ enum AppTheme {
     static let trashImage = UIImage(systemName: "trash")
     
     // colors
-    static let fioletColor = UIColor(named: "primary") ?? UIColor.purple
+    static let fioletColor = UIColor(named: "primaryUColor") ?? UIColor.purple
     static let bgPrimaryColor = UIColor(named: "primaryBackground") ?? UIColor.white
     static let bgSecondaryColor = UIColor(named: "secondaryBackground") ?? UIColor.white
     static let bgThirdthColor = UIColor(named: "thirdthBackground") ?? UIColor.white
     static let textColor = UIColor(named: "text") ?? UIColor.white
+    
+    // paddings
+    static let horizontalPadding: CGFloat = 20
 }
 
 // MARK: - Shared UI Components

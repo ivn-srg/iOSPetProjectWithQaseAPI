@@ -824,13 +824,13 @@
         }
       }
     },
-    "Your changes for %@-%@ test case with successfully saved" : {
+    "Your changes for %@-%d test case with successfully saved" : {
       "extractionState" : "manual",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Твои данные для тест кейса %@-%@ были успешно сохранены"
+            "value" : "Твои данные для тест кейса %@-%d были успешно сохранены"
           }
         }
       }

@@ -12,14 +12,28 @@ struct TestEntity: Codable, Equatable {
     let position: Int
     var title: String
     var description, preconditions, postconditions: String?
-    var severity, priority, type, layer, isFlaky: Int
-    var behavior, automation, status: Int
+    var severity: Severity
+    var priority: Priority
+    var type: Types
+    var layer: Layer
+    var behavior: Behavior
+    var automation: AutomationStatus
+    var status: Status
+    var isFlaky: Int
     let suiteId: Int?
     let links, customFields, attachments: [String]
     let stepsType: String?
     let steps: [StepsInTestCase]
     let params, tags: [String]
     let memberId, authorId: Int
+    
+    var dictOfValues: EncodableTestCase {
+        EncodableTestCase(testCase: self)
+    }
+    
+    static var empty: TestEntity {
+        return .init()
+    }
     
     enum CodingKeys: String, CodingKey {
         case id, position, title, description, preconditions, postconditions,
@@ -43,14 +57,14 @@ struct TestEntity: Codable, Equatable {
         description = try container.decode(String?.self, forKey: .description)
         preconditions = try container.decode(String?.self, forKey: .preconditions)
         postconditions = try container.decode(String?.self, forKey: .postconditions)
-        severity = try container.decode(Int.self, forKey: .severity)
-        priority = try container.decode(Int.self, forKey: .priority)
-        type = try container.decode(Int.self, forKey: .type)
-        layer = try container.decode(Int.self, forKey: .layer)
+        severity = try container.decode(Severity.self, forKey: .severity)
+        priority = try container.decode(Priority.self, forKey: .priority)
+        type = try container.decode(Types.self, forKey: .type)
+        layer = try container.decode(Layer.self, forKey: .layer)
         isFlaky = try container.decode(Int.self, forKey: .isFlaky)
-        behavior = try container.decode(Int.self, forKey: .behavior)
-        automation = try container.decode(Int.self, forKey: .automation)
-        status = try container.decode(Int.self, forKey: .status)
+        behavior = try container.decode(Behavior.self, forKey: .behavior)
+        automation = try container.decode(AutomationStatus.self, forKey: .automation)
+        status = try container.decode(Status.self, forKey: .status)
         suiteId = try container.decode(Int?.self, forKey: .suiteId)
         links = try container.decode([String].self, forKey: .links)
         customFields = try container.decode([String].self, forKey: .customFields)
@@ -90,14 +104,14 @@ extension TestEntity {
         description = realmObject.itemDescription
         preconditions = realmObject.preconditions
         postconditions = realmObject.postconditions
-        severity = realmObject.severity
-        priority = realmObject.priority
-        type = realmObject.type
-        layer = realmObject.layer
+        severity = Severity(realmObject.severity)
+        priority = Priority(realmObject.priority)
+        type = Types(realmObject.type)
+        layer = Layer(realmObject.layer)
         isFlaky = realmObject.isFlaky
-        behavior = realmObject.behavior
-        automation = realmObject.automation
-        status = realmObject.status
+        behavior = Behavior(realmObject.behavior)
+        automation =  AutomationStatus(realmObject.automation)
+        status = Status(realmObject.status)
         suiteId = realmObject.suiteId
         links = realmObject.links.toArray
         customFields = realmObject.customFields.toArray
@@ -108,6 +122,33 @@ extension TestEntity {
         tags = realmObject.tags.toArray
         memberId = realmObject.memberId
         authorId = realmObject.authorId
+    }
+    
+    init() {
+        self.id = 0
+        self.position = 0
+        self.title = ""
+        self.description = ""
+        self.preconditions = ""
+        self.postconditions = ""
+        self.severity = Severity(0)
+        self.priority = Priority(0)
+        self.type = Types(0)
+        self.layer = Layer(0)
+        self.isFlaky = 0
+        self.behavior = Behavior(1)
+        self.automation = AutomationStatus(0)
+        self.status = Status(0)
+        self.suiteId = 0
+        self.links = []
+        self.customFields = []
+        self.attachments = []
+        self.stepsType = ""
+        self.steps = []
+        self.params = []
+        self.tags = []
+        self.memberId = 0
+        self.authorId = 0
     }
 }
 
@@ -198,29 +239,36 @@ struct StepsInTestCase: Codable, Equatable {
 
 // MARK: - response models
 struct CreateOrUpdateTestCaseModel: Codable {
-    let id: Int
+    let id: Int?
+    let status: Bool?
 }
 
-// MARK: - Create test case model
-struct CreatingTestCase: Codable {
+struct EncodableTestCase: Encodable {
     var title: String
-    var description, precondition, postcondition: String
-    var severity, priority, type, layer: Int
-    var isFlaky, behavior, automation, status: Int
-    var suiteId: Int?
-    var attachment, tags: [String]?
-    var steps: StepsInTestCase?
+    var description, preconditions, postconditions: String?
+    var severity, priority, type,layer: Int
+    var behavior, automation, status: Int
+    var isFlaky: Int
+    var suiteId: Int
+    var attachments, tags: [String]
+    var steps: [StepsInTestCase]?
     
-    static var empty: CreatingTestCase {
-        return .init(
-            title: "",
-            description: "", precondition: "",
-            postcondition: "", severity: 0,
-            priority: 0, type: 0,
-            layer: 0, isFlaky: 0,
-            behavior: 0, automation: 0,
-            status: 0
-        )
+    init(testCase: TestEntity) {
+        self.title = testCase.title
+        self.description = testCase.description
+        self.preconditions = testCase.preconditions
+        self.postconditions = testCase.postconditions
+        self.severity = testCase.severity.menuItem.id
+        self.priority = testCase.priority.menuItem.id
+        self.type = testCase.type.menuItem.id
+        self.layer = testCase.layer.menuItem.id
+        self.behavior = testCase.behavior.menuItem.id
+        self.automation = testCase.automation.menuItem.id
+        self.status = testCase.status.menuItem.id
+        self.isFlaky = testCase.isFlaky
+        self.suiteId = testCase.suiteId ?? 0
+        self.attachments = testCase.attachments
+        self.tags = testCase.tags
+        self.steps = testCase.steps
     }
 }
-

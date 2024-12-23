@@ -10,8 +10,8 @@ final class SharedResponseModel: Codable {
 }
 
 struct ServerResponseModel<T: Codable>: Codable {
-    let status: FlexibleBool
-    let result: T
+    let status: FlexibleBool?
+    let result: T?
 }
 
 struct ResponseWithErrorModel: Codable {

@@ -61,7 +61,7 @@ class PropertiesDetailCaseViewController: UIViewController {
     )
     
     private lazy var automationStatusField = PropertiesPickerTextField(
-        textType: .automationStatus,
+        textType: .automation,
         detailCaseVM: vm
     )
     
@@ -116,7 +116,6 @@ class PropertiesDetailCaseViewController: UIViewController {
         
         isFlakySwitch.switchValueChanged = { [weak self] isOn in
             self?.vm.changedTestCase?.isFlaky = isOn ? 1 : 0
-            print("BooleanObject state: \(isOn)")
         }
     }
 }
@@ -133,14 +132,14 @@ extension PropertiesDetailCaseViewController: DetailTestCaseProtocol {
     func updateUI() {
         Task { @MainActor in
             if let testCase = self.vm.changedTestCase {
-                self.severityField.updateValue()
-                self.statusField.updateValue()
-                self.priorityField.updateValue()
-                self.behaviorField.updateValue()
-                self.typeField.updateValue()
-                self.layerField.updateValue()
-                self.automationStatusField.updateValue()
-                self.isFlakySwitch.configure(with: testCase.isFlaky == 1)
+                severityField.updateValue()
+                statusField.updateValue()
+                priorityField.updateValue()
+                behaviorField.updateValue()
+                typeField.updateValue()
+                layerField.updateValue()
+                automationStatusField.updateValue()
+                isFlakySwitch.configure(with: testCase.isFlaky == 1)
             }
         }
     }

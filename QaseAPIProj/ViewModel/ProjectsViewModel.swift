@@ -16,6 +16,7 @@ final class ProjectsViewModel {
             delegate?.updateTableView()
         }
     }
+    var isLoading = false
     private var totalCountOfProject: Int = 0
     private var hasMoreData = true
     private let realmDb = RealmManager.shared
@@ -24,43 +25,46 @@ final class ProjectsViewModel {
     init() {}
     
     // MARK: - Network funcs
-    func fetchProjectsJSON(place: PlaceOfRequest = .start) throws {
+    func fetchProjectsJSON(place: PlaceOfRequest = .start) async throws {
         if hasMoreData {
             LoadingIndicator.startLoading()
-            Task {
-                if place == .start && projects.isEmpty, let cashedProjects = realmDb.getProjects(), !cashedProjects.isEmpty {
-                    self.projects.append(contentsOf: cashedProjects)
-                    LoadingIndicator.stopLoading()
-                    return
-                }
-                guard let urlString = apiManager.formUrlString(
-                    APIMethod: .project,
-                    codeOfProject: nil,
-                    limit: 20,
-                    offset: projects.count,
-                    parentSuite: nil,
-                    caseId: nil
-                ) else { return }
-                
-                
-                let projectListResult = try await apiManager.performRequest(
-                    from: urlString,
-                    method: .get,
-                    modelType: ProjectDataModel.self
-                )
-                
-                let _ = realmDb.saveProjects(projectListResult.result.entities)
-                
-                projects.append(contentsOf: projectListResult.result.entities)
-                totalCountOfProject = totalCountOfProject != 0 ? totalCountOfProject : projectListResult.result.total
-                hasMoreData = totalCountOfProject > projects.count
-                
+            isLoading = true
+            
+            if place == .start && projects.isEmpty, let cashedProjects = realmDb.getProjects(), !cashedProjects.isEmpty {
+                self.projects.append(contentsOf: cashedProjects)
                 LoadingIndicator.stopLoading()
+                isLoading = false
+                return
             }
+            
+            guard let urlString = apiManager.formUrlString(
+                APIMethod: .project,
+                codeOfProject: nil,
+                limit: 20,
+                offset: projects.count,
+                parentSuite: nil,
+                caseId: nil
+            ) else { return }
+            
+            
+            let projectListResult = try await apiManager.performRequest(
+                from: urlString,
+                method: .get,
+                modelType: ProjectDataModel.self
+            )
+            
+            let _ = realmDb.saveProjects(projectListResult.result.entities)
+            
+            projects.append(contentsOf: projectListResult.result.entities)
+            totalCountOfProject = totalCountOfProject != 0 ? totalCountOfProject : projectListResult.result.total
+            hasMoreData = totalCountOfProject > projects.count
+            
+            LoadingIndicator.stopLoading()
+            isLoading = false
         }
     }
     
-    func deleteProject(at index: Int) throws(APIError) {
+    func deleteProject(at index: Int) async throws(APIError) {
         guard let urlString = apiManager.formUrlString(
             APIMethod: .project,
             codeOfProject: self.projects[index].code,
@@ -69,21 +73,22 @@ final class ProjectsViewModel {
             parentSuite: nil,
             caseId: nil
         ) else { throw .invalidURL }
+        
         LoadingIndicator.startLoading()
         
-        Task {
-            let deletingResult = try await apiManager.performRequest(
-                from: urlString,
-                method: .delete,
-                modelType: SharedResponseModel.self
-            )
-            if deletingResult.status {
-                let deletedProject = projects.remove(at: index)
-                let _ = realmDb.deleteProject(deletedProject)
-                
-            }
-            LoadingIndicator.stopLoading()
+        let deletingResult = try await apiManager.performRequest(
+            from: urlString,
+            method: .delete,
+            modelType: SharedResponseModel.self
+        )
+        
+        if deletingResult.status {
+            let deletedProject = projects.remove(at: index)
+            let _ = realmDb.deleteProject(deletedProject)
+            
         }
+        
+        LoadingIndicator.stopLoading()
     }
     
     // MARK: - VC funcs

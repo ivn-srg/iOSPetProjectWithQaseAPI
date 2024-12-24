@@ -255,7 +255,7 @@
         }
       }
     },
-    "errorTitle" : {
+    "Error" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {

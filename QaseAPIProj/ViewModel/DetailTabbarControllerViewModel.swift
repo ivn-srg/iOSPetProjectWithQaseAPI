@@ -13,22 +13,18 @@ final class DetailTabbarControllerViewModel {
     weak var delegate: DetailTestCaseProtocol?
     var testCase: TestEntity? = nil {
         didSet {
-            Task { @MainActor in
-                delegate?.updateUI()
-            }
+            Task { @MainActor in delegate?.updateUI() }
         }
     }
     var changedTestCase: TestEntity? {
         didSet {
-            Task { @MainActor in
-                checkDataChanged()
-            }
+            Task { @MainActor in checkDataChanged() }
         }
     }
     var isUploadingSuccess = false {
         didSet {
-            Task { @MainActor in
-                updatingFinishCallback()
+            if isUploadingSuccess {
+                Task { @MainActor in updatingFinishCallback() }
             }
         }
     }
@@ -43,7 +39,7 @@ final class DetailTabbarControllerViewModel {
     }
     
     // MARK: - Network work
-    func fetchCaseDataJSON() async throws {
+    func fetchCaseDataJSON() async throws(APIError) {
         if let cashedTestCase = realmDb.getTestCase(by: caseId) {
             testCase = cashedTestCase
             changedTestCase = testCase
@@ -59,7 +55,7 @@ final class DetailTabbarControllerViewModel {
                                             offset: nil,
                                             parentSuite: nil,
                                             caseId: caseId
-                                        ) else { return }
+        ) else { throw .invalidURL }
         LoadingIndicator.startLoading()
         
         let testCaseResult = try await apiManager.performRequest(
@@ -75,7 +71,7 @@ final class DetailTabbarControllerViewModel {
         
     }
     
-    func updateTestCaseData() async throws {
+    func updateTestCaseData() async throws(APIError) {
         guard let changedTestCase = changedTestCase else { return }
         guard let urlString = apiManager.formUrlString(
                                             APIMethod: .openedCase,
@@ -84,7 +80,7 @@ final class DetailTabbarControllerViewModel {
                                             offset: nil,
                                             parentSuite: nil,
                                             caseId: testCase?.id
-                                        ) else { return }
+        ) else { throw .invalidURL }
         LoadingIndicator.startLoading()
         
         let response = try await apiManager.performRequest(

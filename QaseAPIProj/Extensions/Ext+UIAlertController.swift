@@ -11,10 +11,11 @@ extension UIAlertController {
     static func showSimpleAlert(
         on viewController: UIViewController,
         title: String = "errorTitle".localized,
-        message: String
+        message: String,
+        handler: @escaping (UIAlertAction) -> Void = {_ in }
     ) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(.init(title: "OK", style: .default))
+        alert.addAction(.init(title: "OK", style: .default, handler: handler))
         viewController.present(alert, animated: true)
     }
     

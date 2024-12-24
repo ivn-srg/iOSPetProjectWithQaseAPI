@@ -171,7 +171,7 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
                 title: "Confirmation".localized,
                 message: composedMessage) { _ in
                     self.executeWithErrorHandling {
-                        try self.viewModel.deleteEntity(at: indexPath.row)
+                        try await self.viewModel.deleteEntity(at: indexPath.row)
                     }
                     completionHandler(true)
                 } cancelCompetionHandler: { _ in
@@ -184,13 +184,9 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         if viewModel.suitesAndCaseData.count - indexPath.row <= 3 && !viewModel.isLoading {
-            guard let activityIndicator = tableVw.tableFooterView as? UIActivityIndicatorView else { return }
-            activityIndicator.startAnimating()
-            
             executeWithErrorHandling {
                 try await self.viewModel.requestEntitiesData(place: .continuos)
             }
-            activityIndicator.stopAnimating()
         }
     }
 }

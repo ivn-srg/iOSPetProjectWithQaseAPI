@@ -42,24 +42,21 @@ final class SuitesAndCasesViewModel {
             resetPaginationArgs()
             loadCachedData()
             
-            Task {
-                do {
-                    try await fetchAndSyncData()
-                } catch {
-                    print("Error syncing data: \(error)")
-                }
-
-                await MainActor.run {
-                    LoadingIndicator.stopLoading()
-                }
+            do {
+                try await fetchAndSyncData()
+            } catch {
+                print("Error syncing data: \(error)")
             }
-
+            
+            await MainActor.run {
+                LoadingIndicator.stopLoading()
+            }
         case .continuos:
             try await fetchCasesJSON()
         }
     }
     
-    func deleteEntity(at index: Int) throws(APIError) {
+    func deleteEntity(at index: Int) async throws(APIError) {
         let entity = suitesAndCaseData[index]
         guard let urlString = apiManager.formUrlString(
             APIMethod: entity.isSuite ? .suites : .cases,
@@ -73,21 +70,19 @@ final class SuitesAndCasesViewModel {
             LoadingIndicator.startLoading()
         }
         
-        Task {
-            let deletingResult = try await apiManager.performRequest(
-                from: urlString,
-                method: .delete,
-                modelType: SharedResponseModel.self
-            )
-            
-            if deletingResult.status {
-                let deletedEntity = suitesAndCaseData.remove(at: index)
-                let _ = realmDb.deleteEntity(deletedEntity)
-            }
-            
-            await MainActor.run {
-                LoadingIndicator.stopLoading()
-            }
+        let deletingResult = try await apiManager.performRequest(
+            from: urlString,
+            method: .delete,
+            modelType: SharedResponseModel.self
+        )
+        
+        if deletingResult.status {
+            let deletedEntity = suitesAndCaseData.remove(at: index)
+            let _ = realmDb.deleteEntity(deletedEntity)
+        }
+        
+        await MainActor.run {
+            LoadingIndicator.stopLoading()
         }
     }
 
@@ -142,24 +137,23 @@ final class SuitesAndCasesViewModel {
                 offset: offset
             ) else { throw APIError.invalidURL }
             
-            Task {
-                let suitesResult = try await apiManager.performRequest(
-                    from: urlStringSuites,
-                    method: .get,
-                    modelType: SuitesDataModel.self
-                )
-                
-                let filteredSuites = parentSuite != nil
-                ? suitesResult.result.entities.filter { $0.parentId == parentSuite!.id }
-                : suitesResult.result.entities.filter { $0.parentId == nil }
-                
-                let newSuites = filteredSuites.map {
-                    SuiteAndCaseData(suite: $0)
-                }
-                
-                let _ = realmDb.saveTestEntities(newSuites)
-                updateDataList(with: newSuites)
+            let suitesResult = try await apiManager.performRequest(
+                from: urlStringSuites,
+                method: .get,
+                modelType: SuitesDataModel.self
+            )
+            
+            let filteredSuites = parentSuite != nil
+            ? suitesResult.result.entities.filter { $0.parentId == parentSuite!.id }
+            : suitesResult.result.entities.filter { $0.parentId == nil }
+            
+            let newSuites = filteredSuites.map {
+                SuiteAndCaseData(suite: $0)
             }
+            
+            let _ = realmDb.saveTestEntities(newSuites)
+            updateDataList(with: newSuites)
+            
             offset += limit
         } while offset < totalCountOfSuites
     }

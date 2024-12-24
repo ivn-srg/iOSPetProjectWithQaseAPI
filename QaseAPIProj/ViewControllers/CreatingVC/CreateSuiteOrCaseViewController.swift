@@ -93,19 +93,21 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         super.viewDidLoad()
         
         viewModel.delegate = self
-        viewModel.emptyFieldsClosure = {
-            showAlertController(
+        viewModel.showErrorClosure = { title, message in
+            UIAlertController.showSimpleAlert(
                 on: self,
-                title: "Not enough".localized,
-                message: "Probably you didn't fill all fields, check it, please".localized)
+                title: title,
+                message: message
+            )
         }
         viewModel.creatingFinishCallback = {
-            showAlertController(
+            UIAlertController.showSimpleAlert(
                 on: self,
                 title: "Success".localized,
-                message: "Your entity was created successfully".localized) { _ in
-                    self.dismiss(animated: true)
-                }
+                message: "Your entity was created successfully".localized
+            ) { _ in
+                self.closeViewController()
+            }
         }
         setupView()
     }
@@ -172,7 +174,8 @@ final class CreateSuiteOrCaseViewController: UIViewController {
 
 extension CreateSuiteOrCaseViewController: CheckEnablingRBBProtocol {
     func checkConditionAndToggleRightBarButton() {
-        self.createButton.isEnabled = viewModel.creatingEntityIsSuite ? !viewModel.creatingSuite.title.isEmpty
+        self.createButton.isEnabled = viewModel.creatingEntityIsSuite
+        ? !viewModel.creatingSuite.title.isEmpty
         : !viewModel.creatingTestCase.title.isEmpty
     }
     

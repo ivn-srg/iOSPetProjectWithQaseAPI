@@ -84,19 +84,6 @@ struct CreatingSuite: Encodable {
     static var empty: CreatingSuite {
         return .init(title: "", description: "", preconditions: "", parentId: 0)
     }
-    
-    enum CodingKeys: String, CodingKey {
-        case title, description, preconditions
-        case parentId = "parent_id"
-    }
-    
-    func encode(to encoder: any Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(self.title, forKey: .title)
-        try container.encode(self.description, forKey: .description)
-        try container.encode(self.preconditions, forKey: .preconditions)
-        try container.encode(self.parentId, forKey: .parentId)
-    }
 }
 
 struct CreateOrUpdateSuiteModel: Codable {

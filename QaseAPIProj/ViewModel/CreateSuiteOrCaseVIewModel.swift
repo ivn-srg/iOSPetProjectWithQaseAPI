@@ -28,19 +28,28 @@ final class CreateSuiteOrCaseViewModel {
     var isFieldsEmpty = false {
         didSet {
             if isFieldsEmpty {
-                Task { @MainActor in emptyFieldsClosure() }
+                Task { @MainActor in
+                    showErrorClosure(
+                        "Not enough".localized,
+                        "Probably you didn't fill all fields, check it, please".localized
+                    )
+                }
             }
         }
     }
     var isEntityWasCreated = false {
         didSet {
-            if isEntityWasCreated {
-                Task { @MainActor in creatingFinishCallback() }
+            Task { @MainActor in
+                if isEntityWasCreated {
+                    creatingFinishCallback()
+                } else {
+                    showErrorClosure("Error".localized, "Something went wrong".localized)
+                }
             }
         }
     }
     var creatingFinishCallback: () -> Void = {}
-    var emptyFieldsClosure: () -> Void = {}
+    var showErrorClosure: (String, String) -> Void = { (_,_) in }
     
     let parentSuiteId: Int
     
@@ -49,8 +58,12 @@ final class CreateSuiteOrCaseViewModel {
         if let parentSuiteId = parentSuiteId {
             self.parentSuiteId = parentSuiteId
         } else { self.parentSuiteId = 0 }
+        
         creatingSuite = CreatingSuite.empty
         creatingTestCase = TestEntity.empty
+        
+        creatingSuite.parentId = self.parentSuiteId
+        creatingTestCase.suiteId = self.parentSuiteId
     }
     
     // MARK: - Network work

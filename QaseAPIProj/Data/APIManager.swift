@@ -39,9 +39,11 @@ final class APIManager: NetworkManager {
         request.addValue(TOKEN, forHTTPHeaderField: "Token")
         
         if let data = data {
+            let encoder = JSONEncoder()
             let jsonData: Data
+            encoder.keyEncodingStrategy = .convertToSnakeCase
             do {
-                jsonData = try JSONEncoder().encode(data)
+                jsonData = try encoder.encode(data)
                 request.httpBody = jsonData
                 request.addValue("application/json", forHTTPHeaderField: "content-type")
             } catch {

@@ -10,8 +10,6 @@ import UIKit
 final class CreatingProjectViewController: UIViewController {
     // MARK: - Fields
     private var viewModel: CreatingProjectViewModel
-    weak var parentVC: UIViewController?
-    var createdProjectCallback: () -> Void
 
     // MARK: - UI components
     private lazy var customNavigationView: UIView = {
@@ -77,12 +75,6 @@ final class CreatingProjectViewController: UIViewController {
     init(viewModel: CreatingProjectViewModel, createdCallback: (() -> Void)? = nil) {
         self.viewModel = viewModel
         
-        if let createdCallback = createdCallback {
-            self.createdProjectCallback = createdCallback
-        } else {
-            self.createdProjectCallback = {}
-        }
-        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -94,15 +86,21 @@ final class CreatingProjectViewController: UIViewController {
         super.viewDidLoad()
         
         viewModel.delegate = self
-        viewModel.emptyFieldsClosure = {
-            showAlertController(
+        viewModel.showErrorClosure = { title, message in
+            UIAlertController.showSimpleAlert(
                 on: self,
-                title: "Not enough".localized,
-                message: "Probably you didn't fill all fields, check it, please".localized
+                title: title,
+                message: message
             )
         }
         viewModel.creatingFinishCallback = {
-            showAlertController(on: self, title: "Success".localized, message: "Your project was created successfully".localized)
+            UIAlertController.showSimpleAlert(
+                on: self,
+                title: "Success".localized,
+                message: "Your project was created successfully".localized
+            ) { _ in
+                self.closeViewController()
+            }
         }
         setupView()
     }
@@ -155,14 +153,12 @@ final class CreatingProjectViewController: UIViewController {
 
 extension CreatingProjectViewController: CheckEnablingRBBProtocol {
     func checkConditionAndToggleRightBarButton() {
-        self.createButton.isEnabled = !viewModel.creatingProject.title.isEmpty
+        createButton.isEnabled = !viewModel.creatingProject.title.isEmpty
     }
     
     @objc func createNewProject() {
-        executeWithErrorHandling(presentingViewController: parentVC) {
+        executeWithErrorHandling {
             try await self.viewModel.createNewProject()
         }
-        dismiss(animated: true)
-        createdProjectCallback()
     }
 }

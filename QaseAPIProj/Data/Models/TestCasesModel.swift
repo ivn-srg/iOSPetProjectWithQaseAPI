@@ -20,7 +20,7 @@ struct TestEntity: Codable, Equatable {
     var automation: AutomationStatus
     var status: Status
     var isFlaky: Int
-    let suiteId: Int?
+    var suiteId: Int?
     let links, customFields, attachments: [String]
     let stepsType: String?
     let steps: [StepsInTestCase]
@@ -246,12 +246,20 @@ struct CreateOrUpdateTestCaseModel: Codable {
 struct EncodableTestCase: Encodable {
     var title: String
     var description, preconditions, postconditions: String?
-    var severity, priority, type,layer: Int
+    var severity, priority, type, layer: Int
     var behavior, automation, status: Int
     var isFlaky: Int
     var suiteId: Int
     var attachments, tags: [String]
     var steps: [StepsInTestCase]?
+    
+    enum CodingKeys: String, CodingKey {
+        case title, description, preconditions, postconditions,
+             severity, priority, type, layer, behavior, automation, status,
+             attachments, tags, steps
+        case isFlaky = "is_flaky"
+        case suiteId = "suite_id"
+    }
     
     init(testCase: TestEntity) {
         self.title = testCase.title

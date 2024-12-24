@@ -13,26 +13,35 @@ final class CreatingProjectViewModel {
     var creatingProject: CreatingProject {
         didSet {
             Task { @MainActor in
-                self.delegate?.checkConditionAndToggleRightBarButton()
+                delegate?.checkConditionAndToggleRightBarButton()
             }
         }
     }
     var isFieldsEmpty = false {
         didSet {
-            Task { @MainActor in
-                self.emptyFieldsClosure()
+            if isFieldsEmpty {
+                Task { @MainActor in
+                    showErrorClosure(
+                        "Not enough".localized,
+                        "Probably you didn't fill all fields, check it, please".localized
+                    )
+                }
             }
         }
     }
     var isEntityWasCreated = false {
         didSet {
             Task { @MainActor in
-                self.creatingFinishCallback()
+                if isEntityWasCreated {
+                    creatingFinishCallback()
+                } else {
+                    showErrorClosure("Error".localized, "Something went wrong".localized)
+                }
             }
         }
     }
     var creatingFinishCallback: () -> Void = {}
-    var emptyFieldsClosure: () -> Void = {}
+    var showErrorClosure: (String, String) -> Void = { (_,_) in }
     
     // MARK: - LifeCycle
     init() {
@@ -40,19 +49,14 @@ final class CreatingProjectViewModel {
     }
     
     // MARK: - Network work
-    func createNewProject() async throws {
+    func createNewProject() async throws(APIError) {
         if creatingProject.isEmpty {
             isFieldsEmpty = true
             return
         }
         guard let urlString = apiManager.formUrlString(
-                                            APIMethod: .project,
-                                            codeOfProject: nil,
-                                            limit: nil,
-                                            offset: nil,
-                                            parentSuite: nil,
-                                            caseId: nil
-                                        ) else { return }
+            APIMethod: .project, codeOfProject: nil
+        ) else { throw .invalidURL }
         LoadingIndicator.startLoading()
         
         let response = try await apiManager.performRequest(

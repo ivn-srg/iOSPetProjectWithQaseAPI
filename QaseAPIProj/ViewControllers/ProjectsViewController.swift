@@ -40,7 +40,7 @@ final class ProjectsViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         executeWithErrorHandling {
-            try self.viewModel.fetchProjectsJSON()
+            try await self.viewModel.fetchProjectsJSON()
         }
     }
     
@@ -59,12 +59,7 @@ final class ProjectsViewController: UIViewController {
     
     // MARK: - @objc func for navigation
     @objc func addNewProject() {
-        let vc = CreatingProjectViewController(viewModel: .init()) {
-            self.executeWithErrorHandling {
-                try self.viewModel.fetchProjectsJSON()
-            }
-        }
-        vc.parentVC = self
+        let vc = CreatingProjectViewController(viewModel: .init())
         vc.modalPresentationStyle = .fullScreen
         present(vc, animated: true)
     }
@@ -73,9 +68,7 @@ final class ProjectsViewController: UIViewController {
 // MARK: - UpdateTableViewProtocol
 extension ProjectsViewController: UpdateTableViewProtocol {
     func updateTableView() {
-        Task { @MainActor in
-            tableVw.reloadData()
-        }
+        Task { @MainActor in tableVw.reloadData() }
     }
 }
 
@@ -84,10 +77,10 @@ extension ProjectsViewController: NextViewControllerPusher {
     func pushToNextVC(to item: Int? = nil) {
         Task { @MainActor in
             if let item = item {
-                PROJECT_NAME = self.viewModel.projects[item].code
+                PROJECT_NAME = viewModel.projects[item].code
             }
             let vc = SuitesAndCasesTableViewController()
-            self.navigationController?.pushViewController(vc, animated: true)
+            navigationController?.pushViewController(vc, animated: true)
         }
     }
 }
@@ -118,15 +111,10 @@ extension ProjectsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         cell.separatorInset = UIEdgeInsets(top: 0, left: 1, bottom: 2, right: -5)
         
-        if viewModel.projects.count - indexPath.row <= 5 {
-            let activityIndicatorView = UIActivityIndicatorView(style: .medium)
-            tableVw.tableFooterView = activityIndicatorView
-            activityIndicatorView.startAnimating()
-            
+        if viewModel.projects.count - indexPath.row <= 3, !viewModel.isLoading {
             executeWithErrorHandling {
-                try self.viewModel.fetchProjectsJSON()
+                try await self.viewModel.fetchProjectsJSON()
             }
-            activityIndicatorView.stopAnimating()
         }
     }
     
@@ -141,7 +129,7 @@ extension ProjectsViewController: UITableViewDelegate {
                 title: "Confirmation".localized,
                 message: composedMessage) { _ in
                     self.executeWithErrorHandling {
-                        try self.viewModel.deleteProject(at: indexPath.row)
+                        try await self.viewModel.deleteProject(at: indexPath.row)
                     }
                     completionHandler(true)
                 } cancelCompetionHandler: { _ in
@@ -163,7 +151,7 @@ extension ProjectsViewController {
     
     @objc func handleRefreshControl() {
         executeWithErrorHandling {
-            try self.viewModel.fetchProjectsJSON()
+            try await self.viewModel.fetchProjectsJSON()
         }
         
         Task { @MainActor in

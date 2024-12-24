@@ -7,172 +7,112 @@
 
 import UIKit
 
-final class AuthViewController: UIViewController {
-    
+final class AuthViewController: UIViewController, NextViewControllerPusher {
     private var tapCount: Int = 0
     
-    var projects = [Project]()
-    var statusOfResponse = false
-    
     // MARK: - UI
-    
-    private lazy var viewCn: UIView = {
-        let vc = UIView()
-        vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.backgroundColor = .white
-        return vc
-    }()
-    
     private var logoImg: UIImageView = {
         let limg = UIImageView()
         limg.translatesAutoresizingMaskIntoConstraints = false
         limg.contentMode = .scaleAspectFit
+        limg.image = AppTheme.LogoApp
+        limg.isUserInteractionEnabled = true
         return limg
     }()
     
     private var inputTokenField: UITextField = {
-        let inf = UITextField()
+        let inf = TextFieldWithPadding()
         inf.translatesAutoresizingMaskIntoConstraints = false
-        inf.backgroundColor = .white
-        inf.textColor = .systemGray
-        inf.borderStyle = .roundedRect
+        inf.backgroundColor = AppTheme.bgSecondaryColor
+        inf.textColor = AppTheme.fioletColor
+        inf.layer.borderWidth = 1
+        inf.layer.cornerRadius = 12
+        inf.layer.borderColor = UIColor.gray.cgColor
+        inf.placeholder = "Input your API Token"
+        inf.delegate = inf
         return inf
     }()
     
     private var authButton: UIButton = {
         let ab = UIButton()
         ab.translatesAutoresizingMaskIntoConstraints = false
-        ab.backgroundColor = .systemBlue
+        ab.backgroundColor = AppTheme.fioletColor
         ab.layer.cornerRadius = 12
         ab.titleLabel?.textColor = .white
+        ab.setTitle("Next", for: .normal)
         return ab
     }()
     
-    func showErrorAlert(titleAlert: String, messageAlert: String) {
-        let ac = UIAlertController(title: titleAlert, message: messageAlert, preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
-    }
-    
     // MARK: - Lifecycle
-    
-    override func loadView() {
-        super.loadView()
-        setup()
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        self.view.backgroundColor = .white
+        setup()
         
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
         tapGestureRecognizer.numberOfTapsRequired = 3
         logoImg.addGestureRecognizer(tapGestureRecognizer)
-        logoImg.isUserInteractionEnabled = true
-
-    }
-    
-    @objc private func authorizate() {
-        
-        if let inputTokenFieldText = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
-            if !inputTokenFieldText.isEmpty {
-                
-                Constants.TOKEN = inputTokenFieldText
-                
-                LoadingIndicator.startLoading()
-                
-                DispatchQueue.global().async {
-                    self.fetchProjectsJSON(Constants.TOKEN)
-                }
-                
-            } else {
-                showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
-            }
-        } else {
-            showErrorAlert(titleAlert: "Incorrect input", messageAlert: "Input the API Token for authorization on Qase service")
-        }
-    }
-    
-    private func fetchProjectsJSON(_ token: String) {
-        let urlString = Constants.urlString(Constants.APIMethods.project.rawValue, nil, 100, 0)
-        
-        APIManager.shared.fetchData(from: urlString, method: Constants.APIType.get.rawValue, token: token, modelType: ProjectDataModel.self) { [weak self] (result: Result<ProjectDataModel, Error>) in
-            
-            switch result {
-            case .success(let jsonProjects):
-                self?.projects = jsonProjects.result.entities
-                self?.statusOfResponse = jsonProjects.status
-                
-                DispatchQueue.main.async {
-                    LoadingIndicator.stopLoading()
-                    
-                    let vc = ProjectsViewController()
-                    vc.projects = self!.projects
-                    self?.navigationController?.pushViewController(vc, animated: true)
-                }
-            case .failure(let error):
-                if let apiError = error as? APIError, apiError == .invalidURL {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Error", messageAlert: "Invalid URL")
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        LoadingIndicator.stopLoading()
-                        self?.showErrorAlert(titleAlert: "Something went wrong", messageAlert: "\(error)")
-                    }
-                }
-            }
-            
-        }
-    }
-    
-    @objc private func tapForFillingTextLb() {
-        inputTokenField.text = ""
-        authorizate()
-    }
-}
-
-private extension AuthViewController {
-    
-    func setup() {
-        
-        logoImg.image = Assets.LogoApp
-        
-        inputTokenField.layer.borderWidth = 1
-        inputTokenField.layer.cornerRadius = 8
-        inputTokenField.layer.borderColor = UIColor.gray.cgColor
-        inputTokenField.placeholder = "API Token"
-        
-        authButton.setTitle("Next", for: .normal)
         authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
-        
-        view.addSubview(viewCn)
+    }
+    
+    // MARK: - UI
+    func setup() {
+        view.backgroundColor = AppTheme.bgPrimaryColor
         view.addSubview(logoImg)
         view.addSubview(inputTokenField)
         view.addSubview(authButton)
         
-        NSLayoutConstraint.activate([
-            viewCn.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            viewCn.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            viewCn.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            viewCn.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            
-            logoImg.topAnchor.constraint(equalTo: viewCn.topAnchor, constant: 30),
-            logoImg.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            logoImg.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            logoImg.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            inputTokenField.topAnchor.constraint(equalTo: logoImg.bottomAnchor, constant: 20),
-            inputTokenField.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            inputTokenField.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            inputTokenField.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-            
-            authButton.topAnchor.constraint(equalTo: inputTokenField.bottomAnchor, constant: 30),
-            authButton.centerXAnchor.constraint(equalTo: viewCn.centerXAnchor),
-            authButton.leadingAnchor.constraint(equalTo: viewCn.leadingAnchor, constant: 30),
-            authButton.trailingAnchor.constraint(equalTo: viewCn.trailingAnchor, constant: -30),
-        ])
+        logoImg.snp.makeConstraints {
+            $0.horizontalEdges.equalToSuperview().inset(30)
+            $0.top.equalToSuperview().offset(130)
+            $0.centerX.equalToSuperview()
+        }
+        
+        inputTokenField.snp.makeConstraints {
+            $0.horizontalEdges.equalToSuperview().inset(30)
+            $0.top.equalTo(logoImg.snp.bottom).offset(20)
+            $0.centerX.equalToSuperview()
+        }
+        
+        authButton.snp.makeConstraints {
+            $0.horizontalEdges.equalToSuperview().inset(30)
+            $0.top.equalTo(inputTokenField.snp.bottom).offset(30)
+            $0.centerX.equalToSuperview()
+        }
+    }
+    
+    // MARK: - Router
+    
+    func pushToNextVC(to item: Int? = nil) {
+        Task { @MainActor in
+            let vc = MainTabbarViewController()
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+    
+    // MARK: - objc funcs
+    @objc private func authorizate() {
+        if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputToken.isEmpty {
+            do {
+                try AuthManager.shared.loggedIn(token: inputToken)
+//                pushToNextVC()
+            } catch {
+                UIAlertController.showSimpleAlert(
+                    on: self,
+                    title: "errorTitle".localized,
+                    message: error.localizedDescription
+                )
+            }
+        } else {
+            UIAlertController.showSimpleAlert(
+                on: self,
+                title: "Incorrect input",
+                message: "Input the API Token for authorization on Qase service"
+            )
+        }
+    }
+    
+    @objc private func tapForFillingTextLb() {
+        inputTokenField.text = KeychainLocal.QASE_API_KEY
+        authorizate()
     }
 }

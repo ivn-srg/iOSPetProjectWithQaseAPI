@@ -22,8 +22,12 @@ protocol HeroDAO {
     func deleteEntity(_ entity: SuiteAndCaseData) -> Bool
     
     func saveTestCase(_ testCase: TestEntity) -> Bool
-    func getTestCase(by id: Int) -> TestEntity?
-    func deleteTestCase(_ testCase: TestEntity) -> Bool
+    func getTestCase(by uniqueKey: String) -> TestEntity?
+    func deleteTestCase(by uniqueKey: String) -> Bool
+    
+//    func saveSteps(_ steps: [StepsInTestCase], parentTestCaseUniqueKey: String) -> Bool
+//    func getSteps(by testCaseUniqueKey: String) -> [StepsInTestCase]?
+//    func deleteStep(by hash: String) -> Bool
 }
 
 final class RealmManager {
@@ -69,7 +73,6 @@ extension RealmManager {
 
 // MARK: - Hero
 extension RealmManager: HeroDAO {
-    
     func saveProjects(_ projects: [Project]) -> Bool {
         do {
             let realm = try Realm()
@@ -101,7 +104,7 @@ extension RealmManager: HeroDAO {
             let realm = try Realm()
             
             if let objectToDelete = realm.object(ofType: ProjectRO.self, forPrimaryKey: project.code) {
-                try! realm.write {
+                try realm.write {
                     realm.delete(objectToDelete)
                 }
             }
@@ -174,7 +177,7 @@ extension RealmManager: HeroDAO {
             let realm = try Realm()
             
             if let objectToDelete = realm.object(ofType: SuiteAndCaseDataRO.self, forPrimaryKey: entity.uniqueKey) {
-                try! realm.write {
+                try realm.write {
                     realm.delete(objectToDelete)
                 }
             }
@@ -191,17 +194,18 @@ extension RealmManager: HeroDAO {
             try realm.write {
                 realm.add(TestEntityRO(testCaseData: testCase), update: .modified)
             }
+            
+            return true
         } catch {
             return false
         }
-        return true
     }
     
-    func getTestCase(by id: Int) -> TestEntity? {
+    func getTestCase(by uniqueKey: String) -> TestEntity? {
         do {
             let realm = try Realm()
             
-            let realmObject = realm.objects(TestEntityRO.self).filter("id == \(id)")
+            let realmObject = realm.objects(TestEntityRO.self).filter("uniqueKey == %@", uniqueKey)
             
             return TestEntity(realmObject: realmObject.first)
         } catch {
@@ -209,13 +213,14 @@ extension RealmManager: HeroDAO {
         }
     }
     
-    func deleteTestCase(_ testCase: TestEntity) -> Bool {
+    func deleteTestCase(by uniqueKey: String) -> Bool {
         do {
             let realm = try Realm()
             
-            if let objectToDelete = realm.object(ofType: TestEntityRO.self, forPrimaryKey: testCase.id) {
-                try! realm.write {
-                    realm.delete(objectToDelete)
+            if let testCaseToDelete = realm.object(ofType: TestEntityRO.self, forPrimaryKey: uniqueKey) {
+                try realm.write {
+                    realm.delete(testCaseToDelete)
+                    realm.delete(testCaseToDelete.steps)
                 }
             }
             return true
@@ -223,4 +228,100 @@ extension RealmManager: HeroDAO {
             return false
         }
     }
+    
+//    func saveSteps(_ steps: [StepsInTestCase], parentTestCaseUniqueKey: String) -> Bool {
+//        do {
+//            for step in steps {
+////                let statusOfSaving = try saveStepIntoDB(step, parentTestCaseUniqueKey: parentTestCaseUniqueKey)
+//            }
+//            return true
+//        } catch {
+//            return false
+//        }
+//    }
+//    
+//    func getSteps(by testCaseUniqueKey: String) -> [StepsInTestCase]? {
+//        do {
+//            return [] /*try getStepFromDB(parentTestCaseUniqueKey: testCaseUniqueKey)*/
+//        } catch {
+//            return nil
+//        }
+//    }
+//    
+//    func deleteStep(by hash: String) -> Bool {
+//        do {
+//            let realm = try Realm()
+//            
+//            if let objectToDelete = realm.object(ofType: StepsInTestCaseRO.self, forPrimaryKey: hash) {
+//                try! realm.write {
+//                    realm.delete(objectToDelete)
+//                }
+//            }
+//            return true
+//        } catch {
+//            return false
+//        }
+//    }
+    
+    // MARK: - private funcs
+//    private func saveStepIntoDB(
+//        _ objectOfSteps: StepsInTestCase,
+//        parentTestCaseUniqueKey: String,
+//        parentStepHash: String? = nil
+//    ) throws -> Bool {
+//        let realm = try Realm()
+//        
+//        guard let steps = objectOfSteps.steps else { return false }
+//        
+//        for step in steps {
+//            let savedStep = StepsInTestCaseRO(
+//                step: step,
+//                parentTestCaseUniqueKey: parentTestCaseUniqueKey,
+//                parentStepHash: parentStepHash
+//            )
+//            
+//            try realm.write {
+//                realm.add(savedStep, update: .modified)
+//            }
+//            
+//            if let nestedSteps = step.steps, !nestedSteps.isEmpty {
+//                let _ = try saveStepIntoDB(step, parentTestCaseUniqueKey: parentTestCaseUniqueKey, parentStepHash: savedStep.entityHash)
+//            }
+//        }
+//        
+//        return true
+//    }
+//    
+//    private func getStepFromDB(parentTestCaseUniqueKey: String, parentStepHash: String? = nil) throws -> [StepsInTestCase] {
+//        let realm = try Realm()
+//        let testCaseSteps: Results<StepsInTestCaseRO>
+//        var resultListOfSteps: [StepsInTestCase] = []
+//        
+//        if let parentStepHash = parentStepHash {
+//            testCaseSteps = realm.objects(StepsInTestCaseRO.self).filter(
+//                "parentTestCaseUniqueKey == %@ AND parentStepHash == %@",
+//                parentTestCaseUniqueKey,
+//                parentStepHash
+//            )
+//        } else {
+//            testCaseSteps = realm.objects(StepsInTestCaseRO.self).filter(
+//                "parentTestCaseUniqueKey == %@ AND parentStepHash == nil",
+//                parentTestCaseUniqueKey
+//            )
+//        }
+//        
+//        for step in testCaseSteps {
+//            var currentStep = StepsInTestCase(realmObject: step)
+//            
+//            let nestedSteps = try getStepFromDB(parentTestCaseUniqueKey: parentTestCaseUniqueKey, parentStepHash: step.entityHash)
+//            
+//            if !nestedSteps.isEmpty {
+//                currentStep.steps = nestedSteps
+//            }
+//            
+//            resultListOfSteps.append(currentStep)
+//        }
+//        
+//        return resultListOfSteps
+//    }
 }

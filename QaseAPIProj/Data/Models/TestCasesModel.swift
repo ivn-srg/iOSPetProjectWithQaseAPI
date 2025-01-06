@@ -23,9 +23,10 @@ struct TestEntity: Codable, Equatable {
     var suiteId: Int?
     let links, customFields, attachments: [String]
     let stepsType: String?
-    let steps: [StepsInTestCase]
+    var steps: [StepsInTestCase]
     let params, tags: [String]
     let memberId, authorId: Int
+    let uniqueKey: String
     
     var dictOfValues: EncodableTestCase {
         EncodableTestCase(testCase: self)
@@ -52,6 +53,7 @@ struct TestEntity: Codable, Equatable {
         
         // Раскодируйте каждое свойство
         id = try container.decode(Int.self, forKey: .id)
+        uniqueKey = "\(id)_\(PROJECT_NAME)"
         position = try container.decode(Int.self, forKey: .position)
         title = try container.decode(String.self, forKey: .title)
         description = try container.decode(String?.self, forKey: .description)
@@ -99,6 +101,7 @@ extension TestEntity {
         guard let realmObject = realmObject else { return nil }
         
         id = realmObject.id
+        uniqueKey = "\(id)_\(PROJECT_NAME)"
         position = realmObject.position
         title = realmObject.title
         description = realmObject.itemDescription
@@ -117,7 +120,7 @@ extension TestEntity {
         customFields = realmObject.customFields.toArray
         attachments = realmObject.attachments.toArray
         stepsType = realmObject.stepsType
-        steps = realmObject.steps.toArray.map { StepsInTestCase(realmObject: $0) }
+        steps = realmObject.steps.map { StepsInTestCase(from: $0) }
         params = realmObject.params.toArray
         tags = realmObject.tags.toArray
         memberId = realmObject.memberId
@@ -125,30 +128,31 @@ extension TestEntity {
     }
     
     init() {
-        self.id = 0
-        self.position = 0
-        self.title = ""
-        self.description = ""
-        self.preconditions = ""
-        self.postconditions = ""
-        self.severity = Severity(0)
-        self.priority = Priority(0)
-        self.type = Types(0)
-        self.layer = Layer(0)
-        self.isFlaky = 0
-        self.behavior = Behavior(1)
-        self.automation = AutomationStatus(0)
-        self.status = Status(0)
-        self.suiteId = 0
-        self.links = []
-        self.customFields = []
-        self.attachments = []
-        self.stepsType = ""
-        self.steps = []
-        self.params = []
-        self.tags = []
-        self.memberId = 0
-        self.authorId = 0
+        id = 0
+        uniqueKey = "\(id)_\(PROJECT_NAME)"
+        position = 0
+        title = ""
+        description = ""
+        preconditions = ""
+        postconditions = ""
+        severity = Severity(0)
+        priority = Priority(0)
+        type = Types(0)
+        layer = Layer(0)
+        isFlaky = 0
+        behavior = Behavior(1)
+        automation = AutomationStatus(0)
+        status = Status(0)
+        suiteId = 0
+        links = []
+        customFields = []
+        attachments = []
+        stepsType = ""
+        steps = []
+        params = []
+        tags = []
+        memberId = 0
+        authorId = 0
     }
 }
 
@@ -178,7 +182,7 @@ struct StepsInTestCase: Codable, Equatable {
     let action: String?
     let expectedResult: String?
     let data: String?
-    let steps: [StepsInTestCase]
+    var steps: [StepsInTestCase]?
     
     enum CodingKeys: String, CodingKey {
         case hash, position, attachments, action, data, steps
@@ -198,7 +202,7 @@ struct StepsInTestCase: Codable, Equatable {
         action = try container.decode(String?.self, forKey: .action)
         expectedResult = try container.decode(String?.self, forKey: .expectedResult)
         data = try container.decode(String?.self, forKey: .data)
-        steps = try container.decode([StepsInTestCase].self, forKey: .steps)
+        steps = try container.decode([StepsInTestCase]?.self, forKey: .steps)
     }
     
     init(hash: String,position: Int, sharedStepHash: String?, sharedStepNestedHash: String?,
@@ -214,16 +218,16 @@ struct StepsInTestCase: Codable, Equatable {
         self.steps = steps
     }
     
-    init(realmObject: StepsInTestCaseRO) {
-        self.hash = realmObject.testCaseHash
+    init(from realmObject: StepsInTestCaseRO) {
+        self.hash = realmObject.entityHash
         self.position = realmObject.position
         self.sharedStepHash = realmObject.sharedStepHash
         self.sharedStepNestedHash = realmObject.sharedStepNestedHash
+        self.attachments = Array(realmObject.attachments)
         self.action = realmObject.action
         self.expectedResult = realmObject.expectedResult
         self.data = realmObject.data
-        self.attachments = realmObject.attachments.toArray
-        self.steps = realmObject.steps.toArray.map { StepsInTestCase(action: $0)}
+        self.steps = realmObject.steps.map { StepsInTestCase(from: $0) }
     }
     
     init() {
@@ -234,6 +238,12 @@ struct StepsInTestCase: Codable, Equatable {
     init(action: String) {
         self.init(hash: UUID().uuidString, position: 0, sharedStepHash: "", sharedStepNestedHash: "", attachments: [],
                   action: action, expectedResult: "", data: "", steps: [StepsInTestCase()])
+    }
+}
+
+extension StepsInTestCase: Hashable {
+    static func == (lhs: StepsInTestCase, rhs: StepsInTestCase) -> Bool {
+        lhs.hash == rhs.hash
     }
 }
 

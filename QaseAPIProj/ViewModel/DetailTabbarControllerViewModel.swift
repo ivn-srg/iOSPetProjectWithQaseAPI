@@ -28,19 +28,25 @@ final class DetailTabbarControllerViewModel {
             }
         }
     }
-    var caseId: Int
+    var caseUniqueKey: String
+    var caseId: Int {
+        guard let caseSubstring = caseUniqueKey.split(separator: "_").first,
+              let caseId = Int(caseSubstring)
+        else { return 0 }
+        return caseId
+    }
     var updatingFinishCallback: () -> Void = {}
     var checkDataChanged: () -> Void = {}
     private let realmDb = RealmManager.shared
     
     // MARK: - Lifecycle
-    init(caseId: Int) {
-        self.caseId = caseId
+    init(caseUniqueKey: String) {
+        self.caseUniqueKey = caseUniqueKey
     }
     
     // MARK: - Network work
     func fetchCaseDataJSON() async throws(APIError) {
-        if let cashedTestCase = realmDb.getTestCase(by: caseId) {
+        if let cashedTestCase = realmDb.getTestCase(by: caseUniqueKey) {
             testCase = cashedTestCase
             changedTestCase = testCase
             
@@ -68,7 +74,6 @@ final class DetailTabbarControllerViewModel {
         changedTestCase = testCase
         
         LoadingIndicator.stopLoading()
-        
     }
     
     func updateTestCaseData() async throws(APIError) {

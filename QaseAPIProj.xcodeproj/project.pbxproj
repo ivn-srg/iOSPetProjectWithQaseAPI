@@ -15,7 +15,7 @@
 		9357F1E22C91732B00219BEC /* KeychainLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9357F1E12C91732B00219BEC /* KeychainLocal.swift */; };
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
 		935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE32B518A4000F08ECF /* LoaderView.swift */; };
-		935F2BA52CCFC73800546162 /* Ext+LocalizableString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935F2BA42CCFC73800546162 /* Ext+LocalizableString.swift */; };
+		935F2BA52CCFC73800546162 /* Ext+String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935F2BA42CCFC73800546162 /* Ext+String.swift */; };
 		936A2B132C8A251E007F7C72 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; };
 		936A2B162C8A252E007F7C72 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B152C8A252E007F7C72 /* SnapKit */; };
 		936A2B192C8A2821007F7C72 /* GeneralCaseTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */; };
@@ -42,6 +42,8 @@
 		938C47E92C9A0C0000B75BE8 /* SwitcherWithTitle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */; };
 		939175222D11A8A600AA38A4 /* TestCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939175212D11A8A600AA38A4 /* TestCaseViewController.swift */; };
 		939175232D12045800AA38A4 /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9395229A2D2BF6F900CCA497 /* TestCaseStepsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939522992D2BF6E600CCA497 /* TestCaseStepsCell.swift */; };
+		939522A22D2C053500CCA497 /* Down in Frameworks */ = {isa = PBXBuildFile; productRef = 939522A12D2C053500CCA497 /* Down */; };
 		93B0454E2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */; };
 		93B045512C9E946700EE125B /* CreateTestCaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045502C9E946700EE125B /* CreateTestCaseView.swift */; };
 		93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045522C9E948B00EE125B /* CreateSuiteView.swift */; };
@@ -86,7 +88,7 @@
 		9357F1E12C91732B00219BEC /* KeychainLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainLocal.swift; sourceTree = "<group>"; };
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		935DCFE32B518A4000F08ECF /* LoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderView.swift; sourceTree = "<group>"; };
-		935F2BA42CCFC73800546162 /* Ext+LocalizableString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+LocalizableString.swift"; sourceTree = "<group>"; };
+		935F2BA42CCFC73800546162 /* Ext+String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+String.swift"; sourceTree = "<group>"; };
 		936A2B102C8A2449007F7C72 /* QaseAPIProj.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QaseAPIProj.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralCaseTextField.swift; sourceTree = "<group>"; };
 		937085502BEB3C49002316B8 /* APIManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIManager.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 		938C47E62C9A0C0000B75BE8 /* PropertiesPickerTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PropertiesPickerTextField.swift; sourceTree = "<group>"; };
 		938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwitcherWithTitle.swift; sourceTree = "<group>"; };
 		939175212D11A8A600AA38A4 /* TestCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCaseViewController.swift; sourceTree = "<group>"; };
+		939522992D2BF6E600CCA497 /* TestCaseStepsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCaseStepsCell.swift; sourceTree = "<group>"; };
 		93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteOrCaseViewController.swift; sourceTree = "<group>"; };
 		93B045502C9E946700EE125B /* CreateTestCaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateTestCaseView.swift; sourceTree = "<group>"; };
 		93B045522C9E948B00EE125B /* CreateSuiteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteView.swift; sourceTree = "<group>"; };
@@ -138,6 +141,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				939522A22D2C053500CCA497 /* Down in Frameworks */,
 				936A2B132C8A251E007F7C72 /* RealmSwift in Frameworks */,
 				936A2B162C8A252E007F7C72 /* SnapKit in Frameworks */,
 			);
@@ -210,6 +214,7 @@
 		93748C3E2B481C3D00BE7FFB /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				939522992D2BF6E600CCA497 /* TestCaseStepsCell.swift */,
 				936A2B172C8A27BE007F7C72 /* Components */,
 				934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */,
 				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
@@ -293,7 +298,7 @@
 				93C809612CCC0FB9006BCCC9 /* Ext+NotificationName.swift */,
 				93CA94752CCA8A2D00D99517 /* Ext+UIViewController.swift */,
 				93B23D092CC9259400FA7509 /* Ext+UIAlertController.swift */,
-				935F2BA42CCFC73800546162 /* Ext+LocalizableString.swift */,
+				935F2BA42CCFC73800546162 /* Ext+String.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -357,6 +362,7 @@
 			packageReferences = (
 				936A2B112C8A251E007F7C72 /* XCRemoteSwiftPackageReference "realm-swift" */,
 				936A2B142C8A252E007F7C72 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				939522A02D2C053500CCA497 /* XCRemoteSwiftPackageReference "Down" */,
 			);
 			productRefGroup = 937F04192AD84E3D006DDB28;
 			projectDirPath = "";
@@ -386,6 +392,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				937085592BEB3C49002316B8 /* APIManager.swift in Sources */,
+				9395229A2D2BF6F900CCA497 /* TestCaseStepsCell.swift in Sources */,
 				93CA94732CCA752300D99517 /* AuthManager.swift in Sources */,
 				938C47E92C9A0C0000B75BE8 /* SwitcherWithTitle.swift in Sources */,
 				93C8095C2CCBCA23006BCCC9 /* MainTabbarViewController.swift in Sources */,
@@ -432,7 +439,7 @@
 				93C8095E2CCBDEB9006BCCC9 /* ProfileViewController.swift in Sources */,
 				93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */,
 				9357F1E22C91732B00219BEC /* KeychainLocal.swift in Sources */,
-				935F2BA52CCFC73800546162 /* Ext+LocalizableString.swift in Sources */,
+				935F2BA52CCFC73800546162 /* Ext+String.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -685,6 +692,14 @@
 				minimumVersion = 5.7.1;
 			};
 		};
+		939522A02D2C053500CCA497 /* XCRemoteSwiftPackageReference "Down" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/johnxnguyen/Down";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.11.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -697,6 +712,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 936A2B142C8A252E007F7C72 /* XCRemoteSwiftPackageReference "SnapKit" */;
 			productName = SnapKit;
+		};
+		939522A12D2C053500CCA497 /* Down */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 939522A02D2C053500CCA497 /* XCRemoteSwiftPackageReference "Down" */;
+			productName = Down;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

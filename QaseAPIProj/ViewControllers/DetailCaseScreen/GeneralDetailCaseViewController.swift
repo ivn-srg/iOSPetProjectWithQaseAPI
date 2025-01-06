@@ -13,6 +13,9 @@ final class GeneralDetailCaseViewController: UIViewController {
     weak var delegate: DetailTestCaseProtocol?
     private var isDataEditing = false
     
+    private var dataSource: UICollectionViewDiffableDataSource<Int, StepsInTestCase>!
+    private var steps: [StepsInTestCase] = []
+    
     // MARK: - UI components
     private lazy var scrollView: UIScrollView = {
         let sv = UIScrollView()
@@ -56,6 +59,18 @@ final class GeneralDetailCaseViewController: UIViewController {
         detailVM: vm
     )
     
+    private lazy var stepsCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: view.frame.width - 40, height: 60)
+        layout.minimumLineSpacing = 10
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.backgroundColor = .clear
+        collectionView.delegate = self
+        collectionView.register(StepCell.self, forCellWithReuseIdentifier: StepCell.identifier)
+        return collectionView
+    }()
+    
     private lazy var panRecognize: UISwipeGestureRecognizer = {
         let gestureRecognizer = UISwipeGestureRecognizer()
         gestureRecognizer.addTarget(self, action: #selector(swipeBetweenViewsDelegate))
@@ -78,6 +93,8 @@ final class GeneralDetailCaseViewController: UIViewController {
         
         setupView()
         setupCustomFields()
+        setupCollectionView()
+        loadSteps()
         updateUI()
     }
     
@@ -103,8 +120,39 @@ final class GeneralDetailCaseViewController: UIViewController {
         stackView.addArrangedSubview(descriptionField)
         stackView.addArrangedSubview(preconditionField)
         stackView.addArrangedSubview(postconditionField)
+        stackView.addArrangedSubview(stepsCollectionView)
+        stepsCollectionView.snp.makeConstraints {
+            $0.height.equalTo(300) // Adjust height as needed
+        }
     }
     
+    // MARK: - CollectionView Diffable logic
+    private func setupCollectionView() {
+        dataSource = UICollectionViewDiffableDataSource<Int, StepsInTestCase>(
+            collectionView: stepsCollectionView,
+            cellProvider: { collectionView, indexPath, step in
+                guard let cell = collectionView.dequeueReusableCell(
+                    withReuseIdentifier: StepCell.identifier,
+                    for: indexPath
+                ) as? StepCell else {
+                    fatalError("Could not dequeue StepCell")
+                }
+                cell.configure(with: step, at: indexPath.row)
+                return cell
+            }
+        )
+    }
+    
+    private func loadSteps() {
+        steps = vm.testCase?.steps ?? []
+        
+        var snapshot = NSDiffableDataSourceSnapshot<Int, StepsInTestCase>()
+        snapshot.appendSections([0])
+        snapshot.appendItems(steps)
+        dataSource.apply(snapshot, animatingDifferences: true)
+    }
+    
+    // MARK: - objc funcs for responder
     @objc func swipeBetweenViewsDelegate() {
         guard let delegate = delegate else { return }
         delegate.swipeBetweenViews(panRecognize)
@@ -127,6 +175,7 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
                 descriptionField.updateTextViewValue(testCase.description)
                 preconditionField.updateTextViewValue(testCase.preconditions)
                 postconditionField.updateTextViewValue(testCase.postconditions)
+                loadSteps()
             }
         }
     }
@@ -138,13 +187,21 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
     }
 }
 
+// MARK: - UICollectionViewDelegate
+extension GeneralDetailCaseViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        print(indexPath)
+        // Handle selection logic
+    }
+}
+
 #if canImport(SwiftUI) && DEBUG
 import SwiftUI
 
 struct ViewControllerRepresentable: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> some UIViewController {
-        return TestCaseViewController(caseId: 317)
+        return TestCaseViewController(caseUniqueKey: "\(317)_\(PROJECT_NAME)")
     }
 
     func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {

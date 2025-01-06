@@ -29,8 +29,8 @@ class TestCaseViewController: UIViewController {
     
     // MARK: - Lifecycle
     
-    init(caseId: Int) {
-        self.viewModel = DetailTabbarControllerViewModel(caseId: caseId)
+    init(caseUniqueKey: String) {
+        self.viewModel = DetailTabbarControllerViewModel(caseUniqueKey: caseUniqueKey)
         super.init(nibName: nil, bundle: nil)
     }
     

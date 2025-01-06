@@ -71,6 +71,7 @@ enum AppTheme {
     static let bgSecondaryColor = UIColor(named: "secondaryBackground") ?? UIColor.white
     static let bgThirdthColor = UIColor(named: "thirdthBackground") ?? UIColor.white
     static let textColor = UIColor(named: "text") ?? UIColor.white
+    static let additionTintColor = UIColor(named: "additionTintColor") ?? UIColor.white
     
     // paddings
     static let horizontalPadding: CGFloat = 20

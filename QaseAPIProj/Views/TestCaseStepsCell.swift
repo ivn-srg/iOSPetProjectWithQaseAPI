@@ -18,9 +18,11 @@ final class StepCell: UICollectionViewCell {
         let view = PaddedLabel()
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = AppTheme.additionTintColor
-        view.textInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
         view.layer.masksToBounds = true
-        view.layer.cornerRadius = 6
+        view.textInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        view.layer.cornerRadius = 8
+        view.setContentHuggingPriority(.required, for: .horizontal)
+        view.setContentCompressionResistancePriority(.required, for: .horizontal)
         return view
     }()
     
@@ -28,8 +30,8 @@ final class StepCell: UICollectionViewCell {
     private lazy var titleLabel: UILabel = {
         let lbl = UILabel()
         lbl.translatesAutoresizingMaskIntoConstraints = false
-        lbl.font = .systemFont(ofSize: 16, weight: .regular)
-        lbl.numberOfLines = 0
+        lbl.font = .systemFont(ofSize: 14, weight: .regular)
+        lbl.numberOfLines = 2
         return lbl
     }()
     
@@ -61,7 +63,7 @@ final class StepCell: UICollectionViewCell {
     func configure(with step: StepsInTestCase, at index: Int) {
         digitalInBoxLbl.text = "\(index + 1)"
         stepHash = step.hash
-        if let attributedString = step.action?.toAttributedString() {
+        if let attributedString = step.action?.withoutLineBreaks.toAttributedString() {
             titleLabel.attributedText = attributedString
         } else {
             titleLabel.text = step.action

@@ -18,10 +18,38 @@ extension String {
 
 // MARK: - toAttributedString
 extension String {
+    var withoutLineBreaks: String {
+        self.replacingOccurrences(of: "\n", with: " ")
+    }
+    
     func toAttributedString() -> NSAttributedString? {
-        // TODO: - добавить покраску для темизации
-        let data = Down(markdownString: self)
-        return try? data.toAttributedString()
+        let attributedString = try? NSMutableAttributedString(
+            markdown: self,
+            options: .init(
+                allowsExtendedAttributes: true,
+                interpretedSyntax: .inlineOnlyPreservingWhitespace,
+                failurePolicy: .returnPartiallyParsedIfPossible
+            )
+        )
+        
+        guard let attributedString = attributedString else { return nil }
+        
+        attributedString.beginEditing()
+        attributedString.enumerateAttributes(
+            in: NSRange(location: 0, length: attributedString.length),
+            options: []
+        ) { attributes, range, _ in
+            if attributes[.link] == nil {
+                var updatedAttributes = attributes
+                updatedAttributes[.foregroundColor] = UIColor.label
+                updatedAttributes[.font] = UIFont.systemFont(ofSize: 14)
+                attributedString.setAttributes(updatedAttributes, range: range)
+            }
+        }
+        attributedString.endEditing()
+        
+        return attributedString
     }
 }
+
 

@@ -44,6 +44,7 @@
 		939175232D12045800AA38A4 /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9395229A2D2BF6F900CCA497 /* TestCaseStepsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 939522992D2BF6E600CCA497 /* TestCaseStepsCell.swift */; };
 		939522A22D2C053500CCA497 /* Down in Frameworks */ = {isa = PBXBuildFile; productRef = 939522A12D2C053500CCA497 /* Down */; };
+		9399A0AB2D2D315000347130 /* Ext+UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9399A0AA2D2D313F00347130 /* Ext+UIColor.swift */; };
 		93B0454E2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */; };
 		93B045512C9E946700EE125B /* CreateTestCaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045502C9E946700EE125B /* CreateTestCaseView.swift */; };
 		93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045522C9E948B00EE125B /* CreateSuiteView.swift */; };
@@ -61,7 +62,6 @@
 		93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5E2BE51C2900D4F365 /* Protocols.swift */; };
 		93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */; };
 		93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */; };
-		93F1F3852B59882C00667DB9 /* DefectsDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */; };
 		93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */; };
 /* End PBXBuildFile section */
 
@@ -115,6 +115,7 @@
 		938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwitcherWithTitle.swift; sourceTree = "<group>"; };
 		939175212D11A8A600AA38A4 /* TestCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCaseViewController.swift; sourceTree = "<group>"; };
 		939522992D2BF6E600CCA497 /* TestCaseStepsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCaseStepsCell.swift; sourceTree = "<group>"; };
+		9399A0AA2D2D313F00347130 /* Ext+UIColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+UIColor.swift"; sourceTree = "<group>"; };
 		93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteOrCaseViewController.swift; sourceTree = "<group>"; };
 		93B045502C9E946700EE125B /* CreateTestCaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateTestCaseView.swift; sourceTree = "<group>"; };
 		93B045522C9E948B00EE125B /* CreateSuiteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteView.swift; sourceTree = "<group>"; };
@@ -132,7 +133,6 @@
 		93DCDF5E2BE51C2900D4F365 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
 		93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesDetailCaseViewController.swift; sourceTree = "<group>"; };
-		93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefectsDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -295,6 +295,7 @@
 		93CA94742CCA8A1C00D99517 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				9399A0AA2D2D313F00347130 /* Ext+UIColor.swift */,
 				93C809612CCC0FB9006BCCC9 /* Ext+NotificationName.swift */,
 				93CA94752CCA8A2D00D99517 /* Ext+UIViewController.swift */,
 				93B23D092CC9259400FA7509 /* Ext+UIAlertController.swift */,
@@ -309,7 +310,6 @@
 				939175212D11A8A600AA38A4 /* TestCaseViewController.swift */,
 				93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */,
 				93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */,
-				93F1F3842B59882C00667DB9 /* DefectsDetailCaseViewController.swift */,
 			);
 			path = DetailCaseScreen;
 			sourceTree = "<group>";
@@ -396,6 +396,7 @@
 				93CA94732CCA752300D99517 /* AuthManager.swift in Sources */,
 				938C47E92C9A0C0000B75BE8 /* SwitcherWithTitle.swift in Sources */,
 				93C8095C2CCBCA23006BCCC9 /* MainTabbarViewController.swift in Sources */,
+				9399A0AB2D2D315000347130 /* Ext+UIColor.swift in Sources */,
 				93DCDF5D2BE5159500D4F365 /* SuitesAndCasesViewModel.swift in Sources */,
 				93B23D0A2CC9259400FA7509 /* Ext+UIAlertController.swift in Sources */,
 				9370855C2BEB3C49002316B8 /* ProjectDataModel.swift in Sources */,
@@ -409,7 +410,6 @@
 				938C47DB2C9A08B300B75BE8 /* CreatingProjectViewController.swift in Sources */,
 				938C47DD2C9A095A00B75BE8 /* CreatingProjectViewModel.swift in Sources */,
 				93C809602CCC0ED8006BCCC9 /* RootViewController.swift in Sources */,
-				93F1F3852B59882C00667DB9 /* DefectsDetailCaseViewController.swift in Sources */,
 				93748C312B4808F500BE7FFB /* ProjectsViewController.swift in Sources */,
 				937F04262AD84E3D006DDB28 /* AppDelegate.swift in Sources */,
 				9370855B2BEB3C49002316B8 /* RealmDB.swift in Sources */,

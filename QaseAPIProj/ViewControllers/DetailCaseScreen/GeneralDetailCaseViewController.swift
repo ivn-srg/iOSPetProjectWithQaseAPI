@@ -59,6 +59,15 @@ final class GeneralDetailCaseViewController: UIViewController {
         detailVM: vm
     )
     
+    private lazy var stepsCollectionViewTitle: UILabel = {
+        let vc = UILabel()
+        vc.translatesAutoresizingMaskIntoConstraints = false
+        vc.font = .systemFont(ofSize: 16, weight: .bold)
+        vc.numberOfLines = 0
+        vc.text = "Steps".localized
+        return vc
+    }()
+    
     private lazy var stepsCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.itemSize = CGSize(width: view.frame.width - 40, height: 60)
@@ -103,13 +112,16 @@ final class GeneralDetailCaseViewController: UIViewController {
         view.addSubview(scrollView)
         
         scrollView.snp.makeConstraints {
-            $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.left.right.equalTo(view.safeAreaLayoutGuide)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
         }
         
         scrollView.addSubview(stackView)
         stackView.snp.makeConstraints {
-            $0.verticalEdges.equalTo(scrollView.contentLayoutGuide.snp.verticalEdges).inset(20)
-            $0.horizontalEdges.equalTo(scrollView.frameLayoutGuide.snp.horizontalEdges).inset(20)
+            $0.top.equalTo(scrollView.contentLayoutGuide.snp.top).offset(20)
+            $0.left.right.equalTo(scrollView.frameLayoutGuide).inset(20)
+            $0.bottom.equalTo(scrollView.contentLayoutGuide.snp.bottom).offset(-20)
         }
         
         view.addGestureRecognizer(panRecognize)
@@ -120,10 +132,8 @@ final class GeneralDetailCaseViewController: UIViewController {
         stackView.addArrangedSubview(descriptionField)
         stackView.addArrangedSubview(preconditionField)
         stackView.addArrangedSubview(postconditionField)
+        stackView.addArrangedSubview(stepsCollectionViewTitle)
         stackView.addArrangedSubview(stepsCollectionView)
-        stepsCollectionView.snp.makeConstraints {
-            $0.height.equalTo(300) // Adjust height as needed
-        }
     }
     
     // MARK: - CollectionView Diffable logic
@@ -143,6 +153,13 @@ final class GeneralDetailCaseViewController: UIViewController {
         )
     }
     
+    private func updateCollectionViewHeight() {
+        let contentHeight = stepsCollectionView.contentSize.height
+        stepsCollectionView.snp.updateConstraints { make in
+            make.height.equalTo(contentHeight)
+        }
+    }
+    
     private func loadSteps() {
         steps = vm.testCase?.steps ?? []
         
@@ -150,6 +167,8 @@ final class GeneralDetailCaseViewController: UIViewController {
         snapshot.appendSections([0])
         snapshot.appendItems(steps)
         dataSource.apply(snapshot, animatingDifferences: true)
+        
+        updateCollectionViewHeight()
     }
     
     // MARK: - objc funcs for responder
@@ -181,9 +200,7 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
     }
     
     @objc func pull2Refresh() {
-        Task { @MainActor in
-            updateUI()
-        }
+        Task { @MainActor in updateUI() }
     }
 }
 

@@ -69,13 +69,11 @@ class TestCaseViewController: UIViewController {
     func setupTopTabBar() {
         let generalInfoVC = GeneralDetailCaseViewController(vm: viewModel)
         let propertiesInfoVC = PropertiesDetailCaseViewController(vm: viewModel)
-        let defectsInfoVC = DefectsDetailCaseViewController(vm: viewModel)
-        viewControllers = [generalInfoVC, propertiesInfoVC, defectsInfoVC]
+        viewControllers = [generalInfoVC, propertiesInfoVC]
         
         let tabbarItems = [
             UITabBarItem(title: "General".localized, image: nil, tag: 0),
             UITabBarItem(title: "Properties".localized, image: nil, tag: 1),
-            UITabBarItem(title: "Defects".localized, image: nil, tag: 2)
         ]
         
         tabbar.items = tabbarItems.map {

@@ -12,12 +12,8 @@ import RealmSwift
 
 final class ProjectRO: Object {
     @Persisted var title: String
-    @Persisted var code: String
+    @Persisted(primaryKey: true) var code: String
     @Persisted var counts: CountsOfProjectRO?
-    
-    override public static func primaryKey() -> String? {
-        "code"
-    }
     
     convenience init(projectData: Project) {
         self.init()
@@ -90,11 +86,7 @@ final class SuiteAndCaseDataRO: Object {
     @Persisted var automation: Int?
     @Persisted var suiteId: Int?
     
-    @Persisted var uniqueKey: String
-    
-    override public static func primaryKey() -> String? {
-        "uniqueKey"
-    }
+    @Persisted(primaryKey: true) var uniqueKey: String
     
     convenience init(entitiesData: SuiteAndCaseData, codeOfProject: String? = nil) {
         self.init()
@@ -116,6 +108,7 @@ final class SuiteAndCaseDataRO: Object {
 // MARK: - Test case
 
 final class TestEntityRO: Object {
+    @Persisted(primaryKey: true) var uniqueKey: String
     @Persisted var id: Int
     @Persisted var position: Int
     @Persisted var title: String
@@ -141,12 +134,10 @@ final class TestEntityRO: Object {
     @Persisted var authorId: Int
     @Persisted var tags: List<String>
     
-    override public static func primaryKey() -> String? {
-        "id"
-    }
-    
     convenience init(testCaseData: TestEntity) {
         self.init()
+        
+        uniqueKey = "\(testCaseData.id)_\(PROJECT_NAME)"
         self.id = testCaseData.id
         self.position = testCaseData.position
         self.title = testCaseData.title
@@ -164,11 +155,12 @@ final class TestEntityRO: Object {
         self.suiteId = testCaseData.suiteId
         self.memberId = testCaseData.memberId
         self.authorId = testCaseData.authorId
+        self.steps.append(objectsIn: testCaseData.steps.map { StepsInTestCaseRO(from: $0) })
     }
 }
 
-final class StepsInTestCaseRO: EmbeddedObject {
-    @Persisted var testCaseHash: String
+final class StepsInTestCaseRO: Object {
+    @Persisted(primaryKey: true) var entityHash: String
     @Persisted var position: Int
     @Persisted var sharedStepHash: String?
     @Persisted var sharedStepNestedHash: String?
@@ -176,7 +168,21 @@ final class StepsInTestCaseRO: EmbeddedObject {
     @Persisted var action: String?
     @Persisted var expectedResult: String?
     @Persisted var data: String?
-    @Persisted var steps: List<String>
+    @Persisted var steps: List<StepsInTestCaseRO>
+    
+    // Дополнительный инициализатор для преобразования из исходной структуры
+    convenience init(from model: StepsInTestCase) {
+        self.init()
+        self.entityHash = model.hash
+        self.position = model.position
+        self.sharedStepHash = model.sharedStepHash
+        self.sharedStepNestedHash = model.sharedStepNestedHash
+        self.attachments.append(objectsIn: model.attachments)
+        self.action = model.action
+        self.expectedResult = model.expectedResult
+        self.data = model.data
+        self.steps.append(objectsIn: model.steps?.map { StepsInTestCaseRO(from: $0) } ?? [])
+    }
 }
 
 

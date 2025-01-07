@@ -725,6 +725,17 @@
         }
       }
     },
+    "Steps" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Шаги воспроизведения"
+          }
+        }
+      }
+    },
     "Success" : {
       "extractionState" : "manual",
       "localizations" : {

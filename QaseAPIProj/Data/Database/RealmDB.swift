@@ -22,8 +22,8 @@ protocol HeroDAO {
     func deleteEntity(_ entity: SuiteAndCaseData) -> Bool
     
     func saveTestCase(_ testCase: TestEntity) -> Bool
-    func getTestCase(by id: Int) -> TestEntity?
-    func deleteTestCase(_ testCase: TestEntity) -> Bool
+    func getTestCase(by uniqueKey: String) -> TestEntity?
+    func deleteTestCase(by uniqueKey: String) -> Bool
 }
 
 final class RealmManager {
@@ -69,7 +69,6 @@ extension RealmManager {
 
 // MARK: - Hero
 extension RealmManager: HeroDAO {
-    
     func saveProjects(_ projects: [Project]) -> Bool {
         do {
             let realm = try Realm()
@@ -101,7 +100,7 @@ extension RealmManager: HeroDAO {
             let realm = try Realm()
             
             if let objectToDelete = realm.object(ofType: ProjectRO.self, forPrimaryKey: project.code) {
-                try! realm.write {
+                try realm.write {
                     realm.delete(objectToDelete)
                 }
             }
@@ -174,7 +173,7 @@ extension RealmManager: HeroDAO {
             let realm = try Realm()
             
             if let objectToDelete = realm.object(ofType: SuiteAndCaseDataRO.self, forPrimaryKey: entity.uniqueKey) {
-                try! realm.write {
+                try realm.write {
                     realm.delete(objectToDelete)
                 }
             }
@@ -191,17 +190,18 @@ extension RealmManager: HeroDAO {
             try realm.write {
                 realm.add(TestEntityRO(testCaseData: testCase), update: .modified)
             }
+            
+            return true
         } catch {
             return false
         }
-        return true
     }
     
-    func getTestCase(by id: Int) -> TestEntity? {
+    func getTestCase(by uniqueKey: String) -> TestEntity? {
         do {
             let realm = try Realm()
             
-            let realmObject = realm.objects(TestEntityRO.self).filter("id == \(id)")
+            let realmObject = realm.objects(TestEntityRO.self).filter("uniqueKey == %@", uniqueKey)
             
             return TestEntity(realmObject: realmObject.first)
         } catch {
@@ -209,13 +209,14 @@ extension RealmManager: HeroDAO {
         }
     }
     
-    func deleteTestCase(_ testCase: TestEntity) -> Bool {
+    func deleteTestCase(by uniqueKey: String) -> Bool {
         do {
             let realm = try Realm()
             
-            if let objectToDelete = realm.object(ofType: TestEntityRO.self, forPrimaryKey: testCase.id) {
-                try! realm.write {
-                    realm.delete(objectToDelete)
+            if let testCaseToDelete = realm.object(ofType: TestEntityRO.self, forPrimaryKey: uniqueKey) {
+                try realm.write {
+                    realm.delete(testCaseToDelete)
+                    realm.delete(testCaseToDelete.steps)
                 }
             }
             return true

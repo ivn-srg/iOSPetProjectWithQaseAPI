@@ -13,6 +13,9 @@ final class GeneralDetailCaseViewController: UIViewController {
     weak var delegate: DetailTestCaseProtocol?
     private var isDataEditing = false
     
+    private var dataSource: UICollectionViewDiffableDataSource<Int, StepsInTestCase>!
+    private var steps: [StepsInTestCase] = []
+    
     // MARK: - UI components
     private lazy var scrollView: UIScrollView = {
         let sv = UIScrollView()
@@ -56,6 +59,27 @@ final class GeneralDetailCaseViewController: UIViewController {
         detailVM: vm
     )
     
+    private lazy var stepsCollectionViewTitle: UILabel = {
+        let vc = UILabel()
+        vc.translatesAutoresizingMaskIntoConstraints = false
+        vc.font = .systemFont(ofSize: 16, weight: .bold)
+        vc.numberOfLines = 0
+        vc.text = "Steps".localized
+        return vc
+    }()
+    
+    private lazy var stepsCollectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: view.frame.width - 40, height: 60)
+        layout.minimumLineSpacing = 10
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.backgroundColor = .clear
+        collectionView.delegate = self
+        collectionView.register(StepCell.self, forCellWithReuseIdentifier: StepCell.identifier)
+        return collectionView
+    }()
+    
     private lazy var panRecognize: UISwipeGestureRecognizer = {
         let gestureRecognizer = UISwipeGestureRecognizer()
         gestureRecognizer.addTarget(self, action: #selector(swipeBetweenViewsDelegate))
@@ -78,6 +102,8 @@ final class GeneralDetailCaseViewController: UIViewController {
         
         setupView()
         setupCustomFields()
+        setupCollectionView()
+        loadSteps()
         updateUI()
     }
     
@@ -86,13 +112,16 @@ final class GeneralDetailCaseViewController: UIViewController {
         view.addSubview(scrollView)
         
         scrollView.snp.makeConstraints {
-            $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.left.right.equalTo(view.safeAreaLayoutGuide)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
         }
         
         scrollView.addSubview(stackView)
         stackView.snp.makeConstraints {
-            $0.verticalEdges.equalTo(scrollView.contentLayoutGuide.snp.verticalEdges).inset(20)
-            $0.horizontalEdges.equalTo(scrollView.frameLayoutGuide.snp.horizontalEdges).inset(20)
+            $0.top.equalTo(scrollView.contentLayoutGuide.snp.top).offset(20)
+            $0.left.right.equalTo(scrollView.frameLayoutGuide).inset(20)
+            $0.bottom.equalTo(scrollView.contentLayoutGuide.snp.bottom).offset(-20)
         }
         
         view.addGestureRecognizer(panRecognize)
@@ -103,8 +132,46 @@ final class GeneralDetailCaseViewController: UIViewController {
         stackView.addArrangedSubview(descriptionField)
         stackView.addArrangedSubview(preconditionField)
         stackView.addArrangedSubview(postconditionField)
+        stackView.addArrangedSubview(stepsCollectionViewTitle)
+        stackView.addArrangedSubview(stepsCollectionView)
     }
     
+    // MARK: - CollectionView Diffable logic
+    private func setupCollectionView() {
+        dataSource = UICollectionViewDiffableDataSource<Int, StepsInTestCase>(
+            collectionView: stepsCollectionView,
+            cellProvider: { collectionView, indexPath, step in
+                guard let cell = collectionView.dequeueReusableCell(
+                    withReuseIdentifier: StepCell.identifier,
+                    for: indexPath
+                ) as? StepCell else {
+                    fatalError("Could not dequeue StepCell")
+                }
+                cell.configure(with: step, at: indexPath.row)
+                return cell
+            }
+        )
+    }
+    
+    private func updateCollectionViewHeight() {
+        let contentHeight = stepsCollectionView.contentSize.height
+        stepsCollectionView.snp.updateConstraints { make in
+            make.height.equalTo(contentHeight)
+        }
+    }
+    
+    private func loadSteps() {
+        steps = vm.testCase?.steps ?? []
+        
+        var snapshot = NSDiffableDataSourceSnapshot<Int, StepsInTestCase>()
+        snapshot.appendSections([0])
+        snapshot.appendItems(steps)
+        dataSource.apply(snapshot, animatingDifferences: true)
+        
+        updateCollectionViewHeight()
+    }
+    
+    // MARK: - objc funcs for responder
     @objc func swipeBetweenViewsDelegate() {
         guard let delegate = delegate else { return }
         delegate.swipeBetweenViews(panRecognize)
@@ -127,14 +194,21 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
                 descriptionField.updateTextViewValue(testCase.description)
                 preconditionField.updateTextViewValue(testCase.preconditions)
                 postconditionField.updateTextViewValue(testCase.postconditions)
+                loadSteps()
             }
         }
     }
     
     @objc func pull2Refresh() {
-        Task { @MainActor in
-            updateUI()
-        }
+        Task { @MainActor in updateUI() }
+    }
+}
+
+// MARK: - UICollectionViewDelegate
+extension GeneralDetailCaseViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        print(indexPath)
+        // Handle selection logic
     }
 }
 
@@ -144,7 +218,7 @@ import SwiftUI
 struct ViewControllerRepresentable: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> some UIViewController {
-        return TestCaseViewController(caseId: 317)
+        return TestCaseViewController(caseUniqueKey: "\(317)_\(PROJECT_NAME)")
     }
 
     func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {

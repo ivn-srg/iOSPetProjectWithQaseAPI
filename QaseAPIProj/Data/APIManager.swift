@@ -10,8 +10,8 @@ import Foundation
 protocol NetworkManager: AnyObject {
     func performRequest<T: Decodable>(
         with data: Encodable?,
-        from urlString: String,
-        method: HTTPMethod,
+        from urlString: URL?,
+        method: API.HTTPMethod,
         modelType: T.Type
     ) async throws -> T
     
@@ -28,11 +28,11 @@ final class APIManager: NetworkManager {
     
     func performRequest<T: Decodable>(
         with data: Encodable? = nil,
-        from urlString: String,
-        method: HTTPMethod,
+        from urlString: URL?,
+        method: API.HTTPMethod,
         modelType: T.Type
-    ) async throws(APIError) -> T {
-        guard let url = URL(string: urlString) else { throw .invalidURL }
+    ) async throws(API.NetError) -> T {
+        guard let url = urlString else { throw .invalidURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
@@ -61,7 +61,7 @@ final class APIManager: NetworkManager {
     func makeHTTPRequest<T: Decodable>(
         for request: URLRequest,
         codableModelType: T.Type
-    ) async throws(APIError) -> T {
+    ) async throws(API.NetError) -> T {
         var errorMessage = ""
         
         do {
@@ -76,7 +76,7 @@ final class APIManager: NetworkManager {
                 ? errorModel.errorMessage!
                 : errorModel.message != nil ? errorModel.message! : ""
             }
-            throw APIError.parsingError(errorMessage)
+            throw API.NetError.parsingError(errorMessage)
         } catch let error as DecodingError {
             throw .parsingError(error.errorDescription ?? error.localizedDescription)
         } catch {
@@ -85,90 +85,67 @@ final class APIManager: NetworkManager {
         }
     }
     
-    func formUrlString(
-        APIMethod: APIEndpoint,
-        codeOfProject: String?,
-        limit: Int? = nil,
-        offset: Int? = nil,
-        parentSuite: ParentSuite? = nil,
-        suiteId: Int? = nil,
-        caseId: Int? = nil
-    ) -> String? {
+    func composeURL(for method: API.Endpoint, urlComponents: [String?]?, queryItems: [API.QueryParams: Int?]? = nil) -> URL? {
         
-        switch APIMethod {
-        case .project:
-            if let limit = limit, let offset = offset {
-                return "\(DOMEN)/project?limit=\(limit)&offset=\(offset)"
-            } else if let codeOfProject = codeOfProject {
-                return "\(DOMEN)/project/\(codeOfProject)"
-            } else {
-                return "\(DOMEN)/project"
+        var resultUrl = URL(string: "\(DOMEN)/\(method.rawValue)")
+        
+        if let urlComponents = urlComponents {
+            for component in urlComponents {
+                guard let component = component else { continue }
+                
+                resultUrl = resultUrl?.appendingPathComponent(component)
             }
-        case .suites:
-            guard let codeOfProject = codeOfProject else { return nil }
-            guard let limit = limit, let offset = offset else {
-                if let suiteId = suiteId {
-                    return "\(DOMEN)/suite/\(codeOfProject)/\(suiteId)"
-                } else {
-                    return "\(DOMEN)/suite/\(codeOfProject)"
-                }
-            }
-            guard let parentSuite = parentSuite else {
-                return "\(DOMEN)/suite/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
-            }
-            guard
-                let searchSuiteString = parentSuite.title.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
-            else { return nil }
-            
-            return "\(DOMEN)/suite/\(codeOfProject)?search=\"\(searchSuiteString)\"&limit=\(limit)&offset=\(offset)"
-        case .cases:
-            guard let codeOfProject = codeOfProject else { return nil }
-            guard let limit = limit, let offset = offset else {
-                if let caseId = caseId {
-                    return "\(DOMEN)/case/\(codeOfProject)/\(caseId)"
-                } else {
-                    return "\(DOMEN)/case/\(codeOfProject)"
-                }
-            }
-            guard let parentSuite = parentSuite else {
-                return "\(DOMEN)/case/\(codeOfProject)?limit=\(limit)&offset=\(offset)"
-            }
-            
-            return "\(DOMEN)/case/\(codeOfProject)?suite_id=\(parentSuite.id)&limit=\(limit)&offset=\(offset)"
-        case .openedCase:
-            guard let codeOfProject = codeOfProject else { return nil }
-            guard let caseId = caseId else { return nil }
-            
-            return "\(DOMEN)/case/\(codeOfProject)/\(caseId)"
         }
+        
+        if let queryItems = queryItems {
+            var queryDict = [URLQueryItem]()
+            
+            for item in queryItems {
+                guard let itemValue = item.value else { continue }
+                
+                queryDict.append(URLQueryItem(name: item.key.rawValue, value: "\(itemValue)"))
+            }
+            
+            resultUrl?.append(queryItems: queryDict)
+        }
+        
+        return resultUrl
     }
 }
 
-enum APIError: Error {
-    case invalidURL, parsingError(String), serializationError(String),
-         noInternetConnection, timeout, otherNetworkError(String)
-}
+struct API {
+    enum NetError: Error {
+        case invalidURL, parsingError(String), serializationError(String),
+             noInternetConnection, timeout, otherNetworkError(String)
+    }
 
-enum HTTPMethod: String {
-    case get = "GET"
-    case post = "POST"
-    case patch = "PATCH"
-    case delete = "DELETE"
-}
+    enum HTTPMethod: String {
+        case get = "GET"
+        case post = "POST"
+        case patch = "PATCH"
+        case delete = "DELETE"
+    }
 
-enum APIEndpoint: String, CaseIterable {
-    case project = "project"
-    case suites = "suite"
-    case cases = "case"
-    case openedCase = ""
-    
-    func returnAllEnumCases() -> [String] {
-        var listOfCases = [String]()
+    enum Endpoint: String, CaseIterable {
+        case project = "project"
+        case suites = "suite"
+        case cases = "case"
         
-        for caseValue in APIEndpoint.allCases {
-            listOfCases.append(caseValue.rawValue)
+        func returnAllEnumCases() -> [String] {
+            var listOfCases = [String]()
+            
+            for caseValue in Self.allCases {
+                listOfCases.append(caseValue.rawValue)
+            }
+            
+            return listOfCases
         }
-        
-        return listOfCases
+    }
+    
+    enum QueryParams: String {
+        case limit = "limit"
+        case offset = "offset"
+        case suiteId = "suite_id"
+        case search = "search"
     }
 }

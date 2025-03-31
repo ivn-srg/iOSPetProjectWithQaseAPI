@@ -49,14 +49,14 @@ final class CreatingProjectViewModel {
     }
     
     // MARK: - Network work
-    func createNewProject() async throws(APIError) {
+    func createNewProject() async throws(API.NetError) {
         if creatingProject.isEmpty {
             isFieldsEmpty = true
             return
         }
-        guard let urlString = apiManager.formUrlString(
-            APIMethod: .project, codeOfProject: nil
-        ) else { throw .invalidURL }
+        
+        guard let urlString = apiManager.composeURL(for: .project, urlComponents: nil) else { throw .invalidURL }
+        
         LoadingIndicator.startLoading()
         
         let response = try await apiManager.performRequest(

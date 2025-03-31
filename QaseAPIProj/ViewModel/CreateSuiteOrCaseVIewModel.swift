@@ -67,14 +67,13 @@ final class CreateSuiteOrCaseViewModel {
     }
     
     // MARK: - Network work
-    func createNewEntity() async throws(APIError) {
+    func createNewEntity() async throws(API.NetError) {
         isFieldsEmpty = creatingEntityIsSuite ? creatingSuite.title.isEmpty : creatingTestCase.title.isEmpty
         if isFieldsEmpty { return }
-            
-        guard let urlString = apiManager.formUrlString(
-            APIMethod: creatingEntityIsSuite ? .suites : .cases,
-            codeOfProject: PROJECT_NAME
-        ) else { throw .invalidURL }
+        
+        guard
+            let urlString = apiManager.composeURL(for: creatingEntityIsSuite ? .suites : .cases, urlComponents: [PROJECT_NAME])
+        else { throw .invalidURL }
         
         LoadingIndicator.startLoading()
         

@@ -45,7 +45,7 @@ final class DetailTabbarControllerViewModel {
     }
     
     // MARK: - Network work
-    func fetchCaseDataJSON() async throws(APIError) {
+    func fetchCaseDataJSON() async throws(API.NetError) {
         if let cashedTestCase = realmDb.getTestCase(by: caseUniqueKey) {
             testCase = cashedTestCase
             changedTestCase = testCase
@@ -54,14 +54,10 @@ final class DetailTabbarControllerViewModel {
             return
         }
         
-        guard let urlString = apiManager.formUrlString(
-                                            APIMethod: .openedCase,
-                                            codeOfProject: PROJECT_NAME,
-                                            limit: nil,
-                                            offset: nil,
-                                            parentSuite: nil,
-                                            caseId: caseId
-        ) else { throw .invalidURL }
+        guard
+            let urlString = apiManager.composeURL(for: .cases, urlComponents: [PROJECT_NAME, String(caseId)])
+        else { throw .invalidURL }
+        
         LoadingIndicator.startLoading()
         
         let testCaseResult = try await apiManager.performRequest(
@@ -76,16 +72,14 @@ final class DetailTabbarControllerViewModel {
         LoadingIndicator.stopLoading()
     }
     
-    func updateTestCaseData() async throws(APIError) {
+    func updateTestCaseData() async throws(API.NetError) {
         guard let changedTestCase = changedTestCase else { return }
-        guard let urlString = apiManager.formUrlString(
-                                            APIMethod: .openedCase,
-                                            codeOfProject: PROJECT_NAME,
-                                            limit: nil,
-                                            offset: nil,
-                                            parentSuite: nil,
-                                            caseId: testCase?.id
-        ) else { throw .invalidURL }
+        
+        guard
+            let testCaseId = testCase?.id,
+            let urlString = apiManager.composeURL(for: .cases, urlComponents: [PROJECT_NAME, String(testCaseId)])
+        else { throw .invalidURL }
+        
         LoadingIndicator.startLoading()
         
         let response = try await apiManager.performRequest(

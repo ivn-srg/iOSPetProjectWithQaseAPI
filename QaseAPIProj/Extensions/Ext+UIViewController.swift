@@ -19,7 +19,7 @@ extension UIViewController {
             } catch {
                 var errorMessage = "Unknown Error".localized
                 
-                if let error = error as? APIError {
+                if let error = error as? API.NetError {
                     switch error {
                     case .invalidURL, .timeout:
                         errorMessage = "Something went wrong".localized

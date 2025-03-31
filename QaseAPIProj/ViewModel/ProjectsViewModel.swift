@@ -37,14 +37,11 @@ final class ProjectsViewModel {
                 return
             }
             
-            guard let urlString = apiManager.formUrlString(
-                APIMethod: .project,
-                codeOfProject: nil,
-                limit: 20,
-                offset: projects.count,
-                parentSuite: nil,
-                caseId: nil
-            ) else { return }
+            guard
+                let urlString = apiManager.composeURL(for: .project, urlComponents: nil, queryItems: [
+                    .limit: 20, .offset: projects.count
+                ])
+            else { throw API.NetError.invalidURL }
             
             
             let projectListResult = try await apiManager.performRequest(
@@ -64,15 +61,11 @@ final class ProjectsViewModel {
         }
     }
     
-    func deleteProject(at index: Int) async throws(APIError) {
-        guard let urlString = apiManager.formUrlString(
-            APIMethod: .project,
-            codeOfProject: self.projects[index].code,
-            limit: nil,
-            offset: nil,
-            parentSuite: nil,
-            caseId: nil
-        ) else { throw .invalidURL }
+    func deleteProject(at index: Int) async throws(API.NetError) {
+        
+        guard
+            let urlString = apiManager.composeURL(for: .project, urlComponents: [projects[index].code])
+        else { throw .invalidURL }
         
         LoadingIndicator.startLoading()
         

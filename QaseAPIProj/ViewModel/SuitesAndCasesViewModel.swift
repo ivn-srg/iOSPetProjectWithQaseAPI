@@ -56,14 +56,11 @@ final class SuitesAndCasesViewModel {
         }
     }
     
-    func deleteEntity(at index: Int) async throws(APIError) {
+    func deleteEntity(at index: Int) async throws(API.NetError) {
         let entity = suitesAndCaseData[index]
-        guard let urlString = apiManager.formUrlString(
-            APIMethod: entity.isSuite ? .suites : .cases,
-            codeOfProject: PROJECT_NAME,
-            suiteId: entity.isSuite ? entity.id : nil,
-            caseId: !entity.isSuite ? entity.id : nil
-        )
+        
+        guard
+            let urlString = apiManager.composeURL(for: entity.isSuite ? .suites : .cases, urlComponents: [PROJECT_NAME, String(entity.id)])
         else { throw .invalidURL }
         
         Task { @MainActor in
@@ -111,12 +108,9 @@ final class SuitesAndCasesViewModel {
         }
         
         let _ = try await {
-            guard let urlStringSuites = apiManager.formUrlString(
-                APIMethod: .suites,
-                codeOfProject: PROJECT_NAME,
-                limit: 1,
-                offset: 0
-            ) else { throw APIError.invalidURL }
+            guard
+                let urlStringSuites = apiManager.composeURL(for: .suites, urlComponents: [PROJECT_NAME], queryItems: [.limit: 1, .offset: 0])
+            else { throw API.NetError.invalidURL }
             
             let countOfSuites = try await apiManager.performRequest(
                 from: urlStringSuites,
@@ -130,12 +124,9 @@ final class SuitesAndCasesViewModel {
         var offset = 0
         
         repeat {
-            guard let urlStringSuites = apiManager.formUrlString(
-                APIMethod: .suites,
-                codeOfProject: PROJECT_NAME,
-                limit: limit,
-                offset: offset
-            ) else { throw APIError.invalidURL }
+            guard
+                let urlStringSuites = apiManager.composeURL(for: .suites, urlComponents: [PROJECT_NAME], queryItems: [.limit: limit, .offset: offset])
+            else { throw API.NetError.invalidURL }
             
             let suitesResult = try await apiManager.performRequest(
                 from: urlStringSuites,
@@ -158,14 +149,17 @@ final class SuitesAndCasesViewModel {
         } while offset < totalCountOfSuites
     }
     
-    private func fetchCasesJSON() async throws(APIError) {
-        guard let urlStringCases = apiManager.formUrlString(
-            APIMethod: .cases,
-            codeOfProject: PROJECT_NAME,
-            limit: Constants.LIMIT_OF_REQUEST,
-            offset: countOfFetchedCases,
-            parentSuite: parentSuite
-        ) else { throw .invalidURL }
+    private func fetchCasesJSON() async throws(API.NetError) {
+        guard
+            let urlStringCases = apiManager.composeURL(
+                for: .cases, urlComponents: [PROJECT_NAME],
+                queryItems: [
+                    .suiteId: parentSuite?.id,
+                    .limit: Constants.LIMIT_OF_REQUEST,
+                    .offset: countOfFetchedCases
+                ]
+            )
+        else { throw .invalidURL }
         
         if hasMoreCases && !isLoading {
             isLoading = true

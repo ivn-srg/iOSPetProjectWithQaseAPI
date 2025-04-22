@@ -16,13 +16,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Select Xcode version
+      - name: Setup Xcode environment
         run: |
           sudo xcode-select -switch /Applications/Xcode.app
           xcodebuild -version
+          swift -version
 
-      - name: Show available devices
-        run: xcrun simctl list devices
+      - name: Create test directories
+        run: |
+          mkdir -p TestResults
+          mkdir -p CoverageData
 
       - name: Build project
         run: |
@@ -30,9 +33,10 @@ jobs:
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
+            -derivedDataPath DerivedData \
             -quiet
 
-      - name: Run Unit Tests
+      - name: Run Unit Tests with coverage
         run: |
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
@@ -40,9 +44,11 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
             -enableCodeCoverage YES \
             -only-testing:QaseAPIProjTests \
+            -resultBundlePath TestResults/UnitTests.xcresult \
+            -derivedDataPath DerivedData \
             | xcpretty && exit ${PIPESTATUS[0]}
 
-      - name: Run UI Tests
+      - name: Run UI Tests with coverage
         run: |
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
@@ -50,13 +56,27 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
             -enableCodeCoverage YES \
             -only-testing:QaseAPIProjUITests \
+            -resultBundlePath TestResults/UITests.xcresult \
+            -derivedDataPath DerivedData \
             | xcpretty && exit ${PIPESTATUS[0]}
 
-      - name: Upload code coverage
+      - name: Generate coverage reports
+        if: always()
+        run: |
+          xcrun xccov view --archive --json DerivedData/Logs/Test/*.xcresult > CoverageData/coverage.json
+          xcrun xccov view --archive DerivedData/Logs/Test/*.xcresult > CoverageData/coverage.txt
+          cp DerivedData/Logs/Test/*.profdata CoverageData/coverage.profdata
+
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage
-          path: |
-            */**/Coverage.profdata
-            */**/Coverage.json
+          name: test-results
+          path: TestResults/*.xcresult
+
+      - name: Upload coverage data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: CoverageData/*

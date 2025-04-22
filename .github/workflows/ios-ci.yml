@@ -7,22 +7,18 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  test:
     runs-on: macos-latest
     timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup environment
+      - name: Setup Xcode
         run: |
           sudo xcode-select -switch /Applications/Xcode.app
           xcodebuild -version
-          swift -version
           xcrun simctl list devices
-
-      - name: Create test directories
-        run: mkdir -p TestResults
 
       - name: Build project
         run: |
@@ -30,45 +26,29 @@ jobs:
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
-            -derivedDataPath DerivedData \
-            | tee build.log || echo "Build failed - check logs"
-        continue-on-error: true
-
-      - name: Show build logs
-        if: always()
-        run: cat build.log
+            -derivedDataPath DerivedData
 
       - name: Run Unit Tests
         run: |
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -testPlan QaseAPIProjTests \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -only-testing:QaseAPIProjTests \
             -resultBundlePath TestResults/UnitTests.xcresult \
-            -derivedDataPath DerivedData \
             | tee test.log || echo "Unit tests failed - check logs"
         continue-on-error: true
-
-      - name: Show unit test logs
-        if: always()
-        run: cat test.log
 
       - name: Run UI Tests
         run: |
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -testPlan QaseAPIProjUITests \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -only-testing:QaseAPIProjUITests \
             -resultBundlePath TestResults/UITests.xcresult \
-            -derivedDataPath DerivedData \
             | tee uitest.log || echo "UI tests failed - check logs"
         continue-on-error: true
-
-      - name: Show UI test logs
-        if: always()
-        run: cat uitest.log
 
       - name: Upload test results
         if: always()
@@ -78,4 +58,3 @@ jobs:
           path: |
             TestResults/*.xcresult
             *.log
-            DerivedData/Logs/Test/*.log

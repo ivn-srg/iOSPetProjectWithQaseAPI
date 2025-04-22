@@ -25,11 +25,11 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         let inf = TextFieldWithPadding()
         inf.translatesAutoresizingMaskIntoConstraints = false
         inf.backgroundColor = AppTheme.bgSecondaryColor
-        inf.textColor = AppTheme.fioletColor
+        inf.textColor = .white
         inf.layer.borderWidth = 1
         inf.layer.cornerRadius = 12
         inf.layer.borderColor = UIColor.gray.cgColor
-        inf.placeholder = "Input your API Token"
+        inf.placeholder = "Input your API Token".localized
         inf.delegate = inf
         inf.accessibilityIdentifier = "inputTextField"
         return inf
@@ -41,7 +41,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         ab.backgroundColor = AppTheme.fioletColor
         ab.layer.cornerRadius = 12
         ab.titleLabel?.textColor = .white
-        ab.setTitle("Next", for: .normal)
+        ab.setTitle("Next".localized, for: .normal)
         ab.accessibilityIdentifier = "authButton"
         return ab
     }()
@@ -54,6 +54,10 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
         tapGestureRecognizer.numberOfTapsRequired = 3
         logoImg.addGestureRecognizer(tapGestureRecognizer)
+        
+        let longTapGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(longTapForFillingTextLb))
+        logoImg.addGestureRecognizer(longTapGestureRecognizer)
+        
         authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
     }
     
@@ -97,7 +101,6 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputToken.isEmpty {
             do {
                 try AuthManager.shared.loggedIn(token: inputToken)
-//                pushToNextVC()
             } catch {
                 UIAlertController.showSimpleAlert(
                     on: self,
@@ -108,14 +111,20 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         } else {
             UIAlertController.showSimpleAlert(
                 on: self,
-                title: "Incorrect input",
-                message: "Input the API Token for authorization on Qase service"
+                title: "Incorrect input".localized,
+                message: "Input the API Token for authorization on Qase service".localized
             )
         }
     }
     
     @objc private func tapForFillingTextLb() {
         inputTokenField.text = KeychainLocal.QASE_API_KEY
+        authorizate()
+    }
+    
+    @objc private func longTapForFillingTextLb() {
+        // Token for demo purposes
+        inputTokenField.text = "df3498cf743579b78d3c34d6640e1e2e39edf9ea2530cdf43eb848156126519e"
         authorizate()
     }
 }

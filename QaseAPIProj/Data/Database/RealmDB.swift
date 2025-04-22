@@ -45,6 +45,8 @@ final class RealmManager {
     }
 
     func getRealm() -> Realm? {
+        if realm == nil { setupRealm() }
+        
         if Thread.isMainThread {
             return realm
         } else {
@@ -55,7 +57,17 @@ final class RealmManager {
     }
     
     func dropDataBase() {
-        realm?.deleteAll()
+        if realm == nil { setupRealm() }
+        
+        Task { @MainActor in
+            do {
+                try realm?.write {
+                    realm?.deleteAll()
+                }
+            } catch {
+                print(error)
+            }
+        }
     }
 }
 

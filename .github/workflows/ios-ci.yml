@@ -29,7 +29,7 @@ jobs:
           xcodebuild build \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
             -quiet
 
       - name: Run Unit Tests
@@ -37,7 +37,7 @@ jobs:
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
             -enableCodeCoverage YES \
             -only-testing:QaseAPIProjTests \
             | xcpretty && exit ${PIPESTATUS[0]}
@@ -47,7 +47,7 @@ jobs:
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.4' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
             -enableCodeCoverage YES \
             -only-testing:QaseAPIProjUITests \
             | xcpretty && exit ${PIPESTATUS[0]}

@@ -43,34 +43,38 @@ final class ProjectsViewModel {
                 ])
             else { throw API.NetError.invalidURL }
             
-            
-            let projectListResult = try await apiManager.performRequest(
-                from: urlString,
-                method: .get,
-                modelType: ProjectDataModel.self
-            )
-            
-            let _ = realmDb.saveProjects(projectListResult.result.entities)
-            
-            projects.append(contentsOf: projectListResult.result.entities)
-            totalCountOfProject = totalCountOfProject != 0 ? totalCountOfProject : projectListResult.result.total
-            hasMoreData = totalCountOfProject > projects.count
-            
-            LoadingIndicator.stopLoading()
-            isLoading = false
+            do {
+                let projectListResult = try await apiManager.performRequest(
+                    with: nil, from: urlString,
+                    method: .get,
+                    modelType: ProjectDataModel.self
+                )
+                
+                let _ = realmDb.saveProjects(projectListResult.result.entities)
+                
+                projects.append(contentsOf: projectListResult.result.entities)
+                totalCountOfProject = totalCountOfProject != 0 ? totalCountOfProject : projectListResult.result.total
+                hasMoreData = totalCountOfProject > projects.count
+                
+                LoadingIndicator.stopLoading()
+                isLoading = false
+            } catch {
+                LoadingIndicator.stopLoading()
+                throw error
+            }
         }
     }
     
     func deleteProject(at index: Int) async throws(API.NetError) {
         
         guard
-            let urlString = apiManager.composeURL(for: .project, urlComponents: [projects[index].code])
+            let urlString = apiManager.composeURL(for: .project, urlComponents: [projects[index].code], queryItems: nil)
         else { throw .invalidURL }
         
         LoadingIndicator.startLoading()
         
         let deletingResult = try await apiManager.performRequest(
-            from: urlString,
+            with: nil, from: urlString,
             method: .delete,
             modelType: SharedResponseModel.self
         )

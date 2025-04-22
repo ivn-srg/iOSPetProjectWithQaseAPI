@@ -60,7 +60,8 @@ final class SuitesAndCasesViewModel {
         let entity = suitesAndCaseData[index]
         
         guard
-            let urlString = apiManager.composeURL(for: entity.isSuite ? .suites : .cases, urlComponents: [PROJECT_NAME, String(entity.id)])
+            let urlString = apiManager.composeURL(for: entity.isSuite ? .suites : .cases,
+                                                  urlComponents: [PROJECT_NAME, String(entity.id)], queryItems: nil)
         else { throw .invalidURL }
         
         Task { @MainActor in
@@ -68,7 +69,7 @@ final class SuitesAndCasesViewModel {
         }
         
         let deletingResult = try await apiManager.performRequest(
-            from: urlString,
+            with: nil, from: urlString,
             method: .delete,
             modelType: SharedResponseModel.self
         )
@@ -113,7 +114,7 @@ final class SuitesAndCasesViewModel {
             else { throw API.NetError.invalidURL }
             
             let countOfSuites = try await apiManager.performRequest(
-                from: urlStringSuites,
+                with: nil, from: urlStringSuites,
                 method: .get,
                 modelType: SuitesDataModel.self
             )
@@ -129,7 +130,7 @@ final class SuitesAndCasesViewModel {
             else { throw API.NetError.invalidURL }
             
             let suitesResult = try await apiManager.performRequest(
-                from: urlStringSuites,
+                with: nil, from: urlStringSuites,
                 method: .get,
                 modelType: SuitesDataModel.self
             )
@@ -164,7 +165,7 @@ final class SuitesAndCasesViewModel {
         if hasMoreCases && !isLoading {
             isLoading = true
             let testCasesResult = try await apiManager.performRequest(
-                from: urlStringCases,
+                with: nil, from: urlStringCases,
                 method: .get,
                 modelType: TestCasesModel.self
             )

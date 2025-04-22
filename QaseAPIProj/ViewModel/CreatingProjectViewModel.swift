@@ -55,7 +55,7 @@ final class CreatingProjectViewModel {
             return
         }
         
-        guard let urlString = apiManager.composeURL(for: .project, urlComponents: nil) else { throw .invalidURL }
+        guard let urlString = apiManager.composeURL(for: .project, urlComponents: nil, queryItems: nil) else { throw .invalidURL }
         
         LoadingIndicator.startLoading()
         

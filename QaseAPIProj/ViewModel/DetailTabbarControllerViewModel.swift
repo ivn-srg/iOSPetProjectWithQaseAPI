@@ -55,13 +55,13 @@ final class DetailTabbarControllerViewModel {
         }
         
         guard
-            let urlString = apiManager.composeURL(for: .cases, urlComponents: [PROJECT_NAME, String(caseId)])
+            let urlString = apiManager.composeURL(for: .cases, urlComponents: [PROJECT_NAME, String(caseId)], queryItems: nil)
         else { throw .invalidURL }
         
         LoadingIndicator.startLoading()
         
         let testCaseResult = try await apiManager.performRequest(
-            from: urlString,
+            with: nil, from: urlString,
             method: .get,
             modelType: TestCaseModel.self)
         
@@ -77,7 +77,7 @@ final class DetailTabbarControllerViewModel {
         
         guard
             let testCaseId = testCase?.id,
-            let urlString = apiManager.composeURL(for: .cases, urlComponents: [PROJECT_NAME, String(testCaseId)])
+            let urlString = apiManager.composeURL(for: .cases, urlComponents: [PROJECT_NAME, String(testCaseId)], queryItems: nil)
         else { throw .invalidURL }
         
         LoadingIndicator.startLoading()

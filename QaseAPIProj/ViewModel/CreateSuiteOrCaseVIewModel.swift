@@ -72,7 +72,7 @@ final class CreateSuiteOrCaseViewModel {
         if isFieldsEmpty { return }
         
         guard
-            let urlString = apiManager.composeURL(for: creatingEntityIsSuite ? .suites : .cases, urlComponents: [PROJECT_NAME])
+            let urlString = apiManager.composeURL(for: creatingEntityIsSuite ? .suites : .cases, urlComponents: [PROJECT_NAME], queryItems: nil)
         else { throw .invalidURL }
         
         LoadingIndicator.startLoading()

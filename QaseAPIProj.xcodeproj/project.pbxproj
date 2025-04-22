@@ -12,7 +12,6 @@
 		931E89C32CC930FD006A41C7 /* TextFieldWithPadding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 931E89C22CC930FD006A41C7 /* TextFieldWithPadding.swift */; };
 		932447392CA484A800998B94 /* SharedResponseModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932447382CA4848C00998B94 /* SharedResponseModel.swift */; };
 		934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */; };
-		9357F1E22C91732B00219BEC /* KeychainLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9357F1E12C91732B00219BEC /* KeychainLocal.swift */; };
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
 		935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE32B518A4000F08ECF /* LoaderView.swift */; };
 		935F2BA52CCFC73800546162 /* Ext+String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935F2BA42CCFC73800546162 /* Ext+String.swift */; };
@@ -118,7 +117,6 @@
 		931E89C22CC930FD006A41C7 /* TextFieldWithPadding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFieldWithPadding.swift; sourceTree = "<group>"; };
 		932447382CA4848C00998B94 /* SharedResponseModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedResponseModel.swift; sourceTree = "<group>"; };
 		934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropDownListPickerView.swift; sourceTree = "<group>"; };
-		9357F1E12C91732B00219BEC /* KeychainLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainLocal.swift; sourceTree = "<group>"; };
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		935DCFE32B518A4000F08ECF /* LoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderView.swift; sourceTree = "<group>"; };
 		935F2BA42CCFC73800546162 /* Ext+String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+String.swift"; sourceTree = "<group>"; };
@@ -288,7 +286,6 @@
 			children = (
 				935DCFE12B516BAA00F08ECF /* Constants.swift */,
 				93DCDF5E2BE51C2900D4F365 /* Protocols.swift */,
-				9357F1E12C91732B00219BEC /* KeychainLocal.swift */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -603,7 +600,6 @@
 				93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */,
 				93C8095E2CCBDEB9006BCCC9 /* ProfileViewController.swift in Sources */,
 				93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */,
-				9357F1E22C91732B00219BEC /* KeychainLocal.swift in Sources */,
 				935F2BA52CCFC73800546162 /* Ext+String.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

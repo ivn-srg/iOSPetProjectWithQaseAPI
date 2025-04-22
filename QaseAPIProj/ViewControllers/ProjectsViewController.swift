@@ -18,7 +18,18 @@ final class ProjectsViewController: UIViewController {
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.register(ProjectTableViewCell.self, forCellReuseIdentifier: ProjectTableViewCell.cellId)
         tv.backgroundColor = .clear
+        tv.accessibilityIdentifier = "projectsTableView"
         return tv
+    }()
+    
+    private lazy var rightBarButton: UIBarButtonItem = {
+        let rbb = UIBarButtonItem(
+            barButtonSystemItem: .add,
+            target: self,
+            action: #selector(addNewProject)
+        )
+        rbb.accessibilityIdentifier = "addNewProjectRBB"
+        return rbb
     }()
     
     // MARK: - Lifecycle
@@ -30,11 +41,8 @@ final class ProjectsViewController: UIViewController {
         configureRefreshControl()
         
         view.backgroundColor = AppTheme.bgPrimaryColor
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .add,
-            target: self,
-            action: #selector(addNewProject)
-        )
+        navigationItem.rightBarButtonItem = rightBarButton
+        navigationController?.navigationBar.accessibilityIdentifier = "navigationBar"
     }
     
     override func viewWillAppear(_ animated: Bool) {

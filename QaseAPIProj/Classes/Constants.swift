@@ -394,4 +394,4 @@ var TOKEN = ""
 
 var PROJECT_NAME = ""
 
-let apiManager = APIManager.shared
+let apiManager = ApiServiceConfiguration.shared.apiService

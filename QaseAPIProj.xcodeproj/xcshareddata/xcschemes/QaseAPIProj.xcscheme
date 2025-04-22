@@ -29,6 +29,30 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "93EE41FB2D9B10600028E085"
+               BuildableName = "QaseAPIProjTests.xctest"
+               BlueprintName = "QaseAPIProjTests"
+               ReferencedContainer = "container:QaseAPIProj.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "93EE42082D9B107A0028E085"
+               BuildableName = "QaseAPIProjUITests.xctest"
+               BlueprintName = "QaseAPIProjUITests"
+               ReferencedContainer = "container:QaseAPIProj.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

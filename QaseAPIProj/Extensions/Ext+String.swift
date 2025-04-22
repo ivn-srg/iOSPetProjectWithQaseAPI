@@ -7,7 +7,6 @@
 
 import Foundation
 import UIKit
-import Down
 
 // MARK: - Localized
 extension String {

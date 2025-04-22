@@ -59,7 +59,7 @@ final class AuthManager {
 private class KeychainService {
     static let shared = KeychainService()
     private let key = "authToken"
-    private let server = APIManager.shared.DOMEN
+    private let server = API.BASE_URL
     
     func saveToken(token: String) throws {
         // delete old token if it exists

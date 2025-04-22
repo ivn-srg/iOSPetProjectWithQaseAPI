@@ -15,6 +15,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         window = UIWindow()
         
+        if CommandLine.arguments.contains("UITests") {
+            // Используем мок сервис в тестовом режиме
+            ApiServiceConfiguration.shared.setMockingServiceEnabled()
+        }
+        
         window?.rootViewController = RootViewController()
         window?.makeKeyAndVisible()
         return true

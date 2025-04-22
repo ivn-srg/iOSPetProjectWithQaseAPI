@@ -17,6 +17,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         limg.contentMode = .scaleAspectFit
         limg.image = AppTheme.LogoApp
         limg.isUserInteractionEnabled = true
+        limg.accessibilityIdentifier = "logoImg"
         return limg
     }()
     
@@ -30,6 +31,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         inf.layer.borderColor = UIColor.gray.cgColor
         inf.placeholder = "Input your API Token"
         inf.delegate = inf
+        inf.accessibilityIdentifier = "inputTextField"
         return inf
     }()
     
@@ -40,6 +42,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         ab.layer.cornerRadius = 12
         ab.titleLabel?.textColor = .white
         ab.setTitle("Next", for: .normal)
+        ab.accessibilityIdentifier = "authButton"
         return ab
     }()
     

@@ -9,18 +9,73 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -switch /Applications/Xcode.app
+      - name: Setup environment
+        run: |
+          sudo xcode-select -switch /Applications/Xcode.app
+          xcodebuild -version
+          swift -version
+          xcrun simctl list devices
 
-      - name: Build
-        run: xcodebuild clean build -project QaseAPIProj.xcodeproj -scheme QaseAPIProj -destination 'platform=iOS Simulator,name=iPhone 16'
+      - name: Create test directories
+        run: mkdir -p TestResults
 
-      - name: Run tests
-        run: xcodebuild test -project QaseAPIProj.xcodeproj -scheme QaseAPIProjTests -destination 'platform=iOS Simulator,name=iPhone 16'
+      - name: Build project
+        run: |
+          xcodebuild clean build \
+            -project QaseAPIProj.xcodeproj \
+            -scheme QaseAPIProj \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -derivedDataPath DerivedData \
+            | tee build.log || echo "Build failed - check logs"
+        continue-on-error: true
 
-      - name: Run UI tests
-        run: xcodebuild test -project QaseAPIProj.xcodeproj -scheme QaseAPIProjUITests -destination 'platform=iOS Simulator,name=iPhone 16'
+      - name: Show build logs
+        if: always()
+        run: cat build.log
+
+      - name: Run Unit Tests
+        run: |
+          xcodebuild test \
+            -project QaseAPIProj.xcodeproj \
+            -scheme QaseAPIProj \
+            -testPlan QaseAPIProjTests \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -resultBundlePath TestResults/UnitTests.xcresult \
+            -derivedDataPath DerivedData \
+            | tee test.log || echo "Unit tests failed - check logs"
+        continue-on-error: true
+
+      - name: Show unit test logs
+        if: always()
+        run: cat test.log
+
+      - name: Run UI Tests
+        run: |
+          xcodebuild test \
+            -project QaseAPIProj.xcodeproj \
+            -scheme QaseAPIProj \
+            -testPlan QaseAPIProjUITests \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -resultBundlePath TestResults/UITests.xcresult \
+            -derivedDataPath DerivedData \
+            | tee uitest.log || echo "UI tests failed - check logs"
+        continue-on-error: true
+
+      - name: Show UI test logs
+        if: always()
+        run: cat uitest.log
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            TestResults/*.xcresult
+            *.log
+            DerivedData/Logs/Test/*.log

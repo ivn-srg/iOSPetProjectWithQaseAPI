@@ -22,16 +22,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
         return tv
     }()
     
-    private let emptyDataLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "There's nothing here yet 🙁".localized
-        label.textAlignment = .center
-        label.textColor = .gray
-        label.numberOfLines = 0
-        label.isHidden = true
-        return label
-    }()
+    private let emptyDataLabel: UILabel = EmptyDataLabel()
     
     // MARK: - Lifecycles
     

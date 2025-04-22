@@ -7,7 +7,7 @@
 
 import UIKit
 
-class SwitcherWithTitle: UIView {
+final class SwitcherWithTitle: UIView {
     // MARK: - Fields
     var switchValueChanged: ((Bool) -> Void)?
     private var viewModel: UpdatableEntityProtocol?

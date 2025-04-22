@@ -333,6 +333,39 @@
         }
       }
     },
+    "Incorrect input" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Некорректный ввод"
+          }
+        }
+      }
+    },
+    "Input the API Token for authorization on Qase service" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите свой API токен для авторизации на сервере Qase"
+          }
+        }
+      }
+    },
+    "Input your API Token" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите свой API токен"
+          }
+        }
+      }
+    },
     "Integration" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -445,6 +478,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Негативный"
+          }
+        }
+      }
+    },
+    "Next" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Далее"
           }
         }
       }

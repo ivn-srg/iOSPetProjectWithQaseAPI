@@ -38,8 +38,7 @@ struct AuthScreen: Screen {
     }
     
     mutating func fallingIntoProjectsScreen() -> ProjectsListScreen {
-        logoImage.tap()
-        logoImage.doubleTap()
+        logoImage.press(forDuration: 2)
         
         return ProjectsListScreen(app: app)
     }
@@ -71,14 +70,14 @@ struct ProjectsListScreen: Screen {
     }
     
     func checkNavigationTitle() {
-        sleep(5)
+        sleep(3)
         
         let navBarTitle = app.navigationBars[Identifiers.navBar].staticTexts["Repository"]
         XCTAssertTrue(navBarTitle.exists)
     }
     
     mutating func tapOnRightBarButton() -> CreateProjectScreen {
-        sleep(5)
+        sleep(3)
         
         addNewProjectRBB.tap()
         

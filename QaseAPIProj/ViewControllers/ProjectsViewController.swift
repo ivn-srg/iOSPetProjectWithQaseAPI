@@ -32,6 +32,8 @@ final class ProjectsViewController: UIViewController {
         return rbb
     }()
     
+    private lazy var emptyDataLabel: UILabel = EmptyDataLabel()
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -59,10 +61,19 @@ final class ProjectsViewController: UIViewController {
         tableVw.delegate = self
         tableVw.dataSource = self
         
+        view.addSubview(emptyDataLabel)
+        emptyDataLabel.snp.makeConstraints {
+            $0.center.equalToSuperview()
+        }
+        
         view.addSubview(tableVw)
         tableVw.snp.makeConstraints {
             $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
         }
+    }
+    
+    private func updateEmptyDataLabelVisibility() {
+        emptyDataLabel.isHidden = viewModel.countOfRows() > 0
     }
     
     // MARK: - @objc func for navigation
@@ -97,7 +108,8 @@ extension ProjectsViewController: NextViewControllerPusher {
 extension ProjectsViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        viewModel.countOfRows()
+        updateEmptyDataLabelVisibility()
+        return viewModel.countOfRows()
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

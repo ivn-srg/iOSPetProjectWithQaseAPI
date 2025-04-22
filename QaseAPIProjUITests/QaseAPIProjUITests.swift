@@ -42,7 +42,7 @@ final class QaseAPIProjUITests: XCTestCase {
     }
     
     @MainActor
-    func testPresetCreateProjectScreen() throws {
+    func testPresentCreatingProjectScreen() throws {
         // UI tests must launch the application that they test.
         let _ = projectsScreen.tapOnRightBarButton()
 

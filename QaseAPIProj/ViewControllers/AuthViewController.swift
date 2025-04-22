@@ -51,10 +51,6 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         super.viewDidLoad()
         setup()
         
-        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(tapForFillingTextLb))
-        tapGestureRecognizer.numberOfTapsRequired = 3
-        logoImg.addGestureRecognizer(tapGestureRecognizer)
-        
         let longTapGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(longTapForFillingTextLb))
         logoImg.addGestureRecognizer(longTapGestureRecognizer)
         
@@ -115,11 +111,6 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
                 message: "Input the API Token for authorization on Qase service".localized
             )
         }
-    }
-    
-    @objc private func tapForFillingTextLb() {
-        inputTokenField.text = KeychainLocal.QASE_API_KEY
-        authorizate()
     }
     
     @objc private func longTapForFillingTextLb() {

@@ -8,7 +8,7 @@
 import Foundation
 
 final class SuitesAndCasesViewModel {
-
+    
     // MARK: - Fields
     weak var delegate: UpdateTableViewProtocol?
     var parentSuite: ParentSuite?
@@ -23,14 +23,14 @@ final class SuitesAndCasesViewModel {
     private var totalCountOfCases = 0
     private var countOfFetchedCases = 0
     private var hasMoreCases = true
-
+    
     // MARK: - lifecycle
-
+    
     init(delegate: UpdateTableViewProtocol? = nil, parentSuite: ParentSuite? = nil) {
         self.delegate = delegate
         self.parentSuite = parentSuite
     }
-
+    
     // MARK: - Network funcs
     func requestEntitiesData(place: PlaceOfRequest = .start) async throws {
         switch place {
@@ -38,7 +38,7 @@ final class SuitesAndCasesViewModel {
             await MainActor.run {
                 LoadingIndicator.startLoading()
             }
-
+            
             resetPaginationArgs()
             loadCachedData()
             
@@ -83,7 +83,7 @@ final class SuitesAndCasesViewModel {
             LoadingIndicator.stopLoading()
         }
     }
-
+    
     // MARK: - private funcs
     private func loadCachedData() {
         if let cachedSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites),
@@ -102,8 +102,8 @@ final class SuitesAndCasesViewModel {
     
     private func fetchSuitesJSON() async throws {
         if suitesAndCaseData.isEmpty,
-            let testSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites),
-            !testSuites.isEmpty {
+           let testSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites),
+           !testSuites.isEmpty {
             suitesAndCaseData.append(contentsOf: testSuites)
             return
         }
@@ -190,7 +190,7 @@ final class SuitesAndCasesViewModel {
             isLoading = false
         }
     }
-
+    
     private func updateDataList(with newData: [SuiteAndCaseData]) {
         for newItem in newData {
             if let existingIndex = suitesAndCaseData.firstIndex(where: { $0.id == newItem.id }) {
@@ -200,7 +200,7 @@ final class SuitesAndCasesViewModel {
             }
         }
     }
-
+    
     private func resetPaginationArgs() {
         totalCountOfSuites = 0
         totalCountOfCases = 0

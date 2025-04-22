@@ -45,6 +45,7 @@ final class AuthManager {
             NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
             return
         }
+        
         try keychain.saveToken(token: token)
         TOKEN = token
         userDefaults.set(true, forKey: authStatusKey)

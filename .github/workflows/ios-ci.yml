@@ -1,82 +1,26 @@
-name: QaseAPIProj CI
+name: iOS CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
-  test:
-    name: Build and Test
+  build:
     runs-on: macos-latest
-    timeout-minutes: 30
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Xcode environment
-        run: |
-          sudo xcode-select -switch /Applications/Xcode.app
-          xcodebuild -version
-          swift -version
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
 
-      - name: Create test directories
-        run: |
-          mkdir -p TestResults
-          mkdir -p CoverageData
+      - name: Build
+        run: xcodebuild clean build -project QaseAPIProj.xcodeproj -scheme QaseAPIProj -destination 'platform=iOS Simulator,name=iPhone 16'
 
-      - name: Build project
-        run: |
-          xcodebuild build \
-            -project QaseAPIProj.xcodeproj \
-            -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
-            -derivedDataPath DerivedData \
-            -quiet
+      - name: Run tests
+        run: xcodebuild test -project QaseAPIProj.xcodeproj -scheme QaseAPIProjTests -destination 'platform=iOS Simulator,name=iPhone 16'
 
-      - name: Run Unit Tests with coverage
-        run: |
-          xcodebuild test \
-            -project QaseAPIProj.xcodeproj \
-            -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
-            -enableCodeCoverage YES \
-            -only-testing:QaseAPIProjTests \
-            -resultBundlePath TestResults/UnitTests.xcresult \
-            -derivedDataPath DerivedData \
-            | xcpretty && exit ${PIPESTATUS[0]}
-
-      - name: Run UI Tests with coverage
-        run: |
-          xcodebuild test \
-            -project QaseAPIProj.xcodeproj \
-            -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
-            -enableCodeCoverage YES \
-            -only-testing:QaseAPIProjUITests \
-            -resultBundlePath TestResults/UITests.xcresult \
-            -derivedDataPath DerivedData \
-            | xcpretty && exit ${PIPESTATUS[0]}
-
-      - name: Generate coverage reports
-        if: always()
-        run: |
-          xcrun xccov view --archive --json DerivedData/Logs/Test/*.xcresult > CoverageData/coverage.json
-          xcrun xccov view --archive DerivedData/Logs/Test/*.xcresult > CoverageData/coverage.txt
-          cp DerivedData/Logs/Test/*.profdata CoverageData/coverage.profdata
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: TestResults/*.xcresult
-
-      - name: Upload coverage data
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-data
-          path: CoverageData/*
+      - name: Run UI tests
+        run: xcodebuild test -project QaseAPIProj.xcodeproj -scheme QaseAPIProjUITests -destination 'platform=iOS Simulator,name=iPhone 16'

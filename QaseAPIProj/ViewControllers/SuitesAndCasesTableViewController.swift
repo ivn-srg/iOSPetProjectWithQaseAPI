@@ -8,7 +8,7 @@
 import UIKit
 
 final class SuitesAndCasesTableViewController: UIViewController {
-
+    
     var viewModel: SuitesAndCasesViewModel
     
     // MARK: - UI

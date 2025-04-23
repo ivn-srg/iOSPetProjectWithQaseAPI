@@ -29,7 +29,7 @@ final class CountsOfProjectRO: EmbeddedObject {
     @Persisted var milestones: Int
     @Persisted var runs: TestRunsRO?
     @Persisted var defects: BugReportsRO?
-            
+    
     convenience init?(countsOfProjectData: CountsOfProject?) {
         guard let countsOfProjectData = countsOfProjectData else { return nil }
         
@@ -45,7 +45,7 @@ final class CountsOfProjectRO: EmbeddedObject {
 final class TestRunsRO: EmbeddedObject {
     @Persisted var total: Int
     @Persisted var active: Int
-            
+    
     convenience init?(testRunsData: TestRuns?) {
         guard let testRunsData = testRunsData else { return nil }
         

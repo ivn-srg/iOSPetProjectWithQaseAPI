@@ -32,7 +32,7 @@ final class SuitesAndCasesViewModel {
     }
     
     // MARK: - Network funcs
-    func requestEntitiesData(place: PlaceOfRequest = .start) async throws {
+    func requestEntitiesData(place: PlaceOfRequest) async throws {
         switch place {
         case .start, .refresh:
             await MainActor.run {
@@ -121,12 +121,11 @@ final class SuitesAndCasesViewModel {
             totalCountOfSuites = countOfSuites.result.total
         }()
         
-        let limit = 50
         var offset = 0
         
         repeat {
             guard
-                let urlStringSuites = apiManager.composeURL(for: .suites, urlComponents: [PROJECT_NAME], queryItems: [.limit: limit, .offset: offset])
+                let urlStringSuites = apiManager.composeURL(for: .suites, urlComponents: [PROJECT_NAME], queryItems: [.limit: Constants.LIMIT_OF_REQUEST, .offset: offset])
             else { throw API.NetError.invalidURL }
             
             let suitesResult = try await apiManager.performRequest(
@@ -146,7 +145,7 @@ final class SuitesAndCasesViewModel {
             let _ = realmDb.saveTestEntities(newSuites)
             updateDataList(with: newSuites)
             
-            offset += limit
+            offset += Constants.LIMIT_OF_REQUEST
         } while offset < totalCountOfSuites
     }
     

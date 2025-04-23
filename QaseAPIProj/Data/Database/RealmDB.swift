@@ -33,7 +33,7 @@ final class RealmManager {
     private init() {}
     
     private var realm: Realm?
-
+    
     func setupRealm() {
         Task { @MainActor in
             do {
@@ -43,7 +43,7 @@ final class RealmManager {
             }
         }
     }
-
+    
     func getRealm() -> Realm? {
         if realm == nil { setupRealm() }
         
@@ -79,7 +79,7 @@ extension RealmManager {
     }
 }
 
-// MARK: - Hero
+// MARK: - Projects
 extension RealmManager: HeroDAO {
     func saveProjects(_ projects: [Project]) -> Bool {
         do {

@@ -19,7 +19,7 @@ enum CreatingEntitySelect: String {
 final class CreateSuiteOrCaseViewController: UIViewController {
     // MARK: - Fields
     private var viewModel: CreateSuiteOrCaseViewModel
-
+    
     // MARK: - UI components
     private lazy var customNavigationView: UIView = {
         let view = UIView()

@@ -22,9 +22,9 @@ enum CreateCaseTextFieldType: String, CaseIterable {
     case automation = "Automation status"
     case status = "Status"
     case suiteId = "Parent suite"
-//    case attachments = "Attachments"
-//    case steps = "Steps"
-//    case tags = "Tags"
+    //    case attachments = "Attachments"
+    //    case steps = "Steps"
+    //    case tags = "Tags"
 }
 
 final class CreateTestCaseView: UIView {

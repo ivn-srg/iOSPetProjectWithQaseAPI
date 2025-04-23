@@ -96,7 +96,7 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
         } else {
             accessoryType = .disclosureIndicator
         }
-                
+        
         titleLbl.text = dataForCell.title
         descriptionLbl.text = dataForCell.itemDescription?.replacingOccurrences(of: "\n", with: " ")
         

@@ -96,7 +96,7 @@ private class KeychainService {
         else { return nil }
         return token
     }
-
+    
     func deleteToken() throws {
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                     kSecAttrAccount as String: key,

@@ -87,7 +87,7 @@ final class GeneralDetailCaseViewController: UIViewController {
     }()
     
     // MARK: - Lifecycle
-
+    
     init(vm: DetailTabbarControllerViewModel) {
         self.vm = vm
         super.init(nibName: nil, bundle: nil)
@@ -208,27 +208,5 @@ extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
 extension GeneralDetailCaseViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         print(indexPath)
-        // Handle selection logic
     }
 }
-
-#if canImport(SwiftUI) && DEBUG
-import SwiftUI
-
-struct ViewControllerRepresentable: UIViewControllerRepresentable {
-
-    func makeUIViewController(context: Context) -> some UIViewController {
-        return TestCaseViewController(caseUniqueKey: "\(317)_\(PROJECT_NAME)")
-    }
-
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
-
-    }
-}
-
-struct ViewController_Preview: PreviewProvider {
-    static var previews: some View {
-        ViewControllerRepresentable()
-    }
-}
-#endif

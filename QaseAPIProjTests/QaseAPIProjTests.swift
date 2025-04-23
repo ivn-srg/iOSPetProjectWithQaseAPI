@@ -12,7 +12,7 @@ import UIKit
 struct QaseAPIProjTests {
     
     let apiManager = APIMockManager.shared
-
+    
     @Test func example() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
         let whiteColor = UIColor.white
@@ -31,7 +31,7 @@ struct QaseAPIProjTests {
         
         #expect(projectUrl.absoluteString == "https://api.qase.io/v1/project?limit=10")
     }
-
+    
     @Test func checkFirstProjectTitle() async throws {
         let dataURL = apiManager.composeURL(for: .project, urlComponents: nil)!
         let projectsData = try await apiManager.performRequest(from: dataURL, method: .get, modelType: ProjectDataModel.self)

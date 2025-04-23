@@ -74,12 +74,12 @@ final class StepCell: UICollectionViewCell {
 final class PaddedLabel: UILabel {
     
     var textInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-
+    
     override func drawText(in rect: CGRect) {
         let insetsRect = rect.inset(by: textInsets)
         super.drawText(in: insetsRect)
     }
-
+    
     override var intrinsicContentSize: CGSize {
         let size = super.intrinsicContentSize
         let width = size.width + textInsets.left + textInsets.right

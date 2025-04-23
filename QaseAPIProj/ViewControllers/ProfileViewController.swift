@@ -8,7 +8,6 @@
 import UIKit
 
 final class ProfileViewController: UIViewController {
-    // MARK: - Fields
     
     // MARK: - UI components
     private lazy var screenTitle: UILabel = {

@@ -14,14 +14,14 @@ struct API {
         case invalidURL, parsingError(String), serializationError(String),
              noInternetConnection, timeout, otherNetworkError(String)
     }
-
+    
     enum HTTPMethod: String {
         case get = "GET"
         case post = "POST"
         case patch = "PATCH"
         case delete = "DELETE"
     }
-
+    
     enum Endpoint: String, CaseIterable {
         case project = "project"
         case suites = "suite"
@@ -236,9 +236,9 @@ final class APIMockManager: NetworkManager {
 
 final class ApiServiceConfiguration {
     public static let shared = ApiServiceConfiguration()
-
+    
     private init() {}
-
+    
     var apiService: NetworkManager {
         if shouldUseMockingService {
             return APIMockManager.shared
@@ -246,9 +246,9 @@ final class ApiServiceConfiguration {
             return APIManager.shared
         }
     }
-
+    
     private var shouldUseMockingService: Bool = false
-
+    
     func setMockingServiceEnabled() {
         shouldUseMockingService = true
     }

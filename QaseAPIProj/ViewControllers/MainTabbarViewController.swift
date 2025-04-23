@@ -8,9 +8,6 @@
 import UIKit
 
 final class MainTabbarViewController: UITabBarController {
-    // MARK: - Fields
-    
-    // MARK: - UI components
     
     // MARK: - LifeCycle
     init() {

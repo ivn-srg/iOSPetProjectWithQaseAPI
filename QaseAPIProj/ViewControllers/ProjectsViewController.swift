@@ -8,7 +8,7 @@
 import UIKit
 
 final class ProjectsViewController: UIViewController {
-
+    
     var suitesAndCasesCompletion: (() -> Void)? = {}
     var viewModel: ProjectsViewModel = .init()
     

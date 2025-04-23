@@ -8,7 +8,7 @@
 import UIKit
 
 class ProjectTableViewCell: UITableViewCell {
-
+    
     static let cellId = "ProjectTableViewCell"
     
     // MARK: - UI

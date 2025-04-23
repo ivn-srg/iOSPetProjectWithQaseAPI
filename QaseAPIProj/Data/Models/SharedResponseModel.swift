@@ -24,7 +24,7 @@ struct ResponseWithErrorModel: Codable {
 enum FlexibleBool: Codable {
     case bool(Bool)
     case int(Int)
-
+    
     var value: Bool {
         switch self {
         case .bool(let boolValue):
@@ -33,7 +33,7 @@ enum FlexibleBool: Codable {
             return intValue != 0
         }
     }
-
+    
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let boolValue = try? container.decode(Bool.self) {
@@ -50,7 +50,7 @@ enum FlexibleBool: Codable {
             )
         }
     }
-
+    
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {

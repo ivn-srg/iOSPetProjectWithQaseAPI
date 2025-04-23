@@ -9,8 +9,6 @@ import UIKit
 
 class DropDownListPickerView: UIPickerView, UIPickerViewDelegate, UIPickerViewDataSource {
     
-//    let viewModel: DropDownListPickerViewModel
-    
     var data = [Severity.blocker.rawValue, Severity.critical.rawValue]
     var textField = UITextField()
     var pickerView = UIPickerView()

@@ -10,7 +10,7 @@ import UIKit
 final class CreatingProjectViewController: UIViewController {
     // MARK: - Fields
     private var viewModel: CreatingProjectViewModel
-
+    
     // MARK: - UI components
     private lazy var customNavigationView: UIView = {
         let view = UIView()

@@ -60,7 +60,7 @@ struct SuiteAndCaseData {
     init(suite: SuiteEntity) {
         self.init(
             isSuite: true,
-            id: suite.id,
+            id: suite.id ?? 0,
             title: suite.title,
             description: suite.itemDescription,
             parentId: suite.parentId,

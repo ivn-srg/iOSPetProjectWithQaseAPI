@@ -394,6 +394,17 @@
         }
       }
     },
+    "Invalid credentials" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Некорректые данные"
+          }
+        }
+      }
+    },
     "Is Flaky" : {
       "extractionState" : "manual",
       "localizations" : {

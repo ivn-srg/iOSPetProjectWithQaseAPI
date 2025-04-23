@@ -49,8 +49,9 @@ final class ProjectsViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
-        executeWithErrorHandling {
-            try await self.viewModel.fetchProjectsJSON()
+        
+        executeWithErrorHandling { [weak self] in
+            try await self?.viewModel.requestEntitiesData(place: .start)
         }
     }
     
@@ -128,16 +129,6 @@ extension ProjectsViewController: UITableViewDataSource {
 
 // MARK: - UITableViewDelegate
 extension ProjectsViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        cell.separatorInset = UIEdgeInsets(top: 0, left: 1, bottom: 2, right: -5)
-        
-        if viewModel.projects.count - indexPath.row <= 3, !viewModel.isLoading {
-            executeWithErrorHandling {
-                try await self.viewModel.fetchProjectsJSON()
-            }
-        }
-    }
-    
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let swipeAction = UIContextualAction(style: .destructive, title: "Delete".localized) { [weak self] _, _, completionHandler in
             guard let self = self else { return }
@@ -159,6 +150,16 @@ extension ProjectsViewController: UITableViewDelegate {
         swipeAction.image = AppTheme.trashImage
         return UISwipeActionsConfiguration(actions: [swipeAction])
     }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        cell.separatorInset = UIEdgeInsets(top: 0, left: 1, bottom: 2, right: -5)
+        
+        if viewModel.projects.count - indexPath.row <= 3 && !viewModel.isLoading {
+            executeWithErrorHandling { [weak self] in
+                try await self?.viewModel.requestEntitiesData(place: .continuos)
+            }
+        }
+    }
 }
 
 extension ProjectsViewController {
@@ -170,8 +171,8 @@ extension ProjectsViewController {
     }
     
     @objc func handleRefreshControl() {
-        executeWithErrorHandling {
-            try await self.viewModel.fetchProjectsJSON()
+        executeWithErrorHandling { [weak self] in
+            try await self?.viewModel.requestEntitiesData(place: .refresh, )
         }
         
         Task { @MainActor in

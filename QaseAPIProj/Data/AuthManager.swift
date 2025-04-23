@@ -31,25 +31,29 @@ final class AuthManager {
     }
     
     func getAuthToken() -> String? {
-        guard let authToken = keychain.getToken() else { return nil }
-        
-        TOKEN = TOKEN.isEmpty ? authToken : TOKEN
-        return authToken
+        keychain.getToken()
     }
     
     func loggedIn(token: String?) throws {
-        guard let token = token else {
-            try keychain.deleteToken()
-            TOKEN = ""
-            userDefaults.set(false, forKey: authStatusKey)
+        Task { @MainActor in
+            guard let token else {
+                
+                try keychain.deleteToken()
+                
+                userDefaults.set(false, forKey: authStatusKey)
+                NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
+                return
+            }
+            
+            let authStatusCheck = await apiManager.auth(by: token)
+            
+            guard authStatusCheck else { throw API.NetError.invalidCredantials }
+            
+            try keychain.saveToken(token: token)
+            
+            userDefaults.set(true, forKey: authStatusKey)
             NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
-            return
         }
-        
-        try keychain.saveToken(token: token)
-        TOKEN = token
-        userDefaults.set(true, forKey: authStatusKey)
-        NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
     }
     
     func logout() throws {

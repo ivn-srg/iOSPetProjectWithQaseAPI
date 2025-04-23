@@ -27,6 +27,8 @@ extension UIViewController {
                         errorMessage = message
                     case .noInternetConnection:
                         errorMessage = "Internet connection problem".localized
+                    case .invalidCredantials:
+                        errorMessage = "Invalid credentials".localized
                     }
                 } else {
                     errorMessage = error.localizedDescription

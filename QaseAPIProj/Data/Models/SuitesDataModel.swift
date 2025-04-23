@@ -20,13 +20,27 @@ struct SuitesResult: Codable {
 }
 
 struct SuiteEntity: Codable {
-    let id: Int
-    let title: String
-    let itemDescription: String?
-    let preconditions: String?
-    let position: Int
-    let casesCount: Int
-    let parentId: Int?
+    let id: Int?
+    var title: String
+    var itemDescription: String?
+    var preconditions: String?
+    let position: Int?
+    let casesCount: Int?
+    var parentId: Int?
+    
+    static var empty: SuiteEntity {
+        return .init(title: "", itemDescription: "", preconditions: "", parentId: 0)
+    }
+    
+    init(title: String, itemDescription: String, preconditions: String, parentId: Int) {
+        self.title = title
+        self.itemDescription = itemDescription
+        self.preconditions = preconditions
+        self.parentId = parentId
+        self.id = nil
+        self.casesCount = nil
+        self.position = nil
+    }
     
     enum CodingKeys: String, CodingKey {
         case id, title, position, preconditions
@@ -41,23 +55,23 @@ struct SuiteEntity: Codable {
         // Раскодируйте каждое свойство
         id = try container.decode(Int.self, forKey: .id)
         title = try container.decode(String.self, forKey: .title)
-        itemDescription = try container.decode(String?.self, forKey: .itemDescription)
-        preconditions = try container.decode(String?.self, forKey: .preconditions)
+        itemDescription = try container.decodeIfPresent(String.self, forKey: .itemDescription)
+        preconditions = try container.decodeIfPresent(String.self, forKey: .preconditions)
         position = try container.decode(Int.self, forKey: .position)
-        casesCount = try container.decode(Int.self, forKey: .caseCount)
-        parentId = try container.decode(Int?.self, forKey: .parentId)
+        casesCount = try container.decodeIfPresent(Int.self, forKey: .caseCount)
+        parentId = try container.decodeIfPresent(Int.self, forKey: .parentId)
     }
     
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         
-        try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(id, forKey: .id)
         try container.encode(title, forKey: .title)
         try container.encode(itemDescription, forKey: .itemDescription)
         try container.encode(preconditions, forKey: .preconditions)
-        try container.encode(position, forKey: .position)
-        try container.encode(casesCount, forKey: .caseCount)
-        try container.encode(parentId, forKey: .parentId)
+        try container.encodeIfPresent(position, forKey: .position)
+        try container.encodeIfPresent(casesCount, forKey: .caseCount)
+        try container.encodeIfPresent(parentId, forKey: .parentId)
     }
 }
 
@@ -72,17 +86,6 @@ struct ParentSuite {
         self.id = id
         self.title = title
         self.codeOfProject = codeOfProject
-    }
-}
-
-struct CreatingSuite: Encodable {
-    var title: String
-    var description: String
-    var preconditions: String
-    var parentId: Int
-    
-    static var empty: CreatingSuite {
-        return .init(title: "", description: "", preconditions: "", parentId: 0)
     }
 }
 

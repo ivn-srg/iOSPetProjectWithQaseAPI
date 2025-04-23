@@ -78,6 +78,7 @@
 		93F866482D9DC136006F6F5C /* suites_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 93F866342D9DBD24006F6F5C /* suites_data.json */; };
 		93F866492D9DC13B006F6F5C /* test_cases_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 93F866352D9DBD24006F6F5C /* test_cases_data.json */; };
 		93F8664A2D9DC613006F6F5C /* Ext+String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935F2BA42CCFC73800546162 /* Ext+String.swift */; };
+		93F9584F2DB95EAE00EA8D96 /* TestCaseFieldEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F9584E2DB95E8700EA8D96 /* TestCaseFieldEnums.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -175,6 +176,7 @@
 		93F866402D9DBD2A006F6F5C /* QaseAPIProjUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QaseAPIProjUITests.swift; sourceTree = "<group>"; };
 		93F866412D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QaseAPIProjUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		93F866422D9DBD2A006F6F5C /* Screens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens.swift; sourceTree = "<group>"; };
+		93F9584E2DB95E8700EA8D96 /* TestCaseFieldEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCaseFieldEnums.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -284,6 +286,7 @@
 		937650C32B6CE7C800B5336B /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				93F9584E2DB95E8700EA8D96 /* TestCaseFieldEnums.swift */,
 				935DCFE12B516BAA00F08ECF /* Constants.swift */,
 				93DCDF5E2BE51C2900D4F365 /* Protocols.swift */,
 			);
@@ -583,6 +586,7 @@
 				93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */,
 				93CA94762CCA8A3900D99517 /* Ext+UIViewController.swift in Sources */,
 				937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */,
+				93F9584F2DB95EAE00EA8D96 /* TestCaseFieldEnums.swift in Sources */,
 				932447392CA484A800998B94 /* SharedResponseModel.swift in Sources */,
 				93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */,
 				93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */,

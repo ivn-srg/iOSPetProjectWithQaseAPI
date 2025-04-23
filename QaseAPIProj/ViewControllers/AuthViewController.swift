@@ -97,10 +97,16 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputToken.isEmpty {
             do {
                 try AuthManager.shared.loggedIn(token: inputToken)
+            } catch API.NetError.invalidCredantials {
+                UIAlertController.showSimpleAlert(
+                    on: self,
+                    title: "Invalid Credantials".localized,
+                    message: "You inputed wrong API Token. Try again"
+                )
             } catch {
                 UIAlertController.showSimpleAlert(
                     on: self,
-                    title: "errorTitle".localized,
+                    title: "Something went wrong".localized,
                     message: error.localizedDescription
                 )
             }

@@ -115,7 +115,9 @@ class PropertiesDetailCaseViewController: UIViewController {
         }
         
         isFlakySwitch.switchValueChanged = { [weak self] isOn in
-            self?.vm.changedTestCase?.isFlaky = isOn ? 1 : 0
+            guard let self else { return }
+            
+            self.vm.changedTestCase?.isFlaky = isOn
         }
     }
 }
@@ -139,7 +141,7 @@ extension PropertiesDetailCaseViewController: DetailTestCaseProtocol {
                 typeField.updateValue()
                 layerField.updateValue()
                 automationStatusField.updateValue()
-                isFlakySwitch.configure(with: testCase.isFlaky == 1)
+                isFlakySwitch.configure(with: testCase.isFlaky)
             }
         }
     }

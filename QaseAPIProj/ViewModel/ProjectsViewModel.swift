@@ -17,51 +17,74 @@ final class ProjectsViewModel {
         }
     }
     var isLoading = false
-    private var totalCountOfProject: Int = 0
-    private var hasMoreData = true
+    private var totalCountOfProjects = 0
+    private var countOfFetchedProjects = 0
+    private var hasMoreCases = true
+    
     private let realmDb = RealmManager.shared
     
     // MARK: - lifecycle
     init() {}
     
     // MARK: - Network funcs
-    func fetchProjectsJSON(place: PlaceOfRequest = .start) async throws {
-        if hasMoreData {
-            LoadingIndicator.startLoading()
+    func requestEntitiesData(place: PlaceOfRequest) async throws {
+        switch place {
+        case .start, .refresh:
+            await MainActor.run {
+                LoadingIndicator.startLoading()
+            }
+            
+            resetPaginationArgs()
+            loadCachedData()
+            
+            fallthrough
+        case .continuos:
+            do {
+                try await fetchProjectsJSON()
+            } catch {
+                print("Error syncing data: \(error)")
+            }
+            
+            await MainActor.run {
+                LoadingIndicator.stopLoading()
+            }
+        }
+    }
+    
+    private func fetchProjectsJSON() async throws {
+        
+        guard
+            let urlString = apiManager.composeURL(for: .project, urlComponents: nil, queryItems: [
+                .limit: 20, .offset: projects.count
+            ])
+        else { throw API.NetError.invalidURL }
+        
+        if hasMoreCases && !isLoading {
             isLoading = true
             
-            if place == .start && projects.isEmpty, let cashedProjects = realmDb.getProjects(), !cashedProjects.isEmpty {
-                self.projects.append(contentsOf: cashedProjects)
-                LoadingIndicator.stopLoading()
-                isLoading = false
-                return
-            }
+            let projectListResult = try await apiManager.performRequest(
+                with: nil, from: urlString,
+                method: .get,
+                modelType: ProjectDataModel.self
+            )
             
-            guard
-                let urlString = apiManager.composeURL(for: .project, urlComponents: nil, queryItems: [
-                    .limit: 20, .offset: projects.count
-                ])
-            else { throw API.NetError.invalidURL }
+            let _ = realmDb.saveProjects(projectListResult.result.entities)
             
-            do {
-                let projectListResult = try await apiManager.performRequest(
-                    with: nil, from: urlString,
-                    method: .get,
-                    modelType: ProjectDataModel.self
-                )
-                
-                let _ = realmDb.saveProjects(projectListResult.result.entities)
-                
-                projects.append(contentsOf: projectListResult.result.entities)
-                totalCountOfProject = totalCountOfProject != 0 ? totalCountOfProject : projectListResult.result.total
-                hasMoreData = totalCountOfProject > projects.count
-                
-                LoadingIndicator.stopLoading()
-                isLoading = false
-            } catch {
-                LoadingIndicator.stopLoading()
-                throw error
-            }
+            projects.append(contentsOf: projectListResult.result.entities)
+            totalCountOfProjects = totalCountOfProjects != 0
+            ? totalCountOfProjects
+            : projectListResult.result.total
+            
+            countOfFetchedProjects += Constants.LIMIT_OF_REQUEST
+            hasMoreCases = countOfFetchedProjects < totalCountOfProjects
+
+            isLoading = false
+        }
+    }
+    
+    private func loadCachedData() {
+        if projects.isEmpty, let cashedProjects = realmDb.getProjects(), !cashedProjects.isEmpty {
+            self.projects.append(contentsOf: cashedProjects)
         }
     }
     
@@ -86,6 +109,12 @@ final class ProjectsViewModel {
         }
         
         LoadingIndicator.stopLoading()
+    }
+    
+    private func resetPaginationArgs() {
+        totalCountOfProjects = 0
+        countOfFetchedProjects = 0
+        hasMoreCases = true
     }
     
     // MARK: - VC funcs

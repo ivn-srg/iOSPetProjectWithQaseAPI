@@ -51,14 +51,22 @@ final class CustomSelectableView: UIButton {
     }()
     
     // MARK: - Lyfecycle
-    init(
-        textFieldType: FieldType,
-        detailCaseVM: UpdatableEntityProtocol?
-    ) {
+    init(textFieldType: FieldType, detailCaseVM: UpdatableEntityProtocol?) {
         self.textFieldType = textFieldType
         self.testCaseViewModel = detailCaseVM
         super.init(frame: .zero)
         
+        setupDataSource(textFieldType)
+        configureView()
+        setupActionsMenu()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: - setup UI funcs
+    private func setupDataSource(_ textFieldType: FieldType) {
         let testCase = testCaseViewModel?.testCase
         
         switch textFieldType {
@@ -85,38 +93,6 @@ final class CustomSelectableView: UIButton {
             selectableValue = testCase != nil ? testCase!.automation.menuItem : MenuItem()
         default: break
         }
-        
-        configureView()
-        
-        let actionList = dataSource.map { item in
-            UIAction(
-                title: item.title,
-                image: item.image
-            ) { action in
-                if self.selectableValue == nil {
-                    self.selectableValue = MenuItem(
-                        id: item.id,
-                        title: action.title,
-                        image: action.image
-                    )
-                } else {
-                    self.selectableValue?.id = item.id
-                    self.selectableValue?.title = action.title
-                    self.selectableValue?.image = action.image
-                }
-                
-                self.textLbl.text = action.title
-                self.trailingImage.image = action.image
-                
-                self.updateTestCaseData()
-            }
-        }
-        menu = UIMenu(title: "", children: actionList)
-        showsMenuAsPrimaryAction = true
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
     }
     
     private func configureView() {
@@ -144,87 +120,116 @@ final class CustomSelectableView: UIButton {
         }
     }
     
+    private func setupActionsMenu() {
+        let actionList = dataSource.map { item in
+            UIAction(
+                title: item.title,
+                image: item.image
+            ) { action in
+                if self.selectableValue == nil {
+                    self.selectableValue = MenuItem(
+                        id: item.id,
+                        title: action.title,
+                        image: action.image
+                    )
+                } else {
+                    self.selectableValue?.id = item.id
+                    self.selectableValue?.title = action.title
+                    self.selectableValue?.image = action.image
+                }
+                
+                self.textLbl.text = action.title
+                self.trailingImage.image = action.image
+                
+                self.updateTestCaseData()
+            }
+        }
+        
+        menu = UIMenu(title: "", children: actionList)
+        showsMenuAsPrimaryAction = true
+    }
+    
     func updateTestCaseData() {
-        guard let testCaseViewModel = testCaseViewModel else { return }
+        guard let testCaseViewModel else { return }
         let testCase = testCaseViewModel.testCase
         
         switch textFieldType {
         case .severity:
             let selectedValue = if selectableValue != nil {
-                selectableValue
+                selectableValue!
             } else if let testCase = testCase {
                 testCase.severity.menuItem
             } else {
                 Severity.nothing.menuItem
             }
             
-            testCaseViewModel.updateValue(for: .severity, value: selectedValue)
+            testCaseViewModel.updateValue(for: .severity, value: selectedValue.id)
         case .status:
             let selectedValue = if selectableValue != nil {
-                selectableValue
+                selectableValue!
             } else if let testCase = testCase {
                 testCase.status.menuItem
             } else {
                 Status.actual.menuItem
             }
             
-            testCaseViewModel.updateValue(for: .status, value: selectedValue)
+            testCaseViewModel.updateValue(for: .status, value: selectedValue.id)
         case .priority:
             let selectedValue = if selectableValue != nil {
-                selectableValue
+                selectableValue!
             } else if let testCase = testCase {
                 testCase.priority.menuItem
             } else {
                 Priority.nothing.menuItem
             }
             
-            testCaseViewModel.updateValue(for: .priority, value: selectedValue)
+            testCaseViewModel.updateValue(for: .priority, value: selectedValue.id)
         case .behavior:
             let selectedValue = if selectableValue != nil {
-                selectableValue
+                selectableValue!
             } else if let testCase = testCase {
                 testCase.behavior.menuItem
             } else {
                 Behavior.positive.menuItem
             }
             
-            testCaseViewModel.updateValue(for: .behavior, value: selectedValue)
+            testCaseViewModel.updateValue(for: .behavior, value: selectedValue.id)
         case .type:
             let selectedValue = if selectableValue != nil {
-                selectableValue
+                selectableValue!
             } else if let testCase = testCase {
                 testCase.type.menuItem
             } else {
                 Types.other.menuItem
             }
             
-            testCaseViewModel.updateValue(for: .type, value: selectedValue)
+            testCaseViewModel.updateValue(for: .type, value: selectedValue.id)
         case .layer:
             let selectedValue = if selectableValue != nil {
-                selectableValue
+                selectableValue!
             } else if let testCase = testCase {
                 testCase.layer.menuItem
             } else {
                 Layer.e2e.menuItem
             }
             
-            testCaseViewModel.updateValue(for: .layer, value: selectedValue)
+            testCaseViewModel.updateValue(for: .layer, value: selectedValue.id)
         case .automation:
             let selectedValue = if selectableValue != nil {
-                selectableValue
+                selectableValue!
             } else if let testCase = testCase {
                 testCase.automation.menuItem
             } else {
                 AutomationStatus.manual.menuItem
             }
             
-            testCaseViewModel.updateValue(for: .automation, value: selectedValue)
+            testCaseViewModel.updateValue(for: .automation, value: selectedValue.id)
         default: break
         }
     }
     
     func updateSelectedValue() {
-        guard let testCaseViewModel = testCaseViewModel else { return }
+        guard let testCaseViewModel else { return }
         
         switch textFieldType {
         case .severity:

@@ -75,20 +75,24 @@ final class CreateTestCaseView: UIView {
         CreateCaseTextFieldType.allCases.forEach {
             switch $0 {
             case .title, .description, .preconditions, .postconditions, .suiteId:
+                
                 guard let textFieldType = FieldType(rawValue: $0.rawValue) else { return }
                 let textField = GeneralCaseTextField(textType: textFieldType, detailVM: linkedViewModel)
                 stackView.addArrangedSubview(textField)
             case .severity, .status, .priority, .behavior, .type, .layer, .automation:
+                
                 guard let menuFieldType = FieldType(rawValue: $0.rawValue) else { return }
                 let menuField = PropertiesPickerTextField(textType: menuFieldType, detailCaseVM: linkedViewModel)
                 stackView.addArrangedSubview(menuField)
             case .isFlaky:
+                
                 let switcher = SwitcherWithTitle(title: "Is Flaky".localized, testCaseVM: linkedViewModel)
                 switcher.switchValueChanged = { [weak self] isOn in
                     guard let self = self else { return }
                     
-                    self.linkedViewModel.creatingTestCase.isFlaky = isOn ? 1 : 0
+                    self.linkedViewModel.creatingTestCase.isFlaky = isOn
                 }
+                
                 stackView.addArrangedSubview(switcher)
                 switcher.snp.makeConstraints {
                     $0.height.equalTo(40)

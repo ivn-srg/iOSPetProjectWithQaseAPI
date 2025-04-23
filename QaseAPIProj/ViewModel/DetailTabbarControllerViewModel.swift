@@ -114,23 +114,26 @@ extension DetailTabbarControllerViewModel: UpdatableEntityProtocol {
             default: break
             }
         case .severity, .status, .priority, .behavior, .type, .layer, .isFlaky, .automation:
+            
+            let intValue = value as? Int
+            
             switch field {
             case .severity:
-                changedTestCase?.severity = value as? Severity ?? Severity.nothing
+                changedTestCase?.severity = Severity(intValue ?? 0)
             case .status:
-                changedTestCase?.status = value as? Status ?? Status.actual
+                changedTestCase?.status = Status(intValue ?? 0)
             case .priority:
-                changedTestCase?.priority = value as? Priority ?? Priority.nothing
+                changedTestCase?.priority = Priority(intValue ?? 0)
             case .behavior:
-                changedTestCase?.behavior = value as? Behavior ?? Behavior.nothing
+                changedTestCase?.behavior = Behavior(intValue ?? 0)
             case .type:
-                changedTestCase?.type = value as? Types ?? Types.other
+                changedTestCase?.type = Types(intValue ?? 0)
             case .layer:
-                changedTestCase?.layer = value as? Layer ?? Layer.e2e
+                changedTestCase?.layer = Layer(intValue ?? 0)
             case .isFlaky:
-                changedTestCase?.isFlaky = value as? Int ?? 0
+                changedTestCase?.isFlaky = value as? Bool ?? false
             case .automation:
-                changedTestCase?.automation = value as? AutomationStatus ?? AutomationStatus.manual
+                changedTestCase?.automation = AutomationStatus(intValue ?? 0)
             default: break
             }
         default: break

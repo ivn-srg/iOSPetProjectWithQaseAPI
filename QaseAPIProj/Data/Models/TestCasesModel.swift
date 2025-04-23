@@ -19,7 +19,7 @@ struct TestEntity: Codable, Equatable {
     var behavior: Behavior
     var automation: AutomationStatus
     var status: Status
-    var isFlaky: Int
+    var isFlaky: Bool
     var suiteId: Int?
     let links, customFields, attachments: [String]
     let stepsType: String?
@@ -62,7 +62,10 @@ struct TestEntity: Codable, Equatable {
         priority = try container.decode(Priority.self, forKey: .priority)
         type = try container.decode(Types.self, forKey: .type)
         layer = try container.decode(Layer.self, forKey: .layer)
-        isFlaky = try container.decode(Int.self, forKey: .isFlaky)
+        
+        let isFlakyInt = try container.decode(Int.self, forKey: .isFlaky)
+        isFlaky = isFlakyInt == 1 ? true : false
+        
         behavior = try container.decode(Behavior.self, forKey: .behavior)
         automation = try container.decode(AutomationStatus.self, forKey: .automation)
         status = try container.decode(Status.self, forKey: .status)
@@ -138,7 +141,7 @@ extension TestEntity {
         priority = Priority(0)
         type = Types(0)
         layer = Layer(0)
-        isFlaky = 0
+        isFlaky = false
         behavior = Behavior(1)
         automation = AutomationStatus(0)
         status = Status(0)
@@ -282,7 +285,7 @@ struct EncodableTestCase: Encodable {
         self.behavior = testCase.behavior.menuItem.id
         self.automation = testCase.automation.menuItem.id
         self.status = testCase.status.menuItem.id
-        self.isFlaky = testCase.isFlaky
+        self.isFlaky = testCase.isFlaky ? 1 : 0
         self.suiteId = testCase.suiteId ?? 0
         self.attachments = testCase.attachments
         self.tags = testCase.tags

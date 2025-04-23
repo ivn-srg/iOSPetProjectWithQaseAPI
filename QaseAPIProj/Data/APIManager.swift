@@ -12,7 +12,7 @@ struct API {
     
     enum NetError: Error {
         case invalidURL, parsingError(String), serializationError(String),
-             noInternetConnection, timeout, otherNetworkError(String)
+             noInternetConnection, timeout, otherNetworkError(String), invalidCredantials
     }
     
     enum HTTPMethod: String {
@@ -55,10 +55,41 @@ protocol NetworkManager: AnyObject {
     ) async throws(API.NetError) -> T
     
     func composeURL(for method: API.Endpoint, urlComponents: [String?]?, queryItems: [API.QueryParams: Int?]?) -> URL?
+    
+    func auth(by token: String) async -> Bool
 }
 
 final class APIManager: NetworkManager {
     static let shared = APIManager()
+    
+    func auth(by token: String) async -> Bool {
+        guard
+            !token.isEmpty,
+            let url = composeURL(for: .project, urlComponents: nil)
+        else {
+            return false
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue(token, forHTTPHeaderField: "Token")
+        
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw URLError(.badServerResponse)
+            }
+            
+            guard (200...299).contains(httpResponse.statusCode) else {
+                return false
+            }
+        } catch {
+            return false
+        }
+        
+        return true
+    }
     
     func performRequest<T: Decodable>(
         with data: Encodable? = nil,
@@ -66,11 +97,14 @@ final class APIManager: NetworkManager {
         method: API.HTTPMethod,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        guard let url = urlString else { throw .invalidURL }
+        guard
+            let url = urlString,
+            let authToken = AuthManager.shared.getAuthToken()
+        else { throw .invalidURL }
         
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        request.addValue(TOKEN, forHTTPHeaderField: "Token")
+        request.addValue(authToken, forHTTPHeaderField: "Token")
         
         if let data = data {
             let encoder = JSONEncoder()
@@ -149,6 +183,8 @@ final class APIManager: NetworkManager {
 
 final class APIMockManager: NetworkManager {
     static let shared = APIMockManager()
+    
+    func auth(by token: String) async -> Bool { true }
     
     func performRequest<T: Decodable>(
         with data: Encodable? = nil,

@@ -18,7 +18,7 @@ final class CreateSuiteOrCaseViewModel {
             }
         }
     }
-    var creatingSuite: CreatingSuite {
+    var creatingSuite: SuiteEntity {
         didSet {
             Task { @MainActor in
                 delegate?.checkConditionAndToggleRightBarButton()
@@ -59,7 +59,7 @@ final class CreateSuiteOrCaseViewModel {
             self.parentSuiteId = parentSuiteId
         } else { self.parentSuiteId = 0 }
         
-        creatingSuite = CreatingSuite.empty
+        creatingSuite = SuiteEntity.empty
         creatingTestCase = TestEntity.empty
         
         creatingSuite.parentId = self.parentSuiteId
@@ -118,7 +118,7 @@ extension CreateSuiteOrCaseViewModel: UpdatableEntityProtocol {
         case .title:
             creatingSuite.title = value
         case .description:
-            creatingSuite.description = value
+            creatingSuite.itemDescription = value
         case .precondition:
             creatingSuite.preconditions = value
         default: break
@@ -143,7 +143,7 @@ extension CreateSuiteOrCaseViewModel: UpdatableEntityProtocol {
             }
         case .severity, .status, .priority, .behavior, .type, .layer, .isFlaky, .automation:
             guard let value = value as? MenuItem else {
-                guard field == .isFlaky, let value = value as? Int else { return }
+                guard field == .isFlaky, let value = value as? Bool else { return }
                 creatingTestCase.isFlaky = value
                 return
             }

@@ -119,7 +119,7 @@ final class TestEntityRO: Object {
     @Persisted var priority: Int
     @Persisted var type: Int
     @Persisted var layer: Int
-    @Persisted var isFlaky: Int
+    @Persisted var isFlaky: Bool
     @Persisted var behavior: Int
     @Persisted var automation: Int
     @Persisted var status: Int

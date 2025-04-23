@@ -19,7 +19,6 @@ final class StepCell: UICollectionViewCell {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = AppTheme.additionTintColor
         view.layer.masksToBounds = true
-        view.textInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         view.layer.cornerRadius = 8
         view.setContentHuggingPriority(.required, for: .horizontal)
         view.setContentCompressionResistancePriority(.required, for: .horizontal)

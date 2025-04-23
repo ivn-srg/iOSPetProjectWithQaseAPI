@@ -35,7 +35,7 @@ final class SwitcherWithTitle: UIView {
         super.init(frame: .zero)
         
         titlelbl.text = title
-        switcher.isOn = viewModel != nil ? viewModel!.testCase?.isFlaky == 1 : false
+        switcher.isOn = viewModel?.testCase?.isFlaky ?? false
         configureView()
         setupActions()
     }

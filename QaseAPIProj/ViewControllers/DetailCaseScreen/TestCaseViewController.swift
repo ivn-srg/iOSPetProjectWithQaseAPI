@@ -94,7 +94,7 @@ class TestCaseViewController: UIViewController {
         }
     }
     
-    func configureView() {
+    private func configureView() {
         view.addSubview(containerView)
         containerView.snp.makeConstraints {
             $0.top.equalTo(tabbar.snp.bottom)

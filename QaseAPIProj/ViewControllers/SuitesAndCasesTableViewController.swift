@@ -27,7 +27,10 @@ final class SuitesAndCasesTableViewController: UIViewController {
     // MARK: - Lifecycles
     
     init(parentSuite: ParentSuite? = nil) {
-        viewModel = parentSuite != nil ? SuitesAndCasesViewModel(parentSuite: parentSuite) : SuitesAndCasesViewModel()
+        viewModel = parentSuite != nil
+        ? SuitesAndCasesViewModel(parentSuite: parentSuite)
+        : SuitesAndCasesViewModel()
+        
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -47,7 +50,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         executeWithErrorHandling {
-            try await self.viewModel.requestEntitiesData()
+            try await self.viewModel.requestEntitiesData(place: .start)
         }
     }
     
@@ -175,8 +178,8 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         if viewModel.suitesAndCaseData.count - indexPath.row <= 3 && !viewModel.isLoading {
-            executeWithErrorHandling {
-                try await self.viewModel.requestEntitiesData(place: .continuos)
+            executeWithErrorHandling { [weak self] in
+                try await self?.viewModel.requestEntitiesData(place: .continuos)
             }
         }
     }
@@ -196,7 +199,7 @@ extension SuitesAndCasesTableViewController {
     
     @objc func handleRefreshControl() {
         executeWithErrorHandling {
-            try await self.viewModel.requestEntitiesData()
+            try await self.viewModel.requestEntitiesData(place: .start)
         }
         
         tableVw.refreshControl?.endRefreshing()

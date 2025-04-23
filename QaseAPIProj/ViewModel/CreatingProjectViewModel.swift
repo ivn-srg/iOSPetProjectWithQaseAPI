@@ -10,7 +10,7 @@ import Foundation
 final class CreatingProjectViewModel {
     // MARK: - Fields
     weak var delegate: CheckEnablingRBBProtocol?
-    var creatingProject: CreatingProject {
+    var creatingProject: Project {
         didSet {
             Task { @MainActor in
                 delegate?.checkConditionAndToggleRightBarButton()
@@ -65,6 +65,7 @@ final class CreatingProjectViewModel {
             method: .post,
             modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
         )
+        
         isEntityWasCreated = response.status?.value ?? false
         LoadingIndicator.stopLoading()
     }

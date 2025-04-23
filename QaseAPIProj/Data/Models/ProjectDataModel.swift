@@ -20,14 +20,32 @@ struct ProjectsResult: Codable {
 }
 
 struct Project: Codable {
-    let title: String
-    let code: String
-    let counts: CountsOfProject?
+    var title: String
+    var code: String
+    var counts: CountsOfProject?
+    var description: String?
+    
+    var isEmpty: Bool {
+        self.title.isEmpty || self.code.isEmpty
+    }
+    
+    init() {
+        self.title = ""
+        self.code = ""
+        self.description = ""
+    }
     
     init(realmObject: ProjectRO) {
         title = realmObject.title
         code = realmObject.code
         counts = CountsOfProject(realmObject: realmObject.counts)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(title, forKey: .title)
+        try container.encode(code, forKey: .code)
+        try container.encode(description, forKey: .description)
     }
 }
 
@@ -78,22 +96,6 @@ struct ProjectErrorDataModel: Codable {
 }
 
 // MARK: - Creating a Project
-struct CreatingProject: Codable {
-    var title: String
-    var code: String
-    var description: String
-    
-    var isEmpty: Bool {
-        self.title.isEmpty || self.code.isEmpty
-    }
-    
-    init() {
-        self.title = ""
-        self.code = ""
-        self.description = ""
-    }
-}
-
 struct CreateOrUpdateProjectModel: Codable {
     let code: String
 }

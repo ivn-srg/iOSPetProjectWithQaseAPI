@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TestEntity: Codable, Equatable {
+struct TestCaseEntity: Codable, Equatable {
     let id: Int
     let position: Int
     var title: String
@@ -32,7 +32,7 @@ struct TestEntity: Codable, Equatable {
         EncodableTestCase(testCase: self)
     }
     
-    static var empty: TestEntity {
+    static var empty: TestCaseEntity {
         return .init()
     }
     
@@ -81,7 +81,7 @@ struct TestEntity: Codable, Equatable {
         tags = try container.decode([String].self, forKey: .tags)
     }
     
-    static func == (lhs: TestEntity, rhs: TestEntity) -> Bool {
+    static func == (lhs: TestCaseEntity, rhs: TestCaseEntity) -> Bool {
         return lhs.id == rhs.id &&
         lhs.title == rhs.title && lhs.position == rhs.position &&
         lhs.description == rhs.description && lhs.preconditions == rhs.preconditions &&
@@ -98,7 +98,7 @@ struct TestEntity: Codable, Equatable {
     }
 }
 
-extension TestEntity {
+extension TestCaseEntity {
     init?(realmObject: TestEntityRO?) {
         guard let realmObject = realmObject else { return nil }
         
@@ -165,14 +165,14 @@ struct TestCasesModel: Codable {
 
 struct TestCaseModel: Codable {
     let status: Bool
-    let result: TestEntity
+    let result: TestCaseEntity
 }
 
 struct TestResult: Codable {
     let total: Int
     let filtered: Int
     let count: Int
-    let entities: [TestEntity]
+    let entities: [TestCaseEntity]
 }
 
 struct StepsInTestCase: Codable, Equatable {
@@ -273,7 +273,7 @@ struct EncodableTestCase: Encodable {
         case suiteId = "suite_id"
     }
     
-    init(testCase: TestEntity) {
+    init(testCase: TestCaseEntity) {
         self.title = testCase.title
         self.description = testCase.description
         self.preconditions = testCase.preconditions

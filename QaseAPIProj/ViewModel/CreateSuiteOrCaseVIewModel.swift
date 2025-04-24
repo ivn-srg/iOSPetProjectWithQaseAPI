@@ -11,14 +11,14 @@ final class CreateSuiteOrCaseViewModel {
     // MARK: - Fields
     weak var delegate: CheckEnablingRBBProtocol?
     var creatingEntityIsSuite = true
-    var creatingTestCase: TestEntity {
+    var creatingTestCase: TestCaseEntity {
         didSet {
             Task { @MainActor in
                 delegate?.checkConditionAndToggleRightBarButton()
             }
         }
     }
-    var creatingSuite: SuiteEntity {
+    var creatingSuite: TestListEntity {
         didSet {
             Task { @MainActor in
                 delegate?.checkConditionAndToggleRightBarButton()
@@ -59,8 +59,8 @@ final class CreateSuiteOrCaseViewModel {
             self.parentSuiteId = parentSuiteId
         } else { self.parentSuiteId = 0 }
         
-        creatingSuite = SuiteEntity.empty
-        creatingTestCase = TestEntity.empty
+        creatingSuite = TestListEntity.empty
+        creatingTestCase = TestCaseEntity.empty
         
         creatingSuite.parentId = self.parentSuiteId
         creatingTestCase.suiteId = self.parentSuiteId

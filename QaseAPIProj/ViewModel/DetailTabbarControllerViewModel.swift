@@ -11,12 +11,12 @@ import UIKit
 final class DetailTabbarControllerViewModel {
     // MARK: - fields
     weak var delegate: DetailTestCaseProtocol?
-    var testCase: TestEntity? = nil {
+    var testCase: TestCaseEntity? = nil {
         didSet {
             Task { @MainActor in delegate?.updateUI() }
         }
     }
-    var changedTestCase: TestEntity? {
+    var changedTestCase: TestCaseEntity? {
         didSet {
             Task { @MainActor in checkDataChanged() }
         }

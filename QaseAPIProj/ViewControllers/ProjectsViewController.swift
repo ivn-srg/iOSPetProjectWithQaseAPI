@@ -99,7 +99,7 @@ extension ProjectsViewController: NextViewControllerPusher {
             if let item = item {
                 PROJECT_NAME = viewModel.projects[item].code
             }
-            let vc = SuitesAndCasesTableViewController()
+            let vc = TestEntitiesTableViewController()
             navigationController?.pushViewController(vc, animated: true)
         }
     }

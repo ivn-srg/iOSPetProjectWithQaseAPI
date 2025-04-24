@@ -7,13 +7,13 @@
 
 import Foundation
 
-final class SuitesAndCasesViewModel {
+final class TestEntitiesViewModel {
     
     // MARK: - Fields
     weak var delegate: UpdateTableViewProtocol?
     var parentSuite: ParentSuite?
     var isLoading = false
-    var suitesAndCaseData = [SuiteAndCaseData]() {
+    var testEntitiesData = [TestListEntity]() {
         didSet {
             delegate?.updateTableView()
         }
@@ -57,7 +57,7 @@ final class SuitesAndCasesViewModel {
     }
     
     func deleteEntity(at index: Int) async throws(API.NetError) {
-        let entity = suitesAndCaseData[index]
+        let entity = testEntitiesData[index]
         
         guard
             let urlString = apiManager.composeURL(for: entity.isSuite ? .suites : .cases,
@@ -75,7 +75,7 @@ final class SuitesAndCasesViewModel {
         )
         
         if deletingResult.status {
-            let deletedEntity = suitesAndCaseData.remove(at: index)
+            let deletedEntity = testEntitiesData.remove(at: index)
             let _ = realmDb.deleteEntity(deletedEntity)
         }
         
@@ -88,10 +88,10 @@ final class SuitesAndCasesViewModel {
     private func loadCachedData() {
         if let cachedSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites),
            let cachedCases = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .cases) {
-            var combinedData = [SuiteAndCaseData]()
+            var combinedData = [TestListEntity]()
             combinedData.append(contentsOf: cachedSuites)
             combinedData.append(contentsOf: cachedCases)
-            suitesAndCaseData = combinedData
+            testEntitiesData = combinedData
         }
     }
     
@@ -101,10 +101,10 @@ final class SuitesAndCasesViewModel {
     }
     
     private func fetchSuitesJSON() async throws {
-        if suitesAndCaseData.isEmpty,
+        if testEntitiesData.isEmpty,
            let testSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites),
            !testSuites.isEmpty {
-            suitesAndCaseData.append(contentsOf: testSuites)
+            testEntitiesData.append(contentsOf: testSuites)
             return
         }
         
@@ -118,6 +118,7 @@ final class SuitesAndCasesViewModel {
                 method: .get,
                 modelType: SuitesDataModel.self
             )
+            
             totalCountOfSuites = countOfSuites.result.total
         }()
         
@@ -138,12 +139,8 @@ final class SuitesAndCasesViewModel {
             ? suitesResult.result.entities.filter { $0.parentId == parentSuite!.id }
             : suitesResult.result.entities.filter { $0.parentId == nil }
             
-            let newSuites = filteredSuites.map {
-                SuiteAndCaseData(suite: $0)
-            }
-            
-            let _ = realmDb.saveTestEntities(newSuites)
-            updateDataList(with: newSuites)
+            let _ = realmDb.saveTestEntities(filteredSuites)
+            updateDataList(with: filteredSuites)
             
             offset += Constants.LIMIT_OF_REQUEST
         } while offset < totalCountOfSuites
@@ -178,7 +175,7 @@ final class SuitesAndCasesViewModel {
             : totalCountOfCases
             
             let newCases = filteredSuites.map {
-                SuiteAndCaseData(testCase: $0)
+                TestListEntity(testCase: $0)
             }
             
             let _ = realmDb.saveTestEntities(newCases)
@@ -190,12 +187,12 @@ final class SuitesAndCasesViewModel {
         }
     }
     
-    private func updateDataList(with newData: [SuiteAndCaseData]) {
+    private func updateDataList(with newData: [TestListEntity]) {
         for newItem in newData {
-            if let existingIndex = suitesAndCaseData.firstIndex(where: { $0.id == newItem.id }) {
-                suitesAndCaseData[existingIndex] = newItem
+            if let existingIndex = testEntitiesData.firstIndex(where: { $0.id == newItem.id && $0.isSuite == newItem.isSuite }) {
+                testEntitiesData[existingIndex] = newItem
             } else {
-                suitesAndCaseData.append(newItem)
+                testEntitiesData.append(newItem)
             }
         }
     }
@@ -209,6 +206,6 @@ final class SuitesAndCasesViewModel {
     
     // MARK: - VC funcs
     func countOfRows() -> Int {
-        suitesAndCaseData.count
+        testEntitiesData.count
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SuiteAndCaseData {
+struct TestListEntity {
     let isSuite: Bool
     let id: Int
     let title: String

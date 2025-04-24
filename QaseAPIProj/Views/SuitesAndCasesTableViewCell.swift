@@ -55,7 +55,7 @@ final class SuitesAndCasesTableViewCell: UITableViewCell {
     
     // MARK: - lifecycles
     
-    func configure(with dataForCell: SuiteAndCaseData) {
+    func configure(with dataForCell: TestListEntity) {
         if !dataForCell.isSuite {
             var image: UIImage? = .init()
             var color: UIColor = .init()

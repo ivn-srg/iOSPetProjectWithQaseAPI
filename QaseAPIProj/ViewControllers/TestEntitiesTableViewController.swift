@@ -7,9 +7,9 @@
 
 import UIKit
 
-final class SuitesAndCasesTableViewController: UIViewController {
+final class TestEntitiesTableViewController: UIViewController {
     
-    var viewModel: SuitesAndCasesViewModel
+    var viewModel: TestEntitiesViewModel
     
     // MARK: - UI
     
@@ -28,8 +28,8 @@ final class SuitesAndCasesTableViewController: UIViewController {
     
     init(parentSuite: ParentSuite? = nil) {
         viewModel = parentSuite != nil
-        ? SuitesAndCasesViewModel(parentSuite: parentSuite)
-        : SuitesAndCasesViewModel()
+        ? TestEntitiesViewModel(parentSuite: parentSuite)
+        : TestEntitiesViewModel()
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -58,7 +58,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
     func setupTableView() {
         view.backgroundColor = AppTheme.bgPrimaryColor
         title = viewModel.parentSuite == nil ? PROJECT_NAME
-        : self.viewModel.suitesAndCaseData.filter( {$0.isSuite && $0.id == self.viewModel.parentSuite?.id} ).first?.title
+        : self.viewModel.testEntitiesData.filter( {$0.isSuite && $0.id == self.viewModel.parentSuite?.id} ).first?.title
         
         tableVw.delegate = self
         tableVw.dataSource = self
@@ -87,7 +87,7 @@ final class SuitesAndCasesTableViewController: UIViewController {
 }
 
 // MARK: - UpdateTableViewProtocol
-extension SuitesAndCasesTableViewController: UpdateTableViewProtocol {
+extension TestEntitiesTableViewController: UpdateTableViewProtocol {
     func updateTableView() {
         Task { @MainActor in
             tableVw.reloadData()
@@ -96,17 +96,17 @@ extension SuitesAndCasesTableViewController: UpdateTableViewProtocol {
 }
 
 // MARK: - NextViewControllerPusher
-extension SuitesAndCasesTableViewController: NextViewControllerPusher {
+extension TestEntitiesTableViewController: NextViewControllerPusher {
     func pushToNextVC(to item: Int?) {
         guard let item = item else { return }
         
         let vc: UIViewController
-        let testEntityItem = viewModel.suitesAndCaseData[item]
+        let testEntityItem = viewModel.testEntitiesData[item]
         let parentSuite = ParentSuite(id: testEntityItem.id, title: testEntityItem.title, codeOfProject: PROJECT_NAME)
-        let caseItem = viewModel.suitesAndCaseData[item]
+        let caseItem = viewModel.testEntitiesData[item]
         
         if testEntityItem.isSuite {
-            vc = SuitesAndCasesTableViewController(parentSuite: parentSuite)
+            vc = TestEntitiesTableViewController(parentSuite: parentSuite)
         } else {
             vc = TestCaseViewController(caseUniqueKey: "\(caseItem.id)_\(PROJECT_NAME)")
         }
@@ -115,11 +115,11 @@ extension SuitesAndCasesTableViewController: NextViewControllerPusher {
 }
 
 // MARK: - Table view data source
-extension SuitesAndCasesTableViewController: UITableViewDataSource {
+extension TestEntitiesTableViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
         updateEmptyDataLabelVisibility()
-        return viewModel.suitesAndCaseData.count > 0 ? 1 : 0
+        return viewModel.testEntitiesData.count > 0 ? 1 : 0
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
@@ -136,7 +136,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
             for: indexPath) as? SuitesAndCasesTableViewCell
         else { return UITableViewCell() }
         
-        let dataForCell = viewModel.suitesAndCaseData[indexPath.row]
+        let dataForCell = viewModel.testEntitiesData[indexPath.row]
         cell.configure(with: dataForCell)
         
         return cell
@@ -148,7 +148,7 @@ extension SuitesAndCasesTableViewController: UITableViewDataSource {
 }
 
 // MARK: - Table view delegate
-extension SuitesAndCasesTableViewController: UITableViewDelegate {
+extension TestEntitiesTableViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         return UITableView.automaticDimension
     }
@@ -156,7 +156,7 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let swipeAction = UIContextualAction(style: .destructive, title: "Delete".localized) { [weak self] _, _, completionHandler in
             guard let self = self else { return }
-            let entity = viewModel.suitesAndCaseData[indexPath.row]
+            let entity = viewModel.testEntitiesData[indexPath.row]
             let entityName = entity.isSuite ? "Test suite".localized : "Test case".localized
             let composedMessage = String(format: "confirmMessage".localized, entityName.localized.lowercased(), "")
             
@@ -177,7 +177,7 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if viewModel.suitesAndCaseData.count - indexPath.row <= 3 && !viewModel.isLoading {
+        if viewModel.testEntitiesData.count - indexPath.row <= 3 && !viewModel.isLoading {
             executeWithErrorHandling { [weak self] in
                 try await self?.viewModel.requestEntitiesData(place: .continuos)
             }
@@ -185,7 +185,7 @@ extension SuitesAndCasesTableViewController: UITableViewDelegate {
     }
 }
 
-extension SuitesAndCasesTableViewController {
+extension TestEntitiesTableViewController {
     func configureRefreshControls() {
         tableVw.refreshControl = UIRefreshControl()
         tableVw.refreshControl?.addTarget(self,

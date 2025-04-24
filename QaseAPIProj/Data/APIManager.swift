@@ -56,13 +56,13 @@ protocol NetworkManager: AnyObject {
     
     func composeURL(for method: API.Endpoint, urlComponents: [String?]?, queryItems: [API.QueryParams: Int?]?) -> URL?
     
-    func auth(by token: String) async -> Bool
+    func auth(by token: String) async throws -> Bool
 }
 
 final class APIManager: NetworkManager {
     static let shared = APIManager()
     
-    func auth(by token: String) async -> Bool {
+    func auth(by token: String) async throws -> Bool {
         guard
             !token.isEmpty,
             let url = composeURL(for: .project, urlComponents: nil)
@@ -74,17 +74,13 @@ final class APIManager: NetworkManager {
         request.httpMethod = "GET"
         request.addValue(token, forHTTPHeaderField: "Token")
         
-        do {
-            let (_, response) = try await URLSession.shared.data(for: request)
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw URLError(.badServerResponse)
-            }
-            
-            guard (200...299).contains(httpResponse.statusCode) else {
-                return false
-            }
-        } catch {
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
             return false
         }
         
@@ -184,7 +180,7 @@ final class APIManager: NetworkManager {
 final class APIMockManager: NetworkManager {
     static let shared = APIMockManager()
     
-    func auth(by token: String) async -> Bool { true }
+    func auth(by token: String) async throws -> Bool { true }
     
     func performRequest<T: Decodable>(
         with data: Encodable? = nil,

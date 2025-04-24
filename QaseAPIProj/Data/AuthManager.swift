@@ -43,7 +43,7 @@ final class AuthManager {
             return
         }
 
-        let authStatusCheck = await apiManager.auth(by: token)
+        let authStatusCheck = try await apiManager.auth(by: token)
         guard authStatusCheck else {
             throw API.NetError.invalidCredantials
         }

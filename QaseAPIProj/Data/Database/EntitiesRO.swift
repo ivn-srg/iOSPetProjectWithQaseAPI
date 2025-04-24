@@ -70,25 +70,24 @@ final class BugReportsRO: EmbeddedObject {
 
 // MARK: - Cases and Suites entities
 
-final class SuiteAndCaseDataRO: Object {
+final class TestEntitiesDataRO: Object {
     @Persisted var isSuites: Bool
     @Persisted var id: Int
     @Persisted var title: String
     @Persisted var itemDescription: String?
     @Persisted var codeOfProject: String?
+    @Persisted var parentId: Int?
     
     // if isSuite
-    @Persisted var parentId: Int?
-    @Persisted var caseCount: Int?
+    @Persisted var casesCount: Int?
     
     // if !isSuite
     @Persisted var priority: Int?
     @Persisted var automation: Int?
-    @Persisted var suiteId: Int?
     
     @Persisted(primaryKey: true) var uniqueKey: String
     
-    convenience init(entitiesData: SuiteAndCaseData, codeOfProject: String? = nil) {
+    convenience init(entitiesData: TestListEntity, codeOfProject: String? = nil) {
         self.init()
         
         self.id = entitiesData.id
@@ -97,10 +96,9 @@ final class SuiteAndCaseDataRO: Object {
         self.title = entitiesData.title
         self.itemDescription = entitiesData.itemDescription
         self.parentId = entitiesData.parentId
-        self.caseCount = entitiesData.caseCount
+        self.casesCount = entitiesData.casesCount
         self.priority = entitiesData.priority?.menuItem.id
         self.automation = entitiesData.automation?.menuItem.id
-        self.suiteId = entitiesData.suiteId
         self.codeOfProject = codeOfProject
     }
 }
@@ -134,7 +132,7 @@ final class TestEntityRO: Object {
     @Persisted var authorId: Int
     @Persisted var tags: List<String>
     
-    convenience init(testCaseData: TestEntity) {
+    convenience init(testCaseData: TestCaseEntity) {
         self.init()
         
         uniqueKey = "\(testCaseData.id)_\(PROJECT_NAME)"

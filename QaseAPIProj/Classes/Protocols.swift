@@ -31,18 +31,18 @@ protocol MenuDataSource {
 }
 
 protocol UpdatableEntityProtocol {
-    var testCase: TestEntity? { get set }
-    var changedTestCase: TestEntity? { get set }
+    var testCase: TestCaseEntity? { get set }
+    var changedTestCase: TestCaseEntity? { get set }
     func updateValue<T>(for field: FieldType, value: T)
 }
 
 extension UpdatableEntityProtocol {
-    var testCase: TestEntity? {
+    var testCase: TestCaseEntity? {
         get { nil }
         set { }
     }
     
-    var changedTestCase: TestEntity? {
+    var changedTestCase: TestCaseEntity? {
         get { nil }
         set { }
     }

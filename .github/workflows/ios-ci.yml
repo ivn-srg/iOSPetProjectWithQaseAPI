@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 30
 
     steps:
@@ -16,7 +16,7 @@ jobs:
 
       - name: Setup Xcode environment
         run: |
-          sudo xcode-select -switch /Applications/Xcode.app
+          sudo xcode-select -switch /Applications/Xcode_16.3.app
           xcodebuild -version
           xcrun simctl list devices
           
@@ -30,7 +30,7 @@ jobs:
           xcodebuild clean build \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.4' \
             -derivedDataPath DerivedData \
             | tee Logs/build.log || echo "Build failed - check logs"
         continue-on-error: true
@@ -41,7 +41,7 @@ jobs:
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.4' \
             -only-testing:QaseAPIProjTests \
             -resultBundlePath TestResults/UnitTests/UnitTests.xcresult \
             -derivedDataPath DerivedData \
@@ -54,7 +54,7 @@ jobs:
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.4' \
             -only-testing:QaseAPIProjUITests \
             -resultBundlePath TestResults/UITests/UITests.xcresult \
             -derivedDataPath DerivedData \

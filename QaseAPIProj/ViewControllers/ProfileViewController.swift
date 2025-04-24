@@ -64,7 +64,7 @@ final class ProfileViewController: UIViewController {
     
     @objc func exitButtonTapped() {
         executeWithErrorHandling {
-            try AuthManager.shared.logout()
+            try await AuthManager.shared.logout()
             RealmManager.shared.dropDataBase()
         }
     }

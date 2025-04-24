@@ -55,9 +55,9 @@ struct TestEntity: Codable, Equatable {
         uniqueKey = "\(id)_\(PROJECT_NAME)"
         position = try container.decode(Int.self, forKey: .position)
         title = try container.decode(String.self, forKey: .title)
-        description = try container.decode(String?.self, forKey: .description)
-        preconditions = try container.decode(String?.self, forKey: .preconditions)
-        postconditions = try container.decode(String?.self, forKey: .postconditions)
+        description = try container.decodeIfPresent(String.self, forKey: .description)
+        preconditions = try container.decodeIfPresent(String.self, forKey: .preconditions)
+        postconditions = try container.decodeIfPresent(String.self, forKey: .postconditions)
         severity = try container.decode(Severity.self, forKey: .severity)
         priority = try container.decode(Priority.self, forKey: .priority)
         type = try container.decode(Types.self, forKey: .type)
@@ -73,7 +73,7 @@ struct TestEntity: Codable, Equatable {
         links = try container.decode([String].self, forKey: .links)
         customFields = try container.decode([String].self, forKey: .customFields)
         attachments = try container.decode([String].self, forKey: .attachments)
-        stepsType = try container.decode(String?.self, forKey: .stepsType)
+        stepsType = try container.decodeIfPresent(String.self, forKey: .stepsType)
         steps = try container.decode([StepsInTestCase].self, forKey: .steps)
         params = try container.decode([String].self, forKey: .params)
         memberId = try container.decode(Int.self, forKey: .memberId)
@@ -198,13 +198,13 @@ struct StepsInTestCase: Codable, Equatable {
         
         hash = try container.decode(String.self, forKey: .hash)
         position = try container.decode(Int.self, forKey: .position)
-        sharedStepHash = try container.decode(String?.self, forKey: .sharedStepHash)
-        sharedStepNestedHash = try container.decode(String?.self, forKey: .sharedStepNestedHash)
+        sharedStepHash = try container.decodeIfPresent(String.self, forKey: .sharedStepHash)
+        sharedStepNestedHash = try container.decodeIfPresent(String.self, forKey: .sharedStepNestedHash)
         attachments = try container.decode([Int].self, forKey: .attachments)
-        action = try container.decode(String?.self, forKey: .action)
-        expectedResult = try container.decode(String?.self, forKey: .expectedResult)
-        data = try container.decode(String?.self, forKey: .data)
-        steps = try container.decode([StepsInTestCase]?.self, forKey: .steps)
+        action = try container.decodeIfPresent(String.self, forKey: .action)
+        expectedResult = try container.decodeIfPresent(String.self, forKey: .expectedResult)
+        data = try container.decodeIfPresent(String.self, forKey: .data)
+        steps = try container.decodeIfPresent([StepsInTestCase].self, forKey: .steps)
     }
     
     init(hash: String,position: Int, sharedStepHash: String?, sharedStepNestedHash: String?,

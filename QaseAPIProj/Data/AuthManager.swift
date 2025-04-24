@@ -25,39 +25,42 @@ final class AuthManager {
     private let userDefaults = UserDefaults.standard
     private let authStatusKey = "isUserLoggedIn"
     private let keychain = KeychainService.shared
-    
+    private let apiManager = APIManager.shared
+
     func isUserLoggedIn() -> Bool {
         userDefaults.bool(forKey: authStatusKey)
     }
-    
+
     func getAuthToken() -> String? {
         keychain.getToken()
     }
-    
-    func loggedIn(token: String?) throws {
+
+    func loggedIn(token: String?) async throws {
+        guard let token else {
+            try keychain.deleteToken()
+            userDefaults.set(false, forKey: authStatusKey)
+            notifyAuthStatusChanged()
+            return
+        }
+
+        let authStatusCheck = await apiManager.auth(by: token)
+        guard authStatusCheck else {
+            throw API.NetError.invalidCredantials
+        }
+
+        try keychain.saveToken(token: token)
+        userDefaults.set(true, forKey: authStatusKey)
+        notifyAuthStatusChanged()
+    }
+
+    func logout() async throws {
+        try await loggedIn(token: nil)
+    }
+
+    private func notifyAuthStatusChanged() {
         Task { @MainActor in
-            guard let token else {
-                
-                try keychain.deleteToken()
-                
-                userDefaults.set(false, forKey: authStatusKey)
-                NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
-                return
-            }
-            
-            let authStatusCheck = await apiManager.auth(by: token)
-            
-            guard authStatusCheck else { throw API.NetError.invalidCredantials }
-            
-            try keychain.saveToken(token: token)
-            
-            userDefaults.set(true, forKey: authStatusKey)
             NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
         }
-    }
-    
-    func logout() throws {
-        try loggedIn(token: nil)
     }
 }
 

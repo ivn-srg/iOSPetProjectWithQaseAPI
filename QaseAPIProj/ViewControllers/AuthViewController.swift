@@ -25,7 +25,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         let inf = TextFieldWithPadding()
         inf.translatesAutoresizingMaskIntoConstraints = false
         inf.backgroundColor = AppTheme.bgSecondaryColor
-        inf.textColor = .white
+        inf.textColor = .label
         inf.layer.borderWidth = 1
         inf.layer.cornerRadius = 12
         inf.layer.borderColor = UIColor.gray.cgColor
@@ -94,28 +94,30 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     
     // MARK: - objc funcs
     @objc private func authorizate() {
-        if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputToken.isEmpty {
-            do {
-                try AuthManager.shared.loggedIn(token: inputToken)
-            } catch API.NetError.invalidCredantials {
+        Task { @MainActor in
+            if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputToken.isEmpty {
+                do {
+                    try await AuthManager.shared.loggedIn(token: inputToken)
+                } catch API.NetError.invalidCredantials {
+                    UIAlertController.showSimpleAlert(
+                        on: self,
+                        title: "Invalid Credantials".localized,
+                        message: "You inputed wrong API Token. Try again"
+                    )
+                } catch {
+                    UIAlertController.showSimpleAlert(
+                        on: self,
+                        title: "Something went wrong".localized,
+                        message: error.localizedDescription
+                    )
+                }
+            } else {
                 UIAlertController.showSimpleAlert(
                     on: self,
-                    title: "Invalid Credantials".localized,
-                    message: "You inputed wrong API Token. Try again"
-                )
-            } catch {
-                UIAlertController.showSimpleAlert(
-                    on: self,
-                    title: "Something went wrong".localized,
-                    message: error.localizedDescription
+                    title: "Incorrect input".localized,
+                    message: "Input the API Token for authorization on Qase service".localized
                 )
             }
-        } else {
-            UIAlertController.showSimpleAlert(
-                on: self,
-                title: "Incorrect input".localized,
-                message: "Input the API Token for authorization on Qase service".localized
-            )
         }
     }
     

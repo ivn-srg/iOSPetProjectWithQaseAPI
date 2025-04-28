@@ -112,16 +112,14 @@ final class GeneralDetailCaseViewController: UIViewController {
         view.addSubview(scrollView)
         
         scrollView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.left.right.equalTo(view.safeAreaLayoutGuide)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
+            $0.edges.equalToSuperview()
         }
         
         scrollView.addSubview(stackView)
+        
         stackView.snp.makeConstraints {
-            $0.top.equalTo(scrollView.contentLayoutGuide.snp.top).offset(20)
-            $0.left.right.equalTo(scrollView.frameLayoutGuide).inset(20)
-            $0.bottom.equalTo(scrollView.contentLayoutGuide.snp.bottom).offset(-20)
+            $0.edges.equalTo(scrollView.contentLayoutGuide.snp.edges).inset(AppTheme.horizontalPadding)
+            $0.width.equalToSuperview().inset(AppTheme.horizontalPadding)
         }
         
         view.addGestureRecognizer(panRecognize)

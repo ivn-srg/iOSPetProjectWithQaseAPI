@@ -93,14 +93,12 @@ class PropertiesDetailCaseViewController: UIViewController {
         scrollView.addSubview(stackView)
         
         scrollView.snp.makeConstraints {
-            $0.edges.equalTo(view.safeAreaLayoutGuide.snp.edges)
+            $0.edges.equalToSuperview()
         }
         
         stackView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(20)
-            $0.centerX.equalToSuperview()
-            $0.width.equalToSuperview().inset(30)
-            $0.bottom.equalToSuperview().inset(40)
+            $0.edges.equalTo(scrollView.contentLayoutGuide.snp.edges).inset(20)
+            $0.width.equalToSuperview().inset(20)
         }
         stackView.addArrangedSubview(severityField)
         stackView.addArrangedSubview(statusField)

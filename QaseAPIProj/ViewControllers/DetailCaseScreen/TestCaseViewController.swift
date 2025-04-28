@@ -8,7 +8,7 @@
 import UIKit
 import Foundation
 
-class TestCaseViewController: UIViewController {
+final class TestCaseViewController: UIViewController {
     // MARK: - Fields
     let viewModel: DetailTabbarControllerViewModel
     private var viewControllers = [UIViewController]()
@@ -89,16 +89,17 @@ class TestCaseViewController: UIViewController {
         view.addSubview(tabbar)
         tabbar.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.horizontalEdges.equalTo(view.safeAreaLayoutGuide.snp.horizontalEdges)
+            $0.horizontalEdges.equalTo(view.snp.horizontalEdges)
             $0.height.equalTo(30)
         }
     }
     
     private func configureView() {
         view.addSubview(containerView)
+        
         containerView.snp.makeConstraints {
             $0.top.equalTo(tabbar.snp.bottom)
-            $0.horizontalEdges.equalTo(view.safeAreaLayoutGuide.snp.horizontalEdges)
+            $0.horizontalEdges.equalTo(view.snp.horizontalEdges)
             $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
         }
         

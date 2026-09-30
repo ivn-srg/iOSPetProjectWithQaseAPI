@@ -16,10 +16,10 @@ jobs:
 
       - name: Setup Xcode environment
         run: |
-          sudo xcode-select -switch /Applications/Xcode_16.3.app
+          sudo xcode-select -switch /Applications/Xcode_26.3.app
           xcodebuild -version
           xcrun simctl list devices
-          
+
       - name: Create test directories
         run: |
           mkdir -p TestResults
@@ -27,51 +27,52 @@ jobs:
 
       - name: Build project
         run: |
+          set -o pipefail
           xcodebuild clean build \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.4' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' \
             -derivedDataPath DerivedData \
-            | tee Logs/build.log || echo "Build failed - check logs"
-        continue-on-error: true
+            -disableAutomaticPackageResolution \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee Logs/build.log
 
       - name: Run Unit Tests
         run: |
+          set -o pipefail
           mkdir -p TestResults/UnitTests
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.4' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' \
             -only-testing:QaseAPIProjTests \
             -resultBundlePath TestResults/UnitTests/UnitTests.xcresult \
             -derivedDataPath DerivedData \
-            | tee Logs/unit-tests.log || echo "Unit tests failed - check logs"
-        continue-on-error: true
+            -disableAutomaticPackageResolution \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee Logs/unit-tests.log
 
       - name: Run UI Tests
         run: |
+          set -o pipefail
           mkdir -p TestResults/UITests
           xcodebuild test \
             -project QaseAPIProj.xcodeproj \
             -scheme QaseAPIProj \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.4' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' \
             -only-testing:QaseAPIProjUITests \
             -resultBundlePath TestResults/UITests/UITests.xcresult \
             -derivedDataPath DerivedData \
-            | tee Logs/ui-tests.log || echo "UI tests failed - check logs"
-        continue-on-error: true
+            -disableAutomaticPackageResolution \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee Logs/ui-tests.log
 
       - name: Prepare artifacts
         if: always()
         run: |
-          # Копируем логи тестов
-          cp Logs/*.log TestResults/
-          
-          # Проверяем существование файлов
-          echo "Contents of TestResults:"
-          ls -la TestResults/*
-          echo "Contents of Logs:"
-          ls -la Logs/
+          mkdir -p TestResults Logs
+          cp Logs/*.log TestResults/ 2>/dev/null || true
 
       - name: Upload test results
         if: always()

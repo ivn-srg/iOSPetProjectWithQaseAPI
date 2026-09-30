@@ -25,19 +25,30 @@ final class AuthManager {
     private let userDefaults = UserDefaults.standard
     private let authStatusKey = "isUserLoggedIn"
     private let keychain = KeychainService.shared
-    private let apiManager = APIManager.shared
+#if DEBUG
+    private var uiTestToken: String?
+    private var usesTestTokenStore: Bool {
+        CommandLine.arguments.contains("UITests")
+    }
+#endif
+    private var apiManager: NetworkManager {
+        ApiServiceConfiguration.shared.apiService
+    }
 
     func isUserLoggedIn() -> Bool {
         userDefaults.bool(forKey: authStatusKey)
     }
 
     func getAuthToken() -> String? {
-        keychain.getToken()
+#if DEBUG
+        if usesTestTokenStore { return uiTestToken }
+#endif
+        return keychain.getToken()
     }
 
     func loggedIn(token: String?) async throws {
         guard let token else {
-            try keychain.deleteToken()
+            try deleteAuthToken()
             userDefaults.set(false, forKey: authStatusKey)
             notifyAuthStatusChanged()
             return
@@ -48,13 +59,33 @@ final class AuthManager {
             throw API.NetError.invalidCredantials
         }
 
-        try keychain.saveToken(token: token)
+        try saveAuthToken(token)
         userDefaults.set(true, forKey: authStatusKey)
         notifyAuthStatusChanged()
     }
 
     func logout() async throws {
         try await loggedIn(token: nil)
+    }
+
+    private func saveAuthToken(_ token: String) throws {
+#if DEBUG
+        if usesTestTokenStore {
+            uiTestToken = token
+            return
+        }
+#endif
+        try keychain.saveToken(token: token)
+    }
+
+    private func deleteAuthToken() throws {
+#if DEBUG
+        if usesTestTokenStore {
+            uiTestToken = nil
+            return
+        }
+#endif
+        try keychain.deleteToken()
     }
 
     private func notifyAuthStatusChanged() {
@@ -112,4 +143,3 @@ private class KeychainService {
         guard status == errSecSuccess || status == errSecItemNotFound else { throw KeychainError.unhandledError(status: status) }
     }
 }
-

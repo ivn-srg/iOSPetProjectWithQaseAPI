@@ -22,6 +22,7 @@
 		9370855A2BEB3C49002316B8 /* EntitiesRO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937085512BEB3C49002316B8 /* EntitiesRO.swift */; };
 		9370855B2BEB3C49002316B8 /* RealmDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937085522BEB3C49002316B8 /* RealmDB.swift */; };
 		9370855C2BEB3C49002316B8 /* ProjectDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937085542BEB3C49002316B8 /* ProjectDataModel.swift */; };
+		A1B2C3D4E5F607182930ABCE /* QaseAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F607182930ABCD /* QaseAPIModels.swift */; };
 		9370855E2BEB3C49002316B8 /* SuitesDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937085562BEB3C49002316B8 /* SuitesDataModel.swift */; };
 		9370855F2BEB3C49002316B8 /* TestCasesModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937085572BEB3C49002316B8 /* TestCasesModel.swift */; };
 		93748C312B4808F500BE7FFB /* ProjectsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93748C302B4808F500BE7FFB /* ProjectsViewController.swift */; };
@@ -125,6 +126,7 @@
 		937085512BEB3C49002316B8 /* EntitiesRO.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EntitiesRO.swift; sourceTree = "<group>"; };
 		937085522BEB3C49002316B8 /* RealmDB.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RealmDB.swift; sourceTree = "<group>"; };
 		937085542BEB3C49002316B8 /* ProjectDataModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProjectDataModel.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F607182930ABCD /* QaseAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QaseAPIModels.swift; sourceTree = "<group>"; };
 		937085562BEB3C49002316B8 /* SuitesDataModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuitesDataModel.swift; sourceTree = "<group>"; };
 		937085572BEB3C49002316B8 /* TestCasesModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestCasesModel.swift; sourceTree = "<group>"; };
 		93748C302B4808F500BE7FFB /* ProjectsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewController.swift; sourceTree = "<group>"; };
@@ -241,6 +243,7 @@
 		937085582BEB3C49002316B8 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4E5F607182930ABCD /* QaseAPIModels.swift */,
 				932447382CA4848C00998B94 /* SharedResponseModel.swift */,
 				937085542BEB3C49002316B8 /* ProjectDataModel.swift */,
 				937085562BEB3C49002316B8 /* SuitesDataModel.swift */,
@@ -550,6 +553,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				937085592BEB3C49002316B8 /* APIManager.swift in Sources */,
+				A1B2C3D4E5F607182930ABCE /* QaseAPIModels.swift in Sources */,
 				9395229A2D2BF6F900CCA497 /* TestCaseStepsCell.swift in Sources */,
 				93CA94732CCA752300D99517 /* AuthManager.swift in Sources */,
 				938C47E92C9A0C0000B75BE8 /* SwitcherWithTitle.swift in Sources */,

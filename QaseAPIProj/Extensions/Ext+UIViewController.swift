@@ -29,6 +29,10 @@ extension UIViewController {
                         errorMessage = "Internet connection problem".localized
                     case .invalidCredantials:
                         errorMessage = "Invalid credentials".localized
+                    case .invalidRequest(let message):
+                        errorMessage = message
+                    case .httpError(_, let message, _):
+                        errorMessage = message
                     }
                 } else {
                     errorMessage = error.localizedDescription

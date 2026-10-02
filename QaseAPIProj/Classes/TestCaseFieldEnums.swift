@@ -323,7 +323,7 @@ enum AutomationStatus: String, CaseIterable, MenuDataSource, Codable {
     static var dataSource = [
         MenuItem(id: 0, title: AutomationStatus.manual.localized, image: AppTheme.handRaisedImage),
         MenuItem(id: 1, title: AutomationStatus.toBeAutomated.localized, image: AppTheme.personWithGearshapeImage),
-        MenuItem(id: 2, title: AutomationStatus.automation.localized, image: AppTheme.gearshapeImage)
+        MenuItem(id: 2, title: AutomationStatus.automation.localized, image: AppTheme.gearshapeFillImage)
     ]
     
     init(_ number: Int) {

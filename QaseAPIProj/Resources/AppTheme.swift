@@ -32,8 +32,6 @@ enum AppTheme {
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
-    static let listBulletImage = UIImage(systemName: "list.bullet.rectangle.fill")
-    static let personImage = UIImage(systemName: "person.crop.circle.fill")
     static let nosignImage: UIImage? = {
         UIImage(systemName: "nosign")?
             .withRenderingMode(.alwaysTemplate)
@@ -58,13 +56,14 @@ enum AppTheme {
     static let computerImage = UIImage(systemName: "desktopcomputer")
     static let gearDoubleFillImage = UIImage(systemName: "gearshape.2.fill")
     static let apiImage = UIImage(systemName: "externaldrive.connected.to.line.below.fill")
-    static let gearshapeImage: UIImage? = {
-        UIImage(systemName: "gearshape.fill")?
-            .withRenderingMode(.alwaysTemplate)
-            .withTintColor(.blue, renderingMode: .alwaysOriginal)
-    }()
     static let trashImage = UIImage(systemName: "trash")
-    
+    static let repositoryImage = UIImage(systemName: "internaldrive.fill")
+    static let homeImage = UIImage(systemName: "house.fill")
+    static let playCircleImage = UIImage(systemName: "play.circle") ?? UIImage()
+    static let textDocumentImage = UIImage(systemName: "text.document") ?? UIImage()
+    static let squareStackImage = UIImage(systemName: "square.stack.3d.up") ?? UIImage()
+    static let bugImage = UIImage(systemName: "ladybug") ?? UIImage()
+
     // colors
     static let fioletColor = UIColor(named: "primaryUColor") ?? UIColor.purple
     static let bgPrimaryColor = UIColor(named: "primaryBackground") ?? UIColor.white
@@ -75,4 +74,10 @@ enum AppTheme {
     
     // paddings
     static let horizontalPadding: CGFloat = 20
+}
+
+extension UIImage {
+    func paint(to color: UIColor) -> UIImage {
+        withTintColor(color, renderingMode: .alwaysOriginal)
+    }
 }

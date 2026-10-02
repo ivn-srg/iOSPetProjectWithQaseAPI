@@ -32,6 +32,14 @@ final class ProjectsViewController: UIViewController {
         return rbb
     }()
     
+    private lazy var searchController: UISearchController = {
+        let search = UISearchController(searchResultsController: nil)
+        search.searchBar.placeholder = "Search repository"
+        search.obscuresBackgroundDuringPresentation = false
+        search.definesPresentationContext = true
+        return search
+    }()
+
     private lazy var emptyDataLabel: UILabel = EmptyDataLabel()
     
     // MARK: - Lifecycle
@@ -42,8 +50,15 @@ final class ProjectsViewController: UIViewController {
         viewModel.delegate = self
         configureRefreshControl()
         
-        view.backgroundColor = AppTheme.bgPrimaryColor
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
         navigationItem.rightBarButtonItem = rightBarButton
+
+        if #available(iOS 26.0, *) {
+            navigationItem.searchBarPlacementAllowsToolbarIntegration = false
+        }
+
+        view.backgroundColor = AppTheme.bgPrimaryColor
         navigationController?.navigationBar.accessibilityIdentifier = "navigationBar"
     }
     

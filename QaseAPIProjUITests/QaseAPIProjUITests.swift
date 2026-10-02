@@ -11,21 +11,14 @@ final class QaseAPIProjUITests: XCTestCase {
     
     private var app: XCUIApplication!
     private var authScreen: AuthScreen!
-    private var projectsScreen: ProjectsListScreen!
-    
+
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-        
         app = XCUIApplication()
         app.launchArguments.append("UITests")
         app.launch()
-        
+
         authScreen = AuthScreen(app: app)
-        projectsScreen = ProjectsListScreen(app: app)
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-        
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
     }
     
     override func tearDownWithError() throws {
@@ -35,18 +28,12 @@ final class QaseAPIProjUITests: XCTestCase {
     
     @MainActor
     func testCheckNavigationTitle() throws {
-        // UI tests must launch the application that they test.
-        authScreen.fallingIntoProjectsScreen().checkNavigationTitle()
-        
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        authScreen.openProjects().checkNavigationTitle()
     }
     
     @MainActor
     func testPresentCreatingProjectScreen() throws {
-        // UI tests must launch the application that they test.
-        let _ = projectsScreen.tapOnRightBarButton()
-        
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        authScreen.openProjects().openCreateProject().checkPresented()
     }
     
     @MainActor

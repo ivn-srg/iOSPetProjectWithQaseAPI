@@ -100,3 +100,8 @@ Pods
 QaseAPIProj/Classes/KeychainLocal.swift
 
 iOSInjectionProject/
+
+# Local development tools
+.omc/
+.omx/
+.codegraph/

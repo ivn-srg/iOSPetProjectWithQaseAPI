@@ -51,11 +51,12 @@
 		93BCD2472CD00CF900C6D6EE /* ButtonWithLeadingImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BCD2462CD00CF900C6D6EE /* ButtonWithLeadingImage.swift */; };
 		93C03CFF2DB80EFB00D1869B /* EmptyListLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C03CFE2DB80EFB00D1869B /* EmptyListLabel.swift */; };
 		93C8095C2CCBCA23006BCCC9 /* MainTabbarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */; };
-		93C8095E2CCBDEB9006BCCC9 /* ProfileViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095D2CCBDEB9006BCCC9 /* ProfileViewController.swift */; };
+		93C8095E2CCBDEB9006BCCC9 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095D2CCBDEB9006BCCC9 /* SettingsViewController.swift */; };
 		93C809602CCC0ED8006BCCC9 /* RootViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095F2CCC0ECD006BCCC9 /* RootViewController.swift */; };
 		93C809622CCC0FC8006BCCC9 /* Ext+NotificationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C809612CCC0FB9006BCCC9 /* Ext+NotificationName.swift */; };
 		93CA94732CCA752300D99517 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CA94722CCA751800D99517 /* AuthManager.swift */; };
 		93CA94762CCA8A3900D99517 /* Ext+UIViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CA94752CCA8A2D00D99517 /* Ext+UIViewController.swift */; };
+		93CB37E13047830400054726 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93CB37E03047830400054726 /* HomeViewController.swift */; };
 		93DCDF592BE4EC3800D4F365 /* ProjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */; };
 		93DCDF5D2BE5159500D4F365 /* TestEntitiesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5C2BE5159500D4F365 /* TestEntitiesViewModel.swift */; };
 		93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5E2BE51C2900D4F365 /* Protocols.swift */; };
@@ -63,6 +64,10 @@
 		93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */; };
 		93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */; };
 		93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */; };
+		93F84C823048B6A8003A5227 /* TestRunsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C813048B6A8003A5227 /* TestRunsViewController.swift */; };
+		93F84C843048B7F8003A5227 /* SearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C833048B7F8003A5227 /* SearchViewController.swift */; };
+		93F84C863048C7FF003A5227 /* TilesCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */; };
+		93F84C883048CF60003A5227 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C873048CF60003A5227 /* HomeViewModel.swift */; };
 		93F866392D9DBD24006F6F5C /* project_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 93F866332D9DBD24006F6F5C /* project_data.json */; };
 		93F8663A2D9DBD24006F6F5C /* suites_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 93F866342D9DBD24006F6F5C /* suites_data.json */; };
 		93F8663B2D9DBD24006F6F5C /* test_cases_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 93F866352D9DBD24006F6F5C /* test_cases_data.json */; };
@@ -155,11 +160,12 @@
 		93BCD2462CD00CF900C6D6EE /* ButtonWithLeadingImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonWithLeadingImage.swift; sourceTree = "<group>"; };
 		93C03CFE2DB80EFB00D1869B /* EmptyListLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyListLabel.swift; sourceTree = "<group>"; };
 		93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabbarViewController.swift; sourceTree = "<group>"; };
-		93C8095D2CCBDEB9006BCCC9 /* ProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
+		93C8095D2CCBDEB9006BCCC9 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		93C8095F2CCC0ECD006BCCC9 /* RootViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootViewController.swift; sourceTree = "<group>"; };
 		93C809612CCC0FB9006BCCC9 /* Ext+NotificationName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+NotificationName.swift"; sourceTree = "<group>"; };
 		93CA94722CCA751800D99517 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		93CA94752CCA8A2D00D99517 /* Ext+UIViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+UIViewController.swift"; sourceTree = "<group>"; };
+		93CB37E03047830400054726 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
 		93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsViewModel.swift; sourceTree = "<group>"; };
 		93DCDF5C2BE5159500D4F365 /* TestEntitiesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestEntitiesViewModel.swift; sourceTree = "<group>"; };
 		93DCDF5E2BE51C2900D4F365 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
@@ -168,6 +174,10 @@
 		93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewCell.swift; sourceTree = "<group>"; };
+		93F84C813048B6A8003A5227 /* TestRunsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRunsViewController.swift; sourceTree = "<group>"; };
+		93F84C833048B7F8003A5227 /* SearchViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewController.swift; sourceTree = "<group>"; };
+		93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilesCollectionViewController.swift; sourceTree = "<group>"; };
+		93F84C873048CF60003A5227 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		93F866332D9DBD24006F6F5C /* project_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = project_data.json; sourceTree = "<group>"; };
 		93F866342D9DBD24006F6F5C /* suites_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = suites_data.json; sourceTree = "<group>"; };
 		93F866352D9DBD24006F6F5C /* test_cases_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = test_cases_data.json; sourceTree = "<group>"; };
@@ -213,6 +223,7 @@
 				93DCDF5C2BE5159500D4F365 /* TestEntitiesViewModel.swift */,
 				938C47DC2C9A095A00B75BE8 /* CreatingProjectViewModel.swift */,
 				93B045542C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift */,
+				93F84C873048CF60003A5227 /* HomeViewModel.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -256,14 +267,17 @@
 		93748C2F2B4808BF00BE7FFB /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
-				93C8095F2CCC0ECD006BCCC9 /* RootViewController.swift */,
 				93B0454F2C9E940800EE125B /* CreatingVC */,
+				93C8095F2CCC0ECD006BCCC9 /* RootViewController.swift */,
 				93748C322B480F4400BE7FFB /* AuthViewController.swift */,
 				93F1F37D2B59879900667DB9 /* DetailCaseScreen */,
 				9384FCDE2B4D7FC0009EB478 /* TestEntitiesTableViewController.swift */,
 				93748C302B4808F500BE7FFB /* ProjectsViewController.swift */,
 				93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */,
-				93C8095D2CCBDEB9006BCCC9 /* ProfileViewController.swift */,
+				93C8095D2CCBDEB9006BCCC9 /* SettingsViewController.swift */,
+				93CB37E03047830400054726 /* HomeViewController.swift */,
+				93F84C813048B6A8003A5227 /* TestRunsViewController.swift */,
+				93F84C833048B7F8003A5227 /* SearchViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -277,6 +291,7 @@
 				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
 				93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */,
 				93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */,
+				93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -560,6 +575,7 @@
 				93C8095C2CCBCA23006BCCC9 /* MainTabbarViewController.swift in Sources */,
 				9399A0AB2D2D315000347130 /* Ext+UIColor.swift in Sources */,
 				93DCDF5D2BE5159500D4F365 /* TestEntitiesViewModel.swift in Sources */,
+				93F84C863048C7FF003A5227 /* TilesCollectionViewController.swift in Sources */,
 				93B23D0A2CC9259400FA7509 /* Ext+UIAlertController.swift in Sources */,
 				9370855C2BEB3C49002316B8 /* ProjectDataModel.swift in Sources */,
 				9370855A2BEB3C49002316B8 /* EntitiesRO.swift in Sources */,
@@ -578,6 +594,7 @@
 				937650C22B6CE70800B5336B /* DetailTabbarControllerViewModel.swift in Sources */,
 				938C47E82C9A0C0000B75BE8 /* PropertiesPickerTextField.swift in Sources */,
 				93B0454E2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift in Sources */,
+				93CB37E13047830400054726 /* HomeViewController.swift in Sources */,
 				93C03CFF2DB80EFB00D1869B /* EmptyListLabel.swift in Sources */,
 				93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */,
 				934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */,
@@ -586,7 +603,9 @@
 				937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */,
 				93F9584F2DB95EAE00EA8D96 /* TestCaseFieldEnums.swift in Sources */,
 				932447392CA484A800998B94 /* SharedResponseModel.swift in Sources */,
+				93F84C843048B7F8003A5227 /* SearchViewController.swift in Sources */,
 				93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */,
+				93F84C883048CF60003A5227 /* HomeViewModel.swift in Sources */,
 				93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */,
 				93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */,
 				93B045512C9E946700EE125B /* CreateTestCaseView.swift in Sources */,
@@ -597,9 +616,10 @@
 				9370855E2BEB3C49002316B8 /* SuitesDataModel.swift in Sources */,
 				9384FCDF2B4D7FC0009EB478 /* TestEntitiesTableViewController.swift in Sources */,
 				93C809622CCC0FC8006BCCC9 /* Ext+NotificationName.swift in Sources */,
+				93F84C823048B6A8003A5227 /* TestRunsViewController.swift in Sources */,
 				93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */,
 				93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */,
-				93C8095E2CCBDEB9006BCCC9 /* ProfileViewController.swift in Sources */,
+				93C8095E2CCBDEB9006BCCC9 /* SettingsViewController.swift in Sources */,
 				93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */,
 				935F2BA52CCFC73800546162 /* Ext+String.swift in Sources */,
 			);
@@ -793,7 +813,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -828,7 +848,7 @@
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -854,7 +874,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ivn.srg.QaseAPIProjTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -872,7 +892,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ivn.srg.QaseAPIProjTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -889,7 +909,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ivn.srg.QaseAPIProjUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -906,7 +926,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ivn.srg.QaseAPIProjUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -963,8 +983,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/realm/realm-swift";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 10.53.0;
+				branch = community;
+				kind = branch;
 			};
 		};
 		936A2B142C8A252E007F7C72 /* XCRemoteSwiftPackageReference "SnapKit" */ = {

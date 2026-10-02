@@ -93,14 +93,18 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         super.viewDidLoad()
         
         viewModel.delegate = self
-        viewModel.showErrorClosure = { title, message in
+        viewModel.showErrorClosure = { [weak self] title, message in
+            guard let self else { return }
+
             UIAlertController.showSimpleAlert(
                 on: self,
                 title: title,
                 message: message
             )
         }
-        viewModel.creatingFinishCallback = {
+        viewModel.creatingFinishCallback = { [weak self] in
+            guard let self else { return }
+
             UIAlertController.showSimpleAlert(
                 on: self,
                 title: "Success".localized,

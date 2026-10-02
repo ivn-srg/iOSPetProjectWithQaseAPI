@@ -9,7 +9,6 @@ import UIKit
 
 final class MainTabbarViewController: UITabBarController {
     
-    // MARK: - LifeCycle
     init() {
         super.init(nibName: nil, bundle: nil)
     }
@@ -20,19 +19,19 @@ final class MainTabbarViewController: UITabBarController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        delegate = self
+        let homeVC = UINavigationController(rootViewController: HomeViewController())
+        let repositoryVC = UINavigationController(rootViewController: ProjectsViewController())
+        let testRunsVC = UINavigationController(rootViewController: TestRunsViewController())
+        let settingsVC = UINavigationController(rootViewController: SettingsViewController())
         
-        let firstVC = UINavigationController(rootViewController: ProjectsViewController())
-        let secondVC = ProfileViewController()
+        repositoryVC.tabBarItem = UITabBarItem(title: "Repository".localized, image: AppTheme.repositoryImage, tag: 1)
+        homeVC.tabBarItem = UITabBarItem(title: "Home".localized, image: AppTheme.homeImage, tag: 0)
+        testRunsVC.tabBarItem = UITabBarItem(title: "In progress".localized, image: AppTheme.playCircleImage, tag: 2)
+        settingsVC.tabBarItem = UITabBarItem(title: "Settings".localized, image: AppTheme.gearshapeFillImage, tag: 3)
         
-        firstVC.tabBarItem = UITabBarItem(title: "Repository".localized, image: AppTheme.listBulletImage, tag: 0)
-        secondVC.tabBarItem = UITabBarItem(title: "Profile".localized, image: AppTheme.personImage, tag: 1)
-        
-        viewControllers = [firstVC, secondVC]
+        setViewControllers(
+            [homeVC, repositoryVC, testRunsVC, settingsVC],
+            animated: true
+        )
     }
-    // MARK: - other block
-}
-
-extension MainTabbarViewController: UITabBarControllerDelegate {
-    
 }

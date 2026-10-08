@@ -9,6 +9,10 @@ import UIKit
 
 final class ProjectsViewController: UIViewController {
     
+    var onSelectProject: ((Project) -> Void)?
+    var beforeDeleteProject: ((Project) async -> Bool)?
+    var onProjectDeleted: ((String) -> Void)?
+    var onProjectsChanged: (() -> Void)?
     var suitesAndCasesCompletion: (() -> Void)? = {}
     var viewModel: ProjectsViewModel = .init()
     
@@ -94,7 +98,9 @@ final class ProjectsViewController: UIViewController {
     
     // MARK: - @objc func for navigation
     @objc func addNewProject() {
-        let vc = CreatingProjectViewController(viewModel: .init())
+        let vc = CreatingProjectViewController(viewModel: .init(), createdCallback: { [weak self] in
+            self?.onProjectsChanged?()
+        })
         vc.modalPresentationStyle = .fullScreen
         present(vc, animated: true)
     }
@@ -110,13 +116,8 @@ extension ProjectsViewController: UpdateTableViewProtocol {
 // MARK: - NextViewControllerPusher
 extension ProjectsViewController: NextViewControllerPusher {
     func pushToNextVC(to item: Int? = nil) {
-        Task { @MainActor in
-            if let item = item {
-                PROJECT_NAME = viewModel.projects[item].code
-            }
-            let vc = TestEntitiesTableViewController()
-            navigationController?.pushViewController(vc, animated: true)
-        }
+        guard let item, viewModel.projects.indices.contains(item) else { return }
+        onSelectProject?(viewModel.projects[item])
     }
 }
 
@@ -147,7 +148,9 @@ extension ProjectsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let swipeAction = UIContextualAction(style: .destructive, title: "Delete".localized) { [weak self] _, _, completionHandler in
             guard let self = self else { return }
-            let codeOfProject = viewModel.projects[indexPath.row].code
+            guard self.viewModel.projects.indices.contains(indexPath.row) else { completionHandler(false); return }
+            let project = self.viewModel.projects[indexPath.row]
+            let codeOfProject = project.code
             let composedMessage = String(format: "confirmMessage".localized, "Project".localized.lowercased(), codeOfProject)
             
             UIAlertController.showConfirmAlert(
@@ -155,7 +158,10 @@ extension ProjectsViewController: UITableViewDelegate {
                 title: "Confirmation".localized,
                 message: composedMessage) { _ in
                     self.executeWithErrorHandling {
-                        try await self.viewModel.deleteProject(at: indexPath.row)
+                        if let guardDelete = self.beforeDeleteProject, !(await guardDelete(project)) { return }
+                        try await self.viewModel.deleteProject(project)
+                        self.onProjectDeleted?(project.code)
+                        self.onProjectsChanged?()
                     }
                     completionHandler(true)
                 } cancelCompetionHandler: { _ in

@@ -19,6 +19,8 @@ enum CreatingEntitySelect: String {
 final class CreateSuiteOrCaseViewController: UIViewController {
     // MARK: - Fields
     private var viewModel: CreateSuiteOrCaseViewModel
+    private var initialSuite: Data?
+    private var initialCase: TestCaseEntity
     
     // MARK: - UI components
     private lazy var customNavigationView: UIView = {
@@ -82,6 +84,10 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     // MARK: - LifeCycle
     init(viewModel: CreateSuiteOrCaseViewModel) {
         self.viewModel = viewModel
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        initialSuite = try? encoder.encode(viewModel.creatingSuite)
+        initialCase = viewModel.creatingTestCase
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -188,4 +194,42 @@ extension CreateSuiteOrCaseViewController: CheckEnablingRBBProtocol {
             try await self.viewModel.createNewEntity()
         }
     }
+}
+
+
+extension CreateSuiteOrCaseViewController: ProjectDraft {
+    private var suiteSnapshot: Data? {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        return try? encoder.encode(viewModel.creatingSuite)
+    }
+    private var suiteDirty: Bool { suiteSnapshot != initialSuite }
+    private var caseDirty: Bool { viewModel.creatingTestCase != initialCase }
+    var hasUnsavedChanges: Bool { suiteDirty || caseDirty }
+    var canSaveDraft: Bool {
+        (!suiteDirty || !viewModel.creatingSuite.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            && (!caseDirty || !viewModel.creatingTestCase.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    }
+    func saveDraft() async throws {
+        let callback = viewModel.creatingFinishCallback
+        let activeType = viewModel.creatingEntityIsSuite
+        viewModel.creatingFinishCallback = {}
+        defer {
+            viewModel.creatingFinishCallback = callback
+            viewModel.creatingEntityIsSuite = activeType
+        }
+        if suiteDirty {
+            viewModel.creatingEntityIsSuite = true
+            try await viewModel.createNewEntity()
+            guard viewModel.isEntityWasCreated else { throw API.NetError.invalidRequest("Create failed") }
+            initialSuite = suiteSnapshot
+        }
+        if caseDirty {
+            viewModel.creatingEntityIsSuite = false
+            try await viewModel.createNewEntity()
+            guard viewModel.isEntityWasCreated else { throw API.NetError.invalidRequest("Create failed") }
+            initialCase = viewModel.creatingTestCase
+        }
+    }
+    func discardDraft() { viewModel.discardDraft() }
 }

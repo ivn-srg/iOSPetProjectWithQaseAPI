@@ -7,57 +7,53 @@
 
 import Foundation
 
+@MainActor
 final class CreateSuiteOrCaseViewModel {
     // MARK: - Fields
     weak var delegate: CheckEnablingRBBProtocol?
     var creatingEntityIsSuite = true
-    var creatingTestCase: TestCaseEntity {
-        didSet {
-            Task { @MainActor in
-                delegate?.checkConditionAndToggleRightBarButton()
-            }
-        }
-    }
-    var creatingSuite: TestListEntity {
-        didSet {
-            Task { @MainActor in
-                delegate?.checkConditionAndToggleRightBarButton()
-            }
-        }
-    }
+    var creatingTestCase: TestCaseEntity { didSet { delegate?.checkConditionAndToggleRightBarButton() } }
+    var creatingSuite: TestListEntity { didSet { delegate?.checkConditionAndToggleRightBarButton() } }
     var isFieldsEmpty = false {
         didSet {
             if isFieldsEmpty {
-                Task { @MainActor in
-                    showErrorClosure(
-                        "Not enough".localized,
-                        "Probably you didn't fill all fields, check it, please".localized
-                    )
-                }
+                showErrorClosure("Not enough".localized, "Probably you didn't fill all fields, check it, please".localized)
             }
         }
     }
     var isEntityWasCreated = false {
         didSet {
-            Task { @MainActor in
-                if isEntityWasCreated {
-                    creatingFinishCallback()
-                } else {
-                    showErrorClosure("Error".localized, "Something went wrong".localized)
-                }
-            }
+            if isEntityWasCreated { creatingFinishCallback() }
+            else { showErrorClosure("Error".localized, "Something went wrong".localized) }
         }
     }
     var creatingFinishCallback: () -> Void = {}
     var showErrorClosure: (String, String) -> Void = { (_,_) in }
     
-    let parentSuiteId: Int
+    let projectCode: String
+    private let network: NetworkManager
+    private let session: SessionContext
+    private let stamp: SessionStamp
+    private var baselineCase: TestCaseEntity
+    private var baselineSuite: TestListEntity
+    let parentSuiteId: Int?
+    var hasUnsavedChanges: Bool {
+        if creatingEntityIsSuite {
+            return creatingSuite.title != baselineSuite.title || creatingSuite.itemDescription != baselineSuite.itemDescription || creatingSuite.preconditions != baselineSuite.preconditions || creatingSuite.parentId != baselineSuite.parentId
+        }
+        return creatingTestCase != baselineCase
+    }
+    var canSaveDraft: Bool { !(creatingEntityIsSuite ? creatingSuite.title : creatingTestCase.title).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    func discardDraft() { creatingSuite = baselineSuite; creatingTestCase = baselineCase }
     
     // MARK: - LifeCycle
-    init(parentSuiteId: Int? = 0) {
-        if let parentSuiteId = parentSuiteId {
-            self.parentSuiteId = parentSuiteId
-        } else { self.parentSuiteId = 0 }
+    init(projectCode: String, parentSuiteId: Int? = nil, network: NetworkManager = ApiServiceConfiguration.shared.apiService, session: SessionContext? = nil) {
+        let session = session ?? .shared
+        self.projectCode = projectCode; self.network = network; self.session = session; self.stamp = session.capture()
+        var initialCase = TestCaseEntity.empty; initialCase.suiteId = parentSuiteId
+        var initialSuite = TestListEntity.empty; initialSuite.parentId = parentSuiteId
+        self.baselineCase = initialCase; self.baselineSuite = initialSuite
+        self.parentSuiteId = parentSuiteId
         
         creatingSuite = TestListEntity.empty
         creatingTestCase = TestCaseEntity.empty
@@ -68,33 +64,42 @@ final class CreateSuiteOrCaseViewModel {
     
     // MARK: - Network work
     func createNewEntity() async throws(API.NetError) {
-        isFieldsEmpty = creatingEntityIsSuite ? creatingSuite.title.isEmpty : creatingTestCase.title.isEmpty
+        guard session.isCurrent(stamp) else { return }
+        isFieldsEmpty = !canSaveDraft
         if isFieldsEmpty { return }
         
         guard
-            let urlString = apiManager.composeURL(for: creatingEntityIsSuite ? .suites : .cases, urlComponents: [PROJECT_NAME], queryItems: nil)
+            let urlString = network.composeURL(for: creatingEntityIsSuite ? .suites : .cases, urlComponents: [projectCode], queryItems: nil)
         else { throw .invalidURL }
         
         LoadingIndicator.startLoading()
+        defer { if session.isCurrent(stamp) { LoadingIndicator.stopLoading() } }
         
         if creatingEntityIsSuite {
-            let response = try await apiManager.performRequest(
-                with: creatingSuite,
+            let draft = creatingSuite
+            let response = try await network.performRequest(
+                with: QaseAPISuiteCreateRequest(title: draft.title, description: draft.itemDescription, preconditions: draft.preconditions, parentId: draft.parentId),
                 from: urlString,
                 method: .post,
                 modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self
             )
-            isEntityWasCreated = response.status?.value ?? false
+            guard session.isCurrent(stamp) else { return }
+            guard response.status?.value == true else { throw .invalidRequest("The entity could not be created") }
+            baselineSuite = draft
+            isEntityWasCreated = true
         } else {
-            let response = try await apiManager.performRequest(
-                with: creatingTestCase.dictOfValues,
+            let draft = creatingTestCase
+            let response = try await network.performRequest(
+                with: draft.dictOfValues,
                 from: urlString,
                 method: .post,
                 modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
             )
-            isEntityWasCreated = response.status?.value ?? false
+            guard session.isCurrent(stamp) else { return }
+            guard response.status?.value == true else { throw .invalidRequest("The entity could not be created") }
+            baselineCase = draft
+            isEntityWasCreated = true
         }
-        LoadingIndicator.stopLoading()
     }
 }
 
@@ -110,7 +115,7 @@ extension CreateSuiteOrCaseViewModel: UpdatableEntityProtocol {
     private func updateSuite<T>(for field: FieldType, value: T) {
         guard let value = value as? String else {
             guard field == .parentSuite, let value = value as? Int else { return }
-            creatingSuite.parentId = value
+            creatingSuite.parentId = value == 0 ? nil : value
             return
         }
         

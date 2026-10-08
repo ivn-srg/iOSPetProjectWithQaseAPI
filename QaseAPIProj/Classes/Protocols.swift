@@ -8,19 +8,23 @@
 import Foundation
 import UIKit
 
+@MainActor
 protocol NextViewControllerPusher: AnyObject {
     func pushToNextVC(to item: Int?)
 }
 
+@MainActor
 protocol UpdateTableViewProtocol: AnyObject {
     func updateTableView()
 }
 
+@MainActor
 @objc protocol DetailTestCaseProtocol: AnyObject {
     func updateUI()
     @objc func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer)
 }
 
+@MainActor
 protocol CheckEnablingRBBProtocol: AnyObject {
     func checkConditionAndToggleRightBarButton()
 }
@@ -30,6 +34,7 @@ protocol MenuDataSource {
     var menuItem: MenuItem { get }
 }
 
+@MainActor
 protocol UpdatableEntityProtocol {
     var testCase: TestCaseEntity? { get set }
     var changedTestCase: TestCaseEntity? { get set }

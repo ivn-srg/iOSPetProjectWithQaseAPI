@@ -29,8 +29,8 @@ final class TestCaseViewController: UIViewController {
     
     // MARK: - Lifecycle
     
-    init(caseUniqueKey: String) {
-        self.viewModel = DetailTabbarControllerViewModel(caseUniqueKey: caseUniqueKey)
+    init(reference: TestCaseReference) {
+        self.viewModel = DetailTabbarControllerViewModel(reference: reference)
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -45,17 +45,18 @@ final class TestCaseViewController: UIViewController {
         executeWithErrorHandling {
             try await self.viewModel.fetchCaseDataJSON()
         }
-        viewModel.updatingFinishCallback = {
+        viewModel.updatingFinishCallback = { [weak self] in
+            guard let self else { return }
             UIAlertController.showSimpleAlert(
                 on: self, title: "Data has been saved ✅".localized,
                 message: String(
                     format: "Your changes for %@-%d test case with successfully saved".localized,
-                    PROJECT_NAME, self.viewModel.caseId
+                    self.viewModel.reference.projectCode, self.viewModel.caseId
                 )
             )
         }
-        viewModel.checkDataChanged = {
-            self.checkConditionAndToggleRightBarButton()
+        viewModel.checkDataChanged = { [weak self] in
+            self?.checkConditionAndToggleRightBarButton()
         }
         
         setupTopTabBar()
@@ -65,6 +66,11 @@ final class TestCaseViewController: UIViewController {
         checkConditionAndToggleRightBarButton()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        view.endEditing(true)
+    }
+
     // MARK: - View Configuration
     func setupTopTabBar() {
         let generalInfoVC = GeneralDetailCaseViewController(vm: viewModel)
@@ -103,7 +109,7 @@ final class TestCaseViewController: UIViewController {
             $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
         }
         
-        title = "\(PROJECT_NAME)-\(viewModel.caseId)"
+        title = "\(viewModel.reference.projectCode)-\(viewModel.caseId)"
     }
     
     private func setupInitialViewController() {
@@ -155,7 +161,7 @@ extension TestCaseViewController: UITabBarDelegate {
 extension TestCaseViewController: DetailTestCaseProtocol {
     func updateUI() {
         Task { @MainActor in
-            title = "\(PROJECT_NAME)-\(viewModel.caseId)"
+            title = "\(viewModel.reference.projectCode)-\(viewModel.caseId)"
             for viewC in viewControllers {
                 guard let viewC = viewC as? DetailTestCaseProtocol else { continue }
                 viewC.updateUI()
@@ -218,4 +224,18 @@ extension TestCaseViewController: CheckEnablingRBBProtocol {
             try await self.viewModel.updateTestCaseData()
         }
     }
+}
+
+
+extension TestCaseViewController: ProjectDraft {
+    var hasUnsavedChanges: Bool { viewModel.testCase != viewModel.changedTestCase }
+    var canSaveDraft: Bool { viewModel.canSaveDraft }
+    func saveDraft() async throws {
+        let callback = viewModel.updatingFinishCallback
+        viewModel.updatingFinishCallback = {}
+        defer { viewModel.updatingFinishCallback = callback }
+        try await viewModel.updateTestCaseData()
+        guard viewModel.isUploadingSuccess else { throw API.NetError.invalidRequest("Save failed") }
+    }
+    func discardDraft() { viewModel.changedTestCase = viewModel.testCase }
 }

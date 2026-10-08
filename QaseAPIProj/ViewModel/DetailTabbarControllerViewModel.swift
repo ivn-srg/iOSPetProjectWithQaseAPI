@@ -1,98 +1,64 @@
-//
-//  DetailTabbarControllerViewModel.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 02.02.2024.
-//
-
 import Foundation
 import UIKit
 
+@MainActor
 final class DetailTabbarControllerViewModel {
-    // MARK: - fields
     weak var delegate: DetailTestCaseProtocol?
-    var testCase: TestCaseEntity? = nil {
-        didSet {
-            Task { @MainActor in delegate?.updateUI() }
-        }
-    }
-    var changedTestCase: TestCaseEntity? {
-        didSet {
-            Task { @MainActor in checkDataChanged() }
-        }
-    }
-    var isUploadingSuccess = false {
-        didSet {
-            if isUploadingSuccess {
-                Task { @MainActor in updatingFinishCallback() }
-            }
-        }
-    }
-    var caseUniqueKey: String
-    var caseId: Int {
-        guard let caseSubstring = caseUniqueKey.split(separator: "_").first,
-              let caseId = Int(caseSubstring)
-        else { return 0 }
-        return caseId
-    }
+    var testCase: TestCaseEntity? { didSet { delegate?.updateUI() } }
+    var changedTestCase: TestCaseEntity? { didSet { checkDataChanged() } }
+    var isUploadingSuccess = false { didSet { if isUploadingSuccess { updatingFinishCallback() } } }
+    let reference: TestCaseReference
+    var caseUniqueKey: String { reference.cacheKey }
+    var caseId: Int { reference.caseID }
     var updatingFinishCallback: () -> Void = {}
     var checkDataChanged: () -> Void = {}
-    private let realmDb = RealmManager.shared
-    
-    // MARK: - Lifecycle
-    init(caseUniqueKey: String) {
-        self.caseUniqueKey = caseUniqueKey
+    private let network: NetworkManager
+    private let dao: HeroDAO
+    private let session: SessionContext
+    private let stamp: SessionStamp
+    private let clock: () -> Date
+    private var didRecordView = false
+
+    init(reference: TestCaseReference, network: NetworkManager = ApiServiceConfiguration.shared.apiService, dao: HeroDAO? = nil, session: SessionContext? = nil, clock: @escaping () -> Date = Date.init) {
+        let session = session ?? .shared
+        self.reference = reference; self.network = network; self.dao = dao ?? RealmManager.shared; self.session = session; self.stamp = session.capture(); self.clock = clock
     }
-    
-    // MARK: - Network work
+    var hasUnsavedChanges: Bool { testCase != changedTestCase }
+    var canSaveDraft: Bool { changedTestCase?.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false }
+    func discardDraft() { changedTestCase = testCase }
+
     func fetchCaseDataJSON() async throws(API.NetError) {
-        if let cashedTestCase = realmDb.getTestCase(by: caseUniqueKey) {
-            testCase = cashedTestCase
-            changedTestCase = testCase
-            
-            LoadingIndicator.stopLoading()
-            return
+        guard session.isCurrent(stamp) else { return }
+        if let cached = dao.getTestCase(reference: reference) {
+            publish(cached); return
         }
-        
-        guard
-            let urlString = apiManager.composeURL(for: .cases, urlComponents: [PROJECT_NAME, String(caseId)], queryItems: nil)
-        else { throw .invalidURL }
-        
-        LoadingIndicator.startLoading()
-        
-        let testCaseResult = try await apiManager.performRequest(
-            with: nil, from: urlString,
-            method: .get,
-            modelType: TestCaseModel.self)
-        
-        let _ = realmDb.saveTestCase(testCaseResult.result)
-        testCase = testCaseResult.result
-        changedTestCase = testCase
-        
-        LoadingIndicator.stopLoading()
+        guard let url = network.composeURL(for: .cases, urlComponents: [reference.projectCode, String(reference.caseID)], queryItems: nil) else { throw .invalidURL }
+        LoadingIndicator.startLoading(); defer { if session.isCurrent(stamp) { LoadingIndicator.stopLoading() } }
+        let response = try await network.performRequest(with: nil, from: url, method: .get, modelType: TestCaseModel.self)
+        guard session.isCurrent(stamp) else { return }
+        guard response.status, response.result.id == reference.caseID else { throw .invalidRequest("The test case could not be loaded") }
+        _ = dao.saveTestCase(response.result, reference: reference, stamp: stamp)
+        publish(response.result)
     }
-    
+    private func publish(_ value: TestCaseEntity) {
+        guard session.isCurrent(stamp) else { return }
+        testCase = value; changedTestCase = value
+        if !didRecordView {
+            let item = RecentCaseItem(reference: reference, title: value.title, description: value.description, priority: value.priority.menuItem.id, automation: value.automation.menuItem.id, viewedAt: clock())
+            _ = dao.recordRecentCase(item, stamp: stamp)
+            didRecordView = true
+        }
+    }
     func updateTestCaseData() async throws(API.NetError) {
-        guard let changedTestCase = changedTestCase else { return }
-        
-        guard
-            let testCaseId = testCase?.id,
-            let urlString = apiManager.composeURL(for: .cases, urlComponents: [PROJECT_NAME, String(testCaseId)], queryItems: nil)
-        else { throw .invalidURL }
-        
-        LoadingIndicator.startLoading()
-        
-        let response = try await apiManager.performRequest(
-            with: changedTestCase.dictOfValues,
-            from: urlString,
-            method: .patch,
-            modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
-        )
-        
-        isUploadingSuccess = response.status?.value ?? false
-        let _ = isUploadingSuccess ? realmDb.saveTestCase(changedTestCase) : nil
-        try await fetchCaseDataJSON()
-        LoadingIndicator.stopLoading()
+        isUploadingSuccess = false
+        guard session.isCurrent(stamp), let draft = changedTestCase, canSaveDraft else { throw .invalidRequest("The draft cannot be saved") }
+        guard let url = network.composeURL(for: .cases, urlComponents: [reference.projectCode, String(reference.caseID)], queryItems: nil) else { throw .invalidURL }
+        LoadingIndicator.startLoading(); defer { if session.isCurrent(stamp) { LoadingIndicator.stopLoading() } }
+        let response = try await network.performRequest(with: draft.dictOfValues, from: url, method: .patch, modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self)
+        guard session.isCurrent(stamp) else { return }
+        guard response.status?.value == true else { throw .invalidRequest("The test case could not be saved") }
+        _ = dao.saveTestCase(draft, reference: reference, stamp: stamp)
+        testCase = draft; changedTestCase = draft; isUploadingSuccess = true
     }
 }
 

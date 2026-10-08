@@ -10,6 +10,7 @@ import UIKit
 final class CreatingProjectViewController: UIViewController {
     // MARK: - Fields
     private var viewModel: CreatingProjectViewModel
+    private var createdCallback: (() -> Void)?
     
     // MARK: - UI components
     private lazy var customNavigationView: UIView = {
@@ -74,6 +75,7 @@ final class CreatingProjectViewController: UIViewController {
     // MARK: - LifeCycle
     init(viewModel: CreatingProjectViewModel, createdCallback: (() -> Void)? = nil) {
         self.viewModel = viewModel
+        self.createdCallback = createdCallback
         
         super.init(nibName: nil, bundle: nil)
     }
@@ -86,20 +88,23 @@ final class CreatingProjectViewController: UIViewController {
         super.viewDidLoad()
         
         viewModel.delegate = self
-        viewModel.showErrorClosure = { title, message in
+        viewModel.showErrorClosure = { [weak self] title, message in
+            guard let self else { return }
             UIAlertController.showSimpleAlert(
                 on: self,
                 title: title,
                 message: message
             )
         }
-        viewModel.creatingFinishCallback = {
+        viewModel.creatingFinishCallback = { [weak self] in
+            guard let self else { return }
             UIAlertController.showSimpleAlert(
                 on: self,
                 title: "Success".localized,
                 message: "Your project was created successfully".localized
             ) { _ in
                 self.closeViewController()
+                self.createdCallback?()
             }
         }
         setupView()
@@ -161,4 +166,21 @@ extension CreatingProjectViewController: CheckEnablingRBBProtocol {
             try await self.viewModel.createNewProject()
         }
     }
+}
+
+
+extension CreatingProjectViewController: ProjectDraft {
+    var hasUnsavedChanges: Bool {
+        !viewModel.creatingProject.title.isEmpty || !viewModel.creatingProject.code.isEmpty
+            || !(viewModel.creatingProject.description ?? "").isEmpty
+    }
+    var canSaveDraft: Bool { !viewModel.creatingProject.isEmpty }
+    func saveDraft() async throws {
+        let callback = viewModel.creatingFinishCallback
+        viewModel.creatingFinishCallback = {}
+        defer { viewModel.creatingFinishCallback = callback }
+        try await viewModel.createNewProject()
+        guard viewModel.isEntityWasCreated else { throw API.NetError.invalidRequest("Create failed") }
+    }
+    func discardDraft() { viewModel.creatingProject = .init() }
 }

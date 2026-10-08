@@ -1,211 +1,244 @@
-//
-//  SuitesAndCasesViewModel.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 03.05.2024.
-//
-
+import Combine
 import Foundation
 
-final class TestEntitiesViewModel {
-    
-    // MARK: - Fields
-    weak var delegate: UpdateTableViewProtocol?
-    var parentSuite: ParentSuite?
-    var isLoading = false
-    var testEntitiesData = [TestListEntity]() {
-        didSet {
-            delegate?.updateTableView()
-        }
-    }
-    private let realmDb = RealmManager.shared
-    private var totalCountOfSuites = 0
-    private var totalCountOfCases = 0
-    private var countOfFetchedCases = 0
-    private var hasMoreCases = true
-    
-    // MARK: - lifecycle
-    
-    init(delegate: UpdateTableViewProtocol? = nil, parentSuite: ParentSuite? = nil) {
-        self.delegate = delegate
+@MainActor
+final class TestEntitiesViewModel: ObservableObject {
+    let projectCode: String
+    let parentSuite: ParentSuite?
+    var location: RepositoryLocation { .init(projectCode: projectCode, suiteID: parentSuite?.id) }
+    @Published private(set) var catalogComplete = false
+    @Published private(set) var catalog: [TestListEntity] = []
+    @Published private(set) var cases: [TestListEntity] = []
+    @Published private(set) var suitesLoading = false
+    @Published private(set) var casesLoading = false
+    @Published private(set) var suiteError: String?
+    @Published private(set) var caseError: String?
+    @Published private(set) var caseCount: Int?
+    @Published private(set) var updatedAt: Date?
+    @Published var query = ""
+    @Published var requestSearchFocus = false
+    @Published private(set) var searchedSuites: [TestListEntity] = []
+    @Published private(set) var searchedCases: [CaseSummary] = []
+    @Published private(set) var searchLoading = false
+    @Published private(set) var searchError: String?
+    @Published private(set) var moreSearchSuites = false
+    @Published private(set) var moreSearchCases = false
+    @Published private(set) var hasMoreCases = true
+    private let repository: HomeRepository
+    private let network: NetworkManager
+    private let dao: RealmManager
+    private let session: SessionContext
+    private let stamp: SessionStamp
+    private var offset = 0
+    private var fetchedCases: [TestListEntity] = []
+    private var caseGeneration = 0
+    private var catalogGeneration = 0
+    private var searchGeneration = 0
+    private var suiteSearchOffset = 0
+    private var caseSearchOffset = 0
+    private var searchTask: Task<Void, Never>?
+    private var invalidation: AnyCancellable?
+
+    var childSuites: [TestListEntity] { catalog.filter { normalized($0.parentId) == location.suiteID } }
+    var testEntitiesData: [TestListEntity] { childSuites + cases }
+    var isLoading: Bool { suitesLoading || casesLoading }
+    var hasQuery: Bool { !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    var showingSavedData: Bool { (suiteError != nil && catalogComplete) || (caseError != nil && updatedAt != nil) || (searchError != nil && (!searchedSuites.isEmpty || !searchedCases.isEmpty)) }
+    var levelTitle: String { catalog.first(where: { $0.id == location.suiteID })?.title ?? parentSuite?.title ?? "Project root".localized }
+    var levelUnavailable: Bool { location.suiteID != nil && !suitesLoading && suiteError == "Suite unavailable".localized }
+
+    init(projectCode: String, parentSuite: ParentSuite? = nil, network: NetworkManager = ApiServiceConfiguration.shared.apiService,
+         dao: RealmManager? = nil, session: SessionContext? = nil) {
+        self.projectCode = projectCode
         self.parentSuite = parentSuite
+        self.network = network
+        self.dao = dao ?? .shared
+        self.session = session ?? .shared
+        stamp = self.session.capture()
+        repository = HomeRepository(network: network, session: self.session)
+        catalog = self.dao.getAllCachedSuites(projectCode: projectCode)
+        catalogComplete = self.dao.hasRepositoryCatalog(projectCode: projectCode)
+        let cachedCases = self.dao.getAllCachedCases(projectCode: projectCode).filter { normalized($0.parentId) == location.suiteID }
+        if let snapshot = self.dao.repositorySnapshot(location: location) {
+            let order = Dictionary(snapshot.caseIDs.enumerated().map { ($0.element, $0.offset) }, uniquingKeysWith: { first, _ in first })
+            cases = cachedCases.sorted { (order[$0.id] ?? Int.max) < (order[$1.id] ?? Int.max) }
+            caseCount = cases.count
+            updatedAt = snapshot.updatedAt
+        } else { cases = cachedCases }
+        invalidation = NotificationCenter.default.publisher(for: .didInvalidateSession).sink { [weak self] notification in
+            guard let self, notification.object as AnyObject? === self.session else { return }
+            self.cancel()
+            self.catalog = []; self.cases = []; self.searchedSuites = []; self.searchedCases = []
+        }
     }
-    
-    // MARK: - Network funcs
-    func requestEntitiesData(place: PlaceOfRequest) async throws {
-        switch place {
-        case .start, .refresh:
-            await MainActor.run {
-                LoadingIndicator.startLoading()
+
+    func cancel() {
+        caseGeneration += 1; catalogGeneration += 1; searchGeneration += 1
+        searchTask?.cancel()
+        suitesLoading = false; casesLoading = false; searchLoading = false
+    }
+
+    func reload() async {
+        guard session.isCurrent(stamp) else { return }
+        offset = 0; fetchedCases = []; hasMoreCases = true; caseCount = nil; casesLoading = false
+        caseGeneration += 1
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { @MainActor [weak self] in await self?.loadCatalog() }
+            group.addTask { @MainActor [weak self] in await self?.loadMoreCases() }
+        }
+        if hasQuery { await search(reset: true) }
+    }
+
+    private func loadCatalog() async {
+        catalogGeneration += 1
+        let generation = catalogGeneration
+        suitesLoading = true; suiteError = nil
+        defer { if generation == catalogGeneration { suitesLoading = false } }
+        do {
+            var values: [TestListEntity] = []
+            var pageOffset = 0
+            while true {
+                let page = try await repository.suites(projectCode: projectCode, offset: pageOffset)
+                guard accepts(generation, catalogGeneration) else { return }
+                appendUnique(page.entities, to: &values)
+                pageOffset += page.entities.count
+                if page.entities.isEmpty || pageOffset >= (page.filtered ?? page.total ?? pageOffset) { break }
             }
-            
-            resetPaginationArgs()
-            loadCachedData()
-            
-            do {
-                try await fetchAndSyncData()
-            } catch {
-                print("Error syncing data: \(error)")
+            guard accepts(generation, catalogGeneration) else { return }
+            _ = dao.replaceSuiteCatalog(values, projectCode: projectCode, stamp: stamp)
+            catalog = values
+            catalogComplete = true
+            if let id = location.suiteID, !values.contains(where: { $0.id == id }) { suiteError = "Suite unavailable".localized }
+        } catch {
+            if accepts(generation, catalogGeneration), !(error is CancellationError) { suiteError = "Could not load suites".localized }
+        }
+    }
+
+    func loadMoreCases() async {
+        guard !casesLoading, hasMoreCases, session.isCurrent(stamp) else { return }
+        let generation = caseGeneration
+        casesLoading = true; caseError = nil
+        defer { if generation == caseGeneration { casesLoading = false } }
+        do {
+            var found: Bool
+            repeat {
+                let page = try await repository.cases(projectCode: projectCode, offset: offset, suiteID: location.suiteID)
+                guard accepts(generation, caseGeneration) else { return }
+                let entities = page.entities.map(Self.entity)
+                _ = dao.saveTestEntities(entities, projectCode: projectCode, stamp: stamp)
+                appendUnique(entities, to: &fetchedCases)
+                offset += page.entities.count
+                hasMoreCases = !page.entities.isEmpty && offset < (page.filtered ?? page.total ?? offset)
+                let matching = entities.filter { normalized($0.parentId) == location.suiteID }
+                found = !matching.isEmpty
+                cases = fetchedCases.filter { normalized($0.parentId) == location.suiteID }
+            } while !found && hasMoreCases
+            if !hasMoreCases, accepts(generation, caseGeneration) {
+                _ = dao.replaceRepositoryCases(fetchedCases, location: location, stamp: stamp)
+                caseCount = cases.count
+                updatedAt = Date()
+                _ = dao.saveRepositorySnapshot(.init(caseIDs: cases.map(\.id), updatedAt: updatedAt!), location: location, stamp: stamp)
             }
-            
-            await MainActor.run {
-                LoadingIndicator.stopLoading()
+        } catch {
+            if accepts(generation, caseGeneration), !(error is CancellationError) { caseError = "Could not load cases".localized }
+        }
+    }
+
+    func queryChanged() {
+        searchGeneration += 1; searchTask?.cancel()
+        searchedSuites = []; searchedCases = []; searchError = nil
+        guard hasQuery else { searchLoading = false; return }
+        searchTask = Task { [weak self] in
+            do { try await Task.sleep(for: .milliseconds(300)) } catch { return }
+            await self?.search(reset: true)
+        }
+    }
+
+    func search(reset: Bool, suites: Bool = true, cases: Bool = true) async {
+        guard hasQuery, session.isCurrent(stamp) else { return }
+        if reset {
+            searchGeneration += 1; suiteSearchOffset = 0; caseSearchOffset = 0
+            moreSearchSuites = true; moreSearchCases = true
+        }
+        let generation = searchGeneration
+        let requestedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        searchLoading = true; searchError = nil
+        defer { if generation == searchGeneration { searchLoading = false } }
+        await withTaskGroup(of: Void.self) { group in
+            if suites && moreSearchSuites {
+                group.addTask { @MainActor [weak self] in
+                    guard let self else { return }
+                    do {
+                        let page = try await self.repository.suites(projectCode: self.projectCode, query: requestedQuery, offset: self.suiteSearchOffset)
+                        guard self.accepts(generation, self.searchGeneration) else { return }
+                        if reset { self.searchedSuites = [] }
+                        _ = self.dao.saveTestEntities(page.entities, projectCode: self.projectCode, stamp: self.stamp)
+                        self.appendUnique(page.entities, to: &self.searchedSuites)
+                        self.suiteSearchOffset += page.entities.count
+                        self.moreSearchSuites = !page.entities.isEmpty && self.suiteSearchOffset < (page.filtered ?? page.total ?? self.suiteSearchOffset)
+                    } catch {
+                        guard self.accepts(generation, self.searchGeneration), !(error is CancellationError) else { return }
+                        self.searchedSuites = self.catalog.filter { $0.title.localizedCaseInsensitiveContains(requestedQuery) }
+                        self.moreSearchSuites = false; self.searchError = "Search is limited to saved data".localized
+                    }
+                }
             }
-        case .continuos:
-            try await fetchCasesJSON()
-        }
-    }
-    
-    func deleteEntity(at index: Int) async throws(API.NetError) {
-        let entity = testEntitiesData[index]
-        
-        guard
-            let urlString = apiManager.composeURL(for: entity.isSuite ? .suites : .cases,
-                                                  urlComponents: [PROJECT_NAME, String(entity.id)], queryItems: nil)
-        else { throw .invalidURL }
-        
-        Task { @MainActor in
-            LoadingIndicator.startLoading()
-        }
-        
-        let deletingResult = try await apiManager.performRequest(
-            with: nil, from: urlString,
-            method: .delete,
-            modelType: SharedResponseModel.self
-        )
-        
-        if deletingResult.status {
-            let deletedEntity = testEntitiesData.remove(at: index)
-            let _ = realmDb.deleteEntity(deletedEntity)
-        }
-        
-        await MainActor.run {
-            LoadingIndicator.stopLoading()
-        }
-    }
-    
-    // MARK: - private funcs
-    private func loadCachedData() {
-        if let cachedSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites),
-           let cachedCases = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .cases) {
-            var combinedData = [TestListEntity]()
-            combinedData.append(contentsOf: cachedSuites)
-            combinedData.append(contentsOf: cachedCases)
-            testEntitiesData = combinedData
-        }
-    }
-    
-    private func fetchAndSyncData() async throws {
-        try await fetchSuitesJSON()
-        try await fetchCasesJSON()
-    }
-    
-    private func fetchSuitesJSON() async throws {
-        if testEntitiesData.isEmpty,
-           let testSuites = realmDb.getTestEntities(by: parentSuite, testEntitiesType: .suites),
-           !testSuites.isEmpty {
-            testEntitiesData.append(contentsOf: testSuites)
-            return
-        }
-        
-        let _ = try await {
-            guard
-                let urlStringSuites = apiManager.composeURL(for: .suites, urlComponents: [PROJECT_NAME], queryItems: [.limit: 1, .offset: 0])
-            else { throw API.NetError.invalidURL }
-            
-            let countOfSuites = try await apiManager.performRequest(
-                with: nil, from: urlStringSuites,
-                method: .get,
-                modelType: SuitesDataModel.self
-            )
-            
-            totalCountOfSuites = countOfSuites.result.total
-        }()
-        
-        var offset = 0
-        
-        repeat {
-            guard
-                let urlStringSuites = apiManager.composeURL(for: .suites, urlComponents: [PROJECT_NAME], queryItems: [.limit: Constants.LIMIT_OF_REQUEST, .offset: offset])
-            else { throw API.NetError.invalidURL }
-            
-            let suitesResult = try await apiManager.performRequest(
-                with: nil, from: urlStringSuites,
-                method: .get,
-                modelType: SuitesDataModel.self
-            )
-            
-            let filteredSuites = parentSuite != nil
-            ? suitesResult.result.entities.filter { $0.parentId == parentSuite!.id }
-            : suitesResult.result.entities.filter { $0.parentId == nil }
-            
-            let _ = realmDb.saveTestEntities(filteredSuites)
-            updateDataList(with: filteredSuites)
-            
-            offset += Constants.LIMIT_OF_REQUEST
-        } while offset < totalCountOfSuites
-    }
-    
-    private func fetchCasesJSON() async throws(API.NetError) {
-        guard
-            let urlStringCases = apiManager.composeURL(
-                for: .cases, urlComponents: [PROJECT_NAME],
-                queryItems: [
-                    .suiteId: parentSuite?.id,
-                    .limit: Constants.LIMIT_OF_REQUEST,
-                    .offset: countOfFetchedCases
-                ]
-            )
-        else { throw .invalidURL }
-        
-        if hasMoreCases && !isLoading {
-            isLoading = true
-            let testCasesResult = try await apiManager.performRequest(
-                with: nil, from: urlStringCases,
-                method: .get,
-                modelType: TestCasesModel.self
-            )
-            
-            let filteredSuites = parentSuite == nil
-            ? testCasesResult.result.entities.filter { $0.suiteId == nil }
-            : testCasesResult.result.entities
-            
-            totalCountOfCases = totalCountOfCases == 0
-            ? testCasesResult.result.total
-            : totalCountOfCases
-            
-            let newCases = filteredSuites.map {
-                TestListEntity(testCase: $0)
-            }
-            
-            let _ = realmDb.saveTestEntities(newCases)
-            updateDataList(with: newCases)
-            
-            countOfFetchedCases += Constants.LIMIT_OF_REQUEST
-            hasMoreCases = countOfFetchedCases < totalCountOfCases
-            isLoading = false
-        }
-    }
-    
-    private func updateDataList(with newData: [TestListEntity]) {
-        for newItem in newData {
-            if let existingIndex = testEntitiesData.firstIndex(where: { $0.id == newItem.id && $0.isSuite == newItem.isSuite }) {
-                testEntitiesData[existingIndex] = newItem
-            } else {
-                testEntitiesData.append(newItem)
+            if cases && moreSearchCases {
+                group.addTask { @MainActor [weak self] in
+                    guard let self else { return }
+                    do {
+                        let page = try await self.repository.cases(projectCode: self.projectCode, query: requestedQuery, offset: self.caseSearchOffset)
+                        guard self.accepts(generation, self.searchGeneration) else { return }
+                        if reset { self.searchedCases = [] }
+                        _ = self.dao.saveTestEntities(page.entities.map(Self.entity), projectCode: self.projectCode, stamp: self.stamp)
+                        var ids = Set(self.searchedCases.map(\.id))
+                        self.searchedCases += page.entities.filter { ids.insert($0.id).inserted }
+                        self.caseSearchOffset += page.entities.count
+                        self.moreSearchCases = !page.entities.isEmpty && self.caseSearchOffset < (page.filtered ?? page.total ?? self.caseSearchOffset)
+                    } catch {
+                        guard self.accepts(generation, self.searchGeneration), !(error is CancellationError) else { return }
+                        self.searchedCases = self.dao.getAllCachedCases(projectCode: self.projectCode).map(CaseSummary.init(entity:)).filter { $0.title.localizedCaseInsensitiveContains(requestedQuery) }
+                        self.moreSearchCases = false; self.searchError = "Search is limited to saved data".localized
+                    }
+                }
             }
         }
     }
-    
-    private func resetPaginationArgs() {
-        totalCountOfSuites = 0
-        totalCountOfCases = 0
-        countOfFetchedCases = 0
-        hasMoreCases = true
+
+    func path(to suiteID: Int?) -> [RepositoryBreadcrumb]? {
+        var result: [RepositoryBreadcrumb] = []
+        var next = normalized(suiteID)
+        var seen = Set<Int>()
+        while let id = next {
+            guard seen.insert(id).inserted, let suite = catalog.first(where: { $0.id == id }) else { return nil }
+            result.append(.init(id: id, title: suite.title)); next = normalized(suite.parentId)
+        }
+        return [.init(id: nil, title: "Project root".localized)] + result.reversed()
     }
-    
-    // MARK: - VC funcs
-    func countOfRows() -> Int {
-        testEntitiesData.count
+
+    func pathTitle(to suiteID: Int?) -> String { path(to: suiteID)?.map(\.title).joined(separator: " › ") ?? "Path unavailable".localized }
+
+    func delete(_ reference: RepositoryItemReference) async throws {
+        guard session.isCurrent(stamp), reference.projectCode == projectCode else { throw CancellationError() }
+        let operation: API.Operation = reference.isSuite ? .deleteSuite : .deleteCase
+        let response = try await network.performRequest(for: operation, pathParameters: ["code": projectCode, "id": String(reference.id)], queryItems: [], with: nil, modelType: SharedResponseModel.self)
+        guard session.isCurrent(stamp) else { throw CancellationError() }
+        guard response.status else { throw API.NetError.invalidRequest("Delete failed") }
+        let entity = TestListEntity(isSuite: reference.isSuite, id: reference.id, title: "", description: nil, parentId: nil, casesCount: nil)
+        _ = dao.deleteEntity(entity, projectCode: projectCode, stamp: stamp)
+        await reload()
+    }
+
+    private func accepts(_ generation: Int, _ current: Int) -> Bool {
+        generation == current && session.isCurrent(stamp) && !Task.isCancelled
+    }
+    private func normalized(_ value: Int?) -> Int? { value == 0 ? nil : value }
+    private func appendUnique(_ incoming: [TestListEntity], to values: inout [TestListEntity]) {
+        var ids = Set(values.map(\.id))
+        values += incoming.filter { ids.insert($0.id).inserted }
+    }
+    private static func entity(_ item: CaseSummary) -> TestListEntity {
+        .init(isSuite: false, id: item.id, title: item.title, description: item.description, parentId: item.suiteID == 0 ? nil : item.suiteID,
+              casesCount: nil, priority: item.priority.map(Priority.init), automation: item.automation.map(AutomationStatus.init))
     }
 }

@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 final class CreatingProjectViewModel {
     // MARK: - Fields
     weak var delegate: CheckEnablingRBBProtocol?
@@ -31,41 +32,47 @@ final class CreatingProjectViewModel {
     }
     var isEntityWasCreated = false {
         didSet {
-            Task { @MainActor in
-                if isEntityWasCreated {
-                    creatingFinishCallback()
-                } else {
-                    showErrorClosure("Error".localized, "Something went wrong".localized)
-                }
-            }
+            if isEntityWasCreated { creatingFinishCallback() }
+            else { showErrorClosure("Error".localized, "Something went wrong".localized) }
         }
     }
     var creatingFinishCallback: () -> Void = {}
     var showErrorClosure: (String, String) -> Void = { (_,_) in }
     
+    private let network: NetworkManager
+    private let session: SessionContext
+    private let originStamp: SessionStamp
+
     // MARK: - LifeCycle
-    init() {
+    init(network: NetworkManager = ApiServiceConfiguration.shared.apiService, session: SessionContext? = nil) {
+        self.network = network
+        self.session = session ?? .shared
+        originStamp = self.session.capture()
         self.creatingProject = .init()
     }
     
     // MARK: - Network work
-    func createNewProject() async throws(API.NetError) {
+    func createNewProject() async throws {
+        guard session.isCurrent(originStamp) else { throw CancellationError() }
         if creatingProject.isEmpty {
             isFieldsEmpty = true
             return
         }
         
-        guard let urlString = apiManager.composeURL(for: .project, urlComponents: nil, queryItems: nil) else { throw .invalidURL }
+        let stamp = originStamp
+        guard let urlString = network.composeURL(for: .project, urlComponents: nil, queryItems: nil) else { throw API.NetError.invalidURL }
         
         LoadingIndicator.startLoading()
         
-        let response = try await apiManager.performRequest(
+        defer { LoadingIndicator.stopLoading() }
+        let response = try await network.performRequest(
             with: creatingProject,
             from: urlString,
             method: .post,
             modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
         )
         
+        guard session.isCurrent(stamp), !Task.isCancelled else { throw CancellationError() }
         isEntityWasCreated = response.status?.value ?? false
         LoadingIndicator.stopLoading()
     }

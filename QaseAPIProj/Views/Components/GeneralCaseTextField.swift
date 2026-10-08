@@ -44,10 +44,11 @@ final class GeneralCaseTextField: UIView {
         self.detailViewModel = detailVM
         super.init(frame: .zero)
         
+        textView.accessibilityIdentifier = "field." + textType.rawValue
         textView.delegate = self
         titlelbl.text = textType.localized
         textView.text = if let detailVM = detailVM as? CreateSuiteOrCaseViewModel, textType == .parentSuite {
-            "\(detailVM.parentSuiteId)"
+            detailVM.parentSuiteId.map(String.init) ?? Constants.EMPTY_TEXT
         } else {
             textView.text.isEmpty ? textViewValue : textView.text
         }

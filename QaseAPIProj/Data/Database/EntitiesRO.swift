@@ -12,18 +12,30 @@ import RealmSwift
 
 final class ProjectRO: Object {
     @Persisted var title: String
-    @Persisted(primaryKey: true) var code: String
+    @Persisted var code: String
+    @Persisted(primaryKey: true) var cacheKey: String
+    @Persisted var ownerID: String
+    @Persisted var itemDescription: String?
+    @Persisted var hasDescription = false
     @Persisted var counts: CountsOfProjectRO?
     
-    convenience init(projectData: Project) {
+    convenience init(projectData: Project, ownerID: String) {
         self.init()
         self.code = projectData.code
+        self.ownerID = ownerID
+        self.cacheKey = "\(ownerID)|\(projectData.code)"
         self.title = projectData.title
+        self.itemDescription = projectData.description
+        self.hasDescription = projectData.descriptionWasProvided
         self.counts = CountsOfProjectRO(countsOfProjectData: projectData.counts)
     }
 }
 
 final class CountsOfProjectRO: EmbeddedObject {
+    @Persisted var hasCases = false
+    @Persisted var hasSuites = false
+    @Persisted var hasRuns = false
+    @Persisted var hasDefects = false
     @Persisted var cases: Int
     @Persisted var suites: Int
     @Persisted var milestones: Int
@@ -34,6 +46,10 @@ final class CountsOfProjectRO: EmbeddedObject {
         guard let countsOfProjectData = countsOfProjectData else { return nil }
         
         self.init()
+        self.hasCases = true
+        self.hasSuites = true
+        self.hasRuns = countsOfProjectData.runs != nil
+        self.hasDefects = countsOfProjectData.defects != nil
         self.cases = countsOfProjectData.cases
         self.suites = countsOfProjectData.suites
         self.milestones = countsOfProjectData.milestones
@@ -71,6 +87,7 @@ final class BugReportsRO: EmbeddedObject {
 // MARK: - Cases and Suites entities
 
 final class TestEntitiesDataRO: Object {
+    @Persisted var ownerID: String
     @Persisted var isSuites: Bool
     @Persisted var id: Int
     @Persisted var title: String
@@ -87,12 +104,13 @@ final class TestEntitiesDataRO: Object {
     
     @Persisted(primaryKey: true) var uniqueKey: String
     
-    convenience init(entitiesData: TestListEntity, codeOfProject: String? = nil) {
+    convenience init(entitiesData: TestListEntity, codeOfProject: String, ownerID: String) {
         self.init()
         
         self.id = entitiesData.id
         self.isSuites = entitiesData.isSuite
-        self.uniqueKey = "\(id)_\(isSuites)"
+        self.ownerID = ownerID
+        self.uniqueKey = "\(ownerID)|\(codeOfProject)|\(isSuites ? "suite" : "case")|\(id)"
         self.title = entitiesData.title
         self.itemDescription = entitiesData.itemDescription
         self.parentId = entitiesData.parentId
@@ -106,6 +124,8 @@ final class TestEntitiesDataRO: Object {
 // MARK: - Test case
 
 final class TestEntityRO: Object {
+    @Persisted var ownerID: String
+    @Persisted var projectCode: String
     @Persisted(primaryKey: true) var uniqueKey: String
     @Persisted var id: Int
     @Persisted var position: Int
@@ -132,10 +152,12 @@ final class TestEntityRO: Object {
     @Persisted var authorId: Int
     @Persisted var tags: List<String>
     
-    convenience init(testCaseData: TestCaseEntity) {
+    convenience init(testCaseData: TestCaseEntity, reference: TestCaseReference, ownerID: String) {
         self.init()
         
-        uniqueKey = "\(testCaseData.id)_\(PROJECT_NAME)"
+        self.ownerID = ownerID
+        self.projectCode = reference.projectCode
+        uniqueKey = "\(ownerID)|\(reference.cacheKey)"
         self.id = testCaseData.id
         self.position = testCaseData.position
         self.title = testCaseData.title
@@ -153,12 +175,21 @@ final class TestEntityRO: Object {
         self.suiteId = testCaseData.suiteId
         self.memberId = testCaseData.memberId
         self.authorId = testCaseData.authorId
-        self.steps.append(objectsIn: testCaseData.steps.map { StepsInTestCaseRO(from: $0) })
+        self.links.append(objectsIn: testCaseData.links)
+        self.customFields.append(objectsIn: testCaseData.customFields)
+        self.attachments.append(objectsIn: testCaseData.attachments)
+        self.params.append(objectsIn: testCaseData.params)
+        self.tags.append(objectsIn: testCaseData.tags)
+        self.stepsType = testCaseData.stepsType
+        self.steps.append(objectsIn: testCaseData.steps.enumerated().map {
+            StepsInTestCaseRO(from: $0.element, scope: uniqueKey, path: String($0.offset))
+        })
     }
 }
 
 final class StepsInTestCaseRO: Object {
     @Persisted(primaryKey: true) var entityHash: String
+    @Persisted var originalHash: String?
     @Persisted var position: Int
     @Persisted var sharedStepHash: String?
     @Persisted var sharedStepNestedHash: String?
@@ -169,9 +200,10 @@ final class StepsInTestCaseRO: Object {
     @Persisted var steps: List<StepsInTestCaseRO>
     
     // Дополнительный инициализатор для преобразования из исходной структуры
-    convenience init(from model: StepsInTestCase) {
+    convenience init(from model: StepsInTestCase, scope: String, path: String) {
         self.init()
-        self.entityHash = model.hash
+        self.entityHash = "\(scope)|step|\(path)|\(model.hash)"
+        self.originalHash = model.hash
         self.position = model.position
         self.sharedStepHash = model.sharedStepHash
         self.sharedStepNestedHash = model.sharedStepNestedHash
@@ -179,7 +211,9 @@ final class StepsInTestCaseRO: Object {
         self.action = model.action
         self.expectedResult = model.expectedResult
         self.data = model.data
-        self.steps.append(objectsIn: model.steps?.map { StepsInTestCaseRO(from: $0) } ?? [])
+        self.steps.append(objectsIn: (model.steps ?? []).enumerated().map {
+            StepsInTestCaseRO(from: $0.element, scope: scope, path: "\(path).\($0.offset)")
+        })
     }
 }
 
@@ -193,4 +227,26 @@ extension RealmSwift.List {
     var toArray: [Element] {
         return Array(self)
     }
+}
+
+final class HomeSnapshotRO: Object {
+    @Persisted(primaryKey: true) var cacheKey: String
+    @Persisted var ownerID: String
+    @Persisted var projectCode: String
+    @Persisted var payload: Data
+}
+
+final class RecentCaseRO: Object {
+    @Persisted(primaryKey: true) var cacheKey: String
+    @Persisted var ownerID: String
+    @Persisted var projectCode: String
+    @Persisted var viewedAt: Date
+    @Persisted var payload: Data
+}
+
+final class ReadCacheRO: Object {
+    @Persisted(primaryKey: true) var cacheKey: String
+    @Persisted var ownerID: String
+    @Persisted var projectCode: String
+    @Persisted var payload: Data
 }

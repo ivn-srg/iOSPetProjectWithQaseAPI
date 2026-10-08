@@ -6,10 +6,13 @@
 //
 
 import UIKit
+import Combine
 
+@MainActor
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     var window: UIWindow?
+    private var appearanceObservation: AnyCancellable?
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
@@ -18,9 +21,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
         let window = UIWindow(windowScene: windowScene)
-        
+        window.overrideUserInterfaceStyle = AppSettingsStore.shared.appearance.interfaceStyle
         window.rootViewController = RootViewController()
         self.window = window
+        appearanceObservation = AppSettingsStore.shared.$appearance.removeDuplicates().sink { [weak window] appearance in
+            Task { @MainActor in window?.overrideUserInterfaceStyle = appearance.interfaceStyle }
+        }
         window.makeKeyAndVisible()
     }
     

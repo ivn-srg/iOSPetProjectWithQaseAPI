@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+Обязательные ограничения для агентов: `AGENTS.md`. Команды сборки и тестов ниже предназначены для самостоятельного запуска пользователем.
+
 Рабочие заметки для разработки приложения. Перед изменением сетевого слоя или навигации проверьте связанные тесты и mock-данные.
 
 ## Проект
@@ -47,13 +49,13 @@ CI выбирает Xcode 26.3 и симулятор iPhone 16 с iOS 18.6, чт
 
 ## Высокоуровневая архитектура
 
-- `AppDelegate` и `SceneDelegate` создают `RootViewController`. По аргументу запуска `UITests` приложение включает `APIMockManager`; mock читает JSON-файлы из bundle.
+- `SceneDelegate` создаёт `RootViewController`; `AppDelegate` настраивает сервис для UI-тестов. По аргументу запуска `UITests` приложение включает `APIMockManager`; mock читает JSON-файлы из bundle.
 - `RootViewController` слушает `.didChangeAuthStatus` и выбирает экран авторизации или `MainTabbarViewController`. `AuthManager` хранит токен в Keychain, состояние входа в `UserDefaults` и проверяет токен через `APIManager.auth(by:)`.
 - `APIManager` работает с Qase API v1 и передаёт токен в заголовке `Token`. Маршруты перечислены в `API.Operation`, а модели ответов находятся в `Data/Models/`.
-- Глобальный `apiManager` из `Classes/Constants.swift` получает реализацию от `ApiServiceConfiguration`. Mock-сервис нужно включить до первого обращения к этой константе.
+- Сеть, кеш и контекст сессии передаются моделям через init. Демо-сервис выбирается до создания экранов; глобального сетевого экземпляра нет.
 - `RealmDB.swift` и `EntitiesRO.swift` кэшируют проекты, наборы, кейсы и детали кейса. Модели API лежат в `Data/Models/`.
 - Контроллеры UIKit напрямую используют view models. `ProjectsViewModel` загружает и удаляет проекты, `TestEntitiesViewModel` управляет списком наборов и кейсов, `DetailTabbarControllerViewModel` загружает и обновляет детали кейса.
-- Основные вкладки сейчас: Home, Repository, Test Runs и Settings. Из Repository открываются вложенные наборы и экран кейса с разделами General и Properties. Интерфейс строится программно, в основном через SnapKit; общие элементы находятся в `Views/`, тема — в `AppTheme.swift`.
+- Основные вкладки: Home, Repository, Work и Settings. Главная и иерархический Repository написаны на SwiftUI внутри UIKit-навигации. Каждый уровень имеет immutable `RepositoryLocation`; формы и детали кейса остаются UIKit. Общие компоненты находятся в `Views/`, токены — в `AppTheme.swift`.
 - Unit-тесты используют Swift Testing и `APIMockManager`; UI-тесты используют XCTest и page objects из `QaseAPIProjUITests/Screens.swift`.
 
 ## Внешние зависимости
@@ -66,4 +68,4 @@ CI выбирает Xcode 26.3 и симулятор iPhone 16 с iOS 18.6, чт
 - Не добавлять реальные API-токены в код. Текущий демонстрационный вход из `AuthViewController` следует проверять отдельно от авторизации пользователя.
 - При изменениях auth/root flow проверять связку `AuthManager` → `.didChangeAuthStatus` → `RootViewController`.
 - При изменениях network/cache flow проверять и real API path, и mock path (`UITests`/`APIMockManager`), потому что тесты зависят от локальных JSON fixtures.
-- При изменениях списка suites/cases учитывать глобальный `PROJECT_NAME` из `Classes/Constants.swift`: он используется в запросах к Qase и ключах Realm для test entities/test cases.
+- Во всех запросах, навигации и кеше передавать явный projectCode/reference. Глобального `PROJECT_NAME` нет. Ключи кеша включают владельца, проект и тип сущности; корневой родитель — nil. Частичные поисковые страницы не удаляют другие записи.

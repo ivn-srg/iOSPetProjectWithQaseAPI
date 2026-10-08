@@ -1,0 +1,13 @@
+{
+  "status": true,
+  "result": {
+    "total": 3,
+    "filtered": 3,
+    "count": 3,
+    "entities": [
+      {"project_code":"DEMO","id":1,"title":"Ошибка входа после смены домена","severity":"major","status":"open","actual_result":"После смены домена экран входа не обновляет адрес сервера."},
+      {"project_code":"DEMO","id":2,"title":"Длинное название обрезается","severity":"minor","status":"open","actual_result":"Название проекта обрезается на небольшом экране."},
+      {"project_code":"1F","id":1,"title":"Соединение звонка не восстанавливается","severity":"critical","status":"in_progress","actual_result":"После восстановления сети звонок остаётся в состоянии подключения."}
+    ]
+  }
+}

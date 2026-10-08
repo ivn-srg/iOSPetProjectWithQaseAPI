@@ -15,10 +15,12 @@ final class RootViewController: UIViewController {
         
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(handleAuthorizationStatusChange),
+            selector: #selector(handleAuthorizationStatusChange(_:)),
             name: .didChangeAuthStatus,
             object: nil
         )
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSettingsFailure(_:)),
+            name: .settingsOperationFailed, object: nil)
         updateRootViewController()
     }
     
@@ -35,6 +37,7 @@ final class RootViewController: UIViewController {
         }
         
         if let currentVC = currentViewController {
+            currentVC.dismiss(animated: false)
             currentVC.willMove(toParent: nil)
             currentVC.view.removeFromSuperview()
             currentVC.removeFromParent()
@@ -47,7 +50,21 @@ final class RootViewController: UIViewController {
         currentViewController = newViewController
     }
     
-    @objc private func handleAuthorizationStatusChange() {
+    @objc private func handleAuthorizationStatusChange(_ notification: Notification) {
         updateRootViewController()
+        if notification.userInfo?["cacheCleanupFailed"] as? Bool == true {
+            showSettingsError("The API token was updated, but old cached data could not be cleared.".localized)
+        }
+    }
+
+    @objc private func handleSettingsFailure(_ notification: Notification) {
+        if let message = notification.userInfo?["message"] as? String { showSettingsError(message) }
+    }
+
+    private func showSettingsError(_ message: String) {
+        Task { @MainActor [weak self] in
+            guard let self, self.presentedViewController == nil else { return }
+            UIAlertController.showSimpleAlert(on: self, title: "Error".localized, message: message)
+        }
     }
 }

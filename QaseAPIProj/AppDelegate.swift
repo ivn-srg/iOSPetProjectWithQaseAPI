@@ -10,18 +10,12 @@ import UIKit
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
-    var window: UIWindow?
-    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        window = UIWindow()
-        
         if CommandLine.arguments.contains("UITests") {
             // Используем мок сервис в тестовом режиме
             ApiServiceConfiguration.shared.setMockingServiceEnabled()
         }
         
-        window?.rootViewController = RootViewController()
-        window?.makeKeyAndVisible()
         return true
     }
     
@@ -39,8 +33,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
     
-    func applicationWillTerminate(_ application: UIApplication) {
-        RealmManager.shared.dropDataBase()
-    }
 }
 

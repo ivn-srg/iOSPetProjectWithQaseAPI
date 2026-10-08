@@ -1,93 +1,52 @@
-//
-//  HomeViewController.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 02/09/2026.
-//
-
 import UIKit
+import SwiftUI
 
+@MainActor
 final class HomeViewController: UIViewController {
-    private let viewModel: HomeViewModel = .init()
+    private let viewModel: HomeViewModel
+    private let router: HomeRouting
+    private var hostingController: UIHostingController<HomeView>?
 
-    private lazy var projectDigitsCollectionView: TilesCollectionView = {
-        let cv = TilesCollectionView()
-        cv.translatesAutoresizingMaskIntoConstraints = false
-        cv.backgroundColor = .clear
-        cv.delegate = self
-        cv.dataSource = self
-        return cv
-    }()
-
-    init() {
+    init(viewModel: HomeViewModel, router: HomeRouting) {
+        self.viewModel = viewModel
+        self.router = router
         super.init(nibName: nil, bundle: nil)
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = AppTheme.Palette.canvas
         navigationItem.title = "Home".localized
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .search, target: self,
-            action: #selector(didTapSearch)
-        )
-
-        view.addSubview(projectDigitsCollectionView)
-
-        projectDigitsCollectionView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.horizontalEdges.equalToSuperview()
-            $0.height.equalTo(0)
-        }
-
-        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (self: HomeViewController, _) in
-            self.projectDigitsCollectionView.collectionViewLayout.invalidateLayout()
-            self.updateTilesHeight()
-        }
-
-        updateTilesHeight()
+        let hosting = UIHostingController(rootView: HomeView(viewModel: viewModel, router: router))
+        addChild(hosting)
+        hosting.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(hosting.view)
+        NSLayoutConstraint.activate([
+            hosting.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hosting.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hosting.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            hosting.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+        ])
+        hosting.didMove(toParent: self)
+        hostingController = hosting
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshOnForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     }
 
-    private func updateTilesHeight() {
-        let height = projectDigitsCollectionView.contentHeight(for: viewModel.items)
-
-        projectDigitsCollectionView.snp.updateConstraints {
-            $0.height.equalTo(height)
-        }
-    }
-    @objc func didTapSearch() {
-        navigationController?.modalPresentationStyle = .fullScreen
-        navigationController?.present(SearchViewController(), animated: true)
-    }
-}
-
-extension HomeViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(
-        _ collectionView: UICollectionView,
-        layout collectionViewLayout: UICollectionViewLayout,
-        sizeForItemAt indexPath: IndexPath
-    ) -> CGSize {
-        projectDigitsCollectionView.itemSize(for: viewModel.items[indexPath.row])
-    }
-}
-
-extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        viewModel.items.count
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+        viewModel.appear()
     }
 
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TileCollectionViewCell.identifier, for: indexPath) as? TileCollectionViewCell else {
-            return UICollectionViewCell()
-        }
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        viewModel.disappear()
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
 
-        cell.configure(with: viewModel.items[indexPath.row])
-
-        return cell
+    @objc private func refreshOnForeground() {
+        if viewIfLoaded?.window != nil { viewModel.refresh() }
     }
 }

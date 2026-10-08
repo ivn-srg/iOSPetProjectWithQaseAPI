@@ -51,7 +51,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         super.viewDidLoad()
         setup()
         
-        let longTapGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(longTapForFillingTextLb))
+        let longTapGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(longTapForFillingTextLb(_:)))
         logoImg.addGestureRecognizer(longTapGestureRecognizer)
         
         authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
@@ -121,9 +121,10 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         }
     }
     
-    @objc private func longTapForFillingTextLb() {
-        // Token for demo purposes
-        inputTokenField.text = "df3498cf743579b78d3c34d6640e1e2e39edf9ea2530cdf43eb848156126519e"
+    @objc private func longTapForFillingTextLb(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else { return }
+        ApiServiceConfiguration.shared.setMockingServiceEnabled()
+        inputTokenField.text = "QASE_DEMO"
         authorizate()
     }
 }

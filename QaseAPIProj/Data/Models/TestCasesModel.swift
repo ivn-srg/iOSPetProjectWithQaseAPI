@@ -26,7 +26,6 @@ struct TestCaseEntity: Codable, Equatable {
     var steps: [StepsInTestCase]
     let params, tags: [String]
     let memberId, authorId: Int
-    let uniqueKey: String
     
     var dictOfValues: EncodableTestCase {
         EncodableTestCase(testCase: self)
@@ -52,7 +51,6 @@ struct TestCaseEntity: Codable, Equatable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         id = try container.decode(Int.self, forKey: .id)
-        uniqueKey = "\(id)_\(PROJECT_NAME)"
         position = try container.decode(Int.self, forKey: .position)
         title = try container.decode(String.self, forKey: .title)
         description = try container.decodeIfPresent(String.self, forKey: .description)
@@ -87,7 +85,7 @@ struct TestCaseEntity: Codable, Equatable {
         lhs.description == rhs.description && lhs.preconditions == rhs.preconditions &&
         lhs.postconditions == rhs.postconditions &&
         lhs.severity == rhs.severity && lhs.priority == rhs.priority &&
-        lhs.type == rhs.type && lhs.isFlaky == rhs.isFlaky &&
+        lhs.type == rhs.type && lhs.layer == rhs.layer && lhs.isFlaky == rhs.isFlaky &&
         lhs.behavior == rhs.behavior && lhs.automation == rhs.automation &&
         lhs.suiteId == rhs.suiteId && lhs.status == rhs.status &&
         lhs.links == rhs.links && lhs.customFields == rhs.customFields &&
@@ -103,7 +101,6 @@ extension TestCaseEntity {
         guard let realmObject = realmObject else { return nil }
         
         id = realmObject.id
-        uniqueKey = "\(id)_\(PROJECT_NAME)"
         position = realmObject.position
         title = realmObject.title
         description = realmObject.itemDescription
@@ -131,7 +128,6 @@ extension TestCaseEntity {
     
     init() {
         id = 0
-        uniqueKey = "\(id)_\(PROJECT_NAME)"
         position = 0
         title = ""
         description = ""
@@ -221,7 +217,7 @@ struct StepsInTestCase: Codable, Equatable {
     }
     
     init(from realmObject: StepsInTestCaseRO) {
-        self.hash = realmObject.entityHash
+        self.hash = realmObject.originalHash ?? realmObject.entityHash
         self.position = realmObject.position
         self.sharedStepHash = realmObject.sharedStepHash
         self.sharedStepNestedHash = realmObject.sharedStepNestedHash
@@ -261,7 +257,7 @@ struct EncodableTestCase: Encodable {
     var severity, priority, type, layer: Int
     var behavior, automation, status: Int
     var isFlaky: Int
-    var suiteId: Int
+    var suiteId: Int?
     var attachments, tags: [String]
     var steps: [StepsInTestCase]?
     
@@ -273,6 +269,26 @@ struct EncodableTestCase: Encodable {
         case suiteId = "suite_id"
     }
     
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(title, forKey: .title)
+        try container.encode(severity, forKey: .severity)
+        try container.encode(priority, forKey: .priority)
+        try container.encode(type, forKey: .type)
+        try container.encode(layer, forKey: .layer)
+        try container.encode(behavior, forKey: .behavior)
+        try container.encode(automation, forKey: .automation)
+        try container.encode(status, forKey: .status)
+        try container.encode(isFlaky, forKey: .isFlaky)
+        try container.encode(suiteId, forKey: .suiteId)
+        try container.encode(attachments, forKey: .attachments)
+        try container.encode(tags, forKey: .tags)
+        try container.encodeIfPresent(description, forKey: .description)
+        try container.encodeIfPresent(preconditions, forKey: .preconditions)
+        try container.encodeIfPresent(postconditions, forKey: .postconditions)
+        try container.encodeIfPresent(steps, forKey: .steps)
+    }
+
     init(testCase: TestCaseEntity) {
         self.title = testCase.title
         self.description = testCase.description
@@ -286,7 +302,7 @@ struct EncodableTestCase: Encodable {
         self.automation = testCase.automation.menuItem.id
         self.status = testCase.status.menuItem.id
         self.isFlaky = testCase.isFlaky ? 1 : 0
-        self.suiteId = testCase.suiteId ?? 0
+        self.suiteId = testCase.suiteId == 0 ? nil : testCase.suiteId
         self.attachments = testCase.attachments
         self.tags = testCase.tags
         self.steps = testCase.steps

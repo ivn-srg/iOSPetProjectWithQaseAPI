@@ -52,7 +52,3 @@ struct Constants {
     static let LIMIT_OF_REQUEST = 50
     static let EMPTY_TEXT = "Not set".localized
 }
-
-var PROJECT_NAME = ""
-
-let apiManager = ApiServiceConfiguration.shared.apiService

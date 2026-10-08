@@ -33,7 +33,6 @@
 		937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937F04272AD84E3D006DDB28 /* SceneDelegate.swift */; };
 		937F042F2AD84E3F006DDB28 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 937F042E2AD84E3F006DDB28 /* Assets.xcassets */; };
 		937F04322AD84E3F006DDB28 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 937F04302AD84E3F006DDB28 /* LaunchScreen.storyboard */; };
-		9384FCDF2B4D7FC0009EB478 /* TestEntitiesTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9384FCDE2B4D7FC0009EB478 /* TestEntitiesTableViewController.swift */; };
 		938C47DB2C9A08B300B75BE8 /* CreatingProjectViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47DA2C9A08B300B75BE8 /* CreatingProjectViewController.swift */; };
 		938C47DD2C9A095A00B75BE8 /* CreatingProjectViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47DC2C9A095A00B75BE8 /* CreatingProjectViewModel.swift */; };
 		938C47E32C9A0BC600B75BE8 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 938C47DE2C9A0BC600B75BE8 /* AppTheme.swift */; };
@@ -63,7 +62,6 @@
 		93EE421F2D9B24400028E085 /* Ext+UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9399A0AA2D2D313F00347130 /* Ext+UIColor.swift */; };
 		93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */; };
 		93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */; };
-		93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */; };
 		93F84C823048B6A8003A5227 /* TestRunsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C813048B6A8003A5227 /* TestRunsViewController.swift */; };
 		93F84C843048B7F8003A5227 /* SearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C833048B7F8003A5227 /* SearchViewController.swift */; };
 		93F84C863048C7FF003A5227 /* TilesCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */; };
@@ -83,6 +81,35 @@
 		93F866492D9DC13B006F6F5C /* test_cases_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 93F866352D9DBD24006F6F5C /* test_cases_data.json */; };
 		93F8664A2D9DC613006F6F5C /* Ext+String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935F2BA42CCFC73800546162 /* Ext+String.swift */; };
 		93F9584F2DB95EAE00EA8D96 /* TestCaseFieldEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F9584E2DB95E8700EA8D96 /* TestCaseFieldEnums.swift */; };
+		7D382EAE5761A0A4BDCDD160 /* ProjectNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 397F68BFF22CBD579483D9B9 /* ProjectNavigation.swift */; };
+		5F71B9679CDE4225CADB1C9C /* SessionContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 502BB3D232AC267EB803A5DD /* SessionContext.swift */; };
+		DF40124477FC95C5BD2BEA91 /* SelectedProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D5F4DC88D2A5E3B11924D8F /* SelectedProjectStore.swift */; };
+		2ECFB83210F95BED7F8E9C61 /* HomeRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A4B5FF314F6C32A112C893 /* HomeRepository.swift */; };
+		D20EF9D58AD9F097DE2F468D /* HomeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B0D15EA1352B401AB67469E /* HomeComponents.swift */; };
+		B64594297D4D6FA9557A3585 /* HomeData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3AC548D5F7D0A25DCE1916A /* HomeData.swift */; };
+		E5E1495EA78D81E92FD40B66 /* ProjectSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B20161C84EE0BB76FCE8E3 /* ProjectSwitchTests.swift */; };
+		B7EA30100E23B1C6C0998DD1 /* HomeDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D20F6B16CBADE52525CBEC5 /* HomeDataTests.swift */; };
+		87F200BFB21E544A95EB08F5 /* IdentityCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033C5A538B8BD07545468DEE /* IdentityCacheTests.swift */; };
+		C1A76BFE313F5F88B0AA0FFF /* defects_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 4122B577345E466F8B003016 /* defects_data.json */; };
+		128B014547EB7054A3BB18E9 /* runs_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 932725AEF993C0F0F3A41C7E /* runs_data.json */; };
+		D8DE6E3CFDE536B9708883D9 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78515E9BFE8750BBE5D8EB86 /* HomeView.swift */; };
+		AD08C8E667F4AAE9D13AAC6F /* ProjectReadViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA6A1BF38A6B195F05DED8EE /* ProjectReadViews.swift */; };
+		AFD30A3A701A30FEFD8F4A55 /* PagedReadViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104D2BF8619C43FC35FEB99 /* PagedReadViewModelTests.swift */; };
+		A4C4EE4FC588092301E89DF5 /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3FC9C2421536555ECA1DDCB /* HomeViewModelTests.swift */; };
+		4A392523AE3ACB3D9C689ED6 /* HomeScreenUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF57F4672254B6EAA484FC07 /* HomeScreenUITests.swift */; };
+		BCAA8748F631D002A901224A /* RealmSwift in Test Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; };
+		A55087BACAF0D6AD99DB1301 /* ProjectLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29019F526FC5715CC91721D /* ProjectLifecycleTests.swift */; };
+		49F66CA2497E3116D140C71A /* DesignTokenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 496C30546F5DA9F3018BB4D5 /* DesignTokenTests.swift */; };
+		D47B40B6102CD7F646F8FA59 /* RepositoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B4CCD913462D7EE7966BB71 /* RepositoryViewController.swift */; };
+		32816238A73521D9857C58E2 /* RepositoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50B28E0F15BB1E74D4C6583 /* RepositoryView.swift */; };
+		56F22B7CCCC8210EC26BBD8A /* RepositoryModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = EACDC58668BDAC6D7F2E7EDB /* RepositoryModels.swift */; };
+		8D041E1A2F5781616D80FE4B /* RepositoryRefinementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1503FA196E193B1CCF725D5 /* RepositoryRefinementTests.swift */; };
+		98756615B556C2A889B5AAED /* AppSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ACF6BD3B8EF7FFF5416B5A /* AppSettingsStore.swift */; };
+		F3681EA113660E1039A88AE0 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51094F264DC5B2A48DF72F39 /* SettingsViewModel.swift */; };
+		7E18C306E251EF15DC87EBE8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F70413D60AE5458D5F5622A8 /* SettingsView.swift */; };
+		F0FEF0F7354E31BAED8AC812 /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */; };
+		D7D0FBE470E81F465C7A6C14 /* TokenReplacementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */; };
+		CA3DA33CFFF007E6D19D2B65 /* CacheManagementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -143,7 +170,6 @@
 		937F042E2AD84E3F006DDB28 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		937F04312AD84E3F006DDB28 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		937F04332AD84E3F006DDB28 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		9384FCDE2B4D7FC0009EB478 /* TestEntitiesTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestEntitiesTableViewController.swift; sourceTree = "<group>"; };
 		938C47DA2C9A08B300B75BE8 /* CreatingProjectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatingProjectViewController.swift; sourceTree = "<group>"; };
 		938C47DC2C9A095A00B75BE8 /* CreatingProjectViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatingProjectViewModel.swift; sourceTree = "<group>"; };
 		938C47DE2C9A0BC600B75BE8 /* AppTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AppTheme.swift; path = QaseAPIProj/Resources/AppTheme.swift; sourceTree = SOURCE_ROOT; };
@@ -173,7 +199,6 @@
 		93EE42092D9B107B0028E085 /* QaseAPIProjUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QaseAPIProjUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesDetailCaseViewController.swift; sourceTree = "<group>"; };
-		93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuitesAndCasesTableViewCell.swift; sourceTree = "<group>"; };
 		93F84C813048B6A8003A5227 /* TestRunsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRunsViewController.swift; sourceTree = "<group>"; };
 		93F84C833048B7F8003A5227 /* SearchViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewController.swift; sourceTree = "<group>"; };
 		93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilesCollectionViewController.swift; sourceTree = "<group>"; };
@@ -186,6 +211,34 @@
 		93F866412D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QaseAPIProjUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		93F866422D9DBD2A006F6F5C /* Screens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens.swift; sourceTree = "<group>"; };
 		93F9584E2DB95E8700EA8D96 /* TestCaseFieldEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestCaseFieldEnums.swift; sourceTree = "<group>"; };
+		397F68BFF22CBD579483D9B9 /* ProjectNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Classes/ProjectNavigation.swift"; sourceTree = SOURCE_ROOT; };
+		502BB3D232AC267EB803A5DD /* SessionContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Data/SessionContext.swift"; sourceTree = SOURCE_ROOT; };
+		3D5F4DC88D2A5E3B11924D8F /* SelectedProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Data/SelectedProjectStore.swift"; sourceTree = SOURCE_ROOT; };
+		22A4B5FF314F6C32A112C893 /* HomeRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Data/HomeRepository.swift"; sourceTree = SOURCE_ROOT; };
+		1B0D15EA1352B401AB67469E /* HomeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Views/HomeComponents.swift"; sourceTree = SOURCE_ROOT; };
+		C3AC548D5F7D0A25DCE1916A /* HomeData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Data/Models/HomeData.swift"; sourceTree = SOURCE_ROOT; };
+		32B20161C84EE0BB76FCE8E3 /* ProjectSwitchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjTests/ProjectSwitchTests.swift"; sourceTree = SOURCE_ROOT; };
+		3D20F6B16CBADE52525CBEC5 /* HomeDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjTests/HomeDataTests.swift"; sourceTree = SOURCE_ROOT; };
+		033C5A538B8BD07545468DEE /* IdentityCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjTests/IdentityCacheTests.swift"; sourceTree = SOURCE_ROOT; };
+		4122B577345E466F8B003016 /* defects_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "QaseAPIProj/Data/Models/MockData/defects_data.json"; sourceTree = SOURCE_ROOT; };
+		932725AEF993C0F0F3A41C7E /* runs_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "QaseAPIProj/Data/Models/MockData/runs_data.json"; sourceTree = SOURCE_ROOT; };
+		78515E9BFE8750BBE5D8EB86 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Views/HomeView.swift"; sourceTree = SOURCE_ROOT; };
+		CA6A1BF38A6B195F05DED8EE /* ProjectReadViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Views/ProjectReadViews.swift"; sourceTree = SOURCE_ROOT; };
+		F104D2BF8619C43FC35FEB99 /* PagedReadViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjTests/PagedReadViewModelTests.swift"; sourceTree = SOURCE_ROOT; };
+		B3FC9C2421536555ECA1DDCB /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjTests/HomeViewModelTests.swift"; sourceTree = SOURCE_ROOT; };
+		EF57F4672254B6EAA484FC07 /* HomeScreenUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjUITests/HomeScreenUITests.swift"; sourceTree = SOURCE_ROOT; };
+		C29019F526FC5715CC91721D /* ProjectLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjTests/ProjectLifecycleTests.swift"; sourceTree = SOURCE_ROOT; };
+		496C30546F5DA9F3018BB4D5 /* DesignTokenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjTests/DesignTokenTests.swift"; sourceTree = SOURCE_ROOT; };
+		2B4CCD913462D7EE7966BB71 /* RepositoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/ViewControllers/RepositoryViewController.swift"; sourceTree = SOURCE_ROOT; };
+		F50B28E0F15BB1E74D4C6583 /* RepositoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Views/RepositoryView.swift"; sourceTree = SOURCE_ROOT; };
+		EACDC58668BDAC6D7F2E7EDB /* RepositoryModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProj/Data/Models/RepositoryModels.swift"; sourceTree = SOURCE_ROOT; };
+		C1503FA196E193B1CCF725D5 /* RepositoryRefinementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QaseAPIProjTests/RepositoryRefinementTests.swift"; sourceTree = SOURCE_ROOT; };
+		31ACF6BD3B8EF7FFF5416B5A /* AppSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsStore.swift; sourceTree = "<group>"; };
+		51094F264DC5B2A48DF72F39 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		F70413D60AE5458D5F5622A8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
+		DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenReplacementTests.swift; sourceTree = "<group>"; };
+		30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManagementTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -202,6 +255,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BCAA8748F631D002A901224A /* RealmSwift in Test Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,6 +272,7 @@
 		934A36DC2B6820F9001E4F24 /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
+				51094F264DC5B2A48DF72F39 /* SettingsViewModel.swift */,
 				937650C12B6CE70800B5336B /* DetailTabbarControllerViewModel.swift */,
 				93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */,
 				93DCDF5C2BE5159500D4F365 /* TestEntitiesViewModel.swift */,
@@ -254,6 +309,8 @@
 		937085582BEB3C49002316B8 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				EACDC58668BDAC6D7F2E7EDB /* RepositoryModels.swift */,
+				C3AC548D5F7D0A25DCE1916A /* HomeData.swift */,
 				A1B2C3D4E5F607182930ABCD /* QaseAPIModels.swift */,
 				932447382CA4848C00998B94 /* SharedResponseModel.swift */,
 				937085542BEB3C49002316B8 /* ProjectDataModel.swift */,
@@ -267,11 +324,11 @@
 		93748C2F2B4808BF00BE7FFB /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
+				2B4CCD913462D7EE7966BB71 /* RepositoryViewController.swift */,
 				93B0454F2C9E940800EE125B /* CreatingVC */,
 				93C8095F2CCC0ECD006BCCC9 /* RootViewController.swift */,
 				93748C322B480F4400BE7FFB /* AuthViewController.swift */,
 				93F1F37D2B59879900667DB9 /* DetailCaseScreen */,
-				9384FCDE2B4D7FC0009EB478 /* TestEntitiesTableViewController.swift */,
 				93748C302B4808F500BE7FFB /* ProjectsViewController.swift */,
 				93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */,
 				93C8095D2CCBDEB9006BCCC9 /* SettingsViewController.swift */,
@@ -285,12 +342,16 @@
 		93748C3E2B481C3D00BE7FFB /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F70413D60AE5458D5F5622A8 /* SettingsView.swift */,
+				F50B28E0F15BB1E74D4C6583 /* RepositoryView.swift */,
+				CA6A1BF38A6B195F05DED8EE /* ProjectReadViews.swift */,
+				78515E9BFE8750BBE5D8EB86 /* HomeView.swift */,
+				1B0D15EA1352B401AB67469E /* HomeComponents.swift */,
 				939522992D2BF6E600CCA497 /* TestCaseStepsCell.swift */,
 				936A2B172C8A27BE007F7C72 /* Components */,
 				934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */,
 				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
 				93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */,
-				93F3B1612B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift */,
 				93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */,
 			);
 			path = Views;
@@ -299,6 +360,7 @@
 		937650C32B6CE7C800B5336B /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				397F68BFF22CBD579483D9B9 /* ProjectNavigation.swift */,
 				93F9584E2DB95E8700EA8D96 /* TestCaseFieldEnums.swift */,
 				935DCFE12B516BAA00F08ECF /* Constants.swift */,
 				93DCDF5E2BE51C2900D4F365 /* Protocols.swift */,
@@ -338,6 +400,10 @@
 		9395F7372B46DE970050C3F8 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				31ACF6BD3B8EF7FFF5416B5A /* AppSettingsStore.swift */,
+				22A4B5FF314F6C32A112C893 /* HomeRepository.swift */,
+				3D5F4DC88D2A5E3B11924D8F /* SelectedProjectStore.swift */,
+				502BB3D232AC267EB803A5DD /* SessionContext.swift */,
 				93CA94722CCA751800D99517 /* AuthManager.swift */,
 				937085502BEB3C49002316B8 /* APIManager.swift */,
 				937085532BEB3C49002316B8 /* Database */,
@@ -393,6 +459,8 @@
 		93F866362D9DBD24006F6F5C /* MockData */ = {
 			isa = PBXGroup;
 			children = (
+				932725AEF993C0F0F3A41C7E /* runs_data.json */,
+				4122B577345E466F8B003016 /* defects_data.json */,
 				93F866332D9DBD24006F6F5C /* project_data.json */,
 				93F866342D9DBD24006F6F5C /* suites_data.json */,
 				93F866352D9DBD24006F6F5C /* test_cases_data.json */,
@@ -403,6 +471,17 @@
 		93F866382D9DBD24006F6F5C /* QaseAPIProjTests */ = {
 			isa = PBXGroup;
 			children = (
+				30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */,
+				DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */,
+				014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */,
+				C1503FA196E193B1CCF725D5 /* RepositoryRefinementTests.swift */,
+				496C30546F5DA9F3018BB4D5 /* DesignTokenTests.swift */,
+				C29019F526FC5715CC91721D /* ProjectLifecycleTests.swift */,
+				B3FC9C2421536555ECA1DDCB /* HomeViewModelTests.swift */,
+				F104D2BF8619C43FC35FEB99 /* PagedReadViewModelTests.swift */,
+				033C5A538B8BD07545468DEE /* IdentityCacheTests.swift */,
+				3D20F6B16CBADE52525CBEC5 /* HomeDataTests.swift */,
+				32B20161C84EE0BB76FCE8E3 /* ProjectSwitchTests.swift */,
 				93F866372D9DBD24006F6F5C /* QaseAPIProjTests.swift */,
 			);
 			path = QaseAPIProjTests;
@@ -411,6 +490,7 @@
 		93F866432D9DBD2A006F6F5C /* QaseAPIProjUITests */ = {
 			isa = PBXGroup;
 			children = (
+				EF57F4672254B6EAA484FC07 /* HomeScreenUITests.swift */,
 				93F866402D9DBD2A006F6F5C /* QaseAPIProjUITests.swift */,
 				93F866412D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift */,
 				93F866422D9DBD2A006F6F5C /* Screens.swift */,
@@ -454,6 +534,7 @@
 			);
 			name = QaseAPIProjTests;
 			packageProductDependencies = (
+				936A2B122C8A251E007F7C72 /* RealmSwift */,
 			);
 			productName = QaseAPIProjTests;
 			productReference = 93EE41FC2D9B10600028E085 /* QaseAPIProjTests.xctest */;
@@ -531,6 +612,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				128B014547EB7054A3BB18E9 /* runs_data.json in Resources */,
+				C1A76BFE313F5F88B0AA0FFF /* defects_data.json in Resources */,
 				937F04322AD84E3F006DDB28 /* LaunchScreen.storyboard in Resources */,
 				93F866472D9DC132006F6F5C /* project_data.json in Resources */,
 				93F866482D9DC136006F6F5C /* suites_data.json in Resources */,
@@ -567,6 +650,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7E18C306E251EF15DC87EBE8 /* SettingsView.swift in Sources */,
+				F3681EA113660E1039A88AE0 /* SettingsViewModel.swift in Sources */,
+				98756615B556C2A889B5AAED /* AppSettingsStore.swift in Sources */,
+				56F22B7CCCC8210EC26BBD8A /* RepositoryModels.swift in Sources */,
+				32816238A73521D9857C58E2 /* RepositoryView.swift in Sources */,
+				D47B40B6102CD7F646F8FA59 /* RepositoryViewController.swift in Sources */,
+				AD08C8E667F4AAE9D13AAC6F /* ProjectReadViews.swift in Sources */,
+				D8DE6E3CFDE536B9708883D9 /* HomeView.swift in Sources */,
+				B64594297D4D6FA9557A3585 /* HomeData.swift in Sources */,
+				D20EF9D58AD9F097DE2F468D /* HomeComponents.swift in Sources */,
+				2ECFB83210F95BED7F8E9C61 /* HomeRepository.swift in Sources */,
+				DF40124477FC95C5BD2BEA91 /* SelectedProjectStore.swift in Sources */,
+				5F71B9679CDE4225CADB1C9C /* SessionContext.swift in Sources */,
+				7D382EAE5761A0A4BDCDD160 /* ProjectNavigation.swift in Sources */,
 				937085592BEB3C49002316B8 /* APIManager.swift in Sources */,
 				A1B2C3D4E5F607182930ABCE /* QaseAPIModels.swift in Sources */,
 				9395229A2D2BF6F900CCA497 /* TestCaseStepsCell.swift in Sources */,
@@ -596,7 +693,6 @@
 				93B0454E2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift in Sources */,
 				93CB37E13047830400054726 /* HomeViewController.swift in Sources */,
 				93C03CFF2DB80EFB00D1869B /* EmptyListLabel.swift in Sources */,
-				93F3B1622B52C1EC007844F5 /* SuitesAndCasesTableViewCell.swift in Sources */,
 				934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */,
 				93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */,
 				93CA94762CCA8A3900D99517 /* Ext+UIViewController.swift in Sources */,
@@ -614,7 +710,6 @@
 				935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */,
 				939175222D11A8A600AA38A4 /* TestCaseViewController.swift in Sources */,
 				9370855E2BEB3C49002316B8 /* SuitesDataModel.swift in Sources */,
-				9384FCDF2B4D7FC0009EB478 /* TestEntitiesTableViewController.swift in Sources */,
 				93C809622CCC0FC8006BCCC9 /* Ext+NotificationName.swift in Sources */,
 				93F84C823048B6A8003A5227 /* TestRunsViewController.swift in Sources */,
 				93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */,
@@ -629,6 +724,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA3DA33CFFF007E6D19D2B65 /* CacheManagementTests.swift in Sources */,
+				D7D0FBE470E81F465C7A6C14 /* TokenReplacementTests.swift in Sources */,
+				F0FEF0F7354E31BAED8AC812 /* AppSettingsTests.swift in Sources */,
+				8D041E1A2F5781616D80FE4B /* RepositoryRefinementTests.swift in Sources */,
+				49F66CA2497E3116D140C71A /* DesignTokenTests.swift in Sources */,
+				A55087BACAF0D6AD99DB1301 /* ProjectLifecycleTests.swift in Sources */,
+				A4C4EE4FC588092301E89DF5 /* HomeViewModelTests.swift in Sources */,
+				AFD30A3A701A30FEFD8F4A55 /* PagedReadViewModelTests.swift in Sources */,
+				87F200BFB21E544A95EB08F5 /* IdentityCacheTests.swift in Sources */,
+				B7EA30100E23B1C6C0998DD1 /* HomeDataTests.swift in Sources */,
+				E5E1495EA78D81E92FD40B66 /* ProjectSwitchTests.swift in Sources */,
 				93EE421F2D9B24400028E085 /* Ext+UIColor.swift in Sources */,
 				93F8663C2D9DBD24006F6F5C /* QaseAPIProjTests.swift in Sources */,
 			);
@@ -638,6 +744,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4A392523AE3ACB3D9C689ED6 /* HomeScreenUITests.swift in Sources */,
 				93F866442D9DBD2A006F6F5C /* QaseAPIProjUITests.swift in Sources */,
 				93F866452D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift in Sources */,
 				93F8664A2D9DC613006F6F5C /* Ext+String.swift in Sources */,

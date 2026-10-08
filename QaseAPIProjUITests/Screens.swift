@@ -19,9 +19,12 @@ struct AuthScreen: Screen {
         XCTAssertTrue(logoImage.waitForExistence(timeout: 5))
         logoImage.press(forDuration: 2)
 
-        let repositoryTab = app.tabBars.buttons["Repository"]
-        XCTAssertTrue(repositoryTab.waitForExistence(timeout: 5))
-        repositoryTab.tap()
+        let picker = app.buttons["project.picker"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 10))
+        picker.tap()
+        let manage = app.buttons["Manage projects"]
+        XCTAssertTrue(manage.waitForExistence(timeout: 5))
+        manage.tap()
 
         return ProjectsListScreen(app: app)
     }

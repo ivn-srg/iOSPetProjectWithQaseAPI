@@ -68,8 +68,8 @@ struct TestListEntity: Codable {
             description: suiteRO.itemDescription,
             parentId: suiteRO.parentId,
             casesCount: suiteRO.casesCount,
-            priority: Priority(suiteRO.priority ?? 0),
-            automation: AutomationStatus(suiteRO.automation ?? 0)
+            priority: suiteRO.priority.map(Priority.init),
+            automation: suiteRO.automation.map(AutomationStatus.init)
         )
     }
     
@@ -115,22 +115,13 @@ struct TestListEntity: Codable {
         title = try container.decode(String.self, forKey: .title)
         itemDescription = try container.decodeIfPresent(String.self, forKey: .itemDescription)
         preconditions = try container.decodeIfPresent(String.self, forKey: .preconditions)
-        position = try container.decode(Int.self, forKey: .position)
+        position = try container.decodeIfPresent(Int.self, forKey: .position)
         casesCount = try container.decodeIfPresent(Int.self, forKey: .caseCount)
         parentId = try container.decodeIfPresent(Int.self, forKey: .parentId)
         
-        let priorityInt = try container.decodeIfPresent(Int.self, forKey: .priority)
-        let automationInt = try container.decodeIfPresent(Int.self, forKey: .automation)
-        
-        if let priorityInt, let automationInt {
-            isSuite = false
-            priority = Priority(priorityInt)
-            automation = AutomationStatus(automationInt)
-        } else {
-            isSuite = true
-            priority = nil
-            automation = nil
-        }
+        isSuite = true
+        priority = nil
+        automation = nil
         
     }
     

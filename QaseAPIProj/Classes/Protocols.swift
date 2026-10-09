@@ -21,7 +21,6 @@ protocol UpdateTableViewProtocol: AnyObject {
 @MainActor
 @objc protocol DetailTestCaseProtocol: AnyObject {
     func updateUI()
-    @objc func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer)
 }
 
 @MainActor

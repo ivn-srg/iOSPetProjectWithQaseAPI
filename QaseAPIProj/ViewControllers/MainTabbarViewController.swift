@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 final class MainTabbarViewController: UITabBarController, RepositoryRouting {
+    
     private let session = SessionContext.shared
     private let cache = RealmManager.shared
     private lazy var repository = HomeRepository(network: ApiServiceConfiguration.shared.apiService, dao: cache, session: session)
@@ -9,9 +10,11 @@ final class MainTabbarViewController: UITabBarController, RepositoryRouting {
     private lazy var coordinator = ApplicationProjectCoordinator(store: selection, shell: self)
     private lazy var homeRouter = WeakHomeRouter(target: self)
     private var loadTask: Task<Void, Never>?
+    private var isChangingTab = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        delegate = self
         tabBar.tintColor = AppTheme.Palette.accent
         tabBar.unselectedItemTintColor = AppTheme.Palette.secondaryText
         selection.onSelectionRequested = { [weak self] project in
@@ -166,10 +169,17 @@ final class MainTabbarViewController: UITabBarController, RepositoryRouting {
     func repositoryBack() { (selectedViewController as? UINavigationController)?.popViewController(animated: true) }
 
     func createEntity(in location: RepositoryLocation) {
-        guard location.projectCode == projectCode else { return }
-        let controller = CreateSuiteOrCaseViewController(viewModel: .init(projectCode: location.projectCode, parentSuiteId: location.suiteID))
-        controller.modalPresentationStyle = .fullScreen
-        (selectedViewController as? UINavigationController)?.topViewController?.present(controller, animated: true)
+        guard location.projectCode == projectCode,
+              let presenter = (selectedViewController as? UINavigationController)?.topViewController else { return }
+        let source = presenter as? RepositoryViewController
+        let controller = CreateSuiteOrCaseViewController(
+            viewModel: .init(projectCode: location.projectCode, parentSuiteId: location.suiteID),
+            projectTitle: selection.selectedProject?.title,
+            onEntityCreated: { [weak source] in Task { await source?.model.reload() } })
+        let navigation = UINavigationController(rootViewController: controller)
+        navigation.navigationBar.tintColor = AppTheme.Palette.accent
+        navigation.modalPresentationStyle = .fullScreen
+        presenter.present(navigation, animated: true)
     }
 
     func showRuns() {
@@ -194,8 +204,31 @@ final class MainTabbarViewController: UITabBarController, RepositoryRouting {
     }
 
     func showCase(reference: TestCaseReference) {
-        let controller = TestCaseViewController(reference: reference)
+        let projectTitle = selection.selectedProject?.code == reference.projectCode ? selection.selectedProject?.title : nil
+        let controller = TestCaseViewController(reference: reference, projectTitle: projectTitle)
         controller.navigationItem.largeTitleDisplayMode = .never
         push(controller)
+    }
+}
+
+extension MainTabbarViewController: UITabBarControllerDelegate {
+    func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
+        guard viewController !== selectedViewController else { return true }
+        guard !isChangingTab else { return false }
+        guard let origin = selectedViewController,
+              let top = (origin as? UINavigationController)?.topViewController,
+              let form = top as? FormDepartureParticipant else { return true }
+        guard !form.isSavingDraft else { return false }
+        let stamp = session.capture()
+        isChangingTab = true
+        Task { [weak self] in
+            guard let self else { return }
+            defer { self.isChangingTab = false }
+            guard await form.requestDeparture(), self.session.isCurrent(stamp),
+                  self.selectedViewController === origin,
+                  self.viewControllers?.contains(where: { $0 === viewController }) == true else { return }
+            self.selectedViewController = viewController
+        }
+        return false
     }
 }

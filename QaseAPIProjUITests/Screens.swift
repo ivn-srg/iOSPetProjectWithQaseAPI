@@ -59,3 +59,50 @@ struct CreateProjectScreen: Screen {
         XCTAssertTrue(app.staticTexts["Creating project"].waitForExistence(timeout: 5))
     }
 }
+
+struct EntityFormScreen: Screen {
+    let app: XCUIApplication
+
+    func selectCase() {
+        let segment = app.segmentedControls["form.entityType"]
+        XCTAssertTrue(segment.waitForExistence(timeout: 5))
+        segment.buttons.element(boundBy: 1).tap()
+    }
+
+    func enterTitle(_ value: String) {
+        let field = app.textViews["field.Title"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText(value)
+    }
+
+    func openParentPicker() -> SuiteParentPickerScreen {
+        let parent = app.buttons["field.Parent suite"]
+        XCTAssertTrue(parent.waitForExistence(timeout: 5))
+        if !parent.isHittable { app.swipeUp() }
+        parent.tap()
+        return SuiteParentPickerScreen(app: app)
+    }
+
+    func checkCreateEnabled(_ enabled: Bool) {
+        let create = app.buttons["form.create"]
+        XCTAssertTrue(create.waitForExistence(timeout: 5))
+        XCTAssertEqual(create.isEnabled, enabled)
+    }
+}
+
+struct SuiteParentPickerScreen: Screen {
+    let app: XCUIApplication
+
+    func chooseRoot() {
+        let root = app.cells["suitePicker.root"]
+        XCTAssertTrue(root.waitForExistence(timeout: 5))
+        root.tap()
+    }
+
+    func cancel() {
+        let close = app.buttons["suitePicker.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 5))
+        close.tap()
+    }
+}

@@ -24,6 +24,7 @@ final class TestEntitiesViewModel: ObservableObject {
     @Published private(set) var moreSearchSuites = false
     @Published private(set) var moreSearchCases = false
     @Published private(set) var hasMoreCases = true
+    private let catalogLoader: SuiteCatalogLoader
     private let repository: HomeRepository
     private let network: NetworkManager
     private let dao: RealmManager
@@ -56,6 +57,7 @@ final class TestEntitiesViewModel: ObservableObject {
         self.session = session ?? .shared
         stamp = self.session.capture()
         repository = HomeRepository(network: network, session: self.session)
+        catalogLoader = SuiteCatalogLoader(network: network, dao: self.dao, session: self.session)
         catalog = self.dao.getAllCachedSuites(projectCode: projectCode)
         catalogComplete = self.dao.hasRepositoryCatalog(projectCode: projectCode)
         let cachedCases = self.dao.getAllCachedCases(projectCode: projectCode).filter { normalized($0.parentId) == location.suiteID }
@@ -95,17 +97,11 @@ final class TestEntitiesViewModel: ObservableObject {
         suitesLoading = true; suiteError = nil
         defer { if generation == catalogGeneration { suitesLoading = false } }
         do {
-            var values: [TestListEntity] = []
-            var pageOffset = 0
-            while true {
-                let page = try await repository.suites(projectCode: projectCode, offset: pageOffset)
-                guard accepts(generation, catalogGeneration) else { return }
-                appendUnique(page.entities, to: &values)
-                pageOffset += page.entities.count
-                if page.entities.isEmpty || pageOffset >= (page.filtered ?? page.total ?? pageOffset) { break }
-            }
+            let values = try await catalogLoader.load(projectCode: projectCode, isCurrent: { [weak self] in
+                guard let self else { return false }
+                return self.accepts(generation, self.catalogGeneration)
+            })
             guard accepts(generation, catalogGeneration) else { return }
-            _ = dao.replaceSuiteCatalog(values, projectCode: projectCode, stamp: stamp)
             catalog = values
             catalogComplete = true
             if let id = location.suiteID, !values.contains(where: { $0.id == id }) { suiteError = "Suite unavailable".localized }
@@ -206,17 +202,10 @@ final class TestEntitiesViewModel: ObservableObject {
     }
 
     func path(to suiteID: Int?) -> [RepositoryBreadcrumb]? {
-        var result: [RepositoryBreadcrumb] = []
-        var next = normalized(suiteID)
-        var seen = Set<Int>()
-        while let id = next {
-            guard seen.insert(id).inserted, let suite = catalog.first(where: { $0.id == id }) else { return nil }
-            result.append(.init(id: id, title: suite.title)); next = normalized(suite.parentId)
-        }
-        return [.init(id: nil, title: "Project root".localized)] + result.reversed()
+        SuiteCatalogLoader.breadcrumbs(catalog: catalog, suiteID: suiteID)
     }
 
-    func pathTitle(to suiteID: Int?) -> String { path(to: suiteID)?.map(\.title).joined(separator: " › ") ?? "Path unavailable".localized }
+    func pathTitle(to suiteID: Int?) -> String { SuiteCatalogLoader.pathTitle(catalog: catalog, suiteID: suiteID) }
 
     func delete(_ reference: RepositoryItemReference) async throws {
         guard session.isCurrent(stamp), reference.projectCode == projectCode else { throw CancellationError() }

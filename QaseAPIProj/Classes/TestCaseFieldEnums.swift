@@ -233,9 +233,9 @@ enum Types: String, CaseIterable, MenuDataSource, Codable {
         MenuItem(id: 5, title: Types.utility.localized),
         MenuItem(id: 6, title: Types.perfomance.localized),
         MenuItem(id: 7, title: Types.accertance.localized),
-        MenuItem(id: 7, title: Types.compatibility.localized),
-        MenuItem(id: 8, title: Types.exploratory.localized),
-        MenuItem(id: 9, title: Types.integration.localized),
+        MenuItem(id: 8, title: Types.compatibility.localized),
+        MenuItem(id: 9, title: Types.exploratory.localized),
+        MenuItem(id: 10, title: Types.integration.localized),
     ]
     
     init(_ number: Int) {

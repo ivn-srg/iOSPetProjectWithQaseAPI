@@ -1,252 +1,204 @@
-//
-//  CustomSelectableView.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 30.10.2024.
-//
-
 import UIKit
+import SnapKit
 
 final class CustomSelectableView: UIButton {
-    // MARK: - Fields
-    private var selectableValue: MenuItem?
-    private var dataSource = [MenuItem]()
     private let textFieldType: FieldType
-    private var testCaseViewModel: UpdatableEntityProtocol?
-    private var fieldValue: MenuItem? {
-        guard let testCaseViewModel = testCaseViewModel else { return nil }
-        
+    private let viewModel: UpdatableEntityProtocol?
+    private var selectableValue: MenuItem?
+    private var isVertical = false
+    private let titleLbl = UILabel()
+    private let valueLabel = UILabel()
+    private let valueGroup = UIView()
+    private let marker = UIView()
+    private let chevron = UIImageView(image: UIImage(systemName: "chevron.right"))
+
+    private var draft: TestCaseEntity? {
+        if let creating = viewModel as? CreateSuiteOrCaseViewModel {
+            return creating.creatingTestCase
+        }
+        return viewModel?.changedTestCase ?? viewModel?.testCase
+    }
+
+    private var dataSource: [MenuItem] {
         switch textFieldType {
-        case .severity:
-            return testCaseViewModel.testCase?.severity.menuItem
-        case .status:
-            return testCaseViewModel.testCase?.status.menuItem
-        case .priority:
-            return testCaseViewModel.testCase?.priority.menuItem
-        case .behavior:
-            return testCaseViewModel.testCase?.behavior.menuItem
-        case .type:
-            return testCaseViewModel.testCase?.type.menuItem
-        case .layer:
-            return testCaseViewModel.testCase?.layer.menuItem
-        case .automation:
-            return testCaseViewModel.testCase?.automation.menuItem
-        default: return nil
+        case .severity: Severity.dataSource
+        case .status: Status.dataSource
+        case .priority: Priority.dataSource
+        case .behavior: Behavior.dataSource
+        case .type: Types.dataSource
+        case .layer: Layer.dataSource
+        case .automation: AutomationStatus.dataSource
+        default: []
         }
     }
-    
-    // MARK: - UI components
-    private lazy var textLbl: UILabel = {
-        let text = UILabel()
-        text.translatesAutoresizingMaskIntoConstraints = false
-        return text
-    }()
-    
-    private lazy var trailingImage: UIImageView = {
-        let imageV = UIImageView()
-        imageV.translatesAutoresizingMaskIntoConstraints = false
-        imageV.contentMode = .scaleAspectFit
-        imageV.image = selectableValue?.image
-        return imageV
-    }()
-    
-    // MARK: - Lyfecycle
+
     init(textFieldType: FieldType, detailCaseVM: UpdatableEntityProtocol?) {
         self.textFieldType = textFieldType
-        self.testCaseViewModel = detailCaseVM
+        viewModel = detailCaseVM
         super.init(frame: .zero)
-        
-        setupDataSource(textFieldType)
-        configureView()
-        setupActionsMenu()
+        titleLbl.text = textFieldType.localized
+        for label in [titleLbl, valueLabel] {
+            label.font = UIFont.preferredFont(forTextStyle: .body)
+            label.adjustsFontForContentSizeCategory = true
+            label.numberOfLines = 0
+            label.isAccessibilityElement = false
+        }
+        titleLbl.textColor = AppTheme.Palette.text
+        valueLabel.textColor = AppTheme.Palette.text
+        valueGroup.isUserInteractionEnabled = false
+        chevron.tintColor = AppTheme.Palette.tertiaryText
+        chevron.contentMode = .scaleAspectFit
+        marker.layer.cornerRadius = 3
+        addSubview(titleLbl)
+        addSubview(valueGroup)
+        addSubview(chevron)
+        valueGroup.addSubview(valueLabel)
+        valueGroup.addSubview(marker)
+        snp.makeConstraints { $0.height.greaterThanOrEqualTo(52) }
+        chevron.snp.makeConstraints {
+            $0.trailing.equalToSuperview()
+            $0.width.equalTo(12)
+            $0.height.equalTo(16)
+            $0.centerY.equalTo(titleLbl.snp.firstBaseline).offset(-titleLbl.font.capHeight / 2)
+        }
+        titleLbl.setContentCompressionResistancePriority(.required, for: .horizontal)
+        valueLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        isAccessibilityElement = true
+        accessibilityIdentifier = "field." + textFieldType.rawValue
+        accessibilityLabel = textFieldType.localized
+        showsMenuAsPrimaryAction = true
+        updateSelectedValue()
+        applyLayout()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    // MARK: - setup UI funcs
-    private func setupDataSource(_ textFieldType: FieldType) {
-        let testCase = testCaseViewModel?.testCase
-        
-        switch textFieldType {
-        case .severity:
-            dataSource = Severity.dataSource
-            selectableValue = testCase != nil ? testCase!.severity.menuItem : MenuItem()
-        case .status:
-            dataSource = Status.dataSource
-            selectableValue = testCase != nil ? testCase!.status.menuItem : MenuItem()
-        case .priority:
-            dataSource = Priority.dataSource
-            selectableValue = testCase != nil ? testCase!.priority.menuItem : MenuItem()
-        case .behavior:
-            dataSource = Behavior.dataSource
-            selectableValue = testCase != nil ? testCase!.behavior.menuItem : MenuItem()
-        case .type:
-            dataSource = Types.dataSource
-            selectableValue = testCase != nil ? testCase!.type.menuItem : MenuItem()
-        case .layer:
-            dataSource = Layer.dataSource
-            selectableValue = testCase != nil ? testCase!.layer.menuItem : MenuItem()
-        case .automation:
-            dataSource = AutomationStatus.dataSource
-            selectableValue = testCase != nil ? testCase!.automation.menuItem : MenuItem()
-        default: break
+
+    override func layoutSubviews() {
+        let available = bounds.width - 28
+        let measuringSize = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        let needed = titleLbl.sizeThatFits(measuringSize).width + valueLabel.sizeThatFits(measuringSize).width + (marker.isHidden ? 0 : 12) + 16
+        let vertical = traitCollection.preferredContentSizeCategory.isAccessibilityCategory || needed > available
+        if vertical != isVertical {
+            isVertical = vertical
+            applyLayout()
         }
+        super.layoutSubviews()
     }
-    
-    private func configureView() {
-        translatesAutoresizingMaskIntoConstraints = false
-        
-        textLbl.text = fieldValue?.title
-        
-        layer.cornerRadius = 10
-        layer.borderWidth = 1
-        layer.borderColor = UIColor.gray.cgColor
-        backgroundColor = AppTheme.bgSecondaryColor
-        
-        addSubview(textLbl)
-        addSubview(trailingImage)
-        
-        trailingImage.snp.makeConstraints {
-            $0.verticalEdges.trailing.equalToSuperview().inset(15)
-            $0.width.equalTo(trailingImage.image?.size.width ?? 30)
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        chevron.snp.updateConstraints {
+            $0.centerY.equalTo((isVertical ? valueLabel : titleLbl).snp.firstBaseline)
+                .offset(-(isVertical ? valueLabel : titleLbl).font.capHeight / 2)
         }
-        
-        textLbl.snp.makeConstraints {
-            $0.verticalEdges.equalToSuperview().inset(15)
-            $0.leading.equalToSuperview().inset(15)
-            $0.trailing.equalTo(trailingImage.snp.leading)
+        marker.snp.updateConstraints {
+            $0.centerY.equalTo(valueLabel.snp.firstBaseline).offset(-valueLabel.font.capHeight / 2)
         }
+        setNeedsLayout()
     }
-    
-    private func setupActionsMenu() {
-        let actionList = dataSource.map { item in
-            UIAction(
-                title: item.title,
-                image: item.image
-            ) { action in
-                if self.selectableValue == nil {
-                    self.selectableValue = MenuItem(
-                        id: item.id,
-                        title: action.title,
-                        image: action.image
-                    )
-                } else {
-                    self.selectableValue?.id = item.id
-                    self.selectableValue?.title = action.title
-                    self.selectableValue?.image = action.image
-                }
-                
-                self.textLbl.text = action.title
-                self.trailingImage.image = action.image
-                
-                self.updateTestCaseData()
+
+    private func applyLayout() {
+        let compression: UILayoutPriority = isVertical ? .defaultHigh : .required
+        titleLbl.setContentCompressionResistancePriority(compression, for: .horizontal)
+        valueLabel.setContentCompressionResistancePriority(compression, for: .horizontal)
+        titleLbl.snp.remakeConstraints {
+            $0.leading.equalToSuperview()
+            $0.top.equalToSuperview().offset(12)
+            if isVertical {
+                $0.trailing.equalTo(chevron.snp.leading).offset(-12)
+            } else {
+                $0.bottom.equalToSuperview().inset(12)
+                $0.trailing.lessThanOrEqualTo(valueGroup.snp.leading).offset(-16)
             }
         }
-        
-        menu = UIMenu(title: "", children: actionList)
-        showsMenuAsPrimaryAction = true
+        valueGroup.snp.remakeConstraints {
+            if isVertical {
+                $0.leading.equalToSuperview()
+                $0.trailing.lessThanOrEqualTo(chevron.snp.leading).offset(-12)
+                $0.top.equalTo(titleLbl.snp.bottom).offset(6)
+                $0.bottom.equalToSuperview().inset(12)
+            } else {
+                $0.trailing.equalTo(chevron.snp.leading).offset(-12)
+                $0.centerY.equalTo(titleLbl)
+                $0.top.greaterThanOrEqualToSuperview().offset(12)
+                $0.bottom.lessThanOrEqualToSuperview().inset(12)
+            }
+        }
+        valueLabel.snp.remakeConstraints {
+            $0.leading.top.bottom.equalToSuperview()
+            $0.trailing.equalTo(marker.snp.leading).offset(marker.isHidden ? 0 : -6)
+        }
+        marker.snp.remakeConstraints {
+            $0.trailing.equalToSuperview()
+            $0.width.height.equalTo(marker.isHidden ? 0 : 6)
+            $0.centerY.equalTo(valueLabel.snp.firstBaseline).offset(-valueLabel.font.capHeight / 2)
+        }
+        chevron.snp.remakeConstraints {
+            $0.trailing.equalToSuperview()
+            $0.width.equalTo(12)
+            $0.height.equalTo(16)
+            $0.centerY.equalTo((isVertical ? valueLabel : titleLbl).snp.firstBaseline)
+                .offset(-(isVertical ? valueLabel : titleLbl).font.capHeight / 2)
+        }
+        valueLabel.textAlignment = isVertical ? .natural : .right
     }
-    
+
+    private func selectedItem() -> MenuItem? {
+        guard let draft else { return nil }
+        switch textFieldType {
+        case .severity: return draft.severity.menuItem
+        case .status: return draft.status.menuItem
+        case .priority: return draft.priority.menuItem
+        case .behavior: return draft.behavior.menuItem
+        case .type: return draft.type.menuItem
+        case .layer: return draft.layer.menuItem
+        case .automation: return draft.automation.menuItem
+        default: return nil
+        }
+    }
+
+    static func markerColor(for field: FieldType, id: Int?) -> UIColor? {
+        switch (field, id) {
+        case (.priority, 1): AppTheme.Palette.warning
+        case (.priority, 2): AppTheme.Palette.info
+        case (.priority, 3): AppTheme.Palette.secondaryText
+        case (.severity, 1), (.severity, 2), (.severity, 3): AppTheme.Palette.danger
+        case (.severity, 4): AppTheme.Palette.info
+        case (.severity, 5), (.severity, 6): AppTheme.Palette.success
+        default: nil
+        }
+    }
+
+    private func renderSelection() {
+        valueLabel.text = selectableValue?.title ?? Constants.EMPTY_TEXT
+        marker.backgroundColor = Self.markerColor(for: textFieldType, id: selectableValue?.id)
+        marker.isHidden = marker.backgroundColor == nil
+        accessibilityValue = valueLabel.text
+        menu = UIMenu(children: dataSource.map { item in
+            UIAction(title: item.title, image: item.image, state: item.id == selectableValue?.id ? .on : .off) { [weak self] _ in
+                guard let self else { return }
+                selectableValue = item
+                updateTestCaseData()
+                updateSelectedValue()
+            }
+        })
+        applyLayout()
+        setNeedsLayout()
+    }
+
     func updateTestCaseData() {
-        guard let testCaseViewModel else { return }
-        let testCase = testCaseViewModel.testCase
-        
-        switch textFieldType {
-        case .severity:
-            let selectedValue = if selectableValue != nil {
-                selectableValue!
-            } else if let testCase = testCase {
-                testCase.severity.menuItem
-            } else {
-                Severity.nothing.menuItem
-            }
-            
-            testCaseViewModel.updateValue(for: .severity, value: selectedValue.id)
-        case .status:
-            let selectedValue = if selectableValue != nil {
-                selectableValue!
-            } else if let testCase = testCase {
-                testCase.status.menuItem
-            } else {
-                Status.actual.menuItem
-            }
-            
-            testCaseViewModel.updateValue(for: .status, value: selectedValue.id)
-        case .priority:
-            let selectedValue = if selectableValue != nil {
-                selectableValue!
-            } else if let testCase = testCase {
-                testCase.priority.menuItem
-            } else {
-                Priority.nothing.menuItem
-            }
-            
-            testCaseViewModel.updateValue(for: .priority, value: selectedValue.id)
-        case .behavior:
-            let selectedValue = if selectableValue != nil {
-                selectableValue!
-            } else if let testCase = testCase {
-                testCase.behavior.menuItem
-            } else {
-                Behavior.positive.menuItem
-            }
-            
-            testCaseViewModel.updateValue(for: .behavior, value: selectedValue.id)
-        case .type:
-            let selectedValue = if selectableValue != nil {
-                selectableValue!
-            } else if let testCase = testCase {
-                testCase.type.menuItem
-            } else {
-                Types.other.menuItem
-            }
-            
-            testCaseViewModel.updateValue(for: .type, value: selectedValue.id)
-        case .layer:
-            let selectedValue = if selectableValue != nil {
-                selectableValue!
-            } else if let testCase = testCase {
-                testCase.layer.menuItem
-            } else {
-                Layer.e2e.menuItem
-            }
-            
-            testCaseViewModel.updateValue(for: .layer, value: selectedValue.id)
-        case .automation:
-            let selectedValue = if selectableValue != nil {
-                selectableValue!
-            } else if let testCase = testCase {
-                testCase.automation.menuItem
-            } else {
-                AutomationStatus.manual.menuItem
-            }
-            
-            testCaseViewModel.updateValue(for: .automation, value: selectedValue.id)
-        default: break
-        }
+        guard let selectableValue else { return }
+        viewModel?.updateValue(for: textFieldType, value: selectableValue.id)
     }
-    
+
     func updateSelectedValue() {
-        guard let testCaseViewModel else { return }
-        
-        switch textFieldType {
-        case .severity:
-            selectableValue = testCaseViewModel.testCase?.severity.menuItem
-        case .status:
-            selectableValue = testCaseViewModel.testCase?.status.menuItem
-        case .priority:
-            selectableValue = testCaseViewModel.testCase?.priority.menuItem
-        case .behavior:
-            selectableValue = testCaseViewModel.testCase?.behavior.menuItem
-        case .type:
-            selectableValue = testCaseViewModel.testCase?.type.menuItem
-        case .layer:
-            selectableValue = testCaseViewModel.testCase?.layer.menuItem
-        case .automation:
-            selectableValue = testCaseViewModel.testCase?.automation.menuItem
-        default: break
-        }
+        selectableValue = selectedItem()
+        renderSelection()
+    }
+
+    func setEditingEnabled(_ enabled: Bool) {
+        isEnabled = enabled
     }
 }

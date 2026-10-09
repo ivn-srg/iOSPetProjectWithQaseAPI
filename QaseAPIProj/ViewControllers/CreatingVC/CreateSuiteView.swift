@@ -1,78 +1,52 @@
-//
-//  CreateSuiteView.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 21.09.2024.
-//
-
 import UIKit
 import SnapKit
 
-enum CreateSuiteTextFieldType: String {
-    case name = "Title"
-    case description = "Description"
-    case precondition = "Preconditions"
-    case parentSuteId = "Parent suite"
-}
-
 final class CreateSuiteView: UIView {
-    // MARK: - Fields
-    private var linkedViewModel: CreateSuiteOrCaseViewModel
-    private var textViewHeightConstraint: Constraint?
-    
-    // MARK: - UI components
-    private lazy var scrollView: UIScrollView = {
-        let sv = UIScrollView()
-        sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.showsHorizontalScrollIndicator = false
-        sv.alwaysBounceVertical = true
-        sv.showsVerticalScrollIndicator = false
-        sv.isUserInteractionEnabled = true
-        return sv
-    }()
-    
-    private lazy var stackView: UIStackView = {
-        let sv = UIStackView()
-        sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.axis = .vertical
-        sv.spacing = 30
-        sv.alignment = .fill
-        sv.isUserInteractionEnabled = true
-        return sv
-    }()
-    
-    private lazy var titleTextView = GeneralCaseTextField(textType: .title, detailVM: linkedViewModel)
-    private lazy var descriptionTextView = GeneralCaseTextField(textType: .description, detailVM: linkedViewModel)
-    private lazy var preconditionsTextView = GeneralCaseTextField(textType: .precondition, detailVM: linkedViewModel)
-    private lazy var parentSuiteTextView = GeneralCaseTextField(textType: .parentSuite, detailVM: linkedViewModel)
-    
-    // MARK: - Lyfecycle
-    
+    let parentButton = FormParentButton()
+    var onFocusChange: ((GeneralCaseTextField) -> Void)?
+    private let viewModel: CreateSuiteOrCaseViewModel
+    private var fields: [FieldType: GeneralCaseTextField] = [:]
+
     init(linkedViewModel: CreateSuiteOrCaseViewModel) {
-        self.linkedViewModel = linkedViewModel
+        viewModel = linkedViewModel
         super.init(frame: .zero)
-        
-        configureView()
+        let title = makeField(.title, value: linkedViewModel.creatingSuite.title)
+        let description = makeField(.description, value: linkedViewModel.creatingSuite.itemDescription)
+        let precondition = makeField(.precondition, value: linkedViewModel.creatingSuite.preconditions)
+        let stack = UIStackView(arrangedSubviews: [
+            FormSectionView(title: "Main information".localized, rows: [title, description]),
+            FormSectionView(title: "Conditions".localized, rows: [precondition]),
+            FormSectionView(title: "Location".localized, rows: [parentButton])
+        ])
+        stack.axis = .vertical
+        stack.spacing = AppTheme.Space.section
+        addSubview(stack)
+        stack.snp.makeConstraints { $0.edges.equalToSuperview() }
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    func configureView() {
-        
-        self.addSubview(scrollView)
-        scrollView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+
+    private func makeField(_ type: FieldType, value: String?) -> GeneralCaseTextField {
+        let field = GeneralCaseTextField(textType: type, textViewValue: value, detailVM: viewModel, style: .entityForm)
+        fields[type] = field
+        field.onFocusChange = { [weak self, weak field] focused in
+            if focused, let field { self?.onFocusChange?(field) }
         }
-        scrollView.addSubview(stackView)
-        stackView.snp.makeConstraints {
-            $0.verticalEdges.equalToSuperview().inset(30)
-            $0.centerX.width.equalToSuperview()
-        }
-        stackView.addArrangedSubview(titleTextView)
-        stackView.addArrangedSubview(descriptionTextView)
-        stackView.addArrangedSubview(preconditionsTextView)
-        stackView.addArrangedSubview(parentSuiteTextView)
+        return field
     }
+
+    func updateValues() {
+        fields[.title]?.updateTextViewValue(viewModel.creatingSuite.title)
+        fields[.description]?.updateTextViewValue(viewModel.creatingSuite.itemDescription)
+        fields[.precondition]?.updateTextViewValue(viewModel.creatingSuite.preconditions)
+    }
+
+    func setEditingEnabled(_ enabled: Bool) {
+        fields.values.forEach { $0.setEditingEnabled(enabled) }
+        parentButton.isEnabled = enabled
+    }
+
+    func finishEditing() { fields.values.forEach { $0.finishEditing() } }
 }

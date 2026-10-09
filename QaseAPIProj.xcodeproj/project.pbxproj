@@ -61,7 +61,6 @@
 		93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5E2BE51C2900D4F365 /* Protocols.swift */; };
 		93EE421F2D9B24400028E085 /* Ext+UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9399A0AA2D2D313F00347130 /* Ext+UIColor.swift */; };
 		93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */; };
-		93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */; };
 		93F84C823048B6A8003A5227 /* TestRunsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C813048B6A8003A5227 /* TestRunsViewController.swift */; };
 		93F84C843048B7F8003A5227 /* SearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C833048B7F8003A5227 /* SearchViewController.swift */; };
 		93F84C863048C7FF003A5227 /* TilesCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */; };
@@ -110,6 +109,17 @@
 		F0FEF0F7354E31BAED8AC812 /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */; };
 		D7D0FBE470E81F465C7A6C14 /* TokenReplacementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */; };
 		CA3DA33CFFF007E6D19D2B65 /* CacheManagementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */; };
+		0F5A387C60CF2AA5F34AF711 /* SuiteCatalogLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F831D021CF491DB54826E911 /* SuiteCatalogLoader.swift */; };
+		42F9C8A7893BDC54C1F916ED /* SuitePickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB5E153123554BE0B3461CB /* SuitePickerViewModel.swift */; };
+		D83866CA915DEED8982B5353 /* SuitePickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DC61B118CF9611A454A393 /* SuitePickerViewController.swift */; };
+		D5DB045EABB355B61081B834 /* CasePropertiesFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE32CA5D8837F3390C28E23D /* CasePropertiesFormView.swift */; };
+		4E78393B1769F74D054F21C5 /* FormSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 609D32949F5822639F77F3C5 /* FormSectionView.swift */; };
+		9F3CB3B692C6C366B10127F9 /* FormTextInputPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18170712A9602758A5A1C8C3 /* FormTextInputPolicy.swift */; };
+		819D74D967EFCDECBB285369 /* FormParentButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0B46634BFF822A5297EE59 /* FormParentButton.swift */; };
+		6425ACA71D090EFBA70DB8F1 /* FormMessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC11ABD5FB4560B395CE2C /* FormMessageView.swift */; };
+		E0477F2F565BB6555058B043 /* FormDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6387D313D61BEDBE072F7C7D /* FormDraftTests.swift */; };
+		77C516675A1521CD6258C9FC /* FormParentPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B61522BFD97C27159BD673C /* FormParentPickerTests.swift */; };
+		4519AE061F2A6C950219F735 /* FormComponentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCEB7260B65056A25F3B4894 /* FormComponentTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -198,7 +208,6 @@
 		93EE41FC2D9B10600028E085 /* QaseAPIProjTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QaseAPIProjTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93EE42092D9B107B0028E085 /* QaseAPIProjUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QaseAPIProjUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralDetailCaseViewController.swift; sourceTree = "<group>"; };
-		93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesDetailCaseViewController.swift; sourceTree = "<group>"; };
 		93F84C813048B6A8003A5227 /* TestRunsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRunsViewController.swift; sourceTree = "<group>"; };
 		93F84C833048B7F8003A5227 /* SearchViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewController.swift; sourceTree = "<group>"; };
 		93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilesCollectionViewController.swift; sourceTree = "<group>"; };
@@ -239,6 +248,17 @@
 		014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
 		DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenReplacementTests.swift; sourceTree = "<group>"; };
 		30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManagementTests.swift; sourceTree = "<group>"; };
+		F831D021CF491DB54826E911 /* SuiteCatalogLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SuiteCatalogLoader.swift; path = QaseAPIProj/Data/SuiteCatalogLoader.swift; sourceTree = SOURCE_ROOT; };
+		ECB5E153123554BE0B3461CB /* SuitePickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SuitePickerViewModel.swift; path = QaseAPIProj/ViewModel/SuitePickerViewModel.swift; sourceTree = SOURCE_ROOT; };
+		97DC61B118CF9611A454A393 /* SuitePickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SuitePickerViewController.swift; path = QaseAPIProj/ViewControllers/CreatingVC/SuitePickerViewController.swift; sourceTree = SOURCE_ROOT; };
+		DE32CA5D8837F3390C28E23D /* CasePropertiesFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CasePropertiesFormView.swift; path = QaseAPIProj/Views/Components/CasePropertiesFormView.swift; sourceTree = SOURCE_ROOT; };
+		609D32949F5822639F77F3C5 /* FormSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FormSectionView.swift; path = QaseAPIProj/Views/Components/FormSectionView.swift; sourceTree = SOURCE_ROOT; };
+		18170712A9602758A5A1C8C3 /* FormTextInputPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FormTextInputPolicy.swift; path = QaseAPIProj/Views/Components/FormTextInputPolicy.swift; sourceTree = SOURCE_ROOT; };
+		8A0B46634BFF822A5297EE59 /* FormParentButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FormParentButton.swift; path = QaseAPIProj/Views/Components/FormParentButton.swift; sourceTree = SOURCE_ROOT; };
+		4CFC11ABD5FB4560B395CE2C /* FormMessageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FormMessageView.swift; path = QaseAPIProj/Views/Components/FormMessageView.swift; sourceTree = SOURCE_ROOT; };
+		6387D313D61BEDBE072F7C7D /* FormDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FormDraftTests.swift; path = QaseAPIProjTests/FormDraftTests.swift; sourceTree = SOURCE_ROOT; };
+		6B61522BFD97C27159BD673C /* FormParentPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FormParentPickerTests.swift; path = QaseAPIProjTests/FormParentPickerTests.swift; sourceTree = SOURCE_ROOT; };
+		FCEB7260B65056A25F3B4894 /* FormComponentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FormComponentTests.swift; path = QaseAPIProjTests/FormComponentTests.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -272,6 +292,7 @@
 		934A36DC2B6820F9001E4F24 /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
+				ECB5E153123554BE0B3461CB /* SuitePickerViewModel.swift */,
 				51094F264DC5B2A48DF72F39 /* SettingsViewModel.swift */,
 				937650C12B6CE70800B5336B /* DetailTabbarControllerViewModel.swift */,
 				93DCDF582BE4EC3800D4F365 /* ProjectsViewModel.swift */,
@@ -286,6 +307,11 @@
 		936A2B172C8A27BE007F7C72 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				4CFC11ABD5FB4560B395CE2C /* FormMessageView.swift */,
+				8A0B46634BFF822A5297EE59 /* FormParentButton.swift */,
+				18170712A9602758A5A1C8C3 /* FormTextInputPolicy.swift */,
+				609D32949F5822639F77F3C5 /* FormSectionView.swift */,
+				DE32CA5D8837F3390C28E23D /* CasePropertiesFormView.swift */,
 				938C47E62C9A0C0000B75BE8 /* PropertiesPickerTextField.swift */,
 				938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */,
 				936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */,
@@ -400,6 +426,7 @@
 		9395F7372B46DE970050C3F8 /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				F831D021CF491DB54826E911 /* SuiteCatalogLoader.swift */,
 				31ACF6BD3B8EF7FFF5416B5A /* AppSettingsStore.swift */,
 				22A4B5FF314F6C32A112C893 /* HomeRepository.swift */,
 				3D5F4DC88D2A5E3B11924D8F /* SelectedProjectStore.swift */,
@@ -415,6 +442,7 @@
 		93B0454F2C9E940800EE125B /* CreatingVC */ = {
 			isa = PBXGroup;
 			children = (
+				97DC61B118CF9611A454A393 /* SuitePickerViewController.swift */,
 				938C47DA2C9A08B300B75BE8 /* CreatingProjectViewController.swift */,
 				93B0454D2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift */,
 				93B045502C9E946700EE125B /* CreateTestCaseView.swift */,
@@ -451,7 +479,6 @@
 			children = (
 				939175212D11A8A600AA38A4 /* TestCaseViewController.swift */,
 				93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */,
-				93F1F3802B5987F500667DB9 /* PropertiesDetailCaseViewController.swift */,
 			);
 			path = DetailCaseScreen;
 			sourceTree = "<group>";
@@ -471,6 +498,9 @@
 		93F866382D9DBD24006F6F5C /* QaseAPIProjTests */ = {
 			isa = PBXGroup;
 			children = (
+				FCEB7260B65056A25F3B4894 /* FormComponentTests.swift */,
+				6B61522BFD97C27159BD673C /* FormParentPickerTests.swift */,
+				6387D313D61BEDBE072F7C7D /* FormDraftTests.swift */,
 				30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */,
 				DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */,
 				014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */,
@@ -650,6 +680,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6425ACA71D090EFBA70DB8F1 /* FormMessageView.swift in Sources */,
+				819D74D967EFCDECBB285369 /* FormParentButton.swift in Sources */,
+				9F3CB3B692C6C366B10127F9 /* FormTextInputPolicy.swift in Sources */,
+				4E78393B1769F74D054F21C5 /* FormSectionView.swift in Sources */,
+				D5DB045EABB355B61081B834 /* CasePropertiesFormView.swift in Sources */,
+				D83866CA915DEED8982B5353 /* SuitePickerViewController.swift in Sources */,
+				42F9C8A7893BDC54C1F916ED /* SuitePickerViewModel.swift in Sources */,
+				0F5A387C60CF2AA5F34AF711 /* SuiteCatalogLoader.swift in Sources */,
 				7E18C306E251EF15DC87EBE8 /* SettingsView.swift in Sources */,
 				F3681EA113660E1039A88AE0 /* SettingsViewModel.swift in Sources */,
 				98756615B556C2A889B5AAED /* AppSettingsStore.swift in Sources */,
@@ -702,7 +740,6 @@
 				93F84C843048B7F8003A5227 /* SearchViewController.swift in Sources */,
 				93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */,
 				93F84C883048CF60003A5227 /* HomeViewModel.swift in Sources */,
-				93F1F3812B5987F500667DB9 /* PropertiesDetailCaseViewController.swift in Sources */,
 				93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */,
 				93B045512C9E946700EE125B /* CreateTestCaseView.swift in Sources */,
 				936A2B192C8A2821007F7C72 /* GeneralCaseTextField.swift in Sources */,
@@ -724,6 +761,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4519AE061F2A6C950219F735 /* FormComponentTests.swift in Sources */,
+				77C516675A1521CD6258C9FC /* FormParentPickerTests.swift in Sources */,
+				E0477F2F565BB6555058B043 /* FormDraftTests.swift in Sources */,
 				CA3DA33CFFF007E6D19D2B65 /* CacheManagementTests.swift in Sources */,
 				D7D0FBE470E81F465C7A6C14 /* TokenReplacementTests.swift in Sources */,
 				F0FEF0F7354E31BAED8AC812 /* AppSettingsTests.swift in Sources */,

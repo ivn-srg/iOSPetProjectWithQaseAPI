@@ -5,6 +5,7 @@ import Testing
 private final class DraftFixture: ProjectDraft {
     var hasUnsavedChanges = true
     var canSaveDraft = true
+    var isSavingDraft = false
     var saves = 0
     var discards = 0
     var shouldFail = false
@@ -18,6 +19,15 @@ private final class DraftFixture: ProjectDraft {
 
 @Suite @MainActor
 struct ProjectSwitchTests {
+    @Test func busyCleanParticipantBlocksSaveAndDiscard() async throws {
+        let busy = DraftFixture(), changed = DraftFixture()
+        busy.hasUnsavedChanges = false
+        busy.isSavingDraft = true
+        #expect(try await !ProjectSwitchGuard().resolve([busy, changed], decision: .discard))
+        #expect(try await !ProjectSwitchGuard().resolve([busy, changed], decision: .save))
+        #expect(changed.discards == 0 && changed.saves == 0 && changed.hasUnsavedChanges)
+    }
+
     @Test func cancelPreservesAllDrafts() async throws {
         let first = DraftFixture(), second = DraftFixture()
         let allowed = try await ProjectSwitchGuard().resolve([first, second], decision: .stay)

@@ -36,8 +36,38 @@ final class WeakHomeRouter: RepositoryRouting {
 protocol ProjectDraft: AnyObject {
     var hasUnsavedChanges: Bool { get }
     var canSaveDraft: Bool { get }
+    var isSavingDraft: Bool { get }
     func saveDraft() async throws
     func discardDraft()
+}
+
+extension ProjectDraft {
+    var isSavingDraft: Bool { false }
+}
+
+@MainActor
+protocol FormDepartureParticipant: ProjectDraft {
+    func requestDeparture() async -> Bool
+}
+
+@MainActor
+enum FormDepartureGuard {
+    static func confirm(_ draft: ProjectDraft, on presenter: UIViewController, message: String) async -> Bool {
+        guard !draft.isSavingDraft else { return false }
+        guard draft.hasUnsavedChanges else { return true }
+        guard presenter.presentedViewController == nil else { return false }
+        let decision: DraftDecision = await withCheckedContinuation { continuation in
+            let alert = UIAlertController(title: "Discard changes?".localized, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Continue editing".localized, style: .cancel) { _ in
+                continuation.resume(returning: .stay)
+            })
+            alert.addAction(UIAlertAction(title: "Discard changes".localized, style: .destructive) { _ in
+                continuation.resume(returning: .discard)
+            })
+            presenter.present(alert, animated: true)
+        }
+        return (try? await ProjectSwitchGuard().resolve([draft], decision: decision)) == true
+    }
 }
 
 enum DraftDecision { case save, discard, stay }
@@ -45,6 +75,7 @@ enum DraftDecision { case save, discard, stay }
 @MainActor
 struct ProjectSwitchGuard {
     func resolve(_ drafts: [ProjectDraft], decision: DraftDecision) async throws -> Bool {
+        guard !drafts.contains(where: \.isSavingDraft) else { return false }
         let dirty = drafts.filter(\.hasUnsavedChanges)
         switch decision {
         case .stay: return false
@@ -53,7 +84,10 @@ struct ProjectSwitchGuard {
             return true
         case .save:
             guard dirty.allSatisfy(\.canSaveDraft) else { return false }
-            for draft in dirty { try await draft.saveDraft() }
+            for draft in dirty {
+                guard !drafts.contains(where: \.isSavingDraft) else { return false }
+                try await draft.saveDraft()
+            }
             return true
         }
     }
@@ -64,6 +98,7 @@ final class ApplicationProjectCoordinator {
     private let store: SelectedProjectStore
     private weak var shell: MainTabbarViewController?
     private var isSwitching = false
+    private var isPreparingChange = false
 
     init(store: SelectedProjectStore, shell: MainTabbarViewController) {
         self.store = store
@@ -84,10 +119,16 @@ final class ApplicationProjectCoordinator {
     }
 
     func prepareForChange(in controller: UIViewController? = nil, switchingProject: Bool = true) async -> Bool {
-        guard let shell else { return false }
-        let drafts = participants(in: controller ?? shell).filter(\.hasUnsavedChanges)
-        guard !drafts.isEmpty else { return true }
-        let decision = await decisionForDrafts(drafts, from: shell, switchingProject: switchingProject)
+        guard let shell, !isPreparingChange else { return false }
+        let drafts = participants(in: controller ?? shell)
+        guard !drafts.contains(where: \.isSavingDraft) else { return false }
+        let dirty = drafts.filter(\.hasUnsavedChanges)
+        guard !dirty.isEmpty else { return true }
+        let stamp = SessionContext.shared.capture()
+        isPreparingChange = true
+        defer { isPreparingChange = false }
+        let decision = await decisionForDrafts(dirty, from: shell, switchingProject: switchingProject)
+        guard SessionContext.shared.isCurrent(stamp), !drafts.contains(where: \.isSavingDraft) else { return false }
         do {
             return try await ProjectSwitchGuard().resolve(drafts, decision: decision)
         } catch {
@@ -140,4 +181,3 @@ final class ApplicationProjectCoordinator {
         }
     }
 }
-

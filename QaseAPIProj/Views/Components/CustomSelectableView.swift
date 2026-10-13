@@ -27,7 +27,11 @@ final class CustomSelectableView: UIButton {
         }
     }
 
-    init(textFieldType: FieldType, detailCaseVM: UpdatableEntityProtocol?) {
+    init(
+        textFieldType: FieldType,
+        detailCaseVM: UpdatableEntityProtocol?,
+        style: FormSectionStyle = .standard
+    ) {
         self.textFieldType = textFieldType
         viewModel = detailCaseVM
         super.init(frame: .zero)
@@ -39,7 +43,7 @@ final class CustomSelectableView: UIButton {
             label.isAccessibilityElement = false
         }
         titleLbl.textColor = AppTheme.Palette.text
-        valueLabel.textColor = AppTheme.Palette.text
+        valueLabel.textColor = style == .grouped ? AppTheme.Palette.secondaryText : AppTheme.Palette.text
         valueGroup.isUserInteractionEnabled = false
         chevron.tintColor = AppTheme.Palette.tertiaryText
         chevron.contentMode = .scaleAspectFit

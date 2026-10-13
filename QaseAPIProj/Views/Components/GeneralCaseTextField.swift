@@ -4,6 +4,7 @@ import UIKit
 final class GeneralCaseTextField: UIView {
     var onFocusChange: ((Bool) -> Void)?
     private let textType: FieldType
+    private let style: FormSectionStyle
     private let viewModel: FormValueUpdating?
     private var didBlur = false
     private var committedValue = ""
@@ -13,19 +14,29 @@ final class GeneralCaseTextField: UIView {
     private let counter = UILabel()
     private let validation = UILabel()
     private let footnotes = UIStackView()
+    private let inputStateIndicator: UIView?
     private struct Layout {
         static let borderWidth: CGFloat = 1
         static let inputInset: CGFloat = 12
         static let labelSpacing: CGFloat = 6
         static let titleHeight: CGFloat = 48
         static let multilineHeight: CGFloat = 80
+        static let groupedMultilineHeight: CGFloat = 56
+        static let stateIndicatorHeight: CGFloat = 2
     }
 
     private var placeholderHeightConstraint: Constraint?
 
-    init(textType: FieldType, textViewValue: String? = "", detailVM: FormValueUpdating? = nil) {
+    init(
+        textType: FieldType,
+        textViewValue: String? = "",
+        detailVM: FormValueUpdating? = nil,
+        style: FormSectionStyle = .standard
+    ) {
         self.textType = textType
+        self.style = style
         viewModel = detailVM
+        inputStateIndicator = style == .grouped ? UIView() : nil
         super.init(frame: .zero)
         textView.accessibilityIdentifier = AccessibilityID.field(textType.accessibilityField).identifier
         textView.accessibilityLabel = textType.localized
@@ -59,14 +70,15 @@ final class GeneralCaseTextField: UIView {
         textView.font = UIFont.preferredFont(forTextStyle: .body)
         textView.adjustsFontForContentSizeCategory = true
         textView.textColor = AppTheme.Palette.text
-        textView.backgroundColor = AppTheme.Palette.secondarySurface
-        textView.layer.cornerRadius = AppTheme.Radius.card
-        textView.layer.borderWidth = Layout.borderWidth
+        textView.backgroundColor = style == .grouped ? .clear : AppTheme.Palette.secondarySurface
+        textView.layer.cornerRadius = style == .grouped ? 0 : AppTheme.Radius.card
+        textView.layer.borderWidth = style == .grouped ? 0 : Layout.borderWidth
+        let inputInset: CGFloat = style == .grouped ? 0 : Layout.inputInset
         textView.textContainerInset = UIEdgeInsets(
-            top: Layout.inputInset,
-            left: Layout.inputInset,
-            bottom: Layout.inputInset,
-            right: Layout.inputInset
+            top: inputInset,
+            left: inputInset,
+            bottom: inputInset,
+            right: inputInset
         )
         placeholder.font = textView.font
         placeholder.adjustsFontForContentSizeCategory = true
@@ -97,22 +109,35 @@ final class GeneralCaseTextField: UIView {
         validation.setContentHuggingPriority(.defaultLow, for: .horizontal)
         counter.setContentHuggingPriority(.required, for: .horizontal)
         counter.setContentCompressionResistancePriority(.required, for: .horizontal)
-        let stack = UIStackView(arrangedSubviews: [titleLabel, textView, footnotes])
+        let stack = UIStackView(arrangedSubviews: [titleLabel, textView])
         stack.axis = .vertical
         stack.spacing = Layout.labelSpacing
+        if let inputStateIndicator {
+            inputStateIndicator.isUserInteractionEnabled = false
+            inputStateIndicator.isAccessibilityElement = false
+            stack.addArrangedSubview(inputStateIndicator)
+            stack.setCustomSpacing(AppTheme.Space.tiny, after: textView)
+            inputStateIndicator.snp.makeConstraints { $0.height.equalTo(Layout.stateIndicatorHeight) }
+        }
+        stack.addArrangedSubview(footnotes)
         addSubview(stack)
         stack.snp.makeConstraints { $0.edges.equalToSuperview() }
-        let minimumHeight = (textType == .title || textType == .code) ? Layout.titleHeight : Layout
-            .multilineHeight
+        let singleLine = textType == .title || textType == .code
+        let minimumHeight: CGFloat
+        if style == .grouped {
+            minimumHeight = singleLine ? AppTheme.Size.touch : Layout.groupedMultilineHeight
+        } else {
+            minimumHeight = singleLine ? Layout.titleHeight : Layout.multilineHeight
+        }
         textView.snp.makeConstraints { $0.height.greaterThanOrEqualTo(minimumHeight) }
         textView.addSubview(placeholder)
         placeholder.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(Layout.inputInset)
-            $0.top.equalToSuperview().offset(Layout.inputInset)
+            $0.leading.trailing.equalToSuperview().inset(inputInset)
+            $0.top.equalToSuperview().offset(inputInset)
         }
         textView.snp.makeConstraints {
             placeholderHeightConstraint = $0.height.greaterThanOrEqualTo(placeholder.snp.height)
-                .offset(Layout.inputInset * 2).constraint
+                .offset(inputInset * 2).constraint
         }
     }
 
@@ -134,7 +159,11 @@ final class GeneralCaseTextField: UIView {
         if invalid { border = AppTheme.Palette.danger }
         else if textView.isFirstResponder { border = AppTheme.Palette.accent }
         else { border = .clear }
-        textView.layer.borderColor = border.resolvedColor(with: traitCollection).cgColor
+        if let inputStateIndicator {
+            inputStateIndicator.backgroundColor = border
+        } else {
+            textView.layer.borderColor = border.resolvedColor(with: traitCollection).cgColor
+        }
         textView.accessibilityHint = invalid ? validation.text : String.localizedStringWithFormat(
             "Maximum %lld characters".localized,
             FormTextInputPolicy.characterLimit

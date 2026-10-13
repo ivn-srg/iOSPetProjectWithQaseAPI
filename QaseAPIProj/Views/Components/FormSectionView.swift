@@ -1,8 +1,13 @@
 import SnapKit
 import UIKit
 
+enum FormSectionStyle: Equatable, Sendable {
+    case standard
+    case grouped
+}
+
 final class FormSectionView: UIView {
-    init(title: String, rows: [UIView]) {
+    init(title: String, rows: [UIView], style: FormSectionStyle = .standard) {
         super.init(frame: .zero)
         let heading = UILabel()
         heading.text = title
@@ -12,21 +17,33 @@ final class FormSectionView: UIView {
         heading.textColor = AppTheme.Palette.secondaryText
         heading.accessibilityTraits.insert(.header)
         let card = UIView()
-        card.backgroundColor = AppTheme.Palette.surface
+        card.backgroundColor = style == .grouped
+            ? AppTheme.Palette.secondarySurface
+            : AppTheme.Palette.surface
         card.layer.cornerRadius = AppTheme.Radius.card
         let stack = UIStackView()
         stack.axis = .vertical
         let textRows = rows.contains { $0 is GeneralCaseTextField }
-        stack.spacing = textRows ? AppTheme.Space.regular : 0
+        stack.spacing = style == .standard && textRows ? AppTheme.Space.regular : 0
         stack.alignment = .fill
         for (index, row) in rows.enumerated() {
-            if index > 0 && !textRows {
+            if index > 0 && (style == .grouped || !textRows) {
                 let divider = UIView()
                 divider.backgroundColor = AppTheme.Palette.border
                 divider.snp.makeConstraints { $0.height.equalTo(1 / traitCollection.displayScale) }
                 stack.addArrangedSubview(divider)
             }
-            stack.addArrangedSubview(row)
+            if style == .grouped, row is GeneralCaseTextField {
+                let container = UIView()
+                container.addSubview(row)
+                row.snp.makeConstraints {
+                    $0.horizontalEdges.equalToSuperview()
+                    $0.verticalEdges.equalToSuperview().inset(AppTheme.Space.medium)
+                }
+                stack.addArrangedSubview(container)
+            } else {
+                stack.addArrangedSubview(row)
+            }
         }
         addSubview(heading)
         addSubview(card)
@@ -38,7 +55,10 @@ final class FormSectionView: UIView {
         }
         stack.snp.makeConstraints {
             $0.horizontalEdges.equalToSuperview().inset(AppTheme.Space.regular)
-            $0.verticalEdges.equalToSuperview().inset(textRows ? AppTheme.Space.regular : AppTheme.Space.tiny)
+            let verticalInset: CGFloat
+            if style == .grouped { verticalInset = 0 }
+            else { verticalInset = textRows ? AppTheme.Space.regular : AppTheme.Space.tiny }
+            $0.verticalEdges.equalToSuperview().inset(verticalInset)
         }
     }
 

@@ -131,7 +131,8 @@ struct FormMarkerTests {
 
 @Suite @MainActor
 struct FormSelectionTests {
-    @Test func focusAndBlurKeepUntouchedLongServerTextAndCleanDraft() throws {
+    @Test(arguments: [FormSectionStyle.standard, .grouped])
+    func focusAndBlurKeepUntouchedLongServerTextAndCleanDraft(style: FormSectionStyle) throws {
         var original = TestCaseEntity.empty
         original.title = "Loaded case"
         original.description = String(repeating: "x", count: 900)
@@ -144,7 +145,8 @@ struct FormSelectionTests {
         let field = GeneralCaseTextField(
             textType: .description,
             textViewValue: original.description,
-            detailVM: model
+            detailVM: model,
+            style: style
         )
         let input = try #require(descendants(of: field).compactMap { $0 as? UITextView }.first)
         field.textViewDidBeginEditing(input)
@@ -191,7 +193,8 @@ struct FormSelectionTests {
         view.subviews.flatMap { [$0] + descendants(of: $0) }
     }
 
-    @Test func selectedValueAndMenuUseUnsavedDraft() {
+    @Test(arguments: [FormSectionStyle.standard, .grouped])
+    func selectedValueAndMenuUseUnsavedDraft(style: FormSectionStyle) {
         let model = FormSelectionModel()
         var original = TestCaseEntity.empty
         original.priority = .low
@@ -199,7 +202,7 @@ struct FormSelectionTests {
         draft.priority = .high
         model.testCase = original
         model.changedTestCase = draft
-        let field = CustomSelectableView(textFieldType: .priority, detailCaseVM: model)
+        let field = CustomSelectableView(textFieldType: .priority, detailCaseVM: model, style: style)
         #expect(field.accessibilityValue == Priority.high.localized)
         #expect(field.menu?.children.compactMap { $0 as? UIAction }.filter { $0.state == .on }
             .map(\.title) == [Priority.high.localized])
@@ -231,6 +234,153 @@ private final class FormSelectionModel: UpdatableEntityProtocol {
 struct FormLayoutRegressionTests {
     private func descendants(_ view: UIView) -> [UIView] {
         view.subviews.flatMap { [$0] + descendants($0) }
+    }
+
+    private func fit(_ view: UIView, width: CGFloat) {
+        view.frame = CGRect(x: 0, y: 0, width: width, height: 1000)
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        view.frame.size.height = view.systemLayoutSizeFitting(
+            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        ).height
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+    }
+
+    @Test func groupedInputsAlignWithoutNestedInsetAndKeepEditableTarget() throws {
+        let title = GeneralCaseTextField(textType: .title, style: .grouped)
+        let description = GeneralCaseTextField(textType: .description, style: .grouped)
+        let section = FormSectionView(title: "Section", rows: [title, description], style: .grouped)
+        let card = try #require(section.subviews.first { !($0 is UILabel) })
+        let stack = try #require(card.subviews.compactMap { $0 as? UIStackView }.first)
+        for width in [CGFloat(280), 362] {
+            fit(section, width: width)
+            for field in [title, description] {
+                let input = try #require(descendants(field).compactMap { $0 as? UITextView }.first)
+                let placeholder = try #require(input.subviews.compactMap { $0 as? UILabel }.first)
+                let inputFrame = input.convert(input.bounds, to: card)
+                let placeholderFrame = placeholder.convert(placeholder.bounds, to: card)
+                #expect(abs(inputFrame.minX - AppTheme.Space.regular) < 1)
+                #expect(abs(card.bounds.width - inputFrame.maxX - AppTheme.Space.regular) < 1)
+                #expect(abs(placeholderFrame.minX - inputFrame.minX) < 1)
+                #expect(abs(placeholderFrame.minY - inputFrame.minY) < 1)
+                #expect(input.textContainerInset == .zero)
+                #expect(input.textContainer.lineFragmentPadding == 0)
+                #expect(input.bounds.height >= AppTheme.Size.touch)
+                #expect(input.layer.borderWidth == 0)
+            }
+            let divider = try #require(stack.arrangedSubviews.first {
+                $0.bounds.height <= 1 && !($0 is UIStackView)
+            })
+            #expect(abs(divider.bounds.height - 1 / section.traitCollection.displayScale) < 0.01)
+            #expect(stack.spacing == 0)
+        }
+    }
+
+    @Test func defaultProjectInputKeepsItsOriginalPresentation() throws {
+        let title = GeneralCaseTextField(textType: .title)
+        let description = GeneralCaseTextField(textType: .description)
+        let section = FormSectionView(title: "Section", rows: [title, description])
+        fit(section, width: 280)
+        let card = try #require(section.subviews.first { !($0 is UILabel) })
+        let stack = try #require(card.subviews.compactMap { $0 as? UIStackView }.first)
+        #expect(stack.spacing == AppTheme.Space.regular)
+        #expect(stack.arrangedSubviews.count == 2)
+        for field in [title, description] {
+            let input = try #require(descendants(field).compactMap { $0 as? UITextView }.first)
+            #expect(input.textContainerInset == UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12))
+            #expect(input.layer.cornerRadius == AppTheme.Radius.card)
+            #expect(input.layer.borderWidth == 1)
+            let minimumHeight: CGFloat = field === title ? 48 : 80
+            #expect(input.bounds.height >= minimumHeight)
+        }
+    }
+
+    @Test func groupedMultilineFieldGrowsWithLoadedContent() throws {
+        let field = GeneralCaseTextField(textType: .description, style: .grouped)
+        let section = FormSectionView(title: "Section", rows: [field], style: .grouped)
+        fit(section, width: 280)
+        let input = try #require(descendants(field).compactMap { $0 as? UITextView }.first)
+        let initialHeight = section.bounds.height
+        let text = String(repeating: "Long description with a line break.\n", count: 30)
+        field.updateTextViewValue(text)
+        fit(section, width: 280)
+        #expect(section.bounds.height > initialHeight)
+        #expect(input.text == text)
+        #expect(!input.isScrollEnabled)
+        #expect(input.bounds.height >= input.sizeThatFits(
+            CGSize(width: input.bounds.width, height: .greatestFiniteMagnitude)
+        ).height - 1)
+    }
+
+    @Test func groupedPlaceholderGrowsWithAccessibilityTextSize() async throws {
+        let host = UIViewController()
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 800))
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true }
+        host.traitOverrides.preferredContentSizeCategory = .large
+        let field = GeneralCaseTextField(textType: .title, style: .grouped)
+        let section = FormSectionView(title: "Section", rows: [field], style: .grouped)
+        host.view.addSubview(section)
+        await Task.yield()
+        fit(section, width: 280)
+        let input = try #require(descendants(field).compactMap { $0 as? UITextView }.first)
+        let placeholder = try #require(input.subviews.compactMap { $0 as? UILabel }.first)
+        let initialHeight = section.bounds.height
+        let initialFontSize = try #require(placeholder.font).pointSize
+        host.traitOverrides.preferredContentSizeCategory = .accessibilityExtraExtraExtraLarge
+        await Task.yield()
+        host.view.layoutIfNeeded()
+        fit(section, width: 280)
+        #expect(try #require(placeholder.font).pointSize > initialFontSize)
+        #expect(section.bounds.height > initialHeight)
+        #expect(!placeholder.isHidden)
+        #expect(input.bounds.height >= placeholder.bounds.height)
+        #expect(input.text.isEmpty)
+    }
+
+    @Test func groupedFocusAndErrorIndicatorPreservesDraftAcrossThemeChanges() async throws {
+        let host = UIViewController()
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 800))
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true }
+        host.traitOverrides.userInterfaceStyle = .light
+        let model = TestDependencies.creator(projectCode: "A", session: SessionContext(ownerID: "owner"))
+        let field = GeneralCaseTextField(textType: .title, detailVM: model, style: .grouped)
+        host.view.addSubview(field)
+        fit(field, width: 280)
+        let input = try #require(descendants(field).compactMap { $0 as? UITextView }.first)
+        let stack = try #require(input.superview as? UIStackView)
+        let indicator = try #require(stack.arrangedSubviews.first {
+            !($0 is UILabel) && !($0 is UITextView) && !($0 is UIStackView)
+        })
+        #expect(indicator.backgroundColor == .clear)
+        #expect(abs(indicator.bounds.height - 2) < 0.01)
+        #expect(stack.customSpacing(after: input) == AppTheme.Space.tiny)
+        #expect(input.becomeFirstResponder())
+        await Task.yield()
+        fit(field, width: 280)
+        #expect(indicator.backgroundColor?.resolvedColor(with: field.traitCollection) ==
+            AppTheme.Palette.accent.resolvedColor(with: field.traitCollection))
+        host.traitOverrides.userInterfaceStyle = .dark
+        await Task.yield()
+        host.view.layoutIfNeeded()
+        fit(field, width: 280)
+        #expect(indicator.backgroundColor?.resolvedColor(with: field.traitCollection) ==
+            AppTheme.Palette.accent.resolvedColor(with: field.traitCollection))
+        input.resignFirstResponder()
+        await Task.yield()
+        fit(field, width: 280)
+        #expect(indicator.backgroundColor?.resolvedColor(with: field.traitCollection) ==
+            AppTheme.Palette.danger.resolvedColor(with: field.traitCollection))
+        #expect(input.accessibilityHint == "A title is required".localized)
+        #expect(input.layer.borderWidth == 0)
+        #expect(model.creatingSuite.title.isEmpty)
+        #expect(!model.hasUnsavedChanges)
     }
 
     @Test func stepNumberKeepsIntrinsicWidthForShortAndLongActions() throws {

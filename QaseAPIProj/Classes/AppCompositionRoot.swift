@@ -90,7 +90,8 @@ final class AppCompositionRoot {
             dao: cache,
             session: session,
             onCacheFailure: {
-                reportFailure("Could not update cached data. Fresh data remains available.".localized) }
+                reportFailure("Could not update cached data. Fresh data remains available.".localized)
+            }
         )
         let selection = SelectedProjectStore(
             repository: repository,

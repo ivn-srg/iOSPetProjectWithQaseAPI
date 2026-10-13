@@ -7,34 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0088E39668A6CF029F9D7B00 /* TestDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6C587D53EE26FA945E33EC /* TestDependencies.swift */; };
-		1CF14DD728EF49E6B3A57F1A /* AuthScreenUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924D3BCCA002491AA60552AB /* AuthScreenUITests.swift */; };
-		367458A90BD735AAFFB0B1E1 /* ArchitectureRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1643D8A9C35B004429685822 /* ArchitectureRegressionTests.swift */; };
-		4519AE061F2A6C950219F735 /* FormComponentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCEB7260B65056A25F3B4894 /* FormComponentTests.swift */; };
-		49F66CA2497E3116D140C71A /* DesignTokenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 496C30546F5DA9F3018BB4D5 /* DesignTokenTests.swift */; };
-		4A392523AE3ACB3D9C689ED6 /* HomeScreenUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF57F4672254B6EAA484FC07 /* HomeScreenUITests.swift */; };
-		77C516675A1521CD6258C9FC /* FormParentPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B61522BFD97C27159BD673C /* FormParentPickerTests.swift */; };
-		852BEE8082D54D26B9900A38 /* AuthHTTPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */; };
-		87F200BFB21E544A95EB08F5 /* IdentityCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033C5A538B8BD07545468DEE /* IdentityCacheTests.swift */; };
-		8D041E1A2F5781616D80FE4B /* RepositoryRefinementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1503FA196E193B1CCF725D5 /* RepositoryRefinementTests.swift */; };
 		936A2B132C8A251E007F7C72 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; };
 		936A2B162C8A252E007F7C72 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B152C8A252E007F7C72 /* SnapKit */; };
 		939175232D12045800AA38A4 /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		93F8663C2D9DBD24006F6F5C /* QaseAPIProjTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F866372D9DBD24006F6F5C /* QaseAPIProjTests.swift */; };
-		93F866442D9DBD2A006F6F5C /* QaseAPIProjUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F866402D9DBD2A006F6F5C /* QaseAPIProjUITests.swift */; };
-		93F866452D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F866412D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift */; };
-		93F866462D9DBD2A006F6F5C /* Screens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F866422D9DBD2A006F6F5C /* Screens.swift */; };
-		A4C4EE4FC588092301E89DF5 /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3FC9C2421536555ECA1DDCB /* HomeViewModelTests.swift */; };
-		A55087BACAF0D6AD99DB1301 /* ProjectLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29019F526FC5715CC91721D /* ProjectLifecycleTests.swift */; };
-		AFD30A3A701A30FEFD8F4A55 /* PagedReadViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F104D2BF8619C43FC35FEB99 /* PagedReadViewModelTests.swift */; };
-		B7EA30100E23B1C6C0998DD1 /* HomeDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D20F6B16CBADE52525CBEC5 /* HomeDataTests.swift */; };
 		BCAA8748F631D002A901224A /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 936A2B122C8A251E007F7C72 /* RealmSwift */; };
-		CA3DA33CFFF007E6D19D2B65 /* CacheManagementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */; };
-		D7D0FBE470E81F465C7A6C14 /* TokenReplacementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */; };
-		E0477F2F565BB6555058B043 /* FormDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6387D313D61BEDBE072F7C7D /* FormDraftTests.swift */; };
-		E5E1495EA78D81E92FD40B66 /* ProjectSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B20161C84EE0BB76FCE8E3 /* ProjectSwitchTests.swift */; };
-		F0FEF0F7354E31BAED8AC812 /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */; };
-		FB876ACC41674A388A6A8B37 /* AuthScreenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57190279074442FBBECCBF8A /* AuthScreenTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,33 +45,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
-		033C5A538B8BD07545468DEE /* IdentityCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityCacheTests.swift; sourceTree = "<group>"; };
-		162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthHTTPTests.swift; sourceTree = "<group>"; };
-		1643D8A9C35B004429685822 /* ArchitectureRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchitectureRegressionTests.swift; sourceTree = "<group>"; };
-		30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManagementTests.swift; sourceTree = "<group>"; };
-		32B20161C84EE0BB76FCE8E3 /* ProjectSwitchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSwitchTests.swift; sourceTree = "<group>"; };
-		3D20F6B16CBADE52525CBEC5 /* HomeDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDataTests.swift; sourceTree = "<group>"; };
-		496C30546F5DA9F3018BB4D5 /* DesignTokenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokenTests.swift; sourceTree = "<group>"; };
-		57190279074442FBBECCBF8A /* AuthScreenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthScreenTests.swift; sourceTree = "<group>"; };
-		5C6C587D53EE26FA945E33EC /* TestDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDependencies.swift; sourceTree = "<group>"; };
-		6387D313D61BEDBE072F7C7D /* FormDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormDraftTests.swift; sourceTree = "<group>"; };
-		6B61522BFD97C27159BD673C /* FormParentPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormParentPickerTests.swift; sourceTree = "<group>"; };
-		924D3BCCA002491AA60552AB /* AuthScreenUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthScreenUITests.swift; sourceTree = "<group>"; };
 		936A2B102C8A2449007F7C72 /* QaseAPIProj.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QaseAPIProj.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		93EE41FC2D9B10600028E085 /* QaseAPIProjTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QaseAPIProjTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93EE42092D9B107B0028E085 /* QaseAPIProjUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QaseAPIProjUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		93F866372D9DBD24006F6F5C /* QaseAPIProjTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QaseAPIProjTests.swift; sourceTree = "<group>"; };
-		93F866402D9DBD2A006F6F5C /* QaseAPIProjUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QaseAPIProjUITests.swift; sourceTree = "<group>"; };
-		93F866412D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QaseAPIProjUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		93F866422D9DBD2A006F6F5C /* Screens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Screens.swift; sourceTree = "<group>"; };
-		B3FC9C2421536555ECA1DDCB /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
-		C1503FA196E193B1CCF725D5 /* RepositoryRefinementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryRefinementTests.swift; sourceTree = "<group>"; };
-		C29019F526FC5715CC91721D /* ProjectLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectLifecycleTests.swift; sourceTree = "<group>"; };
-		DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenReplacementTests.swift; sourceTree = "<group>"; };
-		EF57F4672254B6EAA484FC07 /* HomeScreenUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreenUITests.swift; sourceTree = "<group>"; };
-		F104D2BF8619C43FC35FEB99 /* PagedReadViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagedReadViewModelTests.swift; sourceTree = "<group>"; };
-		FCEB7260B65056A25F3B4894 /* FormComponentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormComponentTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -129,6 +81,8 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9300574C307E9C3C00790DFB /* QaseAPIProj */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (930057A9307E9C3D00790DFB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 930057AA307E9C3D00790DFB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 930057AB307E9C3D00790DFB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = QaseAPIProj; sourceTree = "<group>"; };
+		930057BF307EB91600790DFB /* QaseAPIProjTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = QaseAPIProjTests; sourceTree = "<group>"; };
+		930057D8307EB91D00790DFB /* QaseAPIProjUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = QaseAPIProjUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,48 +119,10 @@
 				9300574C307E9C3C00790DFB /* QaseAPIProj */,
 				936A2B102C8A2449007F7C72 /* QaseAPIProj.app */,
 				93EE41FC2D9B10600028E085 /* QaseAPIProjTests.xctest */,
-				93F866382D9DBD24006F6F5C /* QaseAPIProjTests */,
+				930057BF307EB91600790DFB /* QaseAPIProjTests */,
 				93EE42092D9B107B0028E085 /* QaseAPIProjUITests.xctest */,
-				93F866432D9DBD2A006F6F5C /* QaseAPIProjUITests */,
+				930057D8307EB91D00790DFB /* QaseAPIProjUITests */,
 			);
-			sourceTree = "<group>";
-		};
-		93F866382D9DBD24006F6F5C /* QaseAPIProjTests */ = {
-			isa = PBXGroup;
-			children = (
-				1643D8A9C35B004429685822 /* ArchitectureRegressionTests.swift */,
-				5C6C587D53EE26FA945E33EC /* TestDependencies.swift */,
-				162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */,
-				57190279074442FBBECCBF8A /* AuthScreenTests.swift */,
-				FCEB7260B65056A25F3B4894 /* FormComponentTests.swift */,
-				6B61522BFD97C27159BD673C /* FormParentPickerTests.swift */,
-				6387D313D61BEDBE072F7C7D /* FormDraftTests.swift */,
-				30F03C565C2C4AB3161217C2 /* CacheManagementTests.swift */,
-				DCBEAC3BA9B1B07C63EC8E07 /* TokenReplacementTests.swift */,
-				014E7E1BC56C7F3598F4BF7D /* AppSettingsTests.swift */,
-				C1503FA196E193B1CCF725D5 /* RepositoryRefinementTests.swift */,
-				496C30546F5DA9F3018BB4D5 /* DesignTokenTests.swift */,
-				C29019F526FC5715CC91721D /* ProjectLifecycleTests.swift */,
-				B3FC9C2421536555ECA1DDCB /* HomeViewModelTests.swift */,
-				F104D2BF8619C43FC35FEB99 /* PagedReadViewModelTests.swift */,
-				033C5A538B8BD07545468DEE /* IdentityCacheTests.swift */,
-				3D20F6B16CBADE52525CBEC5 /* HomeDataTests.swift */,
-				32B20161C84EE0BB76FCE8E3 /* ProjectSwitchTests.swift */,
-				93F866372D9DBD24006F6F5C /* QaseAPIProjTests.swift */,
-			);
-			path = QaseAPIProjTests;
-			sourceTree = "<group>";
-		};
-		93F866432D9DBD2A006F6F5C /* QaseAPIProjUITests */ = {
-			isa = PBXGroup;
-			children = (
-				924D3BCCA002491AA60552AB /* AuthScreenUITests.swift */,
-				EF57F4672254B6EAA484FC07 /* HomeScreenUITests.swift */,
-				93F866402D9DBD2A006F6F5C /* QaseAPIProjUITests.swift */,
-				93F866412D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift */,
-				93F866422D9DBD2A006F6F5C /* Screens.swift */,
-			);
-			path = QaseAPIProjUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -246,6 +162,9 @@
 			dependencies = (
 				93EE42012D9B10600028E085 /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				930057BF307EB91600790DFB /* QaseAPIProjTests */,
+			);
 			name = QaseAPIProjTests;
 			packageProductDependencies = (
 				936A2B122C8A251E007F7C72 /* RealmSwift */,
@@ -266,6 +185,9 @@
 			);
 			dependencies = (
 				93EE42102D9B107B0028E085 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				930057D8307EB91D00790DFB /* QaseAPIProjUITests */,
 			);
 			name = QaseAPIProjUITests;
 			packageProductDependencies = (
@@ -357,25 +279,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				852BEE8082D54D26B9900A38 /* AuthHTTPTests.swift in Sources */,
-				FB876ACC41674A388A6A8B37 /* AuthScreenTests.swift in Sources */,
-				367458A90BD735AAFFB0B1E1 /* ArchitectureRegressionTests.swift in Sources */,
-				0088E39668A6CF029F9D7B00 /* TestDependencies.swift in Sources */,
-				4519AE061F2A6C950219F735 /* FormComponentTests.swift in Sources */,
-				77C516675A1521CD6258C9FC /* FormParentPickerTests.swift in Sources */,
-				E0477F2F565BB6555058B043 /* FormDraftTests.swift in Sources */,
-				CA3DA33CFFF007E6D19D2B65 /* CacheManagementTests.swift in Sources */,
-				D7D0FBE470E81F465C7A6C14 /* TokenReplacementTests.swift in Sources */,
-				F0FEF0F7354E31BAED8AC812 /* AppSettingsTests.swift in Sources */,
-				8D041E1A2F5781616D80FE4B /* RepositoryRefinementTests.swift in Sources */,
-				49F66CA2497E3116D140C71A /* DesignTokenTests.swift in Sources */,
-				A55087BACAF0D6AD99DB1301 /* ProjectLifecycleTests.swift in Sources */,
-				A4C4EE4FC588092301E89DF5 /* HomeViewModelTests.swift in Sources */,
-				AFD30A3A701A30FEFD8F4A55 /* PagedReadViewModelTests.swift in Sources */,
-				87F200BFB21E544A95EB08F5 /* IdentityCacheTests.swift in Sources */,
-				B7EA30100E23B1C6C0998DD1 /* HomeDataTests.swift in Sources */,
-				E5E1495EA78D81E92FD40B66 /* ProjectSwitchTests.swift in Sources */,
-				93F8663C2D9DBD24006F6F5C /* QaseAPIProjTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,11 +286,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1CF14DD728EF49E6B3A57F1A /* AuthScreenUITests.swift in Sources */,
-				4A392523AE3ACB3D9C689ED6 /* HomeScreenUITests.swift in Sources */,
-				93F866442D9DBD2A006F6F5C /* QaseAPIProjUITests.swift in Sources */,
-				93F866452D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift in Sources */,
-				93F866462D9DBD2A006F6F5C /* Screens.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

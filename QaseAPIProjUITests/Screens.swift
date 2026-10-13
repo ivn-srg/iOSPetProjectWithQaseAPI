@@ -32,7 +32,7 @@ struct AuthScreen: Screen {
 
 struct ProjectsListScreen: Screen {
     let app: XCUIApplication
-    
+
     private enum Identifiers {
         static let rbbButtonName = "addNewProjectRBB"
         static let navBar = "navigationBar"

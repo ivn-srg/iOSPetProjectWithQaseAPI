@@ -18,7 +18,7 @@ final class ProjectRO: Object {
     @Persisted var itemDescription: String?
     @Persisted var hasDescription = false
     @Persisted var counts: CountsOfProjectRO?
-    
+
     convenience init(projectData: Project, ownerID: String) {
         self.init()
         self.code = projectData.code
@@ -41,10 +41,10 @@ final class CountsOfProjectRO: EmbeddedObject {
     @Persisted var milestones: Int
     @Persisted var runs: TestRunsRO?
     @Persisted var defects: BugReportsRO?
-    
+
     convenience init?(countsOfProjectData: CountsOfProject?) {
         guard let countsOfProjectData = countsOfProjectData else { return nil }
-        
+
         self.init()
         self.hasCases = true
         self.hasSuites = true
@@ -61,10 +61,10 @@ final class CountsOfProjectRO: EmbeddedObject {
 final class TestRunsRO: EmbeddedObject {
     @Persisted var total: Int
     @Persisted var active: Int
-    
+
     convenience init?(testRunsData: TestRuns?) {
         guard let testRunsData = testRunsData else { return nil }
-        
+
         self.init()
         self.total = testRunsData.total
         self.active = testRunsData.active
@@ -74,10 +74,10 @@ final class TestRunsRO: EmbeddedObject {
 final class BugReportsRO: EmbeddedObject {
     @Persisted var total: Int
     @Persisted var open: Int
-    
+
     convenience init?(defectsData: BugReports?) {
         guard let defectsData = defectsData else { return nil }
-        
+
         self.init()
         self.total = defectsData.total
         self.open = defectsData.open
@@ -94,19 +94,19 @@ final class TestEntitiesDataRO: Object {
     @Persisted var itemDescription: String?
     @Persisted var codeOfProject: String?
     @Persisted var parentId: Int?
-    
+
     // if isSuite
     @Persisted var casesCount: Int?
-    
+
     // if !isSuite
     @Persisted var priority: Int?
     @Persisted var automation: Int?
-    
+
     @Persisted(primaryKey: true) var uniqueKey: String
-    
+
     convenience init(entitiesData: TestListEntity, codeOfProject: String, ownerID: String) {
         self.init()
-        
+
         self.id = entitiesData.id
         self.isSuites = entitiesData.isSuite
         self.ownerID = ownerID
@@ -151,10 +151,10 @@ final class TestEntityRO: Object {
     @Persisted var memberId: Int
     @Persisted var authorId: Int
     @Persisted var tags: List<String>
-    
+
     convenience init(testCaseData: TestCaseEntity, reference: TestCaseReference, ownerID: String) {
         self.init()
-        
+
         self.ownerID = ownerID
         self.projectCode = reference.projectCode
         uniqueKey = "\(ownerID)|\(reference.cacheKey)"
@@ -198,7 +198,7 @@ final class StepsInTestCaseRO: Object {
     @Persisted var expectedResult: String?
     @Persisted var data: String?
     @Persisted var steps: List<StepsInTestCaseRO>
-    
+
     // Дополнительный инициализатор для преобразования из исходной структуры
     convenience init(from model: StepsInTestCase, scope: String, path: String) {
         self.init()
@@ -217,13 +217,12 @@ final class StepsInTestCaseRO: Object {
     }
 }
 
-
 extension RealmSwift.List {
     convenience init(array: [Element]) {
         self.init()
         self.append(objectsIn: array)
     }
-    
+
     var toArray: [Element] {
         return Array(self)
     }

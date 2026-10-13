@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 @MainActor
 final class HomeViewModel: ObservableObject {
@@ -27,11 +27,18 @@ final class HomeViewModel: ObservableObject {
     private var requestGeneration = 0
     private var isVisible = false
 
-    var showingSavedData: Bool { (metricsError != nil && metricsUpdatedAt != nil) || (runError != nil && runUpdatedAt != nil) }
+    var showingSavedData: Bool {
+        (metricsError != nil && metricsUpdatedAt != nil) || (runError != nil && runUpdatedAt != nil) }
+
     var oldestUpdate: Date? { [metricsUpdatedAt, runUpdatedAt].compactMap { $0 }.min() }
 
-    init(repository: HomeRepository, cache: RealmManager, selection: SelectedProjectStore,
-         session: SessionContext, clock: @escaping () -> Date = Date.init) {
+    init(
+        repository: HomeRepository,
+        cache: RealmManager,
+        selection: SelectedProjectStore,
+        session: SessionContext,
+        clock: @escaping () -> Date = Date.init
+    ) {
         self.repository = repository
         self.cache = cache
         self.selection = selection
@@ -94,10 +101,12 @@ final class HomeViewModel: ObservableObject {
                     self.metricsUpdatedAt = self.clock()
                     self.selection.refreshSelection(updated)
                 } catch {
-                    guard self.accepts(code: code, generation: generation, stamp: stamp), !(error is CancellationError) else { return }
+                    guard self.accepts(code: code, generation: generation, stamp: stamp),
+                          !(error is CancellationError) else { return }
                     self.metricsError = "Could not load overview".localized
                 }
-                if self.accepts(code: code, generation: generation, stamp: stamp) { self.metricsLoading = false }
+                if self
+                    .accepts(code: code, generation: generation, stamp: stamp) { self.metricsLoading = false }
             }
             group.addTask { @MainActor [weak self] in
                 guard let self else { return }
@@ -107,7 +116,8 @@ final class HomeViewModel: ObservableObject {
                     self.activeRun = run
                     self.runUpdatedAt = self.clock()
                 } catch {
-                    guard self.accepts(code: code, generation: generation, stamp: stamp), !(error is CancellationError) else { return }
+                    guard self.accepts(code: code, generation: generation, stamp: stamp),
+                          !(error is CancellationError) else { return }
                     self.runError = "Could not load active run".localized
                 }
                 if self.accepts(code: code, generation: generation, stamp: stamp) { self.runLoading = false }
@@ -120,12 +130,14 @@ final class HomeViewModel: ObservableObject {
     }
 
     private func accepts(code: String, generation: Int, stamp: SessionStamp) -> Bool {
-        requestGeneration == generation && project?.code == code && session.isCurrent(stamp) && !Task.isCancelled
+        requestGeneration == generation && project?.code == code && session.isCurrent(stamp) && !Task
+            .isCancelled
     }
 
     private func loadCache() {
         guard let code = project?.code else { return }
-        if let cached = cache.getProjectSummaries().first(where: { $0.code == code }), metricsUpdatedAt == nil {
+        if let cached = cache.getProjectSummaries().first(where: { $0.code == code }),
+           metricsUpdatedAt == nil {
             metrics = cached.metrics
         } else if metrics == nil { metrics = project?.metrics }
         if let snapshot = cache.getHomeSnapshot(projectCode: code) {

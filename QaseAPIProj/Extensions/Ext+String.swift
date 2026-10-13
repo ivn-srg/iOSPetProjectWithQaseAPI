@@ -20,7 +20,7 @@ extension String {
     var withoutLineBreaks: String {
         self.replacingOccurrences(of: "\n", with: " ")
     }
-    
+
     func toAttributedString() -> NSAttributedString? {
         let attributedString = try? NSMutableAttributedString(
             markdown: self,
@@ -30,9 +30,9 @@ extension String {
                 failurePolicy: .returnPartiallyParsedIfPossible
             )
         )
-        
+
         guard let attributedString = attributedString else { return nil }
-        
+
         attributedString.beginEditing()
         attributedString.enumerateAttributes(
             in: NSRange(location: 0, length: attributedString.length),
@@ -46,9 +46,7 @@ extension String {
             }
         }
         attributedString.endEditing()
-        
+
         return attributedString
     }
 }
-
-

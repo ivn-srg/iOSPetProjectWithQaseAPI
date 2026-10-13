@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class CasePropertiesFormView: UIView {
     private let viewModel: UpdatableEntityProtocol
@@ -18,7 +18,10 @@ final class CasePropertiesFormView: UIView {
         stack.addArrangedSubview(section("Classification", fields: [.severity, .status, .priority]))
         stack.addArrangedSubview(section("Type and layer", fields: [.behavior, .type, .layer]))
         let automation = makeField(.automation)
-        stack.addArrangedSubview(FormSectionView(title: "Automation".localized, rows: [automation, flakySwitch]))
+        stack.addArrangedSubview(FormSectionView(
+            title: "Automation".localized,
+            rows: [automation, flakySwitch]
+        ))
         flakySwitch.switchValueChanged = { [weak self] value in
             self?.viewModel.updateValue(for: .isFlaky, value: value)
         }
@@ -41,7 +44,8 @@ final class CasePropertiesFormView: UIView {
 
     func updateValues() {
         fields.forEach { $0.updateValue() }
-        let draft = (viewModel as? CreateSuiteOrCaseViewModel)?.creatingTestCase ?? viewModel.changedTestCase ?? viewModel.testCase
+        let draft = (viewModel as? CreateSuiteOrCaseViewModel)?.creatingTestCase ?? viewModel
+            .changedTestCase ?? viewModel.testCase
         flakySwitch.configure(with: draft?.isFlaky ?? false)
     }
 

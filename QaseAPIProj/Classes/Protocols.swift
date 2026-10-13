@@ -45,7 +45,7 @@ extension UpdatableEntityProtocol {
         get { nil }
         set { }
     }
-    
+
     var changedTestCase: TestCaseEntity? {
         get { nil }
         set { }

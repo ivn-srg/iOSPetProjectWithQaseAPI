@@ -11,13 +11,13 @@ struct MenuItem {
     var id: Int
     var title: String
     var image: UIImage? = nil
-    
+
     init(id: Int, title: String, image: UIImage? = nil) {
         self.id = id
         self.title = title
         self.image = image
     }
-    
+
     init() {
         self.init(id: 0, title: "")
     }
@@ -42,7 +42,7 @@ enum FieldType: String, CaseIterable {
     case layer = "Layer"
     case isFlaky = "Is Flaky"
     case automation = "Automation status"
-    
+
     var localized: String {
         self.rawValue.localized
     }

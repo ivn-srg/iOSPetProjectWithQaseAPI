@@ -18,6 +18,7 @@ final class CreatingProjectViewModel {
             }
         }
     }
+
     var isFieldsEmpty = false {
         didSet {
             if isFieldsEmpty {
@@ -30,27 +31,32 @@ final class CreatingProjectViewModel {
             }
         }
     }
+
     var isEntityWasCreated = false {
         didSet {
             if isEntityWasCreated { creatingFinishCallback() }
             else { showErrorClosure("Error".localized, "Something went wrong".localized) }
         }
     }
+
     var creatingFinishCallback: () -> Void = {}
-    var showErrorClosure: (String, String) -> Void = { (_,_) in }
-    
+    var showErrorClosure: (String, String) -> Void = { (_, _) in }
+
     private let network: NetworkManager
     private let session: SessionContext
     private let originStamp: SessionStamp
 
     // MARK: - LifeCycle
-    init(network: NetworkManager = ApiServiceConfiguration.shared.apiService, session: SessionContext? = nil) {
+    init(
+        network: NetworkManager = ApiServiceConfiguration.shared.apiService,
+        session: SessionContext? = nil
+    ) {
         self.network = network
         self.session = session ?? .shared
         originStamp = self.session.capture()
         self.creatingProject = .init()
     }
-    
+
     // MARK: - Network work
     func createNewProject() async throws {
         guard session.isCurrent(originStamp) else { throw CancellationError() }
@@ -58,12 +64,13 @@ final class CreatingProjectViewModel {
             isFieldsEmpty = true
             return
         }
-        
+
         let stamp = originStamp
-        guard let urlString = network.composeURL(for: .project, urlComponents: nil, queryItems: nil) else { throw API.NetError.invalidURL }
-        
+        guard let urlString = network.composeURL(for: .project, urlComponents: nil, queryItems: nil)
+        else { throw API.NetError.invalidURL }
+
         LoadingIndicator.startLoading()
-        
+
         defer { LoadingIndicator.stopLoading() }
         let response = try await network.performRequest(
             with: creatingProject,
@@ -71,7 +78,7 @@ final class CreatingProjectViewModel {
             method: .post,
             modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
         )
-        
+
         guard session.isCurrent(stamp), !Task.isCancelled else { throw CancellationError() }
         isEntityWasCreated = response.status?.value ?? false
         LoadingIndicator.stopLoading()

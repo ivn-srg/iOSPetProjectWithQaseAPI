@@ -19,8 +19,13 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var cacheError: String?
     @Published private(set) var cacheNotice: String?
 
-    init(preferences: AppSettingsStore, auth: AuthManager = .shared, cache: RealmManager = .shared,
-         session: SessionContext = .shared, bundle: Bundle = .main) {
+    init(
+        preferences: AppSettingsStore,
+        auth: AuthManager = .shared,
+        cache: RealmManager = .shared,
+        session: SessionContext = .shared,
+        bundle: Bundle = .main
+    ) {
         self.preferences = preferences
         self.auth = auth
         self.cache = cache
@@ -34,7 +39,10 @@ final class SettingsViewModel: ObservableObject {
         bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
             ?? bundle.object(forInfoDictionaryKey: "CFBundleName") as? String ?? "Qase"
     }
-    var version: String { bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—" }
+
+    var version: String { bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+    }
+
     var buildNumber: String { bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—" }
 
     func refreshLanguage() {
@@ -140,7 +148,9 @@ final class TokenReplacementViewModel: ObservableObject {
         token = ""
     }
 
-    func cancel() { stop(); onClose?() }
+    func cancel() { stop()
+        onClose?() }
+
     deinit { task?.cancel() }
 }
 

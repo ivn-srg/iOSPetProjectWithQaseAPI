@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class CreateSuiteView: UIView {
     let parentButton = FormParentButton()
@@ -29,7 +29,12 @@ final class CreateSuiteView: UIView {
     }
 
     private func makeField(_ type: FieldType, value: String?) -> GeneralCaseTextField {
-        let field = GeneralCaseTextField(textType: type, textViewValue: value, detailVM: viewModel, style: .entityForm)
+        let field = GeneralCaseTextField(
+            textType: type,
+            textViewValue: value,
+            detailVM: viewModel,
+            style: .entityForm
+        )
         fields[type] = field
         field.onFocusChange = { [weak self, weak field] focused in
             if focused, let field { self?.onFocusChange?(field) }

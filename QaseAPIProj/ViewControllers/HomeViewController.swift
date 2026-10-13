@@ -1,5 +1,5 @@
-import UIKit
 import SwiftUI
+import UIKit
 
 @MainActor
 final class HomeViewController: UIViewController {
@@ -31,7 +31,12 @@ final class HomeViewController: UIViewController {
         ])
         hosting.didMove(toParent: self)
         hostingController = hosting
-        NotificationCenter.default.addObserver(self, selector: #selector(refreshOnForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(refreshOnForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
     }
 
     override func viewWillAppear(_ animated: Bool) {

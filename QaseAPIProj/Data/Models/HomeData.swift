@@ -16,7 +16,13 @@ struct ProjectSummary: Codable, Equatable, Identifiable {
     let descriptionWasProvided: Bool
     var id: String { code }
 
-    init(title: String, code: String, metrics: ProjectMetrics = ProjectMetrics(), description: String? = nil, descriptionWasProvided: Bool? = nil) {
+    init(
+        title: String,
+        code: String,
+        metrics: ProjectMetrics = ProjectMetrics(),
+        description: String? = nil,
+        descriptionWasProvided: Bool? = nil
+    ) {
         self.title = title
         self.code = code
         self.metrics = metrics
@@ -43,7 +49,12 @@ struct ProjectSummary: Codable, Equatable, Identifiable {
             metrics = cached
         } else {
             let counts = try container.decodeIfPresent(Counts.self, forKey: .counts)
-            metrics = ProjectMetrics(cases: counts?.cases, suites: counts?.suites, runs: counts?.runs?.total, defects: counts?.defects?.total)
+            metrics = ProjectMetrics(
+                cases: counts?.cases,
+                suites: counts?.suites,
+                runs: counts?.runs?.total,
+                defects: counts?.defects?.total
+            )
         }
     }
 
@@ -54,11 +65,18 @@ struct ProjectSummary: Codable, Equatable, Identifiable {
         try container.encode(metrics, forKey: .metrics)
         if descriptionWasProvided { try container.encode(description, forKey: .description) }
     }
+
     func mergingDescription(from cached: ProjectSummary?) -> ProjectSummary {
         guard !descriptionWasProvided, let cached else { return self }
-        return ProjectSummary(title: title, code: code, metrics: metrics, description: cached.description,
-                              descriptionWasProvided: cached.descriptionWasProvided)
+        return ProjectSummary(
+            title: title,
+            code: code,
+            metrics: metrics,
+            description: cached.description,
+            descriptionWasProvided: cached.descriptionWasProvided
+        )
     }
+
     var menuSubtitle: String {
         let value = description?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return value.isEmpty ? code : code + " · " + value
@@ -112,7 +130,15 @@ struct RunReadDTO: Codable, Equatable, Identifiable {
     let stats: RunStats?
     let cases: [Int]?
 
-    init(id: Int, title: String, status: Int? = nil, statusText: String? = nil, startTime: Date? = nil, stats: RunStats? = nil, cases: [Int]? = nil) {
+    init(
+        id: Int,
+        title: String,
+        status: Int? = nil,
+        statusText: String? = nil,
+        startTime: Date? = nil,
+        stats: RunStats? = nil,
+        cases: [Int]? = nil
+    ) {
         self.id = id
         self.title = title
         self.status = status
@@ -161,7 +187,13 @@ struct RunReadDTO: Codable, Equatable, Identifiable {
     }
 
     var summary: ActiveRunSummary {
-        ActiveRunSummary(id: id, title: title, startTime: startTime, progress: stats?.progress, statusText: statusText)
+        ActiveRunSummary(
+            id: id,
+            title: title,
+            startTime: startTime,
+            progress: stats?.progress,
+            statusText: statusText
+        )
     }
 }
 
@@ -223,10 +255,15 @@ struct HomeSnapshot: Codable, Equatable {
     let runUpdatedAt: Date?
 }
 
-
 extension CaseSummary {
     init(entity: TestListEntity) {
-        self.init(id: entity.id, title: entity.title, description: entity.itemDescription,
-                  priority: entity.priority?.menuItem.id, automation: entity.automation?.menuItem.id, suiteID: entity.parentId)
+        self.init(
+            id: entity.id,
+            title: entity.title,
+            description: entity.itemDescription,
+            priority: entity.priority?.menuItem.id,
+            automation: entity.automation?.menuItem.id,
+            suiteID: entity.parentId
+        )
     }
 }

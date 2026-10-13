@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class TestCaseStepView: UIView {
     private let step: StepsInTestCase
@@ -50,8 +50,13 @@ final class TestCaseStepView: UIView {
         snp.makeConstraints { $0.height.greaterThanOrEqualTo(badge.snp.height).offset(32) }
         updateText()
         isAccessibilityElement = true
-        accessibilityLabel = [number, "Action".localized, action.attributedText?.string ?? action.text ?? "",
-            "Expected result".localized, expected.attributedText?.string ?? expected.text ?? ""].joined(separator: ", ")
+        accessibilityLabel = [
+            number,
+            "Action".localized,
+            action.attributedText?.string ?? action.text ?? "",
+            "Expected result".localized,
+            expected.attributedText?.string ?? expected.text ?? ""
+        ].joined(separator: ", ")
         accessibilityIdentifier = "case.step." + number
     }
 
@@ -80,8 +85,11 @@ final class TestCaseStepView: UIView {
         label.textColor = AppTheme.Palette.text
         if let rendered = text.toAttributedString() {
             let value = NSMutableAttributedString(attributedString: rendered)
-            value.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .body),
-                range: NSRange(location: 0, length: value.length))
+            value.addAttribute(
+                .font,
+                value: UIFont.preferredFont(forTextStyle: .body),
+                range: NSRange(location: 0, length: value.length)
+            )
             label.attributedText = value
         } else {
             label.text = text

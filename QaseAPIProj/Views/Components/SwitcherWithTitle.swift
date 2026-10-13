@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class SwitcherWithTitle: UIView {
     var switchValueChanged: ((Bool) -> Void)?
@@ -41,7 +41,8 @@ final class SwitcherWithTitle: UIView {
             $0.bottom.lessThanOrEqualToSuperview().inset(12)
         }
         snp.makeConstraints { $0.height.greaterThanOrEqualTo(52) }
-        let draft = (testCaseVM as? CreateSuiteOrCaseViewModel)?.creatingTestCase ?? testCaseVM?.changedTestCase ?? testCaseVM?.testCase
+        let draft = (testCaseVM as? CreateSuiteOrCaseViewModel)?.creatingTestCase ?? testCaseVM?
+            .changedTestCase ?? testCaseVM?.testCase
         switcher.isOn = draft?.isFlaky ?? false
         switcher.addTarget(self, action: #selector(switchValueDidChange(_:)), for: .valueChanged)
     }

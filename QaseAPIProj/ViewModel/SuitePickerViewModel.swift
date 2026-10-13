@@ -22,13 +22,19 @@ final class SuitePickerViewModel {
     var filteredSuites: [TestListEntity] {
         let search = query.trimmingCharacters(in: .whitespacesAndNewlines)
         return catalog.filter {
-            search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) || pathTitle(to: $0.id).localizedCaseInsensitiveContains(search)
+            search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) || pathTitle(to: $0.id)
+                .localizedCaseInsensitiveContains(search)
         }
     }
 
-    init(projectCode: String, selectedID: Int? = nil, projectTitle: String? = nil,
-         network: NetworkManager = ApiServiceConfiguration.shared.apiService,
-         dao: RealmManager? = nil, session: SessionContext? = nil) {
+    init(
+        projectCode: String,
+        selectedID: Int? = nil,
+        projectTitle: String? = nil,
+        network: NetworkManager = ApiServiceConfiguration.shared.apiService,
+        dao: RealmManager? = nil,
+        session: SessionContext? = nil
+    ) {
         let session = session ?? .shared
         let dao = dao ?? .shared
         self.projectCode = projectCode
@@ -39,13 +45,14 @@ final class SuitePickerViewModel {
         catalog = dao.getAllCachedSuites(projectCode: projectCode)
         catalogComplete = dao.hasRepositoryCatalog(projectCode: projectCode)
         loader = SuiteCatalogLoader(network: network, dao: dao, session: session)
-        invalidation = NotificationCenter.default.publisher(for: .didInvalidateSession).sink { [weak self] notification in
-            guard let self, notification.object as AnyObject? === self.session else { return }
-            self.cancel()
-            self.catalog = []
-            self.catalogComplete = false
-            self.onChange?()
-        }
+        invalidation = NotificationCenter.default.publisher(for: .didInvalidateSession)
+            .sink { [weak self] notification in
+                guard let self, notification.object as AnyObject? === self.session else { return }
+                self.cancel()
+                self.catalog = []
+                self.catalogComplete = false
+                self.onChange?()
+            }
     }
 
     func load() async {
@@ -56,7 +63,8 @@ final class SuitePickerViewModel {
         errorMessage = nil
         onChange?()
         defer {
-            if requestedGeneration == generation { isLoading = false; onChange?() }
+            if requestedGeneration == generation { isLoading = false
+                onChange?() }
         }
         do {
             let values = try await loader.load(projectCode: projectCode, isCurrent: { [weak self] in
@@ -103,5 +111,6 @@ final class SuitePickerViewModel {
         return titles.joined(separator: " › ")
     }
 
-    private func accepts(_ value: Int) -> Bool { value == generation && isSessionCurrent && !Task.isCancelled }
+    private func accepts(_ value: Int) -> Bool { value == generation && isSessionCurrent && !Task.isCancelled
+    }
 }

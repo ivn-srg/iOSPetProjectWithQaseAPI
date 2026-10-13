@@ -1,12 +1,16 @@
 import Foundation
+@testable import QaseAPIProj
 import RealmSwift
 import Testing
-@testable import QaseAPIProj
 
 @Suite @MainActor
 struct FormDraftTests {
     @Test func selectedIDsAndParentAreEncodedFromTheCaseDraft() throws {
-        let model = CreateSuiteOrCaseViewModel(projectCode: "A", parentSuiteId: 9, session: SessionContext(ownerID: "owner"))
+        let model = CreateSuiteOrCaseViewModel(
+            projectCode: "A",
+            parentSuiteId: 9,
+            session: SessionContext(ownerID: "owner")
+        )
         model.creatingEntityIsSuite = false
         model.updateValue(for: .priority, value: Priority.high.menuItem.id)
         model.updateValue(for: .severity, value: Severity.critical.menuItem)
@@ -16,7 +20,8 @@ struct FormDraftTests {
         #expect(model.creatingTestCase.severity == .critical)
         #expect(model.creatingTestCase.isFlaky)
         #expect(model.creatingSuite.parentId == 9)
-        let payload = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(model.creatingTestCase.dictOfValues)) as? [String: Any])
+        let payload = try #require(JSONSerialization
+            .jsonObject(with: JSONEncoder().encode(model.creatingTestCase.dictOfValues)) as? [String: Any])
         #expect(payload["suite_id"] as? Int == 12)
         model.selectParent(0, forSuite: false)
         #expect(model.creatingTestCase.suiteId == nil)
@@ -26,13 +31,18 @@ struct FormDraftTests {
 
     @Test func twoDraftsRemainIndependentAndWhitespaceCannotCreate() async {
         let network = FormDraftNetwork()
-        let model = CreateSuiteOrCaseViewModel(projectCode: "A", network: network, session: SessionContext(ownerID: "owner"))
+        let model = CreateSuiteOrCaseViewModel(
+            projectCode: "A",
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
         model.creatingSuite.title = "Suite"
         model.creatingEntityIsSuite = false
         model.creatingTestCase.title = " \n "
         #expect(model.suiteHasUnsavedChanges && model.caseHasUnsavedChanges)
         #expect(!model.canCreate && !model.canSaveAllDrafts)
-        do { try await model.createNewEntity(); Issue.record("Whitespace cannot be posted") } catch {}
+        do { try await model.createNewEntity()
+            Issue.record("Whitespace cannot be posted") } catch {}
         #expect(network.methods.isEmpty)
         #expect(model.creatingSuite.title == "Suite")
         model.creatingTestCase.title = "Case"
@@ -41,19 +51,25 @@ struct FormDraftTests {
 
     @Test func partialSuccessDoesNotResendTheAlreadyConfirmedSuite() async throws {
         let network = FormDraftNetwork()
-        let model = CreateSuiteOrCaseViewModel(projectCode: "A", network: network, session: SessionContext(ownerID: "owner"))
+        let model = CreateSuiteOrCaseViewModel(
+            projectCode: "A",
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
         model.creatingSuite.title = "Suite"
         model.creatingTestCase.title = "Case"
         try await model.createNewEntity()
         #expect(!model.suiteHasUnsavedChanges && model.caseHasUnsavedChanges)
         model.creatingEntityIsSuite = false
         network.error = .noInternetConnection
-        do { try await model.createNewEntity(); Issue.record("Offline save must fail") } catch {}
+        do { try await model.createNewEntity()
+            Issue.record("Offline save must fail") } catch {}
         #expect(!model.isEntityWasCreated && !model.isSaving)
         #expect(model.creatingTestCase.title == "Case" && model.caseHasUnsavedChanges)
         model.creatingEntityIsSuite = true
         #expect(!model.canCreate)
-        do { try await model.createNewEntity(); Issue.record("Confirmed snapshot must not be duplicated") } catch {}
+        do { try await model.createNewEntity()
+            Issue.record("Confirmed snapshot must not be duplicated") } catch {}
         #expect(network.methods.count == 2)
         network.error = nil
         model.creatingEntityIsSuite = false
@@ -63,7 +79,11 @@ struct FormDraftTests {
 
     @Test func busyCreateRejectsAnotherRequestAndParentMutation() async throws {
         let network = FormDraftNetwork()
-        let model = CreateSuiteOrCaseViewModel(projectCode: "A", network: network, session: SessionContext(ownerID: "owner"))
+        let model = CreateSuiteOrCaseViewModel(
+            projectCode: "A",
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
         model.creatingSuite.title = "Suite"
         var request: Task<Void, Error>?
         await withCheckedContinuation { started in
@@ -74,7 +94,8 @@ struct FormDraftTests {
         #expect(model.isSaving && !model.canCreate)
         model.selectParent(7, forSuite: true)
         #expect(model.creatingSuite.parentId == nil)
-        do { try await model.createNewEntity(); Issue.record("Busy save must fail") } catch {}
+        do { try await model.createNewEntity()
+            Issue.record("Busy save must fail") } catch {}
         #expect(network.methods.count == 1)
         network.release?.resume()
         try await request?.value
@@ -89,32 +110,41 @@ struct FormDraftTests {
         model.creatingFinishCallback = { finished = true }
         model.creatingSuite.title = "Old owner"
         network.beforeResponse = { session.activate(ownerID: "new") }
-        do { try await model.createNewEntity(); Issue.record("Late old response must fail") } catch {}
+        do { try await model.createNewEntity()
+            Issue.record("Late old response must fail") } catch {}
         #expect(!finished && !model.isEntityWasCreated && !model.isSaving)
         #expect(model.suiteHasUnsavedChanges && !model.isSessionCurrent)
-        do { try await model.createNewEntity(); Issue.record("Stale form must not send") } catch {}
+        do { try await model.createNewEntity()
+            Issue.record("Stale form must not send") } catch {}
         #expect(network.methods.count == 1)
     }
 
     @Test func editorNoChangeAndFailureKeepCompleteDraft() async throws {
         let session = SessionContext(ownerID: "owner")
         let network = FormDraftNetwork()
-        let model = DetailTabbarControllerViewModel(reference: .init(projectCode: "A", caseID: 1), network: network, session: session)
+        let model = DetailTabbarControllerViewModel(
+            reference: .init(projectCode: "A", caseID: 1),
+            network: network,
+            session: session
+        )
         var initial = TestCaseEntity.empty
         initial.title = "Case"
         initial.suiteId = 8
         model.changedTestCase = initial
         model.testCase = initial
         #expect(!model.canSaveChanges)
-        do { try await model.updateTestCaseData(); Issue.record("Unchanged editor must not patch") } catch {}
+        do { try await model.updateTestCaseData()
+            Issue.record("Unchanged editor must not patch") } catch {}
         model.updateValue(for: .priority, value: Priority.high.menuItem)
         let draft = model.changedTestCase
         network.error = .timeout
-        do { try await model.updateTestCaseData(); Issue.record("Failed update must preserve draft") } catch {}
+        do { try await model.updateTestCaseData()
+            Issue.record("Failed update must preserve draft") } catch {}
         #expect(model.changedTestCase == draft && model.testCase == initial)
         #expect(model.changedTestCase?.suiteId == 8)
         #expect(model.canSaveChanges && !model.isUploadingSuccess && !model.isSaving)
     }
+
     @Test func priorityPatchPreservesNestedStepsAndEveryExistingPayloadField() async throws {
         let session = SessionContext(ownerID: "owner")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
@@ -122,7 +152,12 @@ struct FormDraftTests {
         let fixtureData = Data(Self.completeCaseFixture.utf8)
         let initial = try JSONDecoder().decode(TestCaseEntity.self, from: fixtureData)
         let fixture = try #require(JSONSerialization.jsonObject(with: fixtureData) as? [String: Any])
-        let model = DetailTabbarControllerViewModel(reference: .init(projectCode: "A", caseID: initial.id), network: network, dao: dao, session: session)
+        let model = DetailTabbarControllerViewModel(
+            reference: .init(projectCode: "A", caseID: initial.id),
+            network: network,
+            dao: dao,
+            session: session
+        )
         model.changedTestCase = initial
         model.testCase = initial
         model.updateValue(for: .priority, value: Priority.high.menuItem.id)
@@ -161,7 +196,10 @@ struct FormDraftTests {
         let session = SessionContext(ownerID: "owner")
         let creator = CreateSuiteOrCaseViewModel(projectCode: "A", session: session)
         creator.creatingEntityIsSuite = false
-        let editor = DetailTabbarControllerViewModel(reference: .init(projectCode: "A", caseID: 1), session: session)
+        let editor = DetailTabbarControllerViewModel(
+            reference: .init(projectCode: "A", caseID: 1),
+            session: session
+        )
         editor.changedTestCase = .empty
         for type in Types.allCases {
             #expect(Types(type.menuItem.id) == type)
@@ -209,7 +247,12 @@ struct FormDraftTests {
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
         let network = FormDraftNetwork()
         let reference = TestCaseReference(projectCode: "A", caseID: 0)
-        let model = DetailTabbarControllerViewModel(reference: reference, network: network, dao: dao, session: session)
+        let model = DetailTabbarControllerViewModel(
+            reference: reference,
+            network: network,
+            dao: dao,
+            session: session
+        )
         var initial = TestCaseEntity.empty
         initial.title = "Original"
         #expect(dao.saveTestCase(initial, reference: reference, stamp: session.capture()))
@@ -225,11 +268,13 @@ struct FormDraftTests {
             request = Task { try await model.updateTestCaseData() }
         }
         #expect(model.isSaving && !model.canSaveChanges)
-        do { try await model.updateTestCaseData(); Issue.record("Busy editor must not patch twice") } catch {}
+        do { try await model.updateTestCaseData()
+            Issue.record("Busy editor must not patch twice") } catch {}
         #expect(network.methods.count == 1)
         session.activate(ownerID: "new")
         network.release?.resume()
-        do { try await request?.value; Issue.record("Late response must fail") } catch {}
+        do { try await request?.value
+            Issue.record("Late response must fail") } catch {}
         #expect(!finished && !model.isUploadingSuccess && !model.isSaving)
         #expect(model.testCase?.title == "Original" && model.changedTestCase?.title == "Retained draft")
         #expect(dao.getTestCase(reference: reference) == nil)
@@ -248,7 +293,12 @@ private final class FormDraftNetwork: NetworkManager {
     var beforeResponse: (() -> Void)?
     var release: CheckedContinuation<Void, Never>?
 
-    func performRequest<T: Decodable>(with data: Encodable?, from urlString: URL?, method: API.HTTPMethod, modelType: T.Type) async throws(API.NetError) -> T {
+    func performRequest<T: Decodable>(
+        with data: Encodable?,
+        from urlString: URL?,
+        method: API.HTTPMethod,
+        modelType: T.Type
+    ) async throws(API.NetError) -> T {
         methods.append(method)
         if let data {
             let encoder = JSONEncoder()
@@ -257,19 +307,52 @@ private final class FormDraftNetwork: NetworkManager {
             catch { throw .serializationError("Fixture payload encoding failed") }
         }
         if shouldSuspend {
-            await withCheckedContinuation { continuation in release = continuation; onStarted?() }
+            await withCheckedContinuation { continuation in release = continuation
+                onStarted?() }
         }
         beforeResponse?()
         if let error { throw error }
         return try API.decodeResponse(from: Data(#"{"status":true,"result":{"id":1}}"#.utf8), as: modelType)
     }
-    func performRequest<T: Decodable>(for operation: API.Operation, pathParameters: [String: String], queryItems: [URLQueryItem], with data: Encodable?, modelType: T.Type) async throws(API.NetError) -> T {
-        try await performRequest(with: data, from: API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems), method: operation.httpMethod, modelType: modelType)
+
+    func performRequest<T: Decodable>(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem],
+        with data: Encodable?,
+        modelType: T.Type
+    ) async throws(API.NetError) -> T {
+        try await performRequest(
+            with: data,
+            from: API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems),
+            method: operation.httpMethod,
+            modelType: modelType
+        )
     }
-    func performMultipartRequest<T: Decodable>(for operation: API.Operation, pathParameters: [String: String], files: [API.UploadFile], modelType: T.Type) async throws(API.NetError) -> T { throw .invalidURL }
-    func composeURL(for method: API.Endpoint, urlComponents: [String?]?, queryItems: [API.QueryParams: Int?]?) -> URL? {
-        URL(string: API.BASE_URL + "/" + method.rawValue + "/" + (urlComponents ?? []).compactMap { $0 }.joined(separator: "/"))
+
+    func performMultipartRequest<T: Decodable>(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        files: [API.UploadFile],
+        modelType: T.Type
+    ) async throws(API.NetError) -> T { throw .invalidURL }
+    func composeURL(
+        for method: API.Endpoint,
+        urlComponents: [String?]?,
+        queryItems: [API.QueryParams: Int?]?
+    ) -> URL? {
+        URL(string: API.BASE_URL + "/" + method.rawValue + "/" + (urlComponents ?? []).compactMap { $0 }
+            .joined(separator: "/"))
     }
-    func composeURL(for operation: API.Operation, pathParameters: [String: String], queryItems: [URLQueryItem]) -> URL? { API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems) }
+
+    func composeURL(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem]
+    ) -> URL? { API.makeURL(
+        for: operation,
+        pathParameters: pathParameters,
+        queryItems: queryItems
+    ) }
     func auth(by token: String) async throws -> Bool { true }
 }

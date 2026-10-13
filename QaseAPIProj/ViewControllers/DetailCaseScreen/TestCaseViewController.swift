@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class TestCaseViewController: UIViewController {
     let viewModel: DetailTabbarControllerViewModel
@@ -11,8 +11,18 @@ final class TestCaseViewController: UIViewController {
     private var previousTabVisibility: Bool?
     private weak var previousPopDelegate: UIGestureRecognizerDelegate?
     private lazy var form = GeneralDetailCaseViewController(vm: viewModel, projectTitle: projectTitle)
-    private lazy var saveItem = UIBarButtonItem(title: "Save".localized, style: .plain, target: self, action: #selector(saveChanges))
-    private lazy var backItem = UIBarButtonItem(image: UIImage(systemName: "chevron.left"), style: .plain, target: self, action: #selector(goBack))
+    private lazy var saveItem = UIBarButtonItem(
+        title: "Save".localized,
+        style: .plain,
+        target: self,
+        action: #selector(saveChanges)
+    )
+    private lazy var backItem = UIBarButtonItem(
+        image: UIImage(systemName: "chevron.left"),
+        style: .plain,
+        target: self,
+        action: #selector(goBack)
+    )
     private let spinner = UIActivityIndicatorView(style: .medium)
 
     init(reference: TestCaseReference, projectTitle: String? = nil) {
@@ -84,7 +94,10 @@ final class TestCaseViewController: UIViewController {
     }
 
     private func restoreTabVisibility() {
-        if let previousTabVisibility { tabBarController?.setTabBarHidden(previousTabVisibility, animated: false) }
+        if let previousTabVisibility { tabBarController?.setTabBarHidden(
+            previousTabVisibility,
+            animated: false
+        ) }
         previousTabVisibility = nil
     }
 
@@ -103,9 +116,12 @@ final class TestCaseViewController: UIViewController {
                 try await self.viewModel.fetchCaseDataJSON()
             } catch {
                 guard self.viewModel.isSessionCurrent else { return }
-                self.form.showError("Could not load the test case. Try again.".localized, retry: { [weak self] in
-                    self?.fetchCase()
-                })
+                self.form.showError(
+                    "Could not load the test case. Try again.".localized,
+                    retry: { [weak self] in
+                        self?.fetchCase()
+                    }
+                )
             }
         }
     }
@@ -128,8 +144,11 @@ final class TestCaseViewController: UIViewController {
                 guard self.viewModel.isSessionCurrent, self.viewModel.isUploadingSuccess else { return }
                 self.isSubmitting = false
                 self.checkConditionAndToggleRightBarButton()
-                UIAlertController.showSimpleAlert(on: self, title: "Success".localized,
-                    message: "Changes saved".localized)
+                UIAlertController.showSimpleAlert(
+                    on: self,
+                    title: "Success".localized,
+                    message: "Changes saved".localized
+                )
             } catch {
                 guard self.viewModel.isSessionCurrent else { return }
                 self.form.showError("Could not save the test case. Try again.".localized)
@@ -162,7 +181,9 @@ extension TestCaseViewController: CheckEnablingRBBProtocol {
             navigationItem.rightBarButtonItem = saveItem
         }
         form.updateValues()
-        form.setEditingEnabled(viewModel.changedTestCase != nil && !isSavingDraft && !isFetching && viewModel.isSessionCurrent)
+        form
+            .setEditingEnabled(viewModel.changedTestCase != nil && !isSavingDraft && !isFetching && viewModel
+                .isSessionCurrent)
     }
 }
 
@@ -177,8 +198,12 @@ extension TestCaseViewController: FormDepartureParticipant {
         guard !isSavingDraft, !isConfirmingDeparture, viewModel.isSessionCurrent else { return false }
         isConfirmingDeparture = true
         defer { isConfirmingDeparture = false }
-        let allowed = await FormDepartureGuard.confirm(self, on: self,
-            message: "Unsaved test case changes will be lost.".localized)
+        let allowed = await FormDepartureGuard.confirm(
+            self,
+            on: self,
+            message: "Unsaved test case changes will be lost."
+                .localized
+        )
         return allowed && viewModel.isSessionCurrent && !isSavingDraft
     }
 

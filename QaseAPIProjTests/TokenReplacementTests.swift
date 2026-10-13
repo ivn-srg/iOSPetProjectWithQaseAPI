@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import QaseAPIProj
+import Testing
 
 @Suite @MainActor
 struct TokenReplacementTests {
@@ -145,50 +145,71 @@ struct TokenReplacementTests {
     }
 
     @Test func invalidCredentialsShowSafeCheckTokenMessage() async throws {
-        try await expectFormError(API.NetError.invalidCredantials,
-                                  expectedMessage: "Could not update API token. Check the token and try again.")
+        try await expectFormError(
+            API.NetError.invalidCredantials,
+            expectedMessage: "Could not update API token. Check the token and try again."
+        )
     }
 
     @Test func unauthorizedResponseShowsSafeCheckTokenMessage() async throws {
-        try await expectFormError(API.NetError.httpError(statusCode: 401, message: Self.rawErrorMessage, retryAfter: nil),
-                                  expectedMessage: "Could not update API token. Check the token and try again.")
+        try await expectFormError(
+            API.NetError.httpError(statusCode: 401, message: Self.rawErrorMessage, retryAfter: nil),
+            expectedMessage: "Could not update API token. Check the token and try again."
+        )
     }
 
     @Test func forbiddenResponseDoesNotClaimTheTokenIsInvalid() async throws {
-        try await expectFormError(API.NetError.httpError(statusCode: 403, message: Self.rawErrorMessage, retryAfter: nil),
-                                  expectedMessage: "Could not verify access with this token")
+        try await expectFormError(
+            API.NetError.httpError(statusCode: 403, message: Self.rawErrorMessage, retryAfter: nil),
+            expectedMessage: "Could not verify access with this token"
+        )
     }
 
     @Test func offlineFailureShowsConnectionGuidance() async throws {
-        try await expectFormError(API.NetError.noInternetConnection,
-                                  expectedMessage: "Could not verify API token. Check your internet connection and try again.")
+        try await expectFormError(
+            API.NetError.noInternetConnection,
+            expectedMessage: "Could not verify API token. Check your internet connection and try again."
+        )
     }
 
     @Test func timeoutShowsRetryGuidance() async throws {
-        try await expectFormError(API.NetError.timeout,
-                                  expectedMessage: "Token verification timed out. Try again.")
+        try await expectFormError(
+            API.NetError.timeout,
+            expectedMessage: "Token verification timed out. Try again."
+        )
     }
 
     @Test func nativeOfflineFailureShowsConnectionGuidance() async throws {
-        try await expectFormError(URLError(.notConnectedToInternet, userInfo: [NSLocalizedDescriptionKey: Self.rawErrorMessage]),
-                                  expectedMessage: "Could not verify API token. Check your internet connection and try again.")
+        try await expectFormError(
+            URLError(.notConnectedToInternet, userInfo: [NSLocalizedDescriptionKey: Self.rawErrorMessage]),
+            expectedMessage: "Could not verify API token. Check your internet connection and try again."
+        )
     }
 
     @Test func nativeTimeoutShowsRetryGuidance() async throws {
-        try await expectFormError(URLError(.timedOut, userInfo: [NSLocalizedDescriptionKey: Self.rawErrorMessage]),
-                                  expectedMessage: "Token verification timed out. Try again.")
+        try await expectFormError(
+            URLError(.timedOut, userInfo: [NSLocalizedDescriptionKey: Self.rawErrorMessage]),
+            expectedMessage: "Token verification timed out. Try again."
+        )
     }
 
     @Test func keychainFailureShowsSaveGuidanceAndPreservesTheSession() async throws {
-        try await expectFormError(KeychainError.unhandledError(status: -50),
-                                  expectedMessage: "Could not save API token. Try again.", duringSave: true)
+        try await expectFormError(
+            KeychainError.unhandledError(status: -50),
+            expectedMessage: "Could not save API token. Try again.",
+            duringSave: true
+        )
     }
 
     @Test func otherFailuresNeverExposeServerTextOrToken() async throws {
         let errors: [Error] = [
             API.NetError.otherNetworkError(Self.rawErrorMessage),
             API.NetError.httpError(statusCode: 500, message: Self.rawErrorMessage, retryAfter: nil),
-            NSError(domain: "TokenFixture", code: 1, userInfo: [NSLocalizedDescriptionKey: Self.rawErrorMessage])
+            NSError(
+                domain: "TokenFixture",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: Self.rawErrorMessage]
+            )
         ]
         for error in errors {
             try await expectFormError(error, expectedMessage: "Could not update API token. Try again.")
@@ -363,7 +384,11 @@ struct TokenReplacementTests {
         #expect(fixture.notifications.count == 1)
     }
 
-    private func expectFormError(_ error: Error, expectedMessage: String, duringSave: Bool = false) async throws {
+    private func expectFormError(
+        _ error: Error,
+        expectedMessage: String,
+        duringSave: Bool = false
+    ) async throws {
         let fixture = TokenReplacementFixture()
         if duringSave { fixture.storage.savingError = error }
         else { fixture.authenticate = { _, _ in throw error } }
@@ -404,12 +429,14 @@ private final class TokenCredentialStorage: AuthCredentialStorage {
     init(_ credential: AuthCredential) { record = credential }
 
     func getCredential() -> AuthCredential? {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return record
     }
 
     func saveCredential(_ credential: AuthCredential) throws {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         if let savingError { throw savingError }
         guard !failSaving else { throw TokenFixtureError.storage }
         record = credential
@@ -417,7 +444,8 @@ private final class TokenCredentialStorage: AuthCredentialStorage {
     }
 
     func deleteToken() throws {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         record = nil
         deleteCount += 1
     }
@@ -440,23 +468,32 @@ private final class TokenReplacementFixture {
     var onClearCache: (() -> Void)?
     var onNotify: (() -> Void)?
 
-    lazy var auth = AuthManager(userDefaults: defaults, credentialStore: storage,
-        replacementDependencies: AuthReplacementDependencies(session: session, authenticate: { [unowned self] token, demo in
-            requests.append((token, demo))
-            return try await authenticate(token, demo)
-        }, clearCache: { [unowned self] in
-            events.append("clear")
-            onClearCache?()
-            if failCacheCleanup { throw TokenFixtureError.cleanup }
-            cachedOldData = false
-        }, configureDemoMode: { [unowned self] demo in
-            events.append("configure")
-            configuredModes.append(demo)
-        }, notifyAuthChanged: { [unowned self] cleanupFailed in
-            events.append("notify")
-            notifications.append(cleanupFailed)
-            onNotify?()
-        }))
+    lazy var auth = AuthManager(
+        userDefaults: defaults,
+        credentialStore: storage,
+        replacementDependencies: AuthReplacementDependencies(
+            session: session,
+            authenticate: { [unowned self] token, demo in
+                requests.append((token, demo))
+                return try await authenticate(token, demo)
+            },
+            clearCache: { [unowned self] in
+                events.append("clear")
+                onClearCache?()
+                if failCacheCleanup { throw TokenFixtureError.cleanup }
+                cachedOldData = false
+            },
+            configureDemoMode: { [unowned self] demo in
+                events.append("configure")
+                configuredModes.append(demo)
+            },
+            notifyAuthChanged: { [unowned self] cleanupFailed in
+                events.append("notify")
+                notifications.append(cleanupFailed)
+                onNotify?()
+            }
+        )
+    )
 
     init() {
         let original = AuthCredential(token: "old-fixture", ownerID: "old-owner")

@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class GeneralCaseTextField: UIView {
     enum Style: Equatable {
@@ -20,7 +20,12 @@ final class GeneralCaseTextField: UIView {
     private let validation = UILabel()
     private var placeholderHeightConstraint: Constraint?
 
-    init(textType: FieldType, textViewValue: String? = "", detailVM: UpdatableEntityProtocol? = nil, style: Style = .legacy) {
+    init(
+        textType: FieldType,
+        textViewValue: String? = "",
+        detailVM: UpdatableEntityProtocol? = nil,
+        style: Style = .legacy
+    ) {
         self.textType = textType
         self.style = style
         viewModel = detailVM
@@ -32,7 +37,8 @@ final class GeneralCaseTextField: UIView {
         textView.textContainer.lineBreakMode = .byWordWrapping
         textView.textContainer.maximumNumberOfLines = 0
         titleLabel.numberOfLines = 0
-        titleLabel.text = textType == .title && style == .entityForm ? textType.localized + " *" : textType.localized
+        titleLabel.text = textType == .title && style == .entityForm ? textType.localized + " *" : textType
+            .localized
         if let creating = detailVM as? CreateSuiteOrCaseViewModel, textType == .parentSuite {
             textView.text = creating.parentSuiteId.map(String.init) ?? Constants.EMPTY_TEXT
         } else {
@@ -117,7 +123,8 @@ final class GeneralCaseTextField: UIView {
             $0.top.equalToSuperview().offset(14)
         }
         textView.snp.makeConstraints {
-            placeholderHeightConstraint = $0.height.greaterThanOrEqualTo(placeholder.snp.height).offset(28).constraint
+            placeholderHeightConstraint = $0.height.greaterThanOrEqualTo(placeholder.snp.height).offset(28)
+                .constraint
         }
     }
 
@@ -133,10 +140,14 @@ final class GeneralCaseTextField: UIView {
         else { placeholderHeightConstraint?.activate() }
         counter.text = "\(textView.text.count)/\(FormTextInputPolicy.characterLimit)"
         counter.alpha = textView.isFirstResponder ? 1 : 0
-        let invalid = textType == .title && didBlur && textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let invalid = textType == .title && didBlur && textView.text
+            .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         validation.isHidden = !invalid
-        textView.layer.borderColor = (invalid ? AppTheme.Palette.danger : textView.isFirstResponder ? AppTheme.Palette.accent : UIColor.clear).resolvedColor(with: traitCollection).cgColor
-        textView.accessibilityHint = invalid ? "A title is required".localized : "Maximum 500 characters".localized
+        textView.layer
+            .borderColor = (invalid ? AppTheme.Palette.danger : textView.isFirstResponder ? AppTheme.Palette
+                .accent : UIColor.clear).resolvedColor(with: traitCollection).cgColor
+        textView.accessibilityHint = invalid ? "A title is required".localized : "Maximum 500 characters"
+            .localized
     }
 
     private func publishText() {
@@ -186,7 +197,10 @@ final class GeneralCaseTextField: UIView {
         textView.text = value ?? ""
         committedValue = textView.text ?? ""
         let location = min(selection.location, textView.text.utf16.count)
-        textView.selectedRange = NSRange(location: location, length: min(selection.length, textView.text.utf16.count - location))
+        textView.selectedRange = NSRange(
+            location: location,
+            length: min(selection.length, textView.text.utf16.count - location)
+        )
         refreshTextLayout()
     }
 
@@ -204,9 +218,14 @@ final class GeneralCaseTextField: UIView {
 }
 
 extension GeneralCaseTextField: UITextViewDelegate {
-    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+    func textView(
+        _ textView: UITextView,
+        shouldChangeTextIn range: NSRange,
+        replacementText text: String
+    ) -> Bool {
         guard textView.markedTextRange == nil else { return true }
-        guard let edit = FormTextInputPolicy.replacing(textView.text ?? "", range: range, with: text) else { return false }
+        guard let edit = FormTextInputPolicy.replacing(textView.text ?? "", range: range, with: text)
+        else { return false }
         guard let swiftRange = Range(range, in: textView.text ?? "") else { return false }
         let proposed = (textView.text ?? "").replacingCharacters(in: swiftRange, with: text)
         guard proposed != edit.text else { return true }

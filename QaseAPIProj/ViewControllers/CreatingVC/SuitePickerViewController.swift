@@ -1,6 +1,7 @@
 import UIKit
 
-final class SuitePickerViewController: UITableViewController, UISearchResultsUpdating, UIAdaptivePresentationControllerDelegate {
+final class SuitePickerViewController: UITableViewController, UISearchResultsUpdating,
+    UIAdaptivePresentationControllerDelegate {
     private let viewModel: SuitePickerViewModel
     private let onSelection: (Int?) -> Void
     private let search = UISearchController(searchResultsController: nil)
@@ -23,7 +24,11 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
         super.viewDidLoad()
         title = FieldType.parentSuite.localized
         navigationItem.largeTitleDisplayMode = .never
-        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closePicker))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .close,
+            target: self,
+            action: #selector(closePicker)
+        )
         navigationItem.leftBarButtonItem?.accessibilityIdentifier = "suitePicker.close"
         search.searchResultsUpdater = self
         search.obscuresBackgroundDuringPresentation = false
@@ -104,7 +109,8 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
         } else if viewModel.isLoading {
             text = "Loading suites".localized
         } else if let error = viewModel.errorMessage {
-            text = viewModel.catalogComplete ? error : "Only saved suites are available. Retry to load the full catalog.".localized
+            text = viewModel.catalogComplete ? error : "Only saved suites are available. Retry to load the full catalog."
+                .localized
         } else if viewModel.catalogComplete && viewModel.filteredSuites.isEmpty {
             text = viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "The project has no suites yet".localized : "No suites found".localized
@@ -112,11 +118,15 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
             text = nil
         }
         let width = max(1, tableView.bounds.width)
-        let state = text.map { "\($0)|\(viewModel.isLoading)|\(viewModel.errorMessage != nil)|\(viewModel.isSessionCurrent)" }
+        let state = text
+            .map {
+                "\($0)|\(viewModel.isLoading)|\(viewModel.errorMessage != nil)|\(viewModel.isSessionCurrent)"
+            }
         guard state != footerState || abs(width - footerWidth) > 0.5 else { return }
         footerState = state
         footerWidth = width
-        guard let text else { tableView.tableFooterView = nil; return }
+        guard let text else { tableView.tableFooterView = nil
+            return }
         let label = UILabel()
         label.text = text
         label.numberOfLines = 0
@@ -146,8 +156,11 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
             retry.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
             stack.addArrangedSubview(retry)
         }
-        let size = stack.systemLayoutSizeFitting(CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
-            withHorizontalFittingPriority: .required, verticalFittingPriority: .fittingSizeLevel)
+        let size = stack.systemLayoutSizeFitting(
+            CGSize(width: width, height: UIView.layoutFittingCompressedSize.height),
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        )
         stack.frame = CGRect(x: 0, y: 0, width: width, height: size.height)
         tableView.tableFooterView = stack
     }
@@ -183,11 +196,13 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
         cell.textLabel?.textColor = AppTheme.Palette.text
         cell.detailTextLabel?.textColor = AppTheme.Palette.secondaryText
         cell.imageView?.image = UIImage(systemName: "folder")
-        cell.imageView?.tintColor = id == viewModel.selectedID ? AppTheme.Palette.accent : AppTheme.Palette.secondaryText
+        cell.imageView?.tintColor = id == viewModel.selectedID ? AppTheme.Palette.accent : AppTheme.Palette
+            .secondaryText
         cell.backgroundColor = AppTheme.Palette.secondarySurface
         cell.accessoryType = id == viewModel.selectedID ? .checkmark : .none
         cell.accessibilityIdentifier = id.map { "suitePicker.suite.\($0)" } ?? "suitePicker.root"
-        cell.accessibilityLabel = [cell.textLabel?.text, cell.detailTextLabel?.text].compactMap { $0 }.joined(separator: ", ")
+        cell.accessibilityLabel = [cell.textLabel?.text, cell.detailTextLabel?.text].compactMap { $0 }
+            .joined(separator: ", ")
         cell.accessibilityTraits = id == viewModel.selectedID ? [.button, .selected] : .button
         return cell
     }

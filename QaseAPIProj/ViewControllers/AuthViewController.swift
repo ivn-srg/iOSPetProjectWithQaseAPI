@@ -9,7 +9,7 @@ import UIKit
 
 final class AuthViewController: UIViewController, NextViewControllerPusher {
     private var tapCount: Int = 0
-    
+
     // MARK: - UI
     private var logoImg: UIImageView = {
         let limg = UIImageView()
@@ -20,7 +20,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         limg.accessibilityIdentifier = "logoImg"
         return limg
     }()
-    
+
     private var inputTokenField: UITextField = {
         let inf = TextFieldWithPadding()
         inf.translatesAutoresizingMaskIntoConstraints = false
@@ -34,7 +34,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         inf.accessibilityIdentifier = "inputTextField"
         return inf
     }()
-    
+
     private var authButton: UIButton = {
         let ab = UIButton()
         ab.translatesAutoresizingMaskIntoConstraints = false
@@ -45,57 +45,61 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         ab.accessibilityIdentifier = "authButton"
         return ab
     }()
-    
+
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setup()
-        
-        let longTapGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(longTapForFillingTextLb(_:)))
+
+        let longTapGestureRecognizer = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(longTapForFillingTextLb(_:))
+        )
         logoImg.addGestureRecognizer(longTapGestureRecognizer)
-        
+
         authButton.addTarget(self, action: #selector(authorizate), for: .touchUpInside)
     }
-    
+
     // MARK: - UI
     func setup() {
         view.backgroundColor = AppTheme.bgPrimaryColor
         view.addSubview(logoImg)
         view.addSubview(inputTokenField)
         view.addSubview(authButton)
-        
+
         logoImg.snp.makeConstraints {
             $0.horizontalEdges.equalToSuperview().inset(30)
             $0.top.equalToSuperview().offset(130)
             $0.centerX.equalToSuperview()
         }
-        
+
         inputTokenField.snp.makeConstraints {
             $0.horizontalEdges.equalToSuperview().inset(30)
             $0.top.equalTo(logoImg.snp.bottom).offset(20)
             $0.centerX.equalToSuperview()
         }
-        
+
         authButton.snp.makeConstraints {
             $0.horizontalEdges.equalToSuperview().inset(30)
             $0.top.equalTo(inputTokenField.snp.bottom).offset(30)
             $0.centerX.equalToSuperview()
         }
     }
-    
+
     // MARK: - Router
-    
+
     func pushToNextVC(to item: Int? = nil) {
         Task { @MainActor in
             let vc = MainTabbarViewController()
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }
-    
+
     // MARK: - objc funcs
     @objc private func authorizate() {
         Task { @MainActor in
-            if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !inputToken.isEmpty {
+            if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !inputToken.isEmpty {
                 do {
                     try await AuthManager.shared.loggedIn(token: inputToken)
                 } catch API.NetError.invalidCredantials {
@@ -120,7 +124,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
             }
         }
     }
-    
+
     @objc private func longTapForFillingTextLb(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began else { return }
         ApiServiceConfiguration.shared.setMockingServiceEnabled()

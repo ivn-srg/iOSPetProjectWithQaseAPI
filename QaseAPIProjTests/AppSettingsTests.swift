@@ -3,9 +3,9 @@
 // Проверки сохранения темы в изолированном хранилище.
 
 import Foundation
+@testable import QaseAPIProj
 import Testing
 import UIKit
-@testable import QaseAPIProj
 
 @Suite @MainActor
 struct AppSettingsTests {

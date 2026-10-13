@@ -5,8 +5,8 @@
 //  Created by Sergey Ivanov on 09.01.2024.
 //
 
-import UIKit
 import SwiftUI
+import UIKit
 
 enum AppTheme {
     // images
@@ -20,40 +20,48 @@ enum AppTheme {
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
+
     static let circleImage = UIImage(systemName: "circle")
     static let chevronDownImage: UIImage? = {
         UIImage(systemName: "arrow.down")?
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
     }()
-    static let xmarkCircleFillImage = UIImage(systemName: "xmark.circle.fill")?.withRenderingMode(.alwaysTemplate)
+
+    static let xmarkCircleFillImage = UIImage(systemName: "xmark.circle.fill")?
+        .withRenderingMode(.alwaysTemplate)
     static let minusImage = UIImage(systemName: "minus")
     static let exitImage: UIImage? = {
         UIImage(systemName: "rectangle.portrait.and.arrow.right")?
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
+
     static let nosignImage: UIImage? = {
         UIImage(systemName: "nosign")?
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
+
     static let chevronDoubleUpImage: UIImage? = {
         UIImage(systemName: "chevron.up.2")?
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
+
     static let chevronDoubleDownImage = UIImage(systemName: "chevron.down.2")
     static let arrowUpImage: UIImage? = {
         UIImage(systemName: "arrow.up")?
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.red, renderingMode: .alwaysOriginal)
     }()
+
     static let arrowDownImage: UIImage? = {
         UIImage(systemName: "arrow.down")?
             .withRenderingMode(.alwaysTemplate)
             .withTintColor(.systemGreen, renderingMode: .alwaysOriginal)
     }()
+
     static let computerImage = UIImage(systemName: "desktopcomputer")
     static let gearDoubleFillImage = UIImage(systemName: "gearshape.2.fill")
     static let apiImage = UIImage(systemName: "externaldrive.connected.to.line.below.fill")
@@ -72,7 +80,7 @@ enum AppTheme {
     static let bgThirdthColor = UIColor(named: "thirdthBackground") ?? UIColor.white
     static let textColor = UIColor(named: "text") ?? UIColor.white
     static let additionTintColor = UIColor(named: "additionTintColor") ?? UIColor.white
-    
+
     // paddings
     static let horizontalPadding: CGFloat = 20
 
@@ -128,8 +136,12 @@ enum AppTheme {
     }
 
     enum Shadows {
-        static let low = UIColor { traits in UIColor.black.withAlphaComponent(traits.userInterfaceStyle == .dark ? 0.24 : 0.08) }
-        static let medium = UIColor { traits in UIColor.black.withAlphaComponent(traits.userInterfaceStyle == .dark ? 0.36 : 0.12) }
+        static let low = UIColor { traits in
+            UIColor.black.withAlphaComponent(traits.userInterfaceStyle == .dark ? 0.24 : 0.08) }
+
+        static let medium = UIColor { traits in
+            UIColor.black.withAlphaComponent(traits.userInterfaceStyle == .dark ? 0.36 : 0.12) }
+
         static let lowRadius: CGFloat = 8
         static let lowOffset: CGFloat = 2
         static let mediumRadius: CGFloat = 24
@@ -163,9 +175,12 @@ enum AppTheme {
         private static func adaptive(_ light: UInt32, _ dark: UInt32) -> UIColor {
             UIColor { traits in
                 let value = traits.userInterfaceStyle == .dark ? dark : light
-                return UIColor(red: CGFloat((value >> 16) & 255) / 255,
-                               green: CGFloat((value >> 8) & 255) / 255,
-                               blue: CGFloat(value & 255) / 255, alpha: 1)
+                return UIColor(
+                    red: CGFloat((value >> 16) & 255) / 255,
+                    green: CGFloat((value >> 8) & 255) / 255,
+                    blue: CGFloat(value & 255) / 255,
+                    alpha: 1
+                )
             }
         }
     }

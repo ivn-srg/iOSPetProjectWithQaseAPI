@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class FormParentButton: UIButton {
     private let caption = UILabel()
@@ -52,7 +52,8 @@ final class FormParentButton: UIButton {
         valueLabel.text = title
         pathLabel.text = path
         pathLabel.isHidden = path.isEmpty
-        accessibilityLabel = [FieldType.parentSuite.localized, title, path].filter { !$0.isEmpty }.joined(separator: ", ")
+        accessibilityLabel = [FieldType.parentSuite.localized, title, path].filter { !$0.isEmpty }
+            .joined(separator: ", ")
     }
 
     override var isEnabled: Bool {

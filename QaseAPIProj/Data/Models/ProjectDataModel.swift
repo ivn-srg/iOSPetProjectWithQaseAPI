@@ -25,18 +25,18 @@ struct Project: Codable {
     var counts: CountsOfProject?
     var description: String?
     var descriptionWasProvided = false
-    
+
     var isEmpty: Bool {
         self.title.isEmpty || self.code.isEmpty
     }
-    
+
     init() {
         self.title = ""
         self.code = ""
         self.description = ""
         descriptionWasProvided = true
     }
-    
+
     init(realmObject: ProjectRO) {
         title = realmObject.title
         code = realmObject.code
@@ -44,7 +44,7 @@ struct Project: Codable {
         description = realmObject.itemDescription
         descriptionWasProvided = realmObject.hasDescription
     }
-    
+
     enum CodingKeys: String, CodingKey { case title, code, counts, description }
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -69,10 +69,10 @@ struct CountsOfProject: Codable {
     let milestones: Int
     let runs: TestRuns?
     let defects: BugReports?
-    
+
     init?(realmObject: CountsOfProjectRO?) {
         guard let realmObject = realmObject else { return nil }
-        
+
         cases = realmObject.cases
         suites = realmObject.suites
         milestones = realmObject.milestones
@@ -84,10 +84,10 @@ struct CountsOfProject: Codable {
 struct TestRuns: Codable {
     let total: Int
     let active: Int
-    
+
     init?(realmObject: TestRunsRO?) {
         guard let realmObject = realmObject else { return nil }
-        
+
         total = realmObject.total
         active = realmObject.active
     }
@@ -96,10 +96,10 @@ struct TestRuns: Codable {
 struct BugReports: Codable {
     let total: Int
     let open: Int
-    
+
     init?(realmObject: BugReportsRO?) {
         guard let realmObject = realmObject else { return nil }
-        
+
         total = realmObject.total
         open = realmObject.open
     }

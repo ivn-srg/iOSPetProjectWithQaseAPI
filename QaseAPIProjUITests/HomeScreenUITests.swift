@@ -12,7 +12,10 @@ final class HomeScreenUITests: XCTestCase {
         XCTAssertTrue(logo.waitForExistence(timeout: 5))
         logo.press(forDuration: 2)
         XCTAssertTrue(app.buttons["project.picker"].waitForExistence(timeout: 12))
-        let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", "Demo Project"), object: app.buttons["project.picker"])
+        let selected = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label CONTAINS %@", "Demo Project"),
+            object: app.buttons["project.picker"]
+        )
         XCTAssertEqual(XCTWaiter.wait(for: [selected], timeout: 12), .completed)
     }
 
@@ -20,7 +23,7 @@ final class HomeScreenUITests: XCTestCase {
 
     private func reveal(_ identifier: String) -> XCUIElement {
         let item = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-        for _ in 0..<8 {
+        for _ in 0 ..< 8 {
             if item.exists && item.isHittable { return item }
             app.swipeUp()
         }
@@ -30,7 +33,10 @@ final class HomeScreenUITests: XCTestCase {
 
     func testProjectChoiceIsSharedAcrossTabs() {
         app.buttons["project.picker"].tap()
-        let choice = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "1Forma")).firstMatch
+        let choice = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label BEGINSWITH %@",
+            "1Forma"
+        )).firstMatch
         XCTAssertTrue(choice.waitForExistence(timeout: 5))
         choice.tap()
         XCTAssertTrue(app.buttons["project.picker"].label.contains("1Forma"))
@@ -68,7 +74,7 @@ final class HomeScreenUITests: XCTestCase {
         screenshot.lifetime = .keepAlways
         add(screenshot)
         let cases = app.buttons["Все кейсы"]
-        for _ in 0..<6 where !cases.isHittable { app.swipeUp() }
+        for _ in 0 ..< 6 where !cases.isHittable { app.swipeUp() }
         XCTAssertTrue(cases.isHittable)
         cases.tap()
         _ = reveal("repository.case.81")

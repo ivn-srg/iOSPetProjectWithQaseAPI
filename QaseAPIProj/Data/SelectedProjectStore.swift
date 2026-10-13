@@ -15,8 +15,12 @@ final class SelectedProjectStore: ObservableObject {
     var onSelectionRequested: ((ProjectSummary?) async -> Bool)?
     var onSelectionChanged: (() -> Void)?
 
-    init(repository: HomeRepository, cache: RealmManager, session: SessionContext,
-         defaults: UserDefaults = .standard) {
+    init(
+        repository: HomeRepository,
+        cache: RealmManager,
+        session: SessionContext,
+        defaults: UserDefaults = .standard
+    ) {
         self.repository = repository
         self.cache = cache
         self.session = session
@@ -86,7 +90,8 @@ final class SelectedProjectStore: ObservableObject {
     private func restoreSelection() async {
         let code = selectedProject?.code ?? defaults.string(forKey: preferenceKey)
         let candidate = projects.first(where: { $0.code == code }) ?? projects.first
-        if selectedProject != nil && selectedProject?.code != candidate?.code, let request = onSelectionRequested {
+        if selectedProject != nil && selectedProject?.code != candidate?.code,
+           let request = onSelectionRequested {
             _ = await request(candidate)
         } else {
             commit(candidate)

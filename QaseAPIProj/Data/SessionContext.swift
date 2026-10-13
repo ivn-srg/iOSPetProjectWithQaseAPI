@@ -18,6 +18,7 @@ final class SessionContext {
         generation &+= 1
         self.ownerID = ownerID
     }
+
     func invalidate() {
         generation &+= 1
         ownerID = nil

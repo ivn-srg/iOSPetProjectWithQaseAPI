@@ -27,9 +27,11 @@ final class SuiteCatalogLoader {
             values.append(contentsOf: newValues)
             offset += page.entities.count
             let total = page.filtered ?? page.total
-            let finished = page.entities.isEmpty || (total.map { offset >= $0 } ?? (page.entities.count < pageSize))
+            let finished = page.entities
+                .isEmpty || (total.map { offset >= $0 } ?? (page.entities.count < pageSize))
             if finished { break }
-            guard !newValues.isEmpty else { throw API.NetError.invalidRequest("The suite catalog did not advance") }
+            guard !newValues.isEmpty
+            else { throw API.NetError.invalidRequest("The suite catalog did not advance") }
         }
         guard accepts(isCurrent) else { throw CancellationError() }
         guard dao.replaceSuiteCatalog(values, projectCode: projectCode, stamp: stamp) else {
@@ -57,6 +59,7 @@ final class SuiteCatalogLoader {
     }
 
     static func pathTitle(catalog: [TestListEntity], suiteID: Int?) -> String {
-        breadcrumbs(catalog: catalog, suiteID: suiteID)?.map(\.title).joined(separator: " › ") ?? "Path unavailable".localized
+        breadcrumbs(catalog: catalog, suiteID: suiteID)?.map(\.title).joined(separator: " › ") ?? "Path unavailable"
+            .localized
     }
 }

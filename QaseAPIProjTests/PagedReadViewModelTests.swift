@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 @testable import QaseAPIProj
+import Testing
 
 @MainActor
 struct PagedReadViewModelTests {
@@ -23,9 +23,13 @@ struct PagedReadViewModelTests {
 
     @Test("Offline search is restricted to cached matching cases and disables pagination")
     func cachedSearch() async {
-        let model = PagedReadViewModel<CaseSummary>(session: SessionContext(ownerID: "cache"), cached: { query in
-            [Self.item(1, "Login"), Self.item(2, "Project")].filter { $0.title.localizedCaseInsensitiveContains(query) }
-        }) { _, _ in throw URLError(.notConnectedToInternet) }
+        let model = PagedReadViewModel<CaseSummary>(
+            session: SessionContext(ownerID: "cache"),
+            cached: { query in
+                [Self.item(1, "Login"), Self.item(2, "Project")]
+                    .filter { $0.title.localizedCaseInsensitiveContains(query) }
+            }
+        ) { _, _ in throw URLError(.notConnectedToInternet) }
         model.query = "login"
         await model.reload()
         #expect(model.items.map(\.id) == [1])
@@ -39,7 +43,10 @@ struct PagedReadViewModelTests {
         var offsets: [Int] = []
         let model = PagedReadViewModel<CaseSummary>(session: SessionContext(ownerID: "pages")) { _, offset in
             offsets.append(offset)
-            let items = offset == 0 ? [Self.item(1, "First"), Self.item(2, "Second")] : [Self.item(2, "Second"), Self.item(3, "Third")]
+            let items = offset == 0 ? [Self.item(1, "First"), Self.item(2, "Second")] : [
+                Self.item(2, "Second"),
+                Self.item(3, "Third")
+            ]
             return QaseAPIListResult(total: 4, filtered: 4, count: 2, entities: items)
         }
         await model.reload()
@@ -94,6 +101,11 @@ private final class SearchResponseControl {
     }
 
     private func page(title: String) -> QaseAPIListResult<CaseSummary> {
-        QaseAPIListResult(total: 1, filtered: 1, count: 1, entities: [CaseSummary(id: 1, title: title, description: nil, priority: nil, automation: nil)])
+        QaseAPIListResult(
+            total: 1,
+            filtered: 1,
+            count: 1,
+            entities: [CaseSummary(id: 1, title: title, description: nil, priority: nil, automation: nil)]
+        )
     }
 }

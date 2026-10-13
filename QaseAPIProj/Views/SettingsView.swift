@@ -8,8 +8,15 @@ import UIKit
 private struct SettingsRowSurface: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
     func body(content: Content) -> some View {
-        content.listRowBackground(Color(uiColor: colorScheme == .dark ? AppTheme.Palette.surface : AppTheme.Palette.secondarySurface))
-            .listRowInsets(EdgeInsets(top: 4, leading: AppTheme.Space.regular, bottom: 4, trailing: AppTheme.Space.regular))
+        content
+            .listRowBackground(Color(uiColor: colorScheme == .dark ? AppTheme.Palette.surface : AppTheme
+                    .Palette.secondarySurface))
+            .listRowInsets(EdgeInsets(
+                top: 4,
+                leading: AppTheme.Space.regular,
+                bottom: 4,
+                trailing: AppTheme.Space.regular
+            ))
     }
 }
 
@@ -39,13 +46,15 @@ private struct SettingsRow: View {
                         Text(title).font(AppTheme.Typography.body)
                             .fixedSize(horizontal: true, vertical: true)
                         Spacer(minLength: AppTheme.Space.small)
-                        Text(value).font(.footnote).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
+                        Text(value).font(.footnote)
+                            .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
                             .fixedSize(horizontal: true, vertical: true)
                     }
                     VStack(alignment: .leading, spacing: AppTheme.Space.tiny) {
                         Text(title).font(AppTheme.Typography.body)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(value).font(.footnote).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
+                        Text(value).font(.footnote)
+                            .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
                             .fixedSize(horizontal: false, vertical: true)
                     }.multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -55,7 +64,10 @@ private struct SettingsRow: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if disclosure { Image(systemName: "chevron.right").font(.caption).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText)).fixedSize().accessibilityHidden(true) }
+            if disclosure {
+                Image(systemName: "chevron.right").font(.caption)
+                    .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText)).fixedSize()
+                    .accessibilityHidden(true) }
         }
         .foregroundStyle(Color(uiColor: destructive ? AppTheme.Palette.danger : AppTheme.Palette.text))
         .frame(minHeight: AppTheme.Size.touch)
@@ -79,38 +91,67 @@ struct SettingsRootView: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: AppTheme.Space.tiny) {
                         Text("Qase account".localized).font(AppTheme.Typography.card)
-                        Text(model.accountSubtitle).font(.footnote).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
+                        Text(model.accountSubtitle).font(.footnote)
+                            .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
                     }
                 }.padding(.vertical, AppTheme.Space.small)
                     .modifier(SettingsRowSurface()).accessibilityElement(children: .combine)
             }
             Section {
-                Button { onRoute(.appearance) } label: { SettingsRow(title: "Theme".localized, symbol: "circle.lefthalf.filled", value: preferences.appearance.title) }
-                    .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.appearance")
-                Button { onRoute(.language) } label: { SettingsRow(title: "Language".localized, symbol: "globe", value: model.languageName) }
-                    .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.language")
-            } header: { Text("Appearance".localized) } footer: { Text("Language is changed in iOS Settings.".localized) }
+                Button { onRoute(.appearance) } label: { SettingsRow(
+                    title: "Theme".localized,
+                    symbol: "circle.lefthalf.filled",
+                    value: preferences.appearance.title
+                ) }
+                .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.appearance")
+                Button { onRoute(.language) } label: { SettingsRow(
+                    title: "Language".localized,
+                    symbol: "globe",
+                    value: model.languageName
+                ) }
+                .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.language")
+            } header: { Text("Appearance".localized) } footer: {
+                Text("Language is changed in iOS Settings.".localized) }
             Section("Connection and data".localized) {
-                Button { onRoute(.token) } label: { SettingsRow(title: "API token".localized, symbol: "key", value: "••••••••") }
-                    .modifier(SettingsRowSurface())
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("API token".localized)
-                    .accessibilityValue("Hidden value".localized)
-                    .accessibilityIdentifier("settings.token")
-                Button { onRoute(.cache) } label: { SettingsRow(title: "Manage cache".localized, symbol: "externaldrive") }
-                    .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.cache")
+                Button { onRoute(.token) } label: { SettingsRow(
+                    title: "API token".localized,
+                    symbol: "key",
+                    value: "••••••••"
+                ) }
+                .modifier(SettingsRowSurface())
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("API token".localized)
+                .accessibilityValue("Hidden value".localized)
+                .accessibilityIdentifier("settings.token")
+                Button { onRoute(.cache) } label: { SettingsRow(
+                    title: "Manage cache".localized,
+                    symbol: "externaldrive"
+                ) }
+                .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.cache")
             }
             Section("Application".localized) {
-                Button { onRoute(.about) } label: { SettingsRow(title: "About application".localized, symbol: "info.circle", value: model.version) }
-                    .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.about")
+                Button { onRoute(.about) } label: { SettingsRow(
+                    title: "About application".localized,
+                    symbol: "info.circle",
+                    value: model.version
+                ) }
+                .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.about")
             }
             Section {
-                Button { onRoute(.logout) } label: { SettingsRow(title: "Sign out".localized, symbol: "rectangle.portrait.and.arrow.right", destructive: true, disclosure: false) }
-                    .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.logout")
+                Button { onRoute(.logout) } label: { SettingsRow(
+                    title: "Sign out".localized,
+                    symbol: "rectangle.portrait.and.arrow.right",
+                    destructive: true,
+                    disclosure: false
+                ) }
+                .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.logout")
             }
         }
         .modifier(SettingsListStyle()).accessibilityIdentifier("settingsScreen")
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in model.refreshLanguage() }
+        .onReceive(NotificationCenter.default.publisher(
+            for: UIApplication.didBecomeActiveNotification
+        )) { _ in
+            model.refreshLanguage() }
     }
 }
 
@@ -125,7 +166,12 @@ struct AppearanceSettingsView: View {
                             Image(systemName: appearance.symbol).frame(width: 24).accessibilityHidden(true)
                             Text(appearance.title)
                             Spacer()
-                            if preferences.appearance == appearance { Image(systemName: "checkmark").foregroundStyle(Color(uiColor: AppTheme.Palette.accent)).accessibilityHidden(true) }
+                            if preferences
+                                .appearance ==
+                                appearance {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(Color(uiColor: AppTheme.Palette.accent))
+                                    .accessibilityHidden(true) }
                         }.frame(minHeight: AppTheme.Size.touch)
                     }
                     .modifier(SettingsRowSurface())
@@ -144,29 +190,48 @@ struct CacheSettingsView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: AppTheme.Space.small) {
-                    Text("Saved data".localized).font(.footnote).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
-                    if model.cacheError == nil { Text((model.hasCachedData ? "Data available" : "No cached data").localized).font(AppTheme.Typography.card) }
-                    Text("Local copies of projects, suites, cases and summaries.".localized).font(.footnote).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
+                    Text("Saved data".localized).font(.footnote)
+                        .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
+                    if model
+                        .cacheError ==
+                        nil {
+                        Text((model.hasCachedData ? "Data available" : "No cached data").localized)
+                            .font(AppTheme.Typography.card) }
+                    Text("Local copies of projects, suites, cases and summaries.".localized).font(.footnote)
+                        .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
                 }.padding(.vertical, AppTheme.Space.small).modifier(SettingsRowSurface())
             }
             Section {
-                Button { confirmingClear = true } label: { SettingsRow(title: "Clear cache".localized, symbol: "trash", destructive: true, disclosure: false) }
-                    .disabled(!model.hasCachedData || model.cacheError != nil)
-                    .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.cache.clear")
-            } footer: { Text("Authorization, selected project and viewing history will be preserved.".localized) }
+                Button { confirmingClear = true } label: { SettingsRow(
+                    title: "Clear cache".localized,
+                    symbol: "trash",
+                    destructive: true,
+                    disclosure: false
+                ) }
+                .disabled(!model.hasCachedData || model.cacheError != nil)
+                .modifier(SettingsRowSurface()).accessibilityIdentifier("settings.cache.clear")
+            } footer: {
+                Text("Authorization, selected project and viewing history will be preserved.".localized) }
             if let message = model.cacheError {
                 Section {
                     Text(message).foregroundStyle(Color(uiColor: AppTheme.Palette.danger))
                     Button("Retry".localized, action: model.refreshCache)
                 }
             }
-            if let message = model.cacheNotice { Section { Text(message).foregroundStyle(Color(uiColor: AppTheme.Palette.success)) } }
+            if let message = model
+                .cacheNotice {
+                Section { Text(message).foregroundStyle(Color(uiColor: AppTheme.Palette.success)) } }
         }
         .modifier(SettingsListStyle()).onAppear(perform: model.refreshCache)
-        .confirmationDialog("Clear downloaded data?".localized, isPresented: $confirmingClear, titleVisibility: .visible) {
+        .confirmationDialog(
+            "Clear downloaded data?".localized,
+            isPresented: $confirmingClear,
+            titleVisibility: .visible
+        ) {
             Button("Clear cache".localized, role: .destructive, action: model.clearCache)
             Button("Cancel".localized, role: .cancel) { }
-        } message: { Text("Authorization, selected project and viewing history will be preserved.".localized) }
+        } message: { Text("Authorization, selected project and viewing history will be preserved.".localized)
+        }
     }
 }
 
@@ -179,8 +244,18 @@ struct AboutSettingsView: View {
                     .padding(.vertical, AppTheme.Space.small).modifier(SettingsRowSurface())
             }
             Section {
-                SettingsRow(title: "Version".localized, symbol: "number", value: model.version, disclosure: false).modifier(SettingsRowSurface())
-                SettingsRow(title: "Build".localized, symbol: "hammer", value: model.buildNumber, disclosure: false).modifier(SettingsRowSurface())
+                SettingsRow(
+                    title: "Version".localized,
+                    symbol: "number",
+                    value: model.version,
+                    disclosure: false
+                ).modifier(SettingsRowSurface())
+                SettingsRow(
+                    title: "Build".localized,
+                    symbol: "hammer",
+                    value: model.buildNumber,
+                    disclosure: false
+                ).modifier(SettingsRowSurface())
             } footer: { Text("A client for managing testing in Qase.".localized) }
         }.modifier(SettingsListStyle())
     }
@@ -200,9 +275,11 @@ struct TokenReplacementView: View {
                         .accessibilityIdentifier("settings.token.input")
                 }.frame(minHeight: AppTheme.Size.touch).modifier(SettingsRowSurface())
             } header: { Text("The new token is checked before replacing the current one.".localized) }
-              footer: { Text("Your current authorization will be preserved if an error occurs.".localized) }
+                footer: { Text("Your current authorization will be preserved if an error occurs.".localized) }
             if model.isSaving { Section { ProgressView("Checking token".localized) } }
-            if let message = model.errorMessage { Section { Text(message).foregroundStyle(Color(uiColor: AppTheme.Palette.danger)) } }
+            if let message = model
+                .errorMessage {
+                Section { Text(message).foregroundStyle(Color(uiColor: AppTheme.Palette.danger)) } }
         }.modifier(SettingsListStyle())
     }
 }

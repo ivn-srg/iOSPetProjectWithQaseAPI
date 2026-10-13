@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class GeneralDetailCaseViewController: UIViewController {
     var onKeyboardVisibilityChanged: ((Bool) -> Void)?
@@ -73,12 +73,24 @@ final class GeneralDetailCaseViewController: UIViewController {
         stepGroup.spacing = 8
         content.addArrangedSubview(stepGroup)
         dataSections = [main, conditions, properties, stepGroup]
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardShown),
-            name: UIResponder.keyboardDidShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardShown),
-            name: UIResponder.keyboardDidChangeFrameNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardHidden),
-            name: UIResponder.keyboardWillHideNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardShown),
+            name: UIResponder.keyboardDidShowNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardShown),
+            name: UIResponder.keyboardDidChangeFrameNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardHidden),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
         updateValues()
     }
 

@@ -20,7 +20,11 @@ final class SettingsViewController: UIHostingController<SettingsRootView> {
         self.model = model
         self.prepareForChange = prepareForChange
         super.init(rootView: SettingsRootView(model: model, preferences: model.preferences))
-        rootView = SettingsRootView(model: model, preferences: model.preferences, onRoute: { [weak self] route in self?.show(route) })
+        rootView = SettingsRootView(
+            model: model,
+            preferences: model.preferences,
+            onRoute: { [weak self] route in self?.show(route) }
+        )
         title = "Settings".localized
         navigationItem.largeTitleDisplayMode = .always
     }
@@ -42,8 +46,11 @@ final class SettingsViewController: UIHostingController<SettingsRootView> {
             Task { [weak self] in
                 let opened = await UIApplication.shared.open(url)
                 if !opened, let self {
-                    UIAlertController.showSimpleAlert(on: self, title: "Error".localized,
-                        message: "Could not open iOS Settings".localized)
+                    UIAlertController.showSimpleAlert(
+                        on: self,
+                        title: "Error".localized,
+                        message: "Could not open iOS Settings".localized
+                    )
                 }
             }
         case .token:
@@ -78,8 +85,12 @@ final class SettingsViewController: UIHostingController<SettingsRootView> {
             guard await self.prepareForChange(), !Task.isCancelled else { return }
             do { try await self.model.auth.logout() }
             catch {
-                NotificationCenter.default.post(name: .settingsOperationFailed, object: nil,
-                    userInfo: ["message": "Could not complete sign out".localized])
+                NotificationCenter.default.post(
+                    name: .settingsOperationFailed,
+                    object: nil,
+                    userInfo: ["message": "Could not complete sign out"
+                        .localized]
+                )
             }
         }
     }
@@ -97,15 +108,26 @@ private final class TokenReplacementController: UIHostingController<TokenReplace
         super.init(rootView: TokenReplacementView(model: model))
         title = "API token".localized
         navigationItem.largeTitleDisplayMode = .never
-        let cancelButton = UIBarButtonItem(title: "Cancel".localized, style: .plain, target: self, action: #selector(cancel))
+        let cancelButton = UIBarButtonItem(
+            title: "Cancel".localized,
+            style: .plain,
+            target: self,
+            action: #selector(cancel)
+        )
         cancelButton.accessibilityIdentifier = "settings.token.cancel"
         navigationItem.leftBarButtonItem = cancelButton
-        let saveButton = UIBarButtonItem(title: "Save".localized, style: .done, target: self, action: #selector(save))
+        let saveButton = UIBarButtonItem(
+            title: "Save".localized,
+            style: .done,
+            target: self,
+            action: #selector(save)
+        )
         saveButton.accessibilityIdentifier = "settings.token.save"
         saveButton.isEnabled = model.canSave
         navigationItem.rightBarButtonItem = saveButton
         observation = model.$token.combineLatest(model.$isSaving).sink { [weak self] token, saving in
-            self?.navigationItem.rightBarButtonItem?.isEnabled = !saving && !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            self?.navigationItem.rightBarButtonItem?.isEnabled = !saving && !token
+                .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
     }
 

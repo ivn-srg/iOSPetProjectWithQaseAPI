@@ -25,10 +25,21 @@ final class WeakHomeRouter: RepositoryRouting {
     func showRun(id: Int) { target?.showRun(id: id) }
     func showDefects() { target?.showDefects() }
     func showCase(reference: TestCaseReference) { target?.showCase(reference: reference) }
-    func openSuite(_ suite: TestListEntity, from model: TestEntitiesViewModel) { (target as? RepositoryRouting)?.openSuite(suite, from: model) }
-    func openAncestor(_ breadcrumb: RepositoryBreadcrumb, from model: TestEntitiesViewModel) { (target as? RepositoryRouting)?.openAncestor(breadcrumb, from: model) }
+    func openSuite(_ suite: TestListEntity, from model: TestEntitiesViewModel) {
+        (target as? RepositoryRouting)?.openSuite(
+            suite,
+            from: model
+        ) }
+
+    func openAncestor(_ breadcrumb: RepositoryBreadcrumb, from model: TestEntitiesViewModel) {
+        (target as? RepositoryRouting)?.openAncestor(
+            breadcrumb,
+            from: model
+        ) }
+
     func repositoryBack() { (target as? RepositoryRouting)?.repositoryBack() }
-    func createEntity(in location: RepositoryLocation) { (target as? RepositoryRouting)?.createEntity(in: location) }
+    func createEntity(in location: RepositoryLocation) {
+        (target as? RepositoryRouting)?.createEntity(in: location) }
 
 }
 
@@ -52,12 +63,20 @@ protocol FormDepartureParticipant: ProjectDraft {
 
 @MainActor
 enum FormDepartureGuard {
-    static func confirm(_ draft: ProjectDraft, on presenter: UIViewController, message: String) async -> Bool {
+    static func confirm(
+        _ draft: ProjectDraft,
+        on presenter: UIViewController,
+        message: String
+    ) async -> Bool {
         guard !draft.isSavingDraft else { return false }
         guard draft.hasUnsavedChanges else { return true }
         guard presenter.presentedViewController == nil else { return false }
         let decision: DraftDecision = await withCheckedContinuation { continuation in
-            let alert = UIAlertController(title: "Discard changes?".localized, message: message, preferredStyle: .alert)
+            let alert = UIAlertController(
+                title: "Discard changes?".localized,
+                message: message,
+                preferredStyle: .alert
+            )
             alert.addAction(UIAlertAction(title: "Continue editing".localized, style: .cancel) { _ in
                 continuation.resume(returning: .stay)
             })
@@ -118,7 +137,10 @@ final class ApplicationProjectCoordinator {
         return true
     }
 
-    func prepareForChange(in controller: UIViewController? = nil, switchingProject: Bool = true) async -> Bool {
+    func prepareForChange(
+        in controller: UIViewController? = nil,
+        switchingProject: Bool = true
+    ) async -> Bool {
         guard let shell, !isPreparingChange else { return false }
         let drafts = participants(in: controller ?? shell)
         guard !drafts.contains(where: \.isSavingDraft) else { return false }
@@ -128,13 +150,18 @@ final class ApplicationProjectCoordinator {
         isPreparingChange = true
         defer { isPreparingChange = false }
         let decision = await decisionForDrafts(dirty, from: shell, switchingProject: switchingProject)
-        guard SessionContext.shared.isCurrent(stamp), !drafts.contains(where: \.isSavingDraft) else { return false }
+        guard SessionContext.shared.isCurrent(stamp),
+              !drafts.contains(where: \.isSavingDraft) else { return false }
         do {
             return try await ProjectSwitchGuard().resolve(drafts, decision: decision)
         } catch {
             let presenter = topPresenter(shell)
-            UIAlertController.showSimpleAlert(on: presenter, title: "Error".localized,
-                message: "Could not save changes. The project was not changed.".localized)
+            UIAlertController.showSimpleAlert(
+                on: presenter,
+                title: "Error".localized,
+                message: "Could not save changes. The project was not changed."
+                    .localized
+            )
             return false
         }
     }
@@ -159,23 +186,39 @@ final class ApplicationProjectCoordinator {
         return controller
     }
 
-    private func decisionForDrafts(_ drafts: [ProjectDraft], from shell: UIViewController, switchingProject: Bool) async -> DraftDecision {
+    private func decisionForDrafts(
+        _ drafts: [ProjectDraft],
+        from shell: UIViewController,
+        switchingProject: Bool
+    ) async -> DraftDecision {
         await withCheckedContinuation { continuation in
-            let alert = UIAlertController(title: "Unsaved changes".localized,
-                message: (switchingProject ? "Save changes before switching projects?" : "Save changes before leaving this screen?").localized, preferredStyle: .alert)
-            let save = UIAlertAction(title: (switchingProject ? "Save and switch" : "Save and continue").localized, style: .default) { _ in
+            let alert = UIAlertController(
+                title: "Unsaved changes".localized,
+                message: (switchingProject ?
+                    "Save changes before switching projects?" :
+                    "Save changes before leaving this screen?").localized,
+                preferredStyle: .alert
+            )
+            let save = UIAlertAction(
+                title: (switchingProject ? "Save and switch" : "Save and continue").localized,
+                style: .default
+            ) { _ in
                 continuation.resume(returning: .save)
             }
             save.isEnabled = drafts.allSatisfy(\.canSaveDraft)
             alert.addAction(save)
-            alert.addAction(UIAlertAction(title: (switchingProject ? "Discard and switch" : "Discard and continue").localized, style: .destructive) { _ in
+            alert.addAction(UIAlertAction(
+                title: (switchingProject ? "Discard and switch" : "Discard and continue").localized,
+                style: .destructive
+            ) { _ in
                 continuation.resume(returning: .discard)
             })
             alert.addAction(UIAlertAction(title: "Stay".localized, style: .cancel) { _ in
                 continuation.resume(returning: .stay)
             })
             if !save.isEnabled {
-                alert.message = "Some changes cannot be saved. Stay to finish editing or discard them.".localized
+                alert.message = "Some changes cannot be saved. Stay to finish editing or discard them."
+                    .localized
             }
             topPresenter(shell).present(alert, animated: true)
         }

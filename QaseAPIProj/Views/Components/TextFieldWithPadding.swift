@@ -14,12 +14,12 @@ final class TextFieldWithPadding: UITextField {
         bottom: 10,
         right: 10
     )
-    
+
     override func textRect(forBounds bounds: CGRect) -> CGRect {
         let rect = super.textRect(forBounds: bounds)
         return rect.inset(by: textPadding)
     }
-    
+
     override func editingRect(forBounds bounds: CGRect) -> CGRect {
         let rect = super.editingRect(forBounds: bounds)
         return rect.inset(by: textPadding)
@@ -31,7 +31,7 @@ extension TextFieldWithPadding: UITextFieldDelegate {
         textField.layer.borderColor = AppTheme.fioletColor.cgColor
         return true
     }
-    
+
     func textFieldDidEndEditing(_ textField: UITextField, reason: UITextField.DidEndEditingReason) {
         textField.layer.borderColor = UIColor.gray.cgColor
     }

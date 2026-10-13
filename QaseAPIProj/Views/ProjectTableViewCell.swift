@@ -8,9 +8,9 @@
 import UIKit
 
 class ProjectTableViewCell: UITableViewCell {
-    
+
     static let cellId = "ProjectTableViewCell"
-    
+
     // MARK: - UI
     private lazy var leftContainerVw: UIView = {
         let lvw = UIView()
@@ -19,7 +19,7 @@ class ProjectTableViewCell: UITableViewCell {
         lvw.layer.cornerRadius = 2
         return lvw
     }()
-    
+
     private lazy var contentStackVw: UIStackView = {
         let stackVw = UIStackView()
         stackVw.translatesAutoresizingMaskIntoConstraints = false
@@ -27,7 +27,7 @@ class ProjectTableViewCell: UITableViewCell {
         stackVw.axis = .vertical
         return stackVw
     }()
-    
+
     private lazy var nameLbl: UILabel = {
         let nameLbl = UILabel()
         nameLbl.translatesAutoresizingMaskIntoConstraints = false
@@ -35,7 +35,7 @@ class ProjectTableViewCell: UITableViewCell {
         nameLbl.numberOfLines = 0
         return nameLbl
     }()
-    
+
     private lazy var codeLbl: UILabel = {
         let cLbl = UILabel()
         cLbl.translatesAutoresizingMaskIntoConstraints = false
@@ -44,7 +44,7 @@ class ProjectTableViewCell: UITableViewCell {
         cLbl.textColor = .systemGray
         return cLbl
     }()
-    
+
     private lazy var testsAndSuitesLbl: UILabel = {
         let tLbl = UILabel()
         tLbl.translatesAutoresizingMaskIntoConstraints = false
@@ -52,37 +52,37 @@ class ProjectTableViewCell: UITableViewCell {
         tLbl.numberOfLines = 0
         return tLbl
     }()
-    
+
     // MARK: - lifecycles
-    
+
     func configure(with project: Project) {
         let infoAboutActiveRuns: String
         let textForLbl: String
-        
+
         if let projectCounts = project.counts {
             if let projectTestRuns = projectCounts.runs {
                 infoAboutActiveRuns = projectTestRuns.active == 0
-                ? "No active runs"
-                : "\(projectTestRuns.active) active run(s)"
+                    ? "No active runs"
+                    : "\(projectTestRuns.active) active run(s)"
             } else { infoAboutActiveRuns =  "No active runs" }
             textForLbl = "\(projectCounts.cases) cases | \(projectCounts.suites) suites | \(infoAboutActiveRuns)"
         } else {
             infoAboutActiveRuns = "No active runs"
             textForLbl = ""
         }
-        
+
         nameLbl.text = project.title
         codeLbl.text = project.code
         testsAndSuitesLbl.text = textForLbl
-        
+
         contentView.backgroundColor = AppTheme.bgSecondaryColor
         contentView.addSubview(contentStackVw)
         contentView.addSubview(leftContainerVw)
-        
+
         contentStackVw.addArrangedSubview(nameLbl)
         contentStackVw.addArrangedSubview(codeLbl)
         contentStackVw.addArrangedSubview(testsAndSuitesLbl)
-        
+
         leftContainerVw.snp.makeConstraints {
             $0.verticalEdges.equalToSuperview().inset(6)
             $0.leading.equalToSuperview().offset(8)

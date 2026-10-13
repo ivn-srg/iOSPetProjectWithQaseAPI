@@ -18,12 +18,13 @@ extension UIViewController {
                 try await action()
             } catch {
                 var errorMessage = "Unknown Error".localized
-                
+
                 if let error = error as? API.NetError {
                     switch error {
                     case .invalidURL, .timeout:
                         errorMessage = "Something went wrong".localized
-                    case .parsingError(let message), .otherNetworkError(let message), .serializationError(let message):
+                    case .parsingError(let message), .otherNetworkError(let message),
+                         .serializationError(let message):
                         errorMessage = message
                     case .noInternetConnection:
                         errorMessage = "Internet connection problem".localized
@@ -37,7 +38,7 @@ extension UIViewController {
                 } else {
                     errorMessage = error.localizedDescription
                 }
-                
+
                 await MainActor.run {
                     UIAlertController.showSimpleAlert(
                         on: presentingViewController == nil ? self : presentingViewController!,

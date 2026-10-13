@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class CustomSelectableView: UIButton {
     private let textFieldType: FieldType
@@ -77,9 +77,14 @@ final class CustomSelectableView: UIButton {
 
     override func layoutSubviews() {
         let available = bounds.width - 28
-        let measuringSize = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-        let needed = titleLbl.sizeThatFits(measuringSize).width + valueLabel.sizeThatFits(measuringSize).width + (marker.isHidden ? 0 : 12) + 16
-        let vertical = traitCollection.preferredContentSizeCategory.isAccessibilityCategory || needed > available
+        let measuringSize = CGSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude
+        )
+        let needed = titleLbl.sizeThatFits(measuringSize).width + valueLabel.sizeThatFits(measuringSize)
+            .width + (marker.isHidden ? 0 : 12) + 16
+        let vertical = traitCollection.preferredContentSizeCategory
+            .isAccessibilityCategory || needed > available
         if vertical != isVertical {
             isVertical = vertical
             applyLayout()
@@ -177,7 +182,11 @@ final class CustomSelectableView: UIButton {
         marker.isHidden = marker.backgroundColor == nil
         accessibilityValue = valueLabel.text
         menu = UIMenu(children: dataSource.map { item in
-            UIAction(title: item.title, image: item.image, state: item.id == selectableValue?.id ? .on : .off) { [weak self] _ in
+            UIAction(
+                title: item.title,
+                image: item.image,
+                state: item.id == selectableValue?.id ? .on : .off
+            ) { [weak self] _ in
                 guard let self else { return }
                 selectableValue = item
                 updateTestCaseData()

@@ -53,8 +53,11 @@ struct AuthReplacementDependencies {
             ApiServiceConfiguration.shared.setMockingServiceEnabled(usesDemo)
             RealmManager.shared.useDemoStore(usesDemo)
         }, notifyAuthChanged: { cacheCleanupFailed in
-            NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil,
-                                            userInfo: ["cacheCleanupFailed": cacheCleanupFailed])
+            NotificationCenter.default.post(
+                name: .didChangeAuthStatus,
+                object: nil,
+                userInfo: ["cacheCleanupFailed": cacheCleanupFailed]
+            )
         })
     }
 }
@@ -70,15 +73,18 @@ final class AuthManager {
     private let testLock = NSLock()
     private var testCredential: AuthCredential?
     private var usesTestTokenStore: Bool {
-#if DEBUG
-        CommandLine.arguments.contains("UITests")
-#else
-        false
-#endif
+        #if DEBUG
+            CommandLine.arguments.contains("UITests")
+        #else
+            false
+        #endif
     }
 
-    init(userDefaults: UserDefaults = .standard, credentialStore: AuthCredentialStorage? = nil,
-         replacementDependencies: AuthReplacementDependencies? = nil) {
+    init(
+        userDefaults: UserDefaults = .standard,
+        credentialStore: AuthCredentialStorage? = nil,
+        replacementDependencies: AuthReplacementDependencies? = nil
+    ) {
         self.userDefaults = userDefaults
         self.credentialStore = credentialStore
         self.replacementDependencies = replacementDependencies
@@ -109,9 +115,13 @@ final class AuthManager {
         guard valid else { throw API.NetError.invalidCredantials }
         let isSameToken = token == originalCredential.token
         return ValidatedTokenCandidate(
-            credential: isSameToken ? originalCredential : AuthCredential(token: token, ownerID: UUID().uuidString),
+            credential: isSameToken ? originalCredential : AuthCredential(
+                token: token,
+                ownerID: UUID().uuidString
+            ),
             originalCredential: originalCredential, sessionStamp: stamp, usesDemo: usesDemo,
-            isSameToken: isSameToken, managerID: managerID)
+            isSameToken: isSameToken, managerID: managerID
+        )
     }
 
     @MainActor
@@ -157,7 +167,8 @@ final class AuthManager {
     private func currentCredential() -> AuthCredential? {
         if let credentialStore { return credentialStore.getCredential() }
         if usesTestTokenStore {
-            testLock.lock(); defer { testLock.unlock() }
+            testLock.lock()
+            defer { testLock.unlock() }
             return testCredential
         }
         return keychain.getCredential()
@@ -165,7 +176,8 @@ final class AuthManager {
 
     @MainActor
     func loggedIn(token: String?) async throws {
-        guard let token else { try await logout(); return }
+        guard let token else { try await logout()
+            return }
         let startingStamp = SessionContext.shared.capture()
         let usesDemo = usesTestTokenStore || token == "QASE_DEMO"
         let network: NetworkManager = usesDemo ? APIMockManager.shared : APIManager.shared
@@ -204,16 +216,21 @@ final class AuthManager {
     }
 
     private func saveCredential(_ record: AuthCredential) throws {
-        if let credentialStore { try credentialStore.saveCredential(record); return }
+        if let credentialStore { try credentialStore.saveCredential(record)
+            return }
         if usesTestTokenStore {
-            testLock.lock(); defer { testLock.unlock() }
+            testLock.lock()
+            defer { testLock.unlock() }
             testCredential = record
         } else { try keychain.saveCredential(record) }
     }
+
     private func deleteCredential() throws {
-        if let credentialStore { try credentialStore.deleteToken(); return }
+        if let credentialStore { try credentialStore.deleteToken()
+            return }
         if usesTestTokenStore {
-            testLock.lock(); defer { testLock.unlock() }
+            testLock.lock()
+            defer { testLock.unlock() }
             testCredential = nil
         } else { try keychain.deleteToken() }
     }
@@ -224,26 +241,36 @@ private final class KeychainService: AuthCredentialStorage {
     private let key = "authToken"
     private let lock = NSLock()
     private var query: [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword, kSecAttrAccount as String: key, kSecAttrLabel as String: key]
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: key,
+            kSecAttrLabel as String: key
+        ]
     }
 
     func saveCredential(_ record: AuthCredential) throws {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         try saveUnlocked(record)
     }
+
     private func saveUnlocked(_ record: AuthCredential) throws {
         let data = try JSONEncoder().encode(record)
         // SecItemUpdate replaces token and owner together; never delete before saving.
         let status = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
         if status == errSecItemNotFound {
-            var insertion = query; insertion[kSecValueData as String] = data
+            var insertion = query
+            insertion[kSecValueData as String] = data
             let result = SecItemAdd(insertion as CFDictionary, nil)
             guard result == errSecSuccess else { throw KeychainError.unhandledError(status: result) }
         } else if status != errSecSuccess { throw KeychainError.unhandledError(status: status) }
     }
+
     func getCredential() -> AuthCredential? {
-        lock.lock(); defer { lock.unlock() }
-        var read = query; read[kSecReturnData as String] = true
+        lock.lock()
+        defer { lock.unlock() }
+        var read = query
+        read[kSecReturnData as String] = true
         var item: CFTypeRef?
         guard SecItemCopyMatching(read as CFDictionary, &item) == errSecSuccess,
               let data = item as? Data, let record = AuthCredential.decode(data) else { return nil }
@@ -253,9 +280,12 @@ private final class KeychainService: AuthCredentialStorage {
         }
         return record
     }
+
     func deleteToken() throws {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         let status = SecItemDelete(query as CFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else { throw KeychainError.unhandledError(status: status) }
+        guard status == errSecSuccess || status == errSecItemNotFound
+        else { throw KeychainError.unhandledError(status: status) }
     }
 }

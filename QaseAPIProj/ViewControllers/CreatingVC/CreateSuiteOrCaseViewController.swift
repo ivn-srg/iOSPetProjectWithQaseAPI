@@ -1,5 +1,5 @@
-import UIKit
 import SnapKit
+import UIKit
 
 final class CreateSuiteOrCaseViewController: UIViewController {
     private let viewModel: CreateSuiteOrCaseViewModel
@@ -13,17 +13,30 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     private var isConfirmingDeparture = false
     private var loadTask: Task<Void, Never>?
     private weak var focusedField: GeneralCaseTextField?
-    private lazy var parentCatalog = SuitePickerViewModel(projectCode: viewModel.projectCode, projectTitle: projectTitle)
+    private lazy var parentCatalog = SuitePickerViewModel(
+        projectCode: viewModel.projectCode,
+        projectTitle: projectTitle
+    )
     private lazy var suiteView = CreateSuiteView(linkedViewModel: viewModel)
     private lazy var caseView = CreateTestCaseView(linkedViewModel: viewModel)
-    private lazy var createItem = UIBarButtonItem(title: "Create".localized, style: .plain, target: self, action: #selector(createEntity))
-    private lazy var closeItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(closeForm))
+    private lazy var createItem = UIBarButtonItem(
+        title: "Create".localized,
+        style: .plain,
+        target: self,
+        action: #selector(createEntity)
+    )
+    private lazy var closeItem = UIBarButtonItem(
+        barButtonSystemItem: .close,
+        target: self,
+        action: #selector(closeForm)
+    )
     private lazy var spinner: UIActivityIndicatorView = {
         let value = UIActivityIndicatorView(style: .medium)
         value.color = AppTheme.Palette.accent
         value.accessibilityLabel = "Saving".localized
         return value
     }()
+
     private lazy var segment: UISegmentedControl = {
         let value = UISegmentedControl(items: ["Suite".localized, "Case".localized])
         value.selectedSegmentIndex = 0
@@ -32,7 +45,11 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         return value
     }()
 
-    init(viewModel: CreateSuiteOrCaseViewModel, projectTitle: String? = nil, onEntityCreated: (() -> Void)? = nil) {
+    init(
+        viewModel: CreateSuiteOrCaseViewModel,
+        projectTitle: String? = nil,
+        onEntityCreated: (() -> Void)? = nil
+    ) {
         self.viewModel = viewModel
         self.projectTitle = projectTitle ?? viewModel.projectCode
         self.onEntityCreated = onEntityCreated
@@ -85,10 +102,18 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         viewModel.showErrorClosure = { [weak self] _, _ in
             self?.message.show("A title is required".localized)
         }
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardShown),
-            name: UIResponder.keyboardDidShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardShown),
-            name: UIResponder.keyboardDidChangeFrameNotification, object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardShown),
+            name: UIResponder.keyboardDidShowNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardShown),
+            name: UIResponder.keyboardDidChangeFrameNotification,
+            object: nil
+        )
         checkConditionAndToggleRightBarButton()
     }
 
@@ -131,7 +156,11 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         finishEditing()
         let forSuite = viewModel.creatingEntityIsSuite
         let id = forSuite ? viewModel.creatingSuite.parentId : viewModel.creatingTestCase.suiteId
-        let model = SuitePickerViewModel(projectCode: viewModel.projectCode, selectedID: id, projectTitle: projectTitle)
+        let model = SuitePickerViewModel(
+            projectCode: viewModel.projectCode,
+            selectedID: id,
+            projectTitle: projectTitle
+        )
         let picker = SuitePickerViewController(viewModel: model) { [weak self] selected in
             guard let self, self.viewModel.isSessionCurrent, !self.isSavingDraft else { return }
             self.parentCatalog = model
@@ -162,12 +191,18 @@ final class CreateSuiteOrCaseViewController: UIViewController {
                 self.checkConditionAndToggleRightBarButton()
                 self.onEntityCreated?()
                 if self.viewModel.hasAnyUnsavedChanges {
-                    let allowed = await self.confirmDeparture(message: "Entity created. Unsaved changes in the other form remain.".localized)
+                    let allowed = await self
+                        .confirmDeparture(message: "Entity created. Unsaved changes in the other form remain."
+                            .localized)
                     if allowed { self.navigationController?.dismiss(animated: true) }
                     else { self.showRemainingDraft() }
                 } else {
-                    UIAlertController.showSimpleAlert(on: self, title: "Success".localized,
-                        message: "Your entity was created successfully".localized) { [weak self] _ in
+                    UIAlertController.showSimpleAlert(
+                        on: self,
+                        title: "Success".localized,
+                        message: "Your entity was created successfully"
+                            .localized
+                    ) { [weak self] _ in
                         self?.navigationController?.dismiss(animated: true)
                     }
                 }
@@ -224,10 +259,15 @@ extension CreateSuiteOrCaseViewController: CheckEnablingRBBProtocol {
         caseView.updateValues()
         suiteView.setEditingEnabled(!busy && viewModel.isSessionCurrent)
         caseView.setEditingEnabled(!busy && viewModel.isSessionCurrent)
-        suiteView.parentButton.update(title: parentCatalog.title(for: viewModel.creatingSuite.parentId),
-            path: parentCatalog.ancestorTitle(to: viewModel.creatingSuite.parentId))
-        caseView.parentButton.update(title: parentCatalog.title(for: viewModel.creatingTestCase.suiteId),
-            path: parentCatalog.ancestorTitle(to: viewModel.creatingTestCase.suiteId))
+        suiteView.parentButton.update(
+            title: parentCatalog.title(for: viewModel.creatingSuite.parentId),
+            path: parentCatalog.ancestorTitle(to: viewModel.creatingSuite.parentId)
+        )
+        caseView.parentButton.update(
+            title: parentCatalog.title(for: viewModel.creatingTestCase.suiteId),
+            path: parentCatalog
+                .ancestorTitle(to: viewModel.creatingTestCase.suiteId)
+        )
     }
 }
 
@@ -238,12 +278,14 @@ extension CreateSuiteOrCaseViewController: FormDepartureParticipant {
 
     func requestDeparture() async -> Bool {
         finishEditing()
-        return await confirmDeparture(message: "There are unsaved changes in the suite or case form.".localized)
+        return await confirmDeparture(message: "There are unsaved changes in the suite or case form."
+            .localized)
     }
 
     func saveDraft() async throws {
         finishEditing()
-        guard canSaveDraft, !isSavingDraft else { throw API.NetError.invalidRequest("The drafts cannot be saved") }
+        guard canSaveDraft,
+              !isSavingDraft else { throw API.NetError.invalidRequest("The drafts cannot be saved") }
         let previous = viewModel.creatingEntityIsSuite
         let callback = viewModel.creatingFinishCallback
         isSavingSequence = true

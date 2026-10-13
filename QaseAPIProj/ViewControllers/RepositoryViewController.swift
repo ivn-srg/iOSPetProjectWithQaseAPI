@@ -1,6 +1,6 @@
+import Combine
 import SwiftUI
 import UIKit
-import Combine
 
 final class RepositoryViewController: UIHostingController<RepositoryView> {
     let model: TestEntitiesViewModel
@@ -8,9 +8,11 @@ final class RepositoryViewController: UIHostingController<RepositoryView> {
     private var task: Task<Void, Never>?
     private var modelSubscription: AnyCancellable?
     init(model: TestEntitiesViewModel, selection: SelectedProjectStore, router: RepositoryRouting) {
-        self.model = model; self.router = router
+        self.model = model
+        self.router = router
         super.init(rootView: RepositoryView(model: model, selection: selection, router: router))
     }
+
     required dynamic init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,18 +31,23 @@ final class RepositoryViewController: UIHostingController<RepositoryView> {
             self?.updateCreateAvailability()
         }
     }
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
         task?.cancel()
         task = Task { [weak self] in await self?.model.reload() }
     }
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        task?.cancel(); model.cancel()
+        task?.cancel()
+        model.cancel()
     }
+
     private func updateCreateAvailability() {
         navigationItem.rightBarButtonItem?.isEnabled = !model.levelUnavailable
     }
+
     deinit { task?.cancel() }
 }

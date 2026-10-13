@@ -17,6 +17,7 @@ enum AppAppearance: String, CaseIterable, Identifiable {
         case .dark: return "Dark".localized
         }
     }
+
     var symbol: String {
         switch self {
         case .system: return "circle.lefthalf.filled"
@@ -24,6 +25,7 @@ enum AppAppearance: String, CaseIterable, Identifiable {
         case .dark: return "moon"
         }
     }
+
     var interfaceStyle: UIUserInterfaceStyle {
         switch self {
         case .system: return .unspecified
@@ -45,6 +47,7 @@ final class AppSettingsStore: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        appearance = defaults.string(forKey: Self.appearanceKey).flatMap(AppAppearance.init(rawValue:)) ?? .system
+        appearance = defaults.string(forKey: Self.appearanceKey)
+            .flatMap(AppAppearance.init(rawValue:)) ?? .system
     }
 }

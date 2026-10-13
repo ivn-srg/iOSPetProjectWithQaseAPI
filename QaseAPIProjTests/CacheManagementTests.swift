@@ -1,7 +1,7 @@
 import Foundation
+@testable import QaseAPIProj
 import RealmSwift
 import Testing
-@testable import QaseAPIProj
 
 @MainActor
 struct CacheManagementTests {
@@ -27,13 +27,54 @@ struct CacheManagementTests {
         counts.defects = BugReportsRO()
         project.counts = counts
 
-        let entity = TestListEntity(isSuite: true, id: 1, title: "Suite", description: nil, parentId: nil, casesCount: 1)
+        let entity = TestListEntity(
+            isSuite: true,
+            id: 1,
+            title: "Suite",
+            description: nil,
+            parentId: nil,
+            casesCount: 1
+        )
         let suite = TestEntitiesDataRO(entitiesData: entity, codeOfProject: "PROJECT", ownerID: owner)
-        let nested = StepsInTestCase(hash: "nested", position: 0, sharedStepHash: nil, sharedStepNestedHash: nil, attachments: [], action: "Nested", expectedResult: nil, data: nil, steps: [])
-        let middle = StepsInTestCase(hash: "middle", position: 0, sharedStepHash: nil, sharedStepNestedHash: nil, attachments: [], action: "Middle", expectedResult: nil, data: nil, steps: [nested])
+        let nested = StepsInTestCase(
+            hash: "nested",
+            position: 0,
+            sharedStepHash: nil,
+            sharedStepNestedHash: nil,
+            attachments: [],
+            action: "Nested",
+            expectedResult: nil,
+            data: nil,
+            steps: []
+        )
+        let middle = StepsInTestCase(
+            hash: "middle",
+            position: 0,
+            sharedStepHash: nil,
+            sharedStepNestedHash: nil,
+            attachments: [],
+            action: "Middle",
+            expectedResult: nil,
+            data: nil,
+            steps: [nested]
+        )
         var testCase = TestCaseEntity.empty
-        testCase.steps = [StepsInTestCase(hash: "root", position: 0, sharedStepHash: nil, sharedStepNestedHash: nil, attachments: [], action: "Root", expectedResult: nil, data: nil, steps: [middle])]
-        let detail = TestEntityRO(testCaseData: testCase, reference: TestCaseReference(projectCode: "PROJECT", caseID: 0), ownerID: owner)
+        testCase.steps = [StepsInTestCase(
+            hash: "root",
+            position: 0,
+            sharedStepHash: nil,
+            sharedStepNestedHash: nil,
+            attachments: [],
+            action: "Root",
+            expectedResult: nil,
+            data: nil,
+            steps: [middle]
+        )]
+        let detail = TestEntityRO(
+            testCaseData: testCase,
+            reference: TestCaseReference(projectCode: "PROJECT", caseID: 0),
+            ownerID: owner
+        )
         let home = HomeSnapshotRO()
         home.cacheKey = "\(owner)|PROJECT"
         home.ownerID = owner
@@ -49,11 +90,16 @@ struct CacheManagementTests {
     @Test(arguments: [0, 1, 2, 3, 4])
     func eachDownloadRootIsDetectedAndCleared(rootIndex: Int) throws {
         let (session, dao, realm) = try store()
-        let project = ProjectRO(); project.ownerID = "A"
-        let repository = TestEntitiesDataRO(); repository.ownerID = "A"
-        let detail = TestEntityRO(); detail.ownerID = "A"
-        let home = HomeSnapshotRO(); home.ownerID = "A"
-        let read = ReadCacheRO(); read.ownerID = "A"
+        let project = ProjectRO()
+        project.ownerID = "A"
+        let repository = TestEntitiesDataRO()
+        repository.ownerID = "A"
+        let detail = TestEntityRO()
+        detail.ownerID = "A"
+        let home = HomeSnapshotRO()
+        home.ownerID = "A"
+        let read = ReadCacheRO()
+        read.ownerID = "A"
         let roots: [Object] = [project, repository, detail, home, read]
         try realm.write { realm.add(roots[rootIndex]) }
         let stamp = session.capture()
@@ -71,7 +117,14 @@ struct CacheManagementTests {
         let ownerRuns = try #require(ownerCounts.runs)
         let ownerDefects = try #require(ownerCounts.defects)
         let otherCounts = try #require(otherProject.counts)
-        let history = RecentCaseItem(reference: TestCaseReference(projectCode: "PROJECT", caseID: 0), title: "Viewed", description: nil, priority: nil, automation: nil, viewedAt: Date(timeIntervalSince1970: 1))
+        let history = RecentCaseItem(
+            reference: TestCaseReference(projectCode: "PROJECT", caseID: 0),
+            title: "Viewed",
+            description: nil,
+            priority: nil,
+            automation: nil,
+            viewedAt: Date(timeIntervalSince1970: 1)
+        )
         #expect(dao.recordRecentCase(history, stamp: session.capture()))
         session.activate(ownerID: "B")
         #expect(dao.recordRecentCase(history, stamp: session.capture()))
@@ -108,12 +161,16 @@ struct CacheManagementTests {
         _ = try seedDownloads(owner: "A", in: realm)
         let firstStamp = session.capture()
         session.activate(ownerID: "A")
-        #expect(throws: RealmManager.DownloadedDataError.self) { _ = try dao.hasDownloadedData(stamp: firstStamp) }
-        #expect(throws: RealmManager.DownloadedDataError.self) { try dao.clearDownloadedData(stamp: firstStamp) }
+        #expect(throws: RealmManager.DownloadedDataError.self) {
+            _ = try dao.hasDownloadedData(stamp: firstStamp) }
+        #expect(throws: RealmManager.DownloadedDataError.self) {
+            try dao.clearDownloadedData(stamp: firstStamp) }
         let nextStamp = session.capture()
         session.activate(ownerID: "B")
-        #expect(throws: RealmManager.DownloadedDataError.self) { _ = try dao.hasDownloadedData(stamp: nextStamp) }
-        #expect(throws: RealmManager.DownloadedDataError.self) { try dao.clearDownloadedData(stamp: nextStamp) }
+        #expect(throws: RealmManager.DownloadedDataError.self) {
+            _ = try dao.hasDownloadedData(stamp: nextStamp) }
+        #expect(throws: RealmManager.DownloadedDataError.self) {
+            try dao.clearDownloadedData(stamp: nextStamp) }
         #expect(realm.objects(ProjectRO.self).count == 1)
         #expect(realm.objects(TestEntityRO.self).count == 1)
         #expect(realm.objects(StepsInTestCaseRO.self).count == 3)
@@ -132,7 +189,14 @@ struct CacheManagementTests {
     @Test func emptyCacheClearingIsIdempotentAndHistoryIsNotADownload() throws {
         let (session, dao, _) = try store()
         let stamp = session.capture()
-        let history = RecentCaseItem(reference: TestCaseReference(projectCode: "PROJECT", caseID: 0), title: "Viewed", description: nil, priority: nil, automation: nil, viewedAt: Date(timeIntervalSince1970: 1))
+        let history = RecentCaseItem(
+            reference: TestCaseReference(projectCode: "PROJECT", caseID: 0),
+            title: "Viewed",
+            description: nil,
+            priority: nil,
+            automation: nil,
+            viewedAt: Date(timeIntervalSince1970: 1)
+        )
         #expect(dao.recordRecentCase(history, stamp: stamp))
         #expect(try !dao.hasDownloadedData(stamp: stamp))
         try dao.clearDownloadedData(stamp: stamp)
@@ -140,7 +204,10 @@ struct CacheManagementTests {
         #expect(try !dao.hasDownloadedData(stamp: stamp))
         #expect(dao.getRecentCases(projectCode: "PROJECT") == [history])
         #expect(session.capture() == stamp)
-        #expect(dao.saveProjectSummaries([ProjectSummary(title: "Downloaded again", code: "PROJECT")], stamp: stamp))
+        #expect(dao.saveProjectSummaries(
+            [ProjectSummary(title: "Downloaded again", code: "PROJECT")],
+            stamp: stamp
+        ))
         #expect(try dao.hasDownloadedData(stamp: stamp))
     }
 }

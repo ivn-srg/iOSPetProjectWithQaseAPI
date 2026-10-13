@@ -11,14 +11,14 @@ final class CreatingProjectViewController: UIViewController {
     // MARK: - Fields
     private var viewModel: CreatingProjectViewModel
     private var createdCallback: (() -> Void)?
-    
+
     // MARK: - UI components
     private lazy var customNavigationView: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    
+
     private lazy var closeButton: UIButton = {
         let button = UIButton(type: .close)
         var config = button.configuration
@@ -29,7 +29,7 @@ final class CreatingProjectViewController: UIViewController {
         button.addTarget(self, action: #selector(closeViewController), for: .touchUpInside)
         return button
     }()
-    
+
     private lazy var titleLabel: UILabel = {
         let title = UILabel()
         title.translatesAutoresizingMaskIntoConstraints = false
@@ -37,7 +37,7 @@ final class CreatingProjectViewController: UIViewController {
         title.numberOfLines = 1
         return title
     }()
-    
+
     private lazy var createButton: UIButton = {
         let uib = UIButton(type: .system)
         uib.translatesAutoresizingMaskIntoConstraints = false
@@ -47,7 +47,7 @@ final class CreatingProjectViewController: UIViewController {
         uib.addTarget(self, action: #selector(createNewProject), for: .touchUpInside)
         return uib
     }()
-    
+
     private lazy var scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.translatesAutoresizingMaskIntoConstraints = false
@@ -57,7 +57,7 @@ final class CreatingProjectViewController: UIViewController {
         sv.isUserInteractionEnabled = true
         return sv
     }()
-    
+
     private lazy var stackView: UIStackView = {
         let sv = UIStackView()
         sv.translatesAutoresizingMaskIntoConstraints = false
@@ -67,26 +67,26 @@ final class CreatingProjectViewController: UIViewController {
         sv.isUserInteractionEnabled = true
         return sv
     }()
-    
+
     private lazy var titleTextView = GeneralCaseTextField(textType: .title, detailVM: viewModel)
     private lazy var codeTextView = GeneralCaseTextField(textType: .code, detailVM: viewModel)
     private lazy var descriptionTextView = GeneralCaseTextField(textType: .description, detailVM: viewModel)
-    
+
     // MARK: - LifeCycle
     init(viewModel: CreatingProjectViewModel, createdCallback: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.createdCallback = createdCallback
-        
+
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         viewModel.delegate = self
         viewModel.showErrorClosure = { [weak self] title, message in
             guard let self else { return }
@@ -109,12 +109,12 @@ final class CreatingProjectViewController: UIViewController {
         }
         setupView()
     }
-    
+
     // MARK: - other block
     private func setupView() {
         view.backgroundColor = AppTheme.bgPrimaryColor
         titleLabel.text = "Creating project".localized
-        
+
         view.addSubview(customNavigationView)
         customNavigationView.addSubview(closeButton)
         closeButton.snp.makeConstraints {
@@ -149,7 +149,7 @@ final class CreatingProjectViewController: UIViewController {
         stackView.addArrangedSubview(descriptionTextView)
         stackView.addArrangedSubview(codeTextView)
     }
-    
+
     // MARK: - @objc func
     @objc func closeViewController() {
         dismiss(animated: true)
@@ -160,7 +160,7 @@ extension CreatingProjectViewController: CheckEnablingRBBProtocol {
     func checkConditionAndToggleRightBarButton() {
         createButton.isEnabled = !viewModel.creatingProject.title.isEmpty
     }
-    
+
     @objc func createNewProject() {
         executeWithErrorHandling {
             try await self.viewModel.createNewProject()
@@ -168,12 +168,12 @@ extension CreatingProjectViewController: CheckEnablingRBBProtocol {
     }
 }
 
-
 extension CreatingProjectViewController: ProjectDraft {
     var hasUnsavedChanges: Bool {
         !viewModel.creatingProject.title.isEmpty || !viewModel.creatingProject.code.isEmpty
             || !(viewModel.creatingProject.description ?? "").isEmpty
     }
+
     var canSaveDraft: Bool { !viewModel.creatingProject.isEmpty }
     func saveDraft() async throws {
         let callback = viewModel.creatingFinishCallback
@@ -182,5 +182,6 @@ extension CreatingProjectViewController: ProjectDraft {
         try await viewModel.createNewProject()
         guard viewModel.isEntityWasCreated else { throw API.NetError.invalidRequest("Create failed") }
     }
+
     func discardDraft() { viewModel.creatingProject = .init() }
 }

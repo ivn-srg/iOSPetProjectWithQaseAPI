@@ -1,5 +1,5 @@
-import Testing
 @testable import QaseAPIProj
+import Testing
 
 @MainActor
 private final class DraftFixture: ProjectDraft {
@@ -14,7 +14,9 @@ private final class DraftFixture: ProjectDraft {
         saves += 1
         hasUnsavedChanges = false
     }
-    func discardDraft() { discards += 1; hasUnsavedChanges = false }
+
+    func discardDraft() { discards += 1
+        hasUnsavedChanges = false }
 }
 
 @Suite @MainActor

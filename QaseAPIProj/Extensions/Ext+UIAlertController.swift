@@ -12,13 +12,13 @@ extension UIAlertController {
         on viewController: UIViewController,
         title: String = "errorTitle".localized,
         message: String,
-        handler: @escaping (UIAlertAction) -> Void = {_ in }
+        handler: @escaping (UIAlertAction) -> Void = { _ in }
     ) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(.init(title: "OK", style: .default, handler: handler))
         viewController.present(alert, animated: true)
     }
-    
+
     static func showConfirmAlert(
         on viewController: UIViewController,
         title: String,

@@ -7,15 +7,24 @@
 
 import UIKit
 
-final class AuthViewController: UIViewController, NextViewControllerPusher {
-    private var tapCount: Int = 0
+final class AuthViewController: UIViewController {
+    private let auth: AuthServicing
+
+    init(auth: AuthServicing) {
+        self.auth = auth
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     // MARK: - UI
     private var logoImg: UIImageView = {
         let limg = UIImageView()
         limg.translatesAutoresizingMaskIntoConstraints = false
         limg.contentMode = .scaleAspectFit
-        limg.image = AppTheme.LogoApp
+        limg.image = AppImages.logo
         limg.isUserInteractionEnabled = true
         limg.accessibilityIdentifier = "logoImg"
         return limg
@@ -24,7 +33,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     private var inputTokenField: UITextField = {
         let inf = TextFieldWithPadding()
         inf.translatesAutoresizingMaskIntoConstraints = false
-        inf.backgroundColor = AppTheme.bgSecondaryColor
+        inf.backgroundColor = AppTheme.Palette.secondarySurface
         inf.textColor = .label
         inf.layer.borderWidth = 1
         inf.layer.cornerRadius = 12
@@ -38,7 +47,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
     private var authButton: UIButton = {
         let ab = UIButton()
         ab.translatesAutoresizingMaskIntoConstraints = false
-        ab.backgroundColor = AppTheme.fioletColor
+        ab.backgroundColor = AppTheme.Palette.accent
         ab.layer.cornerRadius = 12
         ab.titleLabel?.textColor = .white
         ab.setTitle("Next".localized, for: .normal)
@@ -62,7 +71,7 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
 
     // MARK: - UI
     func setup() {
-        view.backgroundColor = AppTheme.bgPrimaryColor
+        view.backgroundColor = AppTheme.Palette.canvas
         view.addSubview(logoImg)
         view.addSubview(inputTokenField)
         view.addSubview(authButton)
@@ -86,22 +95,13 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
         }
     }
 
-    // MARK: - Router
-
-    func pushToNextVC(to item: Int? = nil) {
-        Task { @MainActor in
-            let vc = MainTabbarViewController()
-            self.navigationController?.pushViewController(vc, animated: true)
-        }
-    }
-
     // MARK: - objc funcs
     @objc private func authorizate() {
         Task { @MainActor in
             if let inputToken = inputTokenField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
                !inputToken.isEmpty {
                 do {
-                    try await AuthManager.shared.loggedIn(token: inputToken)
+                    try await auth.loggedIn(token: inputToken)
                 } catch API.NetError.invalidCredantials {
                     UIAlertController.showSimpleAlert(
                         on: self,
@@ -127,7 +127,6 @@ final class AuthViewController: UIViewController, NextViewControllerPusher {
 
     @objc private func longTapForFillingTextLb(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began else { return }
-        ApiServiceConfiguration.shared.setMockingServiceEnabled()
         inputTokenField.text = "QASE_DEMO"
         authorizate()
     }

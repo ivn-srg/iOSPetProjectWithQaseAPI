@@ -2,25 +2,34 @@ import Foundation
 
 /// The new read screens share explicit project routing and one session boundary.
 @MainActor
-final class HomeRepository {
+final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, WorkReading {
+    private let onCacheFailure: () -> Void
     private let network: NetworkManager
-    private let dao: RealmManager?
+    private let dao: HomeRepositoryCache?
+    private let originStamp: SessionStamp
     private let session: SessionContext
     private let clock: () -> Date
-    private let pageSize = 50
+    private let pageSize = PaginationPolicy.pageSize
     private var projectPageStamp: SessionStamp?
     private var projectPageOffset = 0
     private var fetchedProjects: [ProjectSummary] = []
 
+    private func reportCacheWrite(_ accepted: Bool) {
+        if !accepted { onCacheFailure() }
+    }
+
     init(
         network: NetworkManager,
-        dao: RealmManager? = nil,
-        session: SessionContext? = nil,
-        clock: @escaping () -> Date = Date.init
+        dao: HomeRepositoryCache? = nil,
+        session: SessionContext,
+        clock: @escaping () -> Date = Date.init,
+        onCacheFailure: @escaping () -> Void = {}
     ) {
+        self.onCacheFailure = onCacheFailure
         self.network = network
         self.dao = dao
-        self.session = session ?? .shared
+        self.session = session
+        originStamp = session.capture()
         self.clock = clock
     }
 
@@ -51,7 +60,7 @@ final class HomeRepository {
                 let finished = page.entities.isEmpty || (page.filtered ?? page.total)
                     .map { projectPageOffset >= $0 } ?? (page.entities.count < pageSize)
                 if finished {
-                    _ = dao.replaceProjectSummaries(fetchedProjects, stamp: stamp)
+                    reportCacheWrite(dao.replaceProjectSummaries(fetchedProjects, stamp: stamp))
                     projectPageStamp = nil
                     fetchedProjects = []
                     return page
@@ -62,7 +71,7 @@ final class HomeRepository {
                 projects.removeAll { $0.code == project.code }
                 projects.append(project)
             }
-            _ = dao.saveProjectSummaries(projects, stamp: stamp)
+            reportCacheWrite(dao.saveProjectSummaries(projects, stamp: stamp))
         }
         return page
     }
@@ -74,9 +83,9 @@ final class HomeRepository {
         if let dao {
             var projects = dao.getProjectSummaries().filter { $0.code != project.code }
             projects.append(project)
-            _ = dao.saveProjectSummaries(projects, stamp: stamp)
+            reportCacheWrite(dao.saveProjectSummaries(projects, stamp: stamp))
             let previous = dao.getHomeSnapshot(projectCode: code)
-            _ = dao.saveHomeSnapshot(
+            reportCacheWrite(dao.saveHomeSnapshot(
                 HomeSnapshot(
                     projectCode: code,
                     activeRun: previous?.activeRun,
@@ -84,7 +93,7 @@ final class HomeRepository {
                     runUpdatedAt: previous?.runUpdatedAt
                 ),
                 stamp: stamp
-            )
+            ))
         }
         return project
     }
@@ -93,6 +102,7 @@ final class HomeRepository {
         let stamp = session.capture()
         var offset = 0
         var candidates: [RunReadDTO] = []
+        var seen = Set<Int>()
         while true {
             let page: QaseAPIListResult<RunReadDTO> = try await request(
                 .getRuns,
@@ -100,26 +110,29 @@ final class HomeRepository {
                 query: pagination(offset) + [API.QueryParams.status.item("in_progress")],
                 stamp: stamp
             )
-            candidates.append(contentsOf: page.entities)
-            offset += page.entities.count
-            guard !page.entities.isEmpty else { break }
-            if let total = page.filtered ?? page.total {
-                if offset >= total { break }
-            } else if page.entities.count < pageSize {
-                break
+            let unique = page.entities.filter { seen.insert($0.id).inserted }
+            guard page.entities.isEmpty || !unique.isEmpty else {
+                throw API.NetError.invalidRequest("The run list did not advance")
             }
+            candidates.append(contentsOf: unique)
+            offset += page.entities.count
+            if !PaginationPolicy.hasMore(
+                received: page.entities.count,
+                offset: offset,
+                total: page.filtered ?? page.total
+            ) { break }
         }
         let active = candidates.sorted(by: Self.mostRecentFirst).first?.summary
         if let dao {
             if !candidates.isEmpty {
-                _ = dao.saveRuns(
+                reportCacheWrite(dao.saveRuns(
                     merged(dao.getRuns(projectCode: projectCode) ?? [], with: candidates),
                     projectCode: projectCode,
                     stamp: stamp
-                )
+                ))
             }
             let previous = dao.getHomeSnapshot(projectCode: projectCode)
-            _ = dao.saveHomeSnapshot(
+            reportCacheWrite(dao.saveHomeSnapshot(
                 HomeSnapshot(
                     projectCode: projectCode,
                     activeRun: active,
@@ -127,7 +140,7 @@ final class HomeRepository {
                     runUpdatedAt: clock()
                 ),
                 stamp: stamp
-            )
+            ))
         }
         return active
     }
@@ -155,13 +168,13 @@ final class HomeRepository {
                     id: $0.id,
                     title: $0.title,
                     description: $0.description,
-                    parentId: $0.suiteID,
+                    parentId: $0.suiteID == 0 ? nil : $0.suiteID,
                     casesCount: nil,
                     priority: $0.priority.map(Priority.init),
                     automation: $0.automation.map(AutomationStatus.init)
                 )
             }
-            _ = dao.saveTestEntities(entities, projectCode: projectCode, stamp: stamp)
+            reportCacheWrite(dao.saveTestEntities(entities, projectCode: projectCode, stamp: stamp))
         }
         return page
     }
@@ -189,11 +202,11 @@ final class HomeRepository {
             query: pagination(offset),
             stamp: stamp
         )
-        if let dao { _ = dao.saveRuns(
+        if let dao { reportCacheWrite(dao.saveRuns(
             merged(dao.getRuns(projectCode: projectCode) ?? [], with: page.entities),
             projectCode: projectCode,
             stamp: stamp
-        ) }
+        )) }
         return page
     }
 
@@ -205,7 +218,7 @@ final class HomeRepository {
             query: [API.QueryParams.include.item("cases")],
             stamp: stamp
         )
-        if let dao { _ = dao.saveRun(run, projectCode: projectCode, stamp: stamp) }
+        if let dao { reportCacheWrite(dao.saveRun(run, projectCode: projectCode, stamp: stamp)) }
         return run
     }
 
@@ -217,11 +230,11 @@ final class HomeRepository {
             query: pagination(offset),
             stamp: stamp
         )
-        if let dao { _ = dao.saveDefects(
+        if let dao { reportCacheWrite(dao.saveDefects(
             merged(dao.getDefects(projectCode: projectCode) ?? [], with: page.entities),
             projectCode: projectCode,
             stamp: stamp
-        ) }
+        )) }
         return page
     }
 
@@ -232,30 +245,47 @@ final class HomeRepository {
             path: ["code": projectCode, "id": String(id)],
             stamp: stamp
         )
-        if let dao { _ = dao.saveDefect(defect, projectCode: projectCode, stamp: stamp) }
+        if let dao { reportCacheWrite(dao.saveDefect(defect, projectCode: projectCode, stamp: stamp)) }
         return defect
     }
 
     func cachedCases(projectCode: String) -> [CaseSummary] {
-        (dao?.getAllCachedCases(projectCode: projectCode) ?? []).map(CaseSummary.init(entity:))
+        guard session.isCurrent(originStamp) else { return [] }
+        return (dao?.getAllCachedCases(projectCode: projectCode) ?? []).map(CaseSummary.init(entity:))
     }
 
-    func cachedRuns(projectCode: String) -> [RunReadDTO] { dao?.getRuns(projectCode: projectCode) ?? [] }
+    func cachedRuns(projectCode: String) -> [RunReadDTO] {
+        guard session.isCurrent(originStamp) else { return [] }
+        return dao?.getRuns(projectCode: projectCode) ?? []
+    }
+
     func cachedRun(projectCode: String, id: Int) -> RunReadDTO? {
-        dao?.getRun(projectCode: projectCode, id: id) ?? cachedRuns(projectCode: projectCode)
+        guard session.isCurrent(originStamp) else { return nil }
+        return dao?.getRun(projectCode: projectCode, id: id) ?? cachedRuns(projectCode: projectCode)
             .first { $0.id == id }
     }
 
-    func cachedDefects(projectCode: String) -> [DefectReadDTO] { dao?
-        .getDefects(projectCode: projectCode) ?? [] }
+    func cachedDefects(projectCode: String) -> [DefectReadDTO] {
+        guard session.isCurrent(originStamp) else { return [] }
+        return dao?
+            .getDefects(projectCode: projectCode) ?? []
+    }
 
     func cachedDefect(projectCode: String, id: Int) -> DefectReadDTO? {
-        dao?.getDefect(projectCode: projectCode, id: id) ?? cachedDefects(projectCode: projectCode)
+        guard session.isCurrent(originStamp) else { return nil }
+        return dao?.getDefect(projectCode: projectCode, id: id) ?? cachedDefects(projectCode: projectCode)
             .first { $0.id == id }
     }
 
-    func hasCachedRuns(projectCode: String) -> Bool { dao?.getRuns(projectCode: projectCode) != nil }
-    func hasCachedDefects(projectCode: String) -> Bool { dao?.getDefects(projectCode: projectCode) != nil }
+    func hasCachedRuns(projectCode: String) -> Bool {
+        guard session.isCurrent(originStamp) else { return false }
+        return dao?.getRuns(projectCode: projectCode) != nil
+    }
+
+    func hasCachedDefects(projectCode: String) -> Bool {
+        guard session.isCurrent(originStamp) else { return false }
+        return dao?.getDefects(projectCode: projectCode) != nil
+    }
 
     private func merged<T: Identifiable>(_ cached: [T], with fetched: [T]) -> [T] {
         let incomingIDs = Set(fetched.map(\.id))
@@ -269,6 +299,7 @@ final class HomeRepository {
         stamp: SessionStamp
     ) async throws -> T {
         try Task.checkCancellation()
+        guard session.isCurrent(originStamp) else { throw CancellationError() }
         let response = try await network.performRequest(
             for: operation,
             pathParameters: path,

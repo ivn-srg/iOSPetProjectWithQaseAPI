@@ -344,7 +344,13 @@ protocol NetworkManager: AnyObject {
 }
 
 final class APIManager: NetworkManager {
-    static let shared = APIManager()
+    private let tokenProvider: () -> String?
+    private let transport: HTTPTransport
+
+    init(tokenProvider: @escaping () -> String?, transport: HTTPTransport) {
+        self.tokenProvider = tokenProvider
+        self.transport = transport
+    }
 
     func auth(by token: String) async throws -> Bool {
         guard
@@ -358,7 +364,7 @@ final class APIManager: NetworkManager {
         request.httpMethod = "GET"
         request.addValue(token, forHTTPHeaderField: "Token")
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await transport.send(request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
@@ -379,7 +385,7 @@ final class APIManager: NetworkManager {
     ) async throws(API.NetError) -> T {
         guard
             let url = urlString,
-            let authToken = AuthManager.shared.getAuthToken()
+            let authToken = tokenProvider()
         else { throw .invalidURL }
 
         var request = URLRequest(url: url)
@@ -434,7 +440,7 @@ final class APIManager: NetworkManager {
     ) async throws(API.NetError) -> T {
         guard operation.usesMultipartFormData,
               let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: []),
-              let authToken = AuthManager.shared.getAuthToken() else {
+              let authToken = tokenProvider() else {
             throw .invalidURL
         }
 
@@ -455,7 +461,7 @@ final class APIManager: NetworkManager {
         codableModelType: T.Type
     ) async throws(API.NetError) -> T {
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await transport.send(request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw API.NetError.otherNetworkError(URLError(.badServerResponse).localizedDescription)
             }
@@ -481,30 +487,7 @@ final class APIManager: NetworkManager {
         urlComponents: [String?]?,
         queryItems: [API.QueryParams: Int?]? = nil
     ) -> URL? {
-
-        var resultUrl = URL(string: "\(API.BASE_URL)/\(method.rawValue)")
-
-        if let urlComponents = urlComponents {
-            for component in urlComponents {
-                guard let component = component else { continue }
-
-                resultUrl = resultUrl?.appendingPathComponent(component)
-            }
-        }
-
-        if let queryItems = queryItems {
-            var queryDict = [URLQueryItem]()
-
-            for item in queryItems {
-                guard let itemValue = item.value else { continue }
-
-                queryDict.append(URLQueryItem(name: item.key.rawValue, value: "\(itemValue)"))
-            }
-
-            resultUrl?.append(queryItems: queryDict)
-        }
-
-        return resultUrl
+        API.makeLegacyURL(for: method, urlComponents: urlComponents, queryItems: queryItems)
     }
 
     func composeURL(
@@ -517,7 +500,6 @@ final class APIManager: NetworkManager {
 }
 
 final class APIMockManager: NetworkManager {
-    static let shared = APIMockManager()
     private let bundle: Bundle
     private let lock = NSLock()
     private var records: [String: [[String: Any]]] = [:]
@@ -660,7 +642,13 @@ final class APIMockManager: NetworkManager {
             }
             let filtered = entities.count
             let offset = max(0, Int(value("offset") ?? "0") ?? 0)
-            let limit = max(0, min(100, Int(value("limit") ?? "50") ?? 50))
+            let limit = max(
+                0,
+                min(
+                    PaginationPolicy.mockMaximumPageSize,
+                    Int(value("limit") ?? "") ?? PaginationPolicy.pageSize
+                )
+            )
             let page = Array(entities.dropFirst(offset).prefix(limit))
             return ["total": total, "filtered": filtered, "count": page.count,
                     "entities": page] as [String: Any]
@@ -750,30 +738,7 @@ final class APIMockManager: NetworkManager {
         urlComponents: [String?]?,
         queryItems: [API.QueryParams: Int?]? = nil
     ) -> URL? {
-
-        var resultUrl = URL(string: "\(API.BASE_URL)/\(method.rawValue)")
-
-        if let urlComponents = urlComponents {
-            for component in urlComponents {
-                guard let component = component else { continue }
-
-                resultUrl = resultUrl?.appendingPathComponent(component)
-            }
-        }
-
-        if let queryItems = queryItems {
-            var queryDict = [URLQueryItem]()
-
-            for item in queryItems {
-                guard let itemValue = item.value else { continue }
-
-                queryDict.append(URLQueryItem(name: item.key.rawValue, value: "\(itemValue)"))
-            }
-
-            resultUrl?.append(queryItems: queryDict)
-        }
-
-        return resultUrl
+        API.makeLegacyURL(for: method, urlComponents: urlComponents, queryItems: queryItems)
     }
 
     func composeURL(
@@ -785,22 +750,20 @@ final class APIMockManager: NetworkManager {
     }
 }
 
-final class ApiServiceConfiguration {
-    public static let shared = ApiServiceConfiguration()
-
-    private init() {}
-
-    var apiService: NetworkManager {
-        if shouldUseMockingService {
-            return APIMockManager.shared
-        } else {
-            return APIManager.shared
+extension API {
+    static func makeLegacyURL(
+        for endpoint: Endpoint,
+        urlComponents: [String?]?,
+        queryItems: [QueryParams: Int?]?
+    ) -> URL? {
+        guard var url = URL(string: "\(BASE_URL)/\(endpoint.rawValue)") else { return nil }
+        for component in urlComponents ?? [] {
+            if let component { url.appendPathComponent(component) }
         }
-    }
-
-    private var shouldUseMockingService: Bool = false
-
-    func setMockingServiceEnabled(_ enabled: Bool = true) {
-        shouldUseMockingService = enabled
+        let items = (queryItems ?? [:]).compactMap { parameter, value in
+            value.map { URLQueryItem(name: parameter.rawValue, value: String($0)) }
+        }
+        if !items.isEmpty { url.append(queryItems: items) }
+        return url
     }
 }

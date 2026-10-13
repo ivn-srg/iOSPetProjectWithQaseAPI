@@ -53,20 +53,25 @@ struct HomePressStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label.opacity(!enabled ? 0.45 : configuration.isPressed ? 0.7 : 1)
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: configuration.isPressed)
+        configuration.label
+            .opacity(!enabled ? Layout.disabledOpacity : configuration.isPressed ? Layout.pressedOpacity : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? Layout.pressedScale : 1)
+            .animation(
+                reduceMotion ? nil : .easeOut(duration: Layout.pressDuration),
+                value: configuration.isPressed
+            )
     }
 }
 
 struct IconButton: View {
-    let symbol: String
+    let symbol: AppSymbol
     let label: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.system(size: AppTheme.Size.actionIcon, weight: .medium))
+            Image(symbol: symbol)
+                .font(.system(size: AppTheme.Size.actionIcon, weight: .medium))
                 .frame(width: AppTheme.Size.touch, height: AppTheme.Size.touch)
                 .modifier(HomeGlass(radius: AppTheme.Size.touch / 2))
         }
@@ -145,15 +150,15 @@ private struct ProjectMenuButton: UIViewRepresentable {
     func makeUIView(context: Context) -> UIButton {
         let button = UIButton(type: .system)
         button.setImage(
-            UIImage(systemName: "chevron.down", withConfiguration: UIImage.SymbolConfiguration(
-                pointSize: 22,
+            UIImage(symbol: .chevronDown, withConfiguration: UIImage.SymbolConfiguration(
+                pointSize: Layout.projectArrowLargeSize,
                 weight: .semibold
             )),
             for: .normal
         )
         button.tintColor = AppTheme.Palette.text
         button.showsMenuAsPrimaryAction = true
-        button.accessibilityIdentifier = "project.picker"
+        button.accessibilityIdentifier = AccessibilityID.projectPicker.identifier
         button.isAccessibilityElement = true
         return button
     }
@@ -166,8 +171,11 @@ private struct ProjectMenuButton: UIViewRepresentable {
             var configuration = UIButton.Configuration.plain()
             configuration.title = title
             configuration.image = UIImage(
-                systemName: "chevron.down",
-                withConfiguration: UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
+                symbol: .chevronDown,
+                withConfiguration: UIImage.SymbolConfiguration(
+                    pointSize: Layout.projectArrowCompactSize,
+                    weight: .semibold
+                )
             )
             configuration.imagePlacement = .trailing
             configuration.imagePadding = AppTheme.Space.small
@@ -200,13 +208,14 @@ private struct ProjectMenuButton: UIViewRepresentable {
 
 struct PrimaryButton: View {
     let title: String
-    var symbol = "play.fill"
+    var symbol: AppSymbol = .playFill
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Label { Text(title) } icon: {
-                Image(systemName: symbol).font(.system(size: AppTheme.Size.actionIcon, weight: .medium))
+                Image(symbol: symbol)
+                    .font(.system(size: AppTheme.Size.actionIcon, weight: .medium))
             }
             .font(.system(.body, weight: .medium))
             .padding(.horizontal, AppTheme.Space.regular)
@@ -230,15 +239,19 @@ struct PrimaryButton: View {
 struct SectionHeader: View {
     let title: String
     var actionTitle: String? = nil
+    var actionIdentifier: AccessibilityID? = nil
     var action: (() -> Void)? = nil
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(title).font(AppTheme.Typography.section)
+            Text(title)
+                .font(AppTheme.Typography.section)
             Spacer(minLength: AppTheme.Space.small)
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .font(.subheadline).frame(minHeight: AppTheme.Size.touch)
+                    .identified(by: actionIdentifier)
+                    .font(.subheadline)
+                    .frame(minHeight: AppTheme.Size.touch)
             }
         }
         .foregroundStyle(Color(uiColor: AppTheme.Palette.text))
@@ -252,19 +265,21 @@ struct ProgressRing: View {
 
     var body: some View {
         ZStack {
-            Circle().stroke(Color(uiColor: AppTheme.Palette.tertiarySurface), lineWidth: 6)
-            Circle().trim(from: 0, to: CGFloat(progress.percent) / 100)
+            Circle().stroke(Color(uiColor: AppTheme.Palette.tertiarySurface), lineWidth: Layout.ringWidth)
+            Circle().trim(from: 0, to: CGFloat(progress.percent) / CGFloat(Const.percentScale))
                 .stroke(
                     Color(uiColor: AppTheme.Palette.accent),
-                    style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                    style: StrokeStyle(lineWidth: Layout.ringWidth, lineCap: .round)
                 )
-                .rotationEffect(.degrees(-90))
+                .rotationEffect(.degrees(Layout.ringStartDegrees))
                 .animation(reduceMotion ? nil : .easeInOut, value: progress.percent)
             VStack(spacing: AppTheme.Space.tiny) {
                 Text("\(progress.completed.formatted()) / \(progress.total.formatted())")
                     .font(.headline).monospacedDigit()
-                Text((Double(progress.percent) / 100).formatted(.percent.precision(.fractionLength(0))))
-                    .font(.subheadline).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
+                Text((Double(progress.percent) / Double(Const.percentScale))
+                    .formatted(.percent.precision(.fractionLength(0))))
+                    .font(.subheadline)
+                    .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
             }.padding(AppTheme.Space.medium)
         }
         .frame(width: diameter, height: diameter)
@@ -283,7 +298,7 @@ struct ActiveRunCard: View {
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .center, spacing: AppTheme.Space.small) {
-                content.frame(minWidth: 180)
+                content.frame(minWidth: Layout.progressContentMinimumWidth)
                 ring
             }
             VStack(alignment: .leading, spacing: AppTheme.Space.section) {
@@ -298,49 +313,59 @@ struct ActiveRunCard: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: AppTheme.Space.medium) {
-            Label("Active run".localized, systemImage: "play.circle.fill")
-                .font(.subheadline.weight(.semibold)).foregroundStyle(Color(uiColor: AppTheme.Palette.accent))
-            Text(run.title).font(AppTheme.Typography.card).fixedSize(horizontal: false, vertical: true)
+            Label("Active run".localized, symbol: .playCircleFill)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color(uiColor: AppTheme.Palette.accent))
+            Text(run.title)
+                .font(AppTheme.Typography.card).fixedSize(horizontal: false, vertical: true)
             if let date = run.startTime {
                 Text("Started".localized + " " + date.formatted(date: .abbreviated, time: .shortened))
                     .font(AppTheme.Typography.metadata)
                     .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
             }
             PrimaryButton(title: "Open run".localized, action: action)
+                .identified(by: .homeOpenRun)
         }
     }
 
     @ViewBuilder private var ring: some View {
         if let progress = run.progress { ProgressRing(progress: progress) }
         else {
-            Label("Progress unavailable".localized, systemImage: "questionmark.circle").font(.footnote)
+            Label("Progress unavailable".localized, symbol: .questionmarkCircle)
+                .font(.footnote)
                 .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText)) }
     }
 }
 
 struct MetricTile: View {
-    @ScaledMetric(relativeTo: .title2) private var metricSize: CGFloat = 24
+    @ScaledMetric(relativeTo: .title2) private var metricSize: CGFloat = AppTheme.Space.section
     let title: String
     let value: Int?
-    let symbol: String
+    let symbol: AppSymbol
     let tone: BadgeTone
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: AppTheme.Space.small) {
-                Image(systemName: symbol).font(.system(size: 28)).foregroundStyle(tone.foreground)
+                Image(symbol: symbol)
+                    .font(.system(size: Layout.metricSymbolSize))
+                    .foregroundStyle(tone.foreground)
                 Text(value
-                    .map { $0 >= 1000 ? $0.formatted(.number.notation(.compactName)) : $0.formatted() } ??
-                    "—").font(.system(
-                    size: metricSize,
-                    weight: .bold
-                )).monospacedDigit()
-                Text(title).font(.footnote).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
+                    .map {
+                        $0 >= Const.abbreviationThreshold ? $0.formatted(.number.notation(.compactName)) : $0
+                            .formatted() } ?? "—")
+                    .font(.system(
+                        size: metricSize,
+                        weight: .bold
+                    )).monospacedDigit()
+                Text(title)
+                    .font(.footnote)
+                    .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
             }
             .padding(.vertical, AppTheme.Space.medium)
             .padding(.horizontal, AppTheme.Space.small)
-            .frame(maxWidth: .infinity, minHeight: 124)
+            .frame(maxWidth: .infinity, minHeight: Layout.metricCardMinimumHeight)
             .background(
                 Color(uiColor: AppTheme.Palette.surface),
                 in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
@@ -361,15 +386,19 @@ struct MetricTile: View {
 
 struct StatusBadge: View {
     let title: String
-    let symbol: String
+    let symbol: AppSymbol
     var tone: BadgeTone = .neutral
 
     var body: some View {
-        Label(title, systemImage: symbol)
-            .font(AppTheme.Typography.badge)
-            .padding(.horizontal, AppTheme.Space.small).padding(.vertical, AppTheme.Space.tiny)
-            .foregroundStyle(tone.foreground)
-            .background(tone.background, in: RoundedRectangle(cornerRadius: AppTheme.Radius.badge))
+        HStack(spacing: AppTheme.Space.tiny) {
+            Image(symbol: symbol).fixedSize().accessibilityHidden(true)
+            Text(title)
+        }
+        .font(AppTheme.Typography.badge)
+        .padding(.horizontal, AppTheme.Space.small)
+        .padding(.vertical, AppTheme.Space.tiny)
+        .foregroundStyle(tone.foreground)
+        .background(tone.background, in: RoundedRectangle(cornerRadius: AppTheme.Radius.badge))
     }
 }
 
@@ -395,8 +424,9 @@ struct CaseBadges: View {
         if let priority {
             labels.append("Priority".localized + ": " + priorityPresentation(priority).0.localized) }
         if let automation {
-            let title = (automation == 2 ? "Automated" : automation == 1 ? "To be automated" : "Manual")
-                .localized
+            let title = (automation == AutomationStatus.automation
+                .apiValue ? "Automated" : automation == AutomationStatus.toBeAutomated
+                .apiValue ? "To be automated" : "Manual").localized
             labels.append("Automation".localized + ": " + title)
         }
         return labels.joined(separator: ", ")
@@ -410,22 +440,24 @@ struct CaseBadges: View {
             }
             if let automation {
                 StatusBadge(
-                    title: (automation == 2 ? "Automated" : automation == 1 ? "To be automated" : "Manual")
-                        .localized,
-                    symbol: automation == 2 ? "gearshape" : "hand.point.up.left",
-                    tone: automation == 2 ? .success : .neutral
+                    title: (automation == AutomationStatus.automation
+                        .apiValue ? "Automated" : automation == AutomationStatus.toBeAutomated
+                        .apiValue ? "To be automated" : "Manual").localized,
+                    symbol: automation == AutomationStatus.automation
+                        .apiValue ? .gearshape : .handPointUpLeft,
+                    tone: automation == AutomationStatus.automation.apiValue ? .success : .neutral
                 )
             }
         }
         .fixedSize()
     }
 
-    private func priorityPresentation(_ value: Int) -> (String, String, BadgeTone) {
-        switch value {
-        case 1: ("High", "arrow.up", .warning)
-        case 2: ("Medium", "equal", .info)
-        case 3: ("Low", "arrow.down", .neutral)
-        default: ("Unspecified", "minus", .neutral)
+    private func priorityPresentation(_ value: Int) -> (String, AppSymbol, BadgeTone) {
+        switch Priority(value) {
+        case .high: ("High", .arrowUp, .warning)
+        case .medium: ("Medium", .equal, .info)
+        case .low: ("Low", .arrowDown, .neutral)
+        default: ("Unspecified", .minus, .neutral)
         }
     }
 }
@@ -434,7 +466,7 @@ struct EntityRow: View {
     let identifier: String
     let title: String
     var description: String? = nil
-    var symbol = "doc"
+    var symbol: AppSymbol = .doc
     var priority: Int? = nil
     var automation: Int? = nil
     var viewedAt: Date? = nil
@@ -450,7 +482,8 @@ struct EntityRow: View {
     var body: some View {
         Button(action: action) {
             HStack(alignment: isTitleOnly ? .center : .top, spacing: AppTheme.Space.medium) {
-                Image(systemName: symbol).font(.title2)
+                Image(symbol: symbol)
+                    .font(.title2)
                     .foregroundStyle(Color(uiColor: AppTheme.Palette.accent))
                     .frame(width: AppTheme.Size.touch, height: AppTheme.Size.touch)
                     .background(
@@ -460,16 +493,19 @@ struct EntityRow: View {
                     .accessibilityHidden(true)
                 HStack(alignment: .firstTextBaseline, spacing: AppTheme.Space.medium) {
                     VStack(alignment: .leading, spacing: AppTheme.Space.tiny) {
-                        Text(title).font(AppTheme.Typography.card)
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                        Text(title)
+                            .font(AppTheme.Typography.card)
+                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : Layout.metadataLines)
                         if !identifier.isEmpty {
-                            Text(identifier).font(.caption)
+                            Text(identifier)
+                                .font(.caption)
                                 .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
                         }
                         if let description, !description.isEmpty {
-                            Text(description).font(.footnote)
+                            Text(description)
+                                .font(.footnote)
                                 .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
-                                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : Layout.metadataLines)
                         }
                         if priority != nil || automation != nil {
                             CaseBadges(priority: priority, automation: automation)
@@ -481,13 +517,14 @@ struct EntityRow: View {
                                 .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
-                    Image(systemName: "chevron.right").font(.footnote)
+                    Image(symbol: .chevronRight)
+                        .font(.footnote)
                         .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
                         .accessibilityHidden(true)
                 }
             }
             .padding(AppTheme.Space.regular)
-            .frame(minHeight: 80)
+            .frame(minHeight: Layout.entityRowMinimumHeight)
             .contentShape(Rectangle())
         }
         .buttonStyle(HomePressStyle())
@@ -501,14 +538,17 @@ struct OfflineBanner: View {
     var body: some View {
         Label {
             VStack(alignment: .leading, spacing: AppTheme.Space.tiny) {
-                Text("Showing saved data".localized).font(.footnote.weight(.semibold))
-                Text("Some data could not be refreshed".localized).font(.caption)
+                Text("Showing saved data".localized)
+                    .font(.footnote.weight(.semibold))
+                Text("Some data could not be refreshed".localized)
+                    .font(.caption)
                 if let updatedAt { Text("Updated".localized + " " + updatedAt.formatted(
                     date: .abbreviated,
                     time: .shortened
-                )).font(.caption) }
+                ))
+                .font(.caption) }
             }
-        } icon: { Image(systemName: "wifi.slash") }
+        } icon: { Image(symbol: .wifiSlash) }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(AppTheme.Space.medium)
             .foregroundStyle(Color(uiColor: AppTheme.Palette.info))
@@ -519,21 +559,25 @@ struct OfflineBanner: View {
 
 struct HomeStateView: View {
     let title: String
-    let symbol: String
+    let symbol: AppSymbol
     var message: String? = nil
     var actionTitle: String? = nil
     var action: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Space.medium) {
-            Label(title, systemImage: symbol).font(AppTheme.Typography.card)
+            Label(title, symbol: symbol)
+                .font(AppTheme.Typography.card)
             if let message {
-                Text(message).font(.subheadline)
+                Text(message)
+                    .font(.subheadline)
                     .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText)) }
             if let actionTitle,
-               let action { Button(actionTitle, action: action).frame(minHeight: AppTheme.Size.touch) }
+               let action { Button(actionTitle, action: action)
+                .frame(minHeight: AppTheme.Size.touch) }
         }
-        .padding(AppTheme.Space.section).frame(maxWidth: .infinity, alignment: .leading)
+        .padding(AppTheme.Space.section)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             Color(uiColor: AppTheme.Palette.secondarySurface),
             in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
@@ -546,11 +590,41 @@ struct HomeSkeleton: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Space.regular) {
             if includeHero {
-                RoundedRectangle(cornerRadius: AppTheme.Radius.control).frame(height: 24).frame(maxWidth: 180)
-                RoundedRectangle(cornerRadius: AppTheme.Radius.hero).frame(height: 180)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
+                    .frame(height: Layout.skeletonTitleHeight)
+                    .frame(maxWidth: Layout.skeletonTitleWidth)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.hero)
+                    .frame(height: Layout.skeletonHeroHeight)
             }
-            RoundedRectangle(cornerRadius: AppTheme.Radius.card).frame(height: 124)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.card)
+                .frame(height: Layout.skeletonCardHeight)
         }.foregroundStyle(Color(uiColor: AppTheme.Palette.secondarySurface))
             .accessibilityLabel("Loading".localized)
     }
+}
+
+private struct Const {
+    static let percentScale = 100
+    static let abbreviationThreshold = 1_000
+}
+
+private struct Layout {
+    static let metricSymbolSize: CGFloat = 28
+    static let disabledOpacity = 0.45
+    static let pressedOpacity = 0.7
+    static let pressedScale: CGFloat = 0.98
+    static let pressDuration = 0.14
+    static let ringWidth: CGFloat = 6
+    static let ringStartDegrees = -90.0
+    static let metadataLines = 2
+
+    static let projectArrowLargeSize: CGFloat = 22
+    static let projectArrowCompactSize: CGFloat = 16
+    static let progressContentMinimumWidth: CGFloat = 180
+    static let metricCardMinimumHeight: CGFloat = 124
+    static let entityRowMinimumHeight: CGFloat = 80
+    static let skeletonTitleHeight: CGFloat = 24
+    static let skeletonTitleWidth: CGFloat = 180
+    static let skeletonHeroHeight: CGFloat = 180
+    static let skeletonCardHeight: CGFloat = 124
 }

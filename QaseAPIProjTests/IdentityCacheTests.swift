@@ -137,7 +137,8 @@ struct IdentityCacheTests {
             let project = ProjectRO()
             project.code = "LEGACY"
             project.title = "Unidentified"
-            project.cacheKey = "LEGACY"
+            project
+                .cacheKey = "LEGACY"
             try legacy.write { legacy.add(project) }
         }
         let session = SessionContext(ownerID: "owner")
@@ -261,7 +262,7 @@ struct IdentityCacheTests {
         let dao = cache(session: session)
         let network = IdentityRecordingNetwork()
         let reference = TestCaseReference(projectCode: "A", caseID: 0)
-        let vm = DetailTabbarControllerViewModel(
+        let vm = TestDependencies.detail(
             reference: reference,
             network: network,
             dao: dao,
@@ -283,7 +284,7 @@ struct IdentityCacheTests {
         let dao = cache(session: session)
         let network = IdentityRecordingNetwork()
         network.caseStatus = false
-        let vm = DetailTabbarControllerViewModel(
+        let vm = TestDependencies.detail(
             reference: TestCaseReference(projectCode: "A", caseID: 0),
             network: network,
             dao: dao,
@@ -299,12 +300,12 @@ struct IdentityCacheTests {
     @Test func saveCallbacksCompleteBeforeGuardRestoresUIHandlers() async {
         let session = SessionContext(ownerID: "owner")
         let dao = cache(session: session)
-        let detail = DetailTabbarControllerViewModel(
+        let detail = TestDependencies.detail(
             reference: TestCaseReference(projectCode: "A", caseID: 0),
             dao: dao,
             session: session
         )
-        let create = CreateSuiteOrCaseViewModel(projectCode: "A", session: session)
+        let create = TestDependencies.creator(projectCode: "A", session: session)
         var callbackCount = 0
         detail.updatingFinishCallback = { callbackCount += 1 }
         create.creatingFinishCallback = { callbackCount += 1 }
@@ -334,7 +335,7 @@ struct IdentityCacheTests {
         let network = IdentityRecordingNetwork()
         network.beforeResponse = { session.invalidate()
             session.activate(ownerID: "B") }
-        let vm = DetailTabbarControllerViewModel(
+        let vm = TestDependencies.detail(
             reference: TestCaseReference(projectCode: "PROJECT", caseID: 0),
             network: network,
             dao: dao,
@@ -371,7 +372,10 @@ private final class IdentityRecordingNetwork: NetworkManager {
         await Task.yield()
         beforeResponse?()
         if modelType == TestCaseModel.self {
-            return TestCaseModel(status: caseStatus, result: TestCaseEntity.empty) as! T
+            guard let value = TestCaseModel(status: caseStatus, result: TestCaseEntity.empty) as? T else {
+                throw API.NetError.serializationError("Fixture type mismatch")
+            }
+            return value
         }
         return try API.decodeResponse(
             from: Data("{\"status\":true,\"result\":{\"id\":0}}".utf8),
@@ -396,7 +400,7 @@ private final class IdentityRecordingNetwork: NetworkManager {
         for method: API.Endpoint,
         urlComponents: [String?]?,
         queryItems: [API.QueryParams: Int?]?
-    ) -> URL? { APIManager.shared.composeURL(
+    ) -> URL? { API.makeLegacyURL(
         for: method,
         urlComponents: urlComponents,
         queryItems: queryItems
@@ -405,7 +409,7 @@ private final class IdentityRecordingNetwork: NetworkManager {
         for operation: API.Operation,
         pathParameters: [String: String],
         queryItems: [URLQueryItem]
-    ) -> URL? { APIManager.shared.composeURL(
+    ) -> URL? { API.makeURL(
         for: operation,
         pathParameters: pathParameters,
         queryItems: queryItems

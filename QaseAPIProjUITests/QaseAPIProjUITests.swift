@@ -14,7 +14,7 @@ final class QaseAPIProjUITests: XCTestCase {
 
     override func setUpWithError() throws {
         app = XCUIApplication()
-        app.launchArguments.append("UITests")
+        app.launchArguments = ["UITests", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
 
         authScreen = AuthScreen(app: app)

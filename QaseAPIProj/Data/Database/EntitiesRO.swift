@@ -115,8 +115,8 @@ final class TestEntitiesDataRO: Object {
         self.itemDescription = entitiesData.itemDescription
         self.parentId = entitiesData.parentId
         self.casesCount = entitiesData.casesCount
-        self.priority = entitiesData.priority?.menuItem.id
-        self.automation = entitiesData.automation?.menuItem.id
+        self.priority = entitiesData.priority?.apiValue
+        self.automation = entitiesData.automation?.apiValue
         self.codeOfProject = codeOfProject
     }
 }
@@ -164,14 +164,14 @@ final class TestEntityRO: Object {
         self.itemDescription = testCaseData.description
         self.preconditions = testCaseData.preconditions
         self.postconditions = testCaseData.postconditions
-        self.severity = testCaseData.severity.menuItem.id
-        self.priority = testCaseData.priority.menuItem.id
-        self.type = testCaseData.type.menuItem.id
-        self.layer = testCaseData.layer.menuItem.id
+        self.severity = testCaseData.severity.apiValue
+        self.priority = testCaseData.priority.apiValue
+        self.type = testCaseData.type.apiValue
+        self.layer = testCaseData.layer.apiValue
         self.isFlaky = testCaseData.isFlaky
-        self.behavior = testCaseData.behavior.menuItem.id
-        self.automation = testCaseData.automation.menuItem.id
-        self.status = testCaseData.status.menuItem.id
+        self.behavior = testCaseData.behavior.apiValue
+        self.automation = testCaseData.automation.apiValue
+        self.status = testCaseData.status.apiValue
         self.suiteId = testCaseData.suiteId
         self.memberId = testCaseData.memberId
         self.authorId = testCaseData.authorId

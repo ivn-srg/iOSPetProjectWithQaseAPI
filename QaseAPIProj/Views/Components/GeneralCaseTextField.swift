@@ -2,15 +2,9 @@ import SnapKit
 import UIKit
 
 final class GeneralCaseTextField: UIView {
-    enum Style: Equatable {
-        case legacy
-        case entityForm
-    }
-
     var onFocusChange: ((Bool) -> Void)?
     private let textType: FieldType
-    private let style: Style
-    private let viewModel: UpdatableEntityProtocol?
+    private let viewModel: FormValueUpdating?
     private var didBlur = false
     private var committedValue = ""
     private let titleLabel = UILabel()
@@ -18,60 +12,44 @@ final class GeneralCaseTextField: UIView {
     private let placeholder = UILabel()
     private let counter = UILabel()
     private let validation = UILabel()
+    private let footnotes = UIStackView()
+    private struct Layout {
+        static let borderWidth: CGFloat = 1
+        static let inputInset: CGFloat = 12
+        static let labelSpacing: CGFloat = 6
+        static let titleHeight: CGFloat = 48
+        static let multilineHeight: CGFloat = 80
+    }
+
     private var placeholderHeightConstraint: Constraint?
 
-    init(
-        textType: FieldType,
-        textViewValue: String? = "",
-        detailVM: UpdatableEntityProtocol? = nil,
-        style: Style = .legacy
-    ) {
+    init(textType: FieldType, textViewValue: String? = "", detailVM: FormValueUpdating? = nil) {
         self.textType = textType
-        self.style = style
         viewModel = detailVM
         super.init(frame: .zero)
-        textView.accessibilityIdentifier = "field." + textType.rawValue
+        textView.accessibilityIdentifier = AccessibilityID.field(textType.accessibilityField).identifier
         textView.accessibilityLabel = textType.localized
         textView.delegate = self
         textView.isScrollEnabled = false
         textView.textContainer.lineBreakMode = .byWordWrapping
         textView.textContainer.maximumNumberOfLines = 0
+        textView.textContainer.lineFragmentPadding = 0
         titleLabel.numberOfLines = 0
-        titleLabel.text = textType == .title && style == .entityForm ? textType.localized + " *" : textType
-            .localized
-        if let creating = detailVM as? CreateSuiteOrCaseViewModel, textType == .parentSuite {
-            textView.text = creating.parentSuiteId.map(String.init) ?? Constants.EMPTY_TEXT
-        } else {
-            textView.text = textViewValue ?? ""
-        }
+        titleLabel.text = textType == .title ? textType.localized + " *" : textType.localized
+        textView.text = textViewValue ?? ""
         committedValue = textView.text ?? ""
-        if style == .entityForm {
-            setupEntityForm()
-        } else {
-            setupLegacy()
+        setupEntityForm()
+        registerForTraitChanges([
+            UITraitUserInterfaceStyle.self,
+            UITraitPreferredContentSizeCategory.self
+        ]) { (view: Self, _) in
+            view.refreshTraits()
         }
         updatePresentation()
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    private func setupLegacy() {
-        titleLabel.font = .systemFont(ofSize: 16, weight: .bold)
-        textView.backgroundColor = AppTheme.bgSecondaryColor
-        textView.layer.borderWidth = 1
-        textView.layer.borderColor = UIColor.gray.cgColor
-        textView.layer.cornerRadius = 10
-        textView.font = .systemFont(ofSize: 16)
-        textView.textContainerInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-        addSubview(titleLabel)
-        addSubview(textView)
-        titleLabel.snp.makeConstraints { $0.top.horizontalEdges.equalToSuperview() }
-        textView.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(8)
-            $0.horizontalEdges.bottom.equalToSuperview()
-        }
     }
 
     private func setupEntityForm() {
@@ -82,14 +60,23 @@ final class GeneralCaseTextField: UIView {
         textView.adjustsFontForContentSizeCategory = true
         textView.textColor = AppTheme.Palette.text
         textView.backgroundColor = AppTheme.Palette.secondarySurface
-        textView.layer.cornerRadius = 16
-        textView.layer.borderWidth = 1
-        textView.textContainerInset = UIEdgeInsets(top: 14, left: 11, bottom: 14, right: 11)
+        textView.layer.cornerRadius = AppTheme.Radius.card
+        textView.layer.borderWidth = Layout.borderWidth
+        textView.textContainerInset = UIEdgeInsets(
+            top: Layout.inputInset,
+            left: Layout.inputInset,
+            bottom: Layout.inputInset,
+            right: Layout.inputInset
+        )
         placeholder.font = textView.font
         placeholder.adjustsFontForContentSizeCategory = true
         placeholder.textColor = AppTheme.Palette.tertiaryText
         placeholder.numberOfLines = 0
-        placeholder.text = textType == .title ? "Enter a title".localized : "Optional".localized
+        switch textType {
+        case .title: placeholder.text = "Enter a title".localized
+        case .code: placeholder.text = FieldType.code.localized
+        default: placeholder.text = "Optional".localized
+        }
         placeholder.isUserInteractionEnabled = false
         placeholder.isAccessibilityElement = false
         counter.font = UIFont.preferredFont(forTextStyle: .caption1)
@@ -100,54 +87,58 @@ final class GeneralCaseTextField: UIView {
         validation.adjustsFontForContentSizeCategory = true
         validation.textColor = AppTheme.Palette.danger
         validation.numberOfLines = 0
-        validation.text = "A title is required".localized
+        validation.text = (textType == .code ? "A project code is required" : "A title is required").localized
         validation.isAccessibilityElement = false
-        textView.accessibilityHint = "Maximum 500 characters".localized
         let spacer = UIView()
-        spacer.setContentHuggingPriority(UILayoutPriority(1), for: .horizontal)
-        let footnotes = UIStackView(arrangedSubviews: [validation, spacer, counter])
+        spacer.setContentHuggingPriority(.fittingSizeLevel, for: .horizontal)
+        [validation, spacer, counter].forEach(footnotes.addArrangedSubview)
         footnotes.alignment = .top
-        footnotes.spacing = 8
+        footnotes.spacing = AppTheme.Space.small
         validation.setContentHuggingPriority(.defaultLow, for: .horizontal)
         counter.setContentHuggingPriority(.required, for: .horizontal)
         counter.setContentCompressionResistancePriority(.required, for: .horizontal)
         let stack = UIStackView(arrangedSubviews: [titleLabel, textView, footnotes])
         stack.axis = .vertical
-        stack.spacing = 6
+        stack.spacing = Layout.labelSpacing
         addSubview(stack)
         stack.snp.makeConstraints { $0.edges.equalToSuperview() }
-        textView.snp.makeConstraints { $0.height.greaterThanOrEqualTo(textType == .title ? 60 : 88) }
+        let minimumHeight = (textType == .title || textType == .code) ? Layout.titleHeight : Layout
+            .multilineHeight
+        textView.snp.makeConstraints { $0.height.greaterThanOrEqualTo(minimumHeight) }
         textView.addSubview(placeholder)
         placeholder.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(16)
-            $0.top.equalToSuperview().offset(14)
+            $0.leading.trailing.equalToSuperview().inset(Layout.inputInset)
+            $0.top.equalToSuperview().offset(Layout.inputInset)
         }
         textView.snp.makeConstraints {
-            placeholderHeightConstraint = $0.height.greaterThanOrEqualTo(placeholder.snp.height).offset(28)
-                .constraint
+            placeholderHeightConstraint = $0.height.greaterThanOrEqualTo(placeholder.snp.height)
+                .offset(Layout.inputInset * 2).constraint
         }
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
+    private func refreshTraits() {
         updatePresentation()
     }
 
     private func updatePresentation() {
-        guard style == .entityForm else { return }
         placeholder.isHidden = !textView.text.isEmpty
         if placeholder.isHidden { placeholderHeightConstraint?.deactivate() }
         else { placeholderHeightConstraint?.activate() }
         counter.text = "\(textView.text.count)/\(FormTextInputPolicy.characterLimit)"
-        counter.alpha = textView.isFirstResponder ? 1 : 0
-        let invalid = textType == .title && didBlur && textView.text
+        counter.isHidden = !textView.isFirstResponder
+        let invalid = (textType == .title || textType == .code) && didBlur && textView.text
             .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         validation.isHidden = !invalid
-        textView.layer
-            .borderColor = (invalid ? AppTheme.Palette.danger : textView.isFirstResponder ? AppTheme.Palette
-                .accent : UIColor.clear).resolvedColor(with: traitCollection).cgColor
-        textView.accessibilityHint = invalid ? "A title is required".localized : "Maximum 500 characters"
-            .localized
+        footnotes.isHidden = !invalid && counter.isHidden
+        let border: UIColor
+        if invalid { border = AppTheme.Palette.danger }
+        else if textView.isFirstResponder { border = AppTheme.Palette.accent }
+        else { border = .clear }
+        textView.layer.borderColor = border.resolvedColor(with: traitCollection).cgColor
+        textView.accessibilityHint = invalid ? validation.text : String.localizedStringWithFormat(
+            "Maximum %lld characters".localized,
+            FormTextInputPolicy.characterLimit
+        )
     }
 
     private func publishText() {

@@ -12,11 +12,22 @@ import UIKit
 @MainActor
 final class SettingsViewController: UIHostingController<SettingsRootView> {
     private let model: SettingsViewModel
+    private let navigate: (SettingsRoute, UIViewController) -> Void
+    private let onFailure: (String) -> Void
+    private let makeTokenController: () -> UIViewController
     private let prepareForChange: @MainActor () async -> Bool
     private var logoutTask: Task<Void, Never>?
 
-    init(prepareForChange: @escaping @MainActor () async -> Bool = { true }) {
-        let model = SettingsViewModel(preferences: .shared)
+    init(
+        model: SettingsViewModel,
+        onFailure: @escaping (String) -> Void,
+        navigate: @escaping (SettingsRoute, UIViewController) -> Void,
+        makeTokenController: @escaping () -> UIViewController,
+        prepareForChange: @escaping @MainActor () async -> Bool
+    ) {
+        self.navigate = navigate
+        self.onFailure = onFailure
+        self.makeTokenController = makeTokenController
         self.model = model
         self.prepareForChange = prepareForChange
         super.init(rootView: SettingsRootView(model: model, preferences: model.preferences))
@@ -40,7 +51,7 @@ final class SettingsViewController: UIHostingController<SettingsRootView> {
     private func show(_ route: SettingsRoute) {
         switch route {
         case .appearance:
-            push(AppearanceSettingsView(preferences: model.preferences), title: "Theme".localized)
+            navigate(.appearance, self)
         case .language:
             guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
             Task { [weak self] in
@@ -54,27 +65,14 @@ final class SettingsViewController: UIHostingController<SettingsRootView> {
                 }
             }
         case .token:
-            let tokenModel = TokenReplacementViewModel(auth: model.auth, prepareForChange: prepareForChange)
-            let controller = TokenReplacementController(model: tokenModel)
-            let navigation = UINavigationController(rootViewController: controller)
-            navigation.navigationBar.tintColor = AppTheme.Palette.accent
-            navigation.modalPresentationStyle = .fullScreen
-            tokenModel.onClose = { [weak navigation] in navigation?.dismiss(animated: true) }
-            present(navigation, animated: true)
+            present(makeTokenController(), animated: true)
         case .cache:
-            push(CacheSettingsView(model: model), title: "Manage cache".localized)
+            navigate(.cache, self)
         case .about:
-            push(AboutSettingsView(model: model), title: "About application".localized)
+            navigate(.about, self)
         case .logout:
             signOut()
         }
-    }
-
-    private func push<V: View>(_ view: V, title: String) {
-        let controller = UIHostingController(rootView: view)
-        controller.title = title
-        controller.navigationItem.largeTitleDisplayMode = .never
-        navigationController?.pushViewController(controller, animated: true)
     }
 
     private func signOut() {
@@ -85,12 +83,11 @@ final class SettingsViewController: UIHostingController<SettingsRootView> {
             guard await self.prepareForChange(), !Task.isCancelled else { return }
             do { try await self.model.auth.logout() }
             catch {
-                NotificationCenter.default.post(
-                    name: .settingsOperationFailed,
-                    object: nil,
-                    userInfo: ["message": "Could not complete sign out"
-                        .localized]
-                )
+                self
+                    .onFailure((error is AuthOperationError ?
+                            "Signed out, but cached data could not be cleared." :
+                            "Could not complete sign out")
+                        .localized)
             }
         }
     }
@@ -99,7 +96,7 @@ final class SettingsViewController: UIHostingController<SettingsRootView> {
 }
 
 @MainActor
-private final class TokenReplacementController: UIHostingController<TokenReplacementView> {
+final class TokenReplacementController: UIHostingController<TokenReplacementView> {
     private let model: TokenReplacementViewModel
     private var observation: AnyCancellable?
 
@@ -114,15 +111,16 @@ private final class TokenReplacementController: UIHostingController<TokenReplace
             target: self,
             action: #selector(cancel)
         )
-        cancelButton.accessibilityIdentifier = "settings.token.cancel"
+        cancelButton.accessibilityIdentifier = AccessibilityID.settingsTokenCancel.identifier
         navigationItem.leftBarButtonItem = cancelButton
         let saveButton = UIBarButtonItem(
             title: "Save".localized,
-            style: .done,
+            style: .plain,
             target: self,
             action: #selector(save)
         )
-        saveButton.accessibilityIdentifier = "settings.token.save"
+        if #available(iOS 26.0, *) { saveButton.style = .prominent }
+        saveButton.accessibilityIdentifier = AccessibilityID.settingsTokenSave.identifier
         saveButton.isEnabled = model.canSave
         navigationItem.rightBarButtonItem = saveButton
         observation = model.$token.combineLatest(model.$isSaving).sink { [weak self] token, saving in

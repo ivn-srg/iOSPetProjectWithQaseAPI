@@ -2,7 +2,7 @@ import SnapKit
 import UIKit
 
 final class CreateSuiteOrCaseViewController: UIViewController {
-    private let viewModel: CreateSuiteOrCaseViewModel
+    private let viewModel: EntityCreationViewModel
     private let projectTitle: String
     private let onEntityCreated: (() -> Void)?
     private let scrollView = UIScrollView()
@@ -13,10 +13,9 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     private var isConfirmingDeparture = false
     private var loadTask: Task<Void, Never>?
     private weak var focusedField: GeneralCaseTextField?
-    private lazy var parentCatalog = SuitePickerViewModel(
-        projectCode: viewModel.projectCode,
-        projectTitle: projectTitle
-    )
+    private var parentCatalog: SuitePickerViewModel
+    private let makeParentPicker: (Int?, String, @escaping (SuitePickerViewModel, Int?) -> Void)
+        -> UIViewController
     private lazy var suiteView = CreateSuiteView(linkedViewModel: viewModel)
     private lazy var caseView = CreateTestCaseView(linkedViewModel: viewModel)
     private lazy var createItem = UIBarButtonItem(
@@ -40,17 +39,22 @@ final class CreateSuiteOrCaseViewController: UIViewController {
     private lazy var segment: UISegmentedControl = {
         let value = UISegmentedControl(items: ["Suite".localized, "Case".localized])
         value.selectedSegmentIndex = 0
-        value.accessibilityIdentifier = "form.entityType"
+        value.accessibilityIdentifier = AccessibilityID.formEntityType.identifier
         value.addTarget(self, action: #selector(changeEntity), for: .valueChanged)
         return value
     }()
 
     init(
-        viewModel: CreateSuiteOrCaseViewModel,
+        viewModel: EntityCreationViewModel,
+        parentCatalog: SuitePickerViewModel,
+        makeParentPicker: @escaping (Int?, String, @escaping (SuitePickerViewModel, Int?) -> Void)
+            -> UIViewController,
         projectTitle: String? = nil,
         onEntityCreated: (() -> Void)? = nil
     ) {
         self.viewModel = viewModel
+        self.parentCatalog = parentCatalog
+        self.makeParentPicker = makeParentPicker
         self.projectTitle = projectTitle ?? viewModel.projectCode
         self.onEntityCreated = onEntityCreated
         super.init(nibName: nil, bundle: nil)
@@ -65,8 +69,8 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         title = "Creation".localized
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.leftBarButtonItem = closeItem
-        closeItem.accessibilityIdentifier = "form.close"
-        createItem.accessibilityIdentifier = "form.create"
+        closeItem.accessibilityIdentifier = AccessibilityID.formClose.identifier
+        createItem.accessibilityIdentifier = AccessibilityID.formCreate.identifier
         view.backgroundColor = AppTheme.Palette.canvas
         scrollView.keyboardDismissMode = .interactive
         scrollView.contentInsetAdjustmentBehavior = .never
@@ -128,7 +132,10 @@ final class CreateSuiteOrCaseViewController: UIViewController {
             guard let self, let field else { return }
             self.view.layoutIfNeeded()
             if let rect = field.focusedCaretRect(in: self.scrollView) {
-                self.scrollView.scrollRectToVisible(rect.insetBy(dx: 0, dy: -12), animated: true)
+                self.scrollView.scrollRectToVisible(
+                    rect.insetBy(dx: 0, dy: -AppTheme.Space.medium),
+                    animated: true
+                )
             }
         }
     }
@@ -156,20 +163,12 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         finishEditing()
         let forSuite = viewModel.creatingEntityIsSuite
         let id = forSuite ? viewModel.creatingSuite.parentId : viewModel.creatingTestCase.suiteId
-        let model = SuitePickerViewModel(
-            projectCode: viewModel.projectCode,
-            selectedID: id,
-            projectTitle: projectTitle
-        )
-        let picker = SuitePickerViewController(viewModel: model) { [weak self] selected in
+        let picker = makeParentPicker(id, projectTitle) { [weak self] model, selected in
             guard let self, self.viewModel.isSessionCurrent, !self.isSavingDraft else { return }
             self.parentCatalog = model
             self.viewModel.selectParent(selected, forSuite: forSuite)
         }
-        let navigation = UINavigationController(rootViewController: picker)
-        navigation.navigationBar.tintColor = AppTheme.Palette.accent
-        navigation.modalPresentationStyle = .pageSheet
-        present(navigation, animated: true)
+        present(picker, animated: true)
     }
 
     @objc private func createEntity() {
@@ -255,6 +254,8 @@ extension CreateSuiteOrCaseViewController: CheckEnablingRBBProtocol {
         segment.selectedSegmentIndex = viewModel.creatingEntityIsSuite ? 0 : 1
         suiteView.isHidden = !viewModel.creatingEntityIsSuite
         caseView.isHidden = viewModel.creatingEntityIsSuite
+        suiteView.accessibilityElementsHidden = suiteView.isHidden
+        caseView.accessibilityElementsHidden = caseView.isHidden
         suiteView.updateValues()
         caseView.updateValues()
         suiteView.setEditingEnabled(!busy && viewModel.isSessionCurrent)

@@ -28,21 +28,24 @@ struct RepositoryView: View {
                             style: .compact
                         )
                         HStack {
-                            Image(systemName: "magnifyingglass").accessibilityHidden(true)
+                            Image(symbol: .magnifyingglass).accessibilityHidden(true)
                             TextField("Search cases and suites".localized, text: $model.query)
                                 .textInputAutocapitalization(.never).autocorrectionDisabled()
-                                .focused($searchFocused).accessibilityIdentifier("repository.search")
+                                .focused($searchFocused)
+                                .accessibilityIdentifier(AccessibilityID.repositorySearch.identifier)
                             if model.hasQuery {
-                                Button { model.query = "" } label: { Image(systemName: "xmark.circle.fill") }
-                                    .accessibilityLabel("Clear search".localized).frame(
+                                Button { model.query = "" } label: { Image(symbol: .xmarkCircleFill) }
+                                    .accessibilityLabel("Clear search".localized)
+                                    .frame(
                                         minWidth: AppTheme.Size.touch,
                                         minHeight: AppTheme.Size.touch
                                     )
                             }
-                        }.padding(AppTheme.Space.medium).background(
-                            Color(uiColor: AppTheme.Palette.secondarySurface),
-                            in: RoundedRectangle(cornerRadius: AppTheme.Radius.control)
-                        )
+                        }.padding(AppTheme.Space.medium)
+                            .background(
+                                Color(uiColor: AppTheme.Palette.secondarySurface),
+                                in: RoundedRectangle(cornerRadius: AppTheme.Radius.control)
+                            )
                         if !model.hasQuery {
                             if model.location.suiteID != nil {
                                 ScrollView(.horizontal, showsIndicators: false) {
@@ -52,7 +55,8 @@ struct RepositoryView: View {
                                                 breadcrumb,
                                                 from: model
                                             ) }
-                                            .font(.subheadline).padding(
+                                            .font(.subheadline)
+                                            .padding(
                                                 .horizontal,
                                                 AppTheme.Space.medium
                                             )
@@ -62,32 +66,40 @@ struct RepositoryView: View {
                                                 in: RoundedRectangle(cornerRadius: AppTheme.Radius
                                                     .control)
                                             )
-                                            .accessibilityIdentifier("repository.breadcrumb." +
-                                                (breadcrumb.id.map(String.init) ?? "root"))
+                                            .accessibilityIdentifier(AccessibilityID
+                                                .breadcrumb(breadcrumb.id).identifier)
                                         }
                                         if model
                                             .path(to: model.location.suiteID) ==
-                                            nil { Text("Path unavailable".localized).font(.footnote) }
+                                            nil { Text("Path unavailable".localized)
+                                            .font(.footnote) }
                                     }
                                 }
-                                Text(model.levelTitle).font(AppTheme.Typography.section)
-                                    .accessibilityIdentifier("repository.level")
+                                Text(model.levelTitle)
+                                    .font(AppTheme.Typography.section)
+                                    .accessibilityIdentifier(AccessibilityID.repositoryLevel.identifier)
                             }
-                            levelSummary
                         }
                         if model.showingSavedData {
-                            Text("Showing saved data".localized).font(.footnote)
+                            Text("Showing saved data".localized)
+                                .font(.footnote)
                                 .foregroundStyle(Color(uiColor: AppTheme.Palette.info))
                         }
                     }
                     .id("repository.header")
                     .padding(.vertical, AppTheme.Space.small)
+                    if !model.hasQuery {
+                        levelSummary
+                            .padding(.horizontal, AppTheme.Space.regular)
+                            .padding(.vertical, AppTheme.Space.small)
+                    }
                 }.listRowBackground(Color.clear).listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
 
                 if model.hasQuery { searchResults } else { levelContents }
                 if let deletionError {
-                    Text(deletionError).foregroundStyle(Color(uiColor: AppTheme.Palette.danger)) }
+                    Text(deletionError)
+                        .foregroundStyle(Color(uiColor: AppTheme.Palette.danger)) }
             }
             .listStyle(.insetGrouped).scrollContentBackground(.hidden)
             .contentMargins(.top, 0, for: .scrollContent)
@@ -120,7 +132,7 @@ struct RepositoryView: View {
                 }
                 Button("Cancel".localized, role: .cancel) { pendingDelete = nil }
             }
-            .accessibilityIdentifier("repositoryScreen")
+            .accessibilityIdentifier(AccessibilityID.repositoryScreen.identifier)
         }
         .frame(maxWidth: AppTheme.Size.content)
         .frame(maxWidth: .infinity)
@@ -146,9 +158,11 @@ struct RepositoryView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .font(.footnote).foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
+        .font(.footnote)
+        .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
         .accessibilityElement(children: .combine)
-        .accessibilityIdentifier(model.location.suiteID == nil ? "repository.level" : "repository.counts")
+        .accessibilityIdentifier((model.location.suiteID == nil ? AccessibilityID
+                .repositoryLevel : .repositoryCounts).identifier)
     }
 
     private var summaryTitle: String {
@@ -180,14 +194,16 @@ struct RepositoryView: View {
             if model.suitesLoading { ProgressView() }
             if let error = model.suiteError { retry(error) }
             if model.childSuites.isEmpty && !model.suitesLoading && model
-                .suiteError == nil { Text("No suites".localized).foregroundStyle(.secondary) }
+                .suiteError == nil { Text("No suites".localized)
+                .foregroundStyle(.secondary) }
         }
         Section("Cases".localized) {
             ForEach(model.cases, id: \.uniqueKey) { entity in caseRow(entity) }
             if model.casesLoading { ProgressView() }
             if let error = model.caseError { retry(error) }
             if model.cases.isEmpty && !model.casesLoading && model
-                .caseError == nil { Text("No cases".localized).foregroundStyle(.secondary) }
+                .caseError == nil { Text("No cases".localized)
+                .foregroundStyle(.secondary) }
             if model.hasMoreCases && !model
                 .casesLoading { Button("Load more".localized) { Task { await model.loadMoreCases() } } }
         }
@@ -213,7 +229,7 @@ struct RepositoryView: View {
                     automation: item.automation
                 ) {
                     router.showCase(reference: .init(projectCode: model.projectCode, caseID: item.id))
-                }.accessibilityIdentifier("repository.case.\(item.id)")
+                }.accessibilityIdentifier(AccessibilityID.repositoryCase(item.id).identifier)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     .swipeActions { deleteAction(.init(
                         projectCode: model.projectCode,
@@ -243,10 +259,10 @@ struct RepositoryView: View {
                     "%lld cases".localized,
                     $0
                 ) },
-            symbol: "folder.fill"
+            symbol: .folderFill
         ) {
             router.openSuite(suite, from: model)
-        }.accessibilityIdentifier("repository.suite.\(suite.id)")
+        }.accessibilityIdentifier(AccessibilityID.repositorySuite(suite.id).identifier)
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             .swipeActions { deleteAction(.init(projectCode: model.projectCode, id: suite.id, isSuite: true)) }
     }
@@ -259,7 +275,7 @@ struct RepositoryView: View {
             automation: item.automation?.menuItem.id
         ) {
             router.showCase(reference: .init(projectCode: model.projectCode, caseID: item.id))
-        }.accessibilityIdentifier("repository.case.\(item.id)")
+        }.accessibilityIdentifier(AccessibilityID.repositoryCase(item.id).identifier)
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             .swipeActions { deleteAction(.init(projectCode: model.projectCode, id: item.id, isSuite: false)) }
     }
@@ -270,7 +286,8 @@ struct RepositoryView: View {
 
     private func retry(_ message: String) -> some View {
         VStack(alignment: .leading) {
-            Text(message).foregroundStyle(Color(uiColor: AppTheme.Palette.warning))
+            Text(message)
+                .foregroundStyle(Color(uiColor: AppTheme.Palette.warning))
             Button("Retry".localized) { Task { await model.reload() } }
         }
     }

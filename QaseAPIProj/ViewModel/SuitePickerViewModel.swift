@@ -12,7 +12,7 @@ final class SuitePickerViewModel {
     private(set) var errorMessage: String?
     var query = "" { didSet { onChange?() } }
     var onChange: (() -> Void)?
-    private let loader: SuiteCatalogLoader
+    private let loader: SuiteCatalogLoading
     private let session: SessionContext
     private let stamp: SessionStamp
     private var generation = 0
@@ -31,12 +31,10 @@ final class SuitePickerViewModel {
         projectCode: String,
         selectedID: Int? = nil,
         projectTitle: String? = nil,
-        network: NetworkManager = ApiServiceConfiguration.shared.apiService,
-        dao: RealmManager? = nil,
-        session: SessionContext? = nil
+        loader: SuiteCatalogLoading,
+        dao: RepositoryCaching,
+        session: SessionContext
     ) {
-        let session = session ?? .shared
-        let dao = dao ?? .shared
         self.projectCode = projectCode
         self.projectTitle = projectTitle
         self.selectedID = selectedID == 0 ? nil : selectedID
@@ -44,7 +42,7 @@ final class SuitePickerViewModel {
         stamp = session.capture()
         catalog = dao.getAllCachedSuites(projectCode: projectCode)
         catalogComplete = dao.hasRepositoryCatalog(projectCode: projectCode)
-        loader = SuiteCatalogLoader(network: network, dao: dao, session: session)
+        self.loader = loader
         invalidation = NotificationCenter.default.publisher(for: .didInvalidateSession)
             .sink { [weak self] notification in
                 guard let self, notification.object as AnyObject? === self.session else { return }

@@ -8,11 +8,12 @@
 import UIKit
 
 final class TextFieldWithPadding: UITextField {
+    private struct Layout { static let inputInset: CGFloat = 10 }
     var textPadding = UIEdgeInsets(
-        top: 10,
-        left: 10,
-        bottom: 10,
-        right: 10
+        top: Layout.inputInset,
+        left: Layout.inputInset,
+        bottom: Layout.inputInset,
+        right: Layout.inputInset
     )
 
     override func textRect(forBounds bounds: CGRect) -> CGRect {
@@ -28,7 +29,7 @@ final class TextFieldWithPadding: UITextField {
 
 extension TextFieldWithPadding: UITextFieldDelegate {
     func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
-        textField.layer.borderColor = AppTheme.fioletColor.cgColor
+        textField.layer.borderColor = AppTheme.Palette.accent.cgColor
         return true
     }
 

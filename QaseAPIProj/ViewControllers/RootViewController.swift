@@ -9,6 +9,16 @@ import UIKit
 
 final class RootViewController: UIViewController {
     private var currentViewController: UIViewController?
+    private let makeContent: () -> UIViewController
+    private let session: SessionContext
+
+    init(session: SessionContext, makeContent: @escaping () -> UIViewController) {
+        self.session = session
+        self.makeContent = makeContent
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -17,28 +27,19 @@ final class RootViewController: UIViewController {
             self,
             selector: #selector(handleAuthorizationStatusChange(_:)),
             name: .didChangeAuthStatus,
-            object: nil
+            object: session
         )
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleSettingsFailure(_:)),
             name: .settingsOperationFailed,
-            object: nil
+            object: session
         )
         updateRootViewController()
     }
 
     func updateRootViewController() {
-        let authManager = AuthManager.shared
-        let isUserLoggedIn = authManager.isUserLoggedIn()
-        let token = authManager.getAuthToken()
-
-        let newViewController: UIViewController
-        if let token = token, !token.isEmpty, isUserLoggedIn {
-            newViewController = MainTabbarViewController()
-        } else {
-            newViewController = AuthViewController()
-        }
+        let newViewController = makeContent()
 
         if let currentVC = currentViewController {
             currentVC.dismiss(animated: false)
@@ -49,7 +50,13 @@ final class RootViewController: UIViewController {
 
         addChild(newViewController)
         view.addSubview(newViewController.view)
-        newViewController.view.frame = view.bounds
+        newViewController.view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            newViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            newViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            newViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            newViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
         newViewController.didMove(toParent: self)
         currentViewController = newViewController
     }

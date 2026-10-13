@@ -261,8 +261,8 @@ extension CaseSummary {
             id: entity.id,
             title: entity.title,
             description: entity.itemDescription,
-            priority: entity.priority?.menuItem.id,
-            automation: entity.automation?.menuItem.id,
+            priority: entity.priority?.apiValue,
+            automation: entity.automation?.apiValue,
             suiteID: entity.parentId
         )
     }

@@ -18,11 +18,11 @@ enum AppAppearance: String, CaseIterable, Identifiable {
         }
     }
 
-    var symbol: String {
+    var symbol: AppSymbol {
         switch self {
-        case .system: return "circle.lefthalf.filled"
-        case .light: return "sun.max"
-        case .dark: return "moon"
+        case .system: return .circleLefthalfFilled
+        case .light: return .sunMax
+        case .dark: return .moon
         }
     }
 
@@ -37,7 +37,6 @@ enum AppAppearance: String, CaseIterable, Identifiable {
 
 @MainActor
 final class AppSettingsStore: ObservableObject {
-    static let shared = AppSettingsStore()
     static let appearanceKey = "qase.app.appearance"
     private let defaults: UserDefaults
 
@@ -45,9 +44,19 @@ final class AppSettingsStore: ObservableObject {
         didSet { defaults.set(appearance.rawValue, forKey: Self.appearanceKey) }
     }
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults) {
         self.defaults = defaults
         appearance = defaults.string(forKey: Self.appearanceKey)
             .flatMap(AppAppearance.init(rawValue:)) ?? .system
+    }
+}
+
+extension AppAppearance {
+    var accessibilityAppearance: AccessibilityID.Appearance {
+        switch self {
+        case .system: return .system
+        case .light: return .light
+        case .dark: return .dark
+        }
     }
 }

@@ -4,38 +4,12 @@ import RealmSwift
 enum TargetTestEntities { case suites, cases, all }
 
 @MainActor
-protocol HeroDAO {
-    func saveProjects(_ projects: [Project], stamp: SessionStamp) -> Bool
-    func getProjects() -> [Project]?
-    func deleteProject(_ project: Project, stamp: SessionStamp) -> Bool
-    func saveTestEntities(_ entities: [TestListEntity], projectCode: String, stamp: SessionStamp) -> Bool
-    func getTestEntities(
-        projectCode: String,
-        by parentSuite: ParentSuite?,
-        testEntitiesType: TargetTestEntities
-    ) -> [TestListEntity]?
-    func getAllCachedCases(projectCode: String) -> [TestListEntity]
-    func deleteEntity(_ entity: TestListEntity, projectCode: String, stamp: SessionStamp) -> Bool
-    func saveTestCase(_ testCase: TestCaseEntity, reference: TestCaseReference, stamp: SessionStamp) -> Bool
-    func getTestCase(reference: TestCaseReference) -> TestCaseEntity?
-    func deleteTestCase(reference: TestCaseReference, stamp: SessionStamp) -> Bool
-    func getProjectSummaries() -> [ProjectSummary]
-    func saveProjectSummaries(_ projects: [ProjectSummary], stamp: SessionStamp) -> Bool
-    func replaceProjectSummaries(_ projects: [ProjectSummary], stamp: SessionStamp) -> Bool
-    func getHomeSnapshot(projectCode: String) -> HomeSnapshot?
-    func saveHomeSnapshot(_ snapshot: HomeSnapshot, stamp: SessionStamp) -> Bool
-    func getRecentCases(projectCode: String) -> [RecentCaseItem]
-    func recordRecentCase(_ item: RecentCaseItem, stamp: SessionStamp) -> Bool
-}
-
-@MainActor
-final class RealmManager: HeroDAO {
+final class RealmManager: AppCache {
     enum DownloadedDataError: Error {
         case invalidSession
         case readOnlyStore
     }
 
-    static let shared = RealmManager(configuration: productionConfiguration())
     static let cacheObjectTypes: [ObjectBase.Type] = [
         ProjectRO.self,
         CountsOfProjectRO.self,
@@ -49,33 +23,30 @@ final class RealmManager: HeroDAO {
         ReadCacheRO.self
     ]
     private let session: SessionContext
+    private let productionStoreConfiguration: Realm.Configuration
+    private let demoIdentifier = "qase-demo." + UUID().uuidString
     private var configuration: Realm.Configuration
     private var realm: Realm?
     private(set) var initializationError: Error?
 
     static func productionConfiguration() -> Realm.Configuration {
-        #if DEBUG
-            if CommandLine.arguments.contains("UITests") || AuthManager.shared.getAuthToken() == "QASE_DEMO" {
-                return Realm.Configuration(inMemoryIdentifier: "qase-ui-tests")
-            }
-        #endif
+
         let configuration = migratedConfiguration(Realm.Configuration.defaultConfiguration)
-        Realm.Configuration.defaultConfiguration = configuration
         return configuration
     }
 
     static func migratedConfiguration(_ initialConfiguration: Realm.Configuration) -> Realm.Configuration {
         var configuration = initialConfiguration
-        configuration.schemaVersion = 5
+        configuration.schemaVersion = CachePolicy.schemaVersion
         configuration.objectTypes = cacheObjectTypes
         configuration.migrationBlock = { migration, oldVersion in
-            if oldVersion < 2 {
+            if oldVersion < CachePolicy.firstOwnedSchema {
                 // The entire legacy Realm is derived cache without a reliable account marker.
                 // Enumerating the old schema also purges abandoned cache tables.
                 for objectSchema in migration.oldSchema.objectSchema {
                     migration.deleteData(forType: objectSchema.className)
                 }
-            } else if oldVersion < 4 {
+            } else if oldVersion < CachePolicy.standaloneStepsSchema {
                 migration.enumerateObjects(ofType: "StepsInTestCaseRO") { old, new in
                     if old?.objectSchema.properties.contains(where: { $0.name == "originalHash" }) == true {
                         new?["originalHash"] = old?["originalHash"] ?? old?["entityHash"]
@@ -90,7 +61,7 @@ final class RealmManager: HeroDAO {
         if let url = configuration.fileURL, FileManager.default.fileExists(atPath: url.path) {
             let backup = url.appendingPathExtension("legacy-backup")
             if !FileManager.default.fileExists(atPath: backup.path),
-               let version = try? schemaVersionAtURL(url), version < 2 {
+               let version = try? schemaVersionAtURL(url), version < CachePolicy.firstOwnedSchema {
                 // Best effort backup; migration is not opened if an existing legacy file cannot be backed up.
                 do { try FileManager.default.copyItem(at: url, to: backup) }
                 catch { configuration.readOnly = true }
@@ -99,11 +70,12 @@ final class RealmManager: HeroDAO {
         return configuration
     }
 
-    init(configuration: Realm.Configuration, session: SessionContext? = nil) {
+    init(configuration: Realm.Configuration, session: SessionContext) {
         var configuration = configuration
         if configuration.objectTypes == nil { configuration.objectTypes = Self.cacheObjectTypes }
+        productionStoreConfiguration = configuration
         self.configuration = configuration
-        self.session = session ?? .shared
+        self.session = session
         setupRealm()
     }
 
@@ -111,9 +83,9 @@ final class RealmManager: HeroDAO {
         realm = nil
         initializationError = nil
         configuration = enabled ? Realm.Configuration(
-            inMemoryIdentifier: "qase-demo",
+            inMemoryIdentifier: demoIdentifier,
             objectTypes: Self.cacheObjectTypes
-        ) : Self.productionConfiguration()
+        ) : productionStoreConfiguration
         setupRealm()
     }
 
@@ -126,9 +98,12 @@ final class RealmManager: HeroDAO {
     private func getRealm() -> Realm? { setupRealm()
         return realm }
 
-    func clearAll() throws { setupRealm()
-        guard let realm else { throw initializationError ?? CocoaError(.fileReadUnknown) }
-        try realm.write { realm.deleteAll() } }
+    func clearAll() throws {
+        setupRealm()
+        guard let realm
+        else { throw initializationError ?? CocoaError(.fileReadUnknown) }
+        try realm
+            .write { realm.deleteAll() } }
 
     private func downloadedDataStore(stamp: SessionStamp) throws -> (realm: Realm, owner: String) {
         guard session.isCurrent(stamp), let owner = stamp.ownerID, !owner.isEmpty else {
@@ -367,7 +342,11 @@ final class RealmManager: HeroDAO {
         object.ownerID = owner
         object.code = project.code
         object.title = project.title
-        object.cacheKey = projectKey(project.code, owner: owner)
+        object
+            .cacheKey = projectKey(
+                project.code,
+                owner: owner
+            )
         let previous = realm.object(ofType: ProjectRO.self, forPrimaryKey: object.cacheKey)
         object.itemDescription = project.descriptionWasProvided ? project.description : previous?
             .itemDescription
@@ -379,10 +358,12 @@ final class RealmManager: HeroDAO {
         counts.suites = project.metrics.suites ?? 0
         counts.hasRuns = project.metrics.runs != nil
         counts.hasDefects = project.metrics.defects != nil
-        if let total = project.metrics.runs { let runs = TestRunsRO()
+        if let total = project.metrics
+            .runs { let runs = TestRunsRO()
             runs.total = total
             counts.runs = runs }
-        if let total = project.metrics.defects { let defects = BugReportsRO()
+        if let total = project.metrics
+            .defects { let defects = BugReportsRO()
             defects.total = total
             counts.defects = defects }
         object.counts = counts
@@ -455,8 +436,12 @@ final class RealmManager: HeroDAO {
         return commit(stamp) { realm, owner in
             let object = HomeSnapshotRO()
             object.ownerID = owner
-            object.projectCode = snapshot.projectCode
-            object.cacheKey = projectKey(snapshot.projectCode, owner: owner)
+            object.projectCode = snapshot
+                .projectCode
+            object.cacheKey = projectKey(
+                snapshot.projectCode,
+                owner: owner
+            )
             object.payload = data
             realm.add(object, update: .modified)
         }
@@ -479,9 +464,11 @@ final class RealmManager: HeroDAO {
         return commit(stamp) { realm, owner in
             let object = RecentCaseRO()
             object.ownerID = owner
-            object.projectCode = item.reference.projectCode
+            object.projectCode = item.reference
+                .projectCode
             object.cacheKey = "\(owner)|\(item.reference.cacheKey)"
-            object.viewedAt = item.viewedAt
+            object.viewedAt = item
+                .viewedAt
             object.payload = data
             realm.add(object, update: .modified)
             let records = realm.objects(RecentCaseRO.self).filter(
@@ -489,7 +476,8 @@ final class RealmManager: HeroDAO {
                 owner,
                 item.reference.projectCode
             ).sorted(byKeyPath: "viewedAt", ascending: false)
-            if records.count > 20 { realm.delete(Array(records.dropFirst(20))) }
+            if records.count > CachePolicy
+                .recentRetention { realm.delete(Array(records.dropFirst(CachePolicy.recentRetention))) }
         }
     }
 
@@ -513,7 +501,8 @@ final class RealmManager: HeroDAO {
             let object = ReadCacheRO()
             object.ownerID = owner
             object.projectCode = projectCode
-            object.cacheKey = "\(owner)|\(projectCode)|\(kind)"
+            object
+                .cacheKey = "\(owner)|\(projectCode)|\(kind)"
             object.payload = data
             realm.add(object, update: .modified)
         }
@@ -590,24 +579,35 @@ extension RealmManager {
     }
 
     func replaceSuiteCatalog(_ suites: [TestListEntity], projectCode: String, stamp: SessionStamp) -> Bool {
-        commit(stamp) { realm, owner in
+        guard let data = try? JSONEncoder().encode(suites.map(\.id)) else { return false }
+        return commit(stamp) { realm, owner in
             let ids = Set(suites.map(\.id))
             let existing = realm.objects(TestEntitiesDataRO.self)
                 .filter("ownerID == %@ AND codeOfProject == %@ AND isSuites == true", owner, projectCode)
             realm.delete(existing.filter { !ids.contains($0.id) })
-            for suite in suites { realm.add(
-                TestEntitiesDataRO(entitiesData: suite, codeOfProject: projectCode, ownerID: owner),
-                update: .modified
-            ) }
-        } && savePayload(suites.map(\.id), projectCode: projectCode, kind: "repository.suites", stamp: stamp)
+            for suite in suites {
+                realm.add(
+                    TestEntitiesDataRO(entitiesData: suite, codeOfProject: projectCode, ownerID: owner),
+                    update: .modified
+                )
+            }
+            let marker = ReadCacheRO()
+            marker.ownerID = owner
+            marker.projectCode = projectCode
+            marker.cacheKey = "\(owner)|\(projectCode)|repository.suites"
+            marker.payload = data
+            realm.add(marker, update: .modified)
+        }
     }
 
     func replaceRepositoryCases(
         _ entities: [TestListEntity],
+        snapshot: RepositoryLevelSnapshot,
         location: RepositoryLocation,
         stamp: SessionStamp
     ) -> Bool {
-        commit(stamp) { realm, owner in
+        guard let data = try? JSONEncoder().encode(snapshot) else { return false }
+        return commit(stamp) { realm, owner in
             let ids = Set(entities.map(\.id))
             var existing = realm.objects(TestEntitiesDataRO.self)
                 .filter(
@@ -634,6 +634,13 @@ extension RealmManager {
                 TestEntitiesDataRO(entitiesData: entity, codeOfProject: location.projectCode, ownerID: owner),
                 update: .modified
             ) }
+            let marker = ReadCacheRO()
+            marker.ownerID = owner
+            marker.projectCode = location.projectCode
+            let level = location.suiteID.map(String.init) ?? "root"
+            marker.cacheKey = "\(owner)|\(location.projectCode)|repository.level.\(level)"
+            marker.payload = data
+            realm.add(marker, update: .modified)
         }
     }
 
@@ -645,16 +652,4 @@ extension RealmManager {
         )
     }
 
-    func saveRepositorySnapshot(
-        _ value: RepositoryLevelSnapshot,
-        location: RepositoryLocation,
-        stamp: SessionStamp
-    ) -> Bool {
-        savePayload(
-            value,
-            projectCode: location.projectCode,
-            kind: "repository.level.\(location.suiteID.map(String.init) ?? "root")",
-            stamp: stamp
-        )
-    }
 }

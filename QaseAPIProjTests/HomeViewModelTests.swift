@@ -115,7 +115,7 @@ struct HomeViewModelTests {
             configuration: .init(inMemoryIdentifier: UUID().uuidString),
             session: session
         )
-        let repository = HomeRepository(network: APIMockManager.shared, dao: cache, session: session)
+        let repository = HomeRepository(network: APIMockManager(), dao: cache, session: session)
         let selection = SelectedProjectStore(
             repository: repository,
             cache: cache,

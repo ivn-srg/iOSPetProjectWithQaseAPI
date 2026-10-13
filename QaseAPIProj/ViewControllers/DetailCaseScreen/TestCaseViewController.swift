@@ -2,15 +2,16 @@ import SnapKit
 import UIKit
 
 final class TestCaseViewController: UIViewController {
-    let viewModel: DetailTabbarControllerViewModel
-    private let projectTitle: String?
-    private var task: Task<Void, Never>?
+    let viewModel: TestCaseEditorViewModel
+    private let session: SessionContext
+    private var fetchTask: Task<Void, Never>?
+    private var saveTask: Task<Void, Never>?
     private var isFetching = false
     private var isSubmitting = false
     private var isConfirmingDeparture = false
     private var previousTabVisibility: Bool?
     private weak var previousPopDelegate: UIGestureRecognizerDelegate?
-    private lazy var form = GeneralDetailCaseViewController(vm: viewModel, projectTitle: projectTitle)
+    private let form: GeneralDetailCaseViewController
     private lazy var saveItem = UIBarButtonItem(
         title: "Save".localized,
         style: .plain,
@@ -18,16 +19,21 @@ final class TestCaseViewController: UIViewController {
         action: #selector(saveChanges)
     )
     private lazy var backItem = UIBarButtonItem(
-        image: UIImage(systemName: "chevron.left"),
+        image: AppImages.chevronLeft,
         style: .plain,
         target: self,
         action: #selector(goBack)
     )
     private let spinner = UIActivityIndicatorView(style: .medium)
 
-    init(reference: TestCaseReference, projectTitle: String? = nil) {
-        viewModel = DetailTabbarControllerViewModel(reference: reference)
-        self.projectTitle = projectTitle
+    init(
+        viewModel: TestCaseEditorViewModel,
+        form: GeneralDetailCaseViewController,
+        session: SessionContext
+    ) {
+        self.viewModel = viewModel
+        self.form = form
+        self.session = session
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -41,8 +47,8 @@ final class TestCaseViewController: UIViewController {
         navigationItem.largeTitleDisplayMode = .never
         navigationItem.leftBarButtonItem = backItem
         backItem.accessibilityLabel = "Back".localized
-        backItem.accessibilityIdentifier = "form.back"
-        saveItem.accessibilityIdentifier = "form.save"
+        backItem.accessibilityIdentifier = AccessibilityID.formBack.identifier
+        saveItem.accessibilityIdentifier = AccessibilityID.formSave.identifier
         spinner.color = AppTheme.Palette.accent
         spinner.accessibilityLabel = "Saving".localized
         view.backgroundColor = AppTheme.Palette.canvas
@@ -56,12 +62,19 @@ final class TestCaseViewController: UIViewController {
         form.onKeyboardVisibilityChanged = { [weak self] visible in self?.setKeyboardVisible(visible) }
         viewModel.delegate = self
         viewModel.checkDataChanged = { [weak self] in self?.checkConditionAndToggleRightBarButton() }
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(sessionInvalidated(_:)),
+            name: .didInvalidateSession,
+            object: session
+        )
         checkConditionAndToggleRightBarButton()
         fetchCase()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        if viewModel.testCase == nil { fetchCase() }
         if let gesture = navigationController?.interactivePopGestureRecognizer {
             if gesture.delegate !== self {
                 previousPopDelegate = gesture.delegate
@@ -73,6 +86,7 @@ final class TestCaseViewController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        cancelFetching()
         form.finishEditing()
         view.endEditing(true)
         restoreTabVisibility()
@@ -81,7 +95,24 @@ final class TestCaseViewController: UIViewController {
         }
     }
 
-    deinit { task?.cancel() }
+    deinit {
+        fetchTask?.cancel()
+        saveTask?.cancel()
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func cancelFetching() {
+        fetchTask?.cancel()
+        fetchTask = nil
+        isFetching = false
+        checkConditionAndToggleRightBarButton()
+    }
+
+    @objc private func sessionInvalidated(_ notification: Notification) {
+        cancelFetching()
+        saveTask?.cancel()
+        restoreTabVisibility()
+    }
 
     private func setKeyboardVisible(_ visible: Bool) {
         if visible {
@@ -106,16 +137,11 @@ final class TestCaseViewController: UIViewController {
         isFetching = true
         form.clearError()
         checkConditionAndToggleRightBarButton()
-        task = Task { [weak self] in
-            guard let self else { return }
-            defer {
-                self.isFetching = false
-                self.checkConditionAndToggleRightBarButton()
-            }
+        fetchTask = Task { [weak self, viewModel] in
             do {
-                try await self.viewModel.fetchCaseDataJSON()
+                try await viewModel.fetchCaseDataJSON()
             } catch {
-                guard self.viewModel.isSessionCurrent else { return }
+                guard !Task.isCancelled, viewModel.isSessionCurrent, let self else { return }
                 self.form.showError(
                     "Could not load the test case. Try again.".localized,
                     retry: { [weak self] in
@@ -123,6 +149,10 @@ final class TestCaseViewController: UIViewController {
                     }
                 )
             }
+            guard !Task.isCancelled, let self else { return }
+            self.fetchTask = nil
+            self.isFetching = false
+            self.checkConditionAndToggleRightBarButton()
         }
     }
 
@@ -133,9 +163,10 @@ final class TestCaseViewController: UIViewController {
         form.clearError()
         isSubmitting = true
         checkConditionAndToggleRightBarButton()
-        task = Task { [weak self] in
+        saveTask = Task { [weak self] in
             guard let self else { return }
             defer {
+                self.saveTask = nil
                 self.isSubmitting = false
                 self.checkConditionAndToggleRightBarButton()
             }

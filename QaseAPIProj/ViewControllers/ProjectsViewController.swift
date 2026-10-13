@@ -14,7 +14,18 @@ final class ProjectsViewController: UIViewController {
     var onProjectDeleted: ((String) -> Void)?
     var onProjectsChanged: (() -> Void)?
     var suitesAndCasesCompletion: (() -> Void)? = {}
-    var viewModel: ProjectsViewModel = .init()
+    private var isVisible = false
+    private var loadTask: Task<Void, Never>?
+    private let viewModel: ProjectsViewModel
+    private let onCreateProject: () -> Void
+
+    init(viewModel: ProjectsViewModel, onCreateProject: @escaping () -> Void) {
+        self.viewModel = viewModel
+        self.onCreateProject = onCreateProject
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     // MARK: - UI
     private lazy var tableVw: UITableView = {
@@ -22,7 +33,7 @@ final class ProjectsViewController: UIViewController {
         tv.translatesAutoresizingMaskIntoConstraints = false
         tv.register(ProjectTableViewCell.self, forCellReuseIdentifier: ProjectTableViewCell.cellId)
         tv.backgroundColor = .clear
-        tv.accessibilityIdentifier = "projectsTableView"
+        tv.accessibilityIdentifier = AccessibilityID.projectsTableView.identifier
         return tv
     }()
 
@@ -32,19 +43,20 @@ final class ProjectsViewController: UIViewController {
             target: self,
             action: #selector(addNewProject)
         )
-        rbb.accessibilityIdentifier = "addNewProjectRBB"
+        rbb.accessibilityIdentifier = AccessibilityID.addNewProjectRBB.identifier
         return rbb
     }()
 
     private lazy var searchController: UISearchController = {
         let search = UISearchController(searchResultsController: nil)
-        search.searchBar.placeholder = "Search repository"
+        search.searchBar.placeholder = "Search repository".localized
         search.obscuresBackgroundDuringPresentation = false
         search.definesPresentationContext = true
         return search
     }()
 
     private lazy var emptyDataLabel: UILabel = EmptyDataLabel()
+    private let activity = UIActivityIndicatorView(style: .medium)
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -62,17 +74,29 @@ final class ProjectsViewController: UIViewController {
             navigationItem.searchBarPlacementAllowsToolbarIntegration = false
         }
 
-        view.backgroundColor = AppTheme.bgPrimaryColor
-        navigationController?.navigationBar.accessibilityIdentifier = "navigationBar"
+        view.backgroundColor = AppTheme.Palette.canvas
+        navigationController?.navigationBar.accessibilityIdentifier = AccessibilityID.navigationBar.identifier
     }
 
     override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(true)
+        super.viewWillAppear(animated)
+        isVisible = true
 
-        executeWithErrorHandling { [weak self] in
+        loadTask?.cancel()
+        viewModel.cancelLoading()
+        loadTask = executeWithErrorHandling { [weak self] in
             try await self?.viewModel.requestEntitiesData(place: .start)
         }
     }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        isVisible = false
+        loadTask?.cancel()
+        viewModel.cancelLoading()
+    }
+
+    deinit { loadTask?.cancel() }
 
     // MARK: - UI
     func setupTableView() {
@@ -81,6 +105,8 @@ final class ProjectsViewController: UIViewController {
         tableVw.delegate = self
         tableVw.dataSource = self
 
+        view.addSubview(activity)
+        activity.snp.makeConstraints { $0.center.equalToSuperview() }
         view.addSubview(emptyDataLabel)
         emptyDataLabel.snp.makeConstraints {
             $0.center.equalToSuperview()
@@ -93,23 +119,21 @@ final class ProjectsViewController: UIViewController {
     }
 
     private func updateEmptyDataLabelVisibility() {
-        emptyDataLabel.isHidden = viewModel.countOfRows() > 0
+        emptyDataLabel.isHidden = viewModel.countOfRows() > 0 || viewModel.isLoading
     }
 
     // MARK: - @objc func for navigation
     @objc func addNewProject() {
-        let vc = CreatingProjectViewController(viewModel: .init(), createdCallback: { [weak self] in
-            self?.onProjectsChanged?()
-        })
-        vc.modalPresentationStyle = .fullScreen
-        present(vc, animated: true)
+        onCreateProject()
     }
 }
 
 // MARK: - UpdateTableViewProtocol
 extension ProjectsViewController: UpdateTableViewProtocol {
     func updateTableView() {
-        Task { @MainActor in tableVw.reloadData() }
+        tableVw.reloadData()
+        if viewModel.isLoading { activity.startAnimating() } else { activity.stopAnimating() }
+        if !viewModel.isLoading { tableVw.refreshControl?.endRefreshing() }
     }
 }
 
@@ -157,7 +181,8 @@ extension ProjectsViewController: UITableViewDelegate {
             title: "Delete".localized
         ) { [weak self] _, _, completionHandler in
             guard let self = self else { return }
-            guard self.viewModel.projects.indices.contains(indexPath.row) else { completionHandler(false)
+            guard self.viewModel.projects.indices.contains(indexPath.row)
+            else { completionHandler(false)
                 return }
             let project = self.viewModel.projects[indexPath.row]
             let codeOfProject = project.code
@@ -184,7 +209,7 @@ extension ProjectsViewController: UITableViewDelegate {
                 completionHandler(false)
             }
         }
-        swipeAction.image = AppTheme.trashImage
+        swipeAction.image = AppImages.trash
         return UISwipeActionsConfiguration(actions: [swipeAction])
     }
 
@@ -193,10 +218,14 @@ extension ProjectsViewController: UITableViewDelegate {
         willDisplay cell: UITableViewCell,
         forRowAt indexPath: IndexPath
     ) {
-        cell.separatorInset = UIEdgeInsets(top: 0, left: 1, bottom: 2, right: -5)
+        cell.separatorInset = UIEdgeInsets(top: 0, left: AppTheme.Space.regular, bottom: 0, right: 0)
 
-        if viewModel.projects.count - indexPath.row <= 3 && !viewModel.isLoading {
-            executeWithErrorHandling { [weak self] in
+        if isVisible && viewModel.projects.count - indexPath.row <= PaginationPolicy
+            .prefetchThreshold && !viewModel
+            .isLoading {
+            loadTask?.cancel()
+            viewModel.cancelLoading()
+            loadTask = executeWithErrorHandling { [weak self] in
                 try await self?.viewModel.requestEntitiesData(place: .continuos)
             }
         }
@@ -214,12 +243,11 @@ extension ProjectsViewController {
     }
 
     @objc func handleRefreshControl() {
-        executeWithErrorHandling { [weak self] in
+        loadTask?.cancel()
+        viewModel.cancelLoading()
+        loadTask = executeWithErrorHandling { [weak self] in
             try await self?.viewModel.requestEntitiesData(place: .refresh,)
         }
 
-        Task { @MainActor in
-            self.tableVw.refreshControl?.endRefreshing()
-        }
     }
 }

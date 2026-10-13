@@ -1,15 +1,14 @@
 import Foundation
 
 @MainActor
-final class SuiteCatalogLoader {
-    private let repository: HomeRepository
-    private let dao: RealmManager
+final class SuiteCatalogLoader: SuiteCatalogLoading {
+    private let repository: RepositoryReading
+    private let dao: RepositoryCaching
     private let session: SessionContext
     private let stamp: SessionStamp
-    private let pageSize = 50
 
-    init(network: NetworkManager, dao: RealmManager, session: SessionContext) {
-        repository = HomeRepository(network: network, session: session)
+    init(repository: RepositoryReading, dao: RepositoryCaching, session: SessionContext) {
+        self.repository = repository
         self.dao = dao
         self.session = session
         stamp = session.capture()
@@ -26,12 +25,15 @@ final class SuiteCatalogLoader {
             let newValues = page.entities.filter { seen.insert($0.id).inserted }
             values.append(contentsOf: newValues)
             offset += page.entities.count
-            let total = page.filtered ?? page.total
-            let finished = page.entities
-                .isEmpty || (total.map { offset >= $0 } ?? (page.entities.count < pageSize))
-            if finished { break }
-            guard !newValues.isEmpty
-            else { throw API.NetError.invalidRequest("The suite catalog did not advance") }
+            guard page.entities.isEmpty || !newValues.isEmpty else {
+                throw API.NetError.invalidRequest("The suite catalog did not advance")
+            }
+            if !PaginationPolicy.hasMore(
+                received: page.entities.count,
+                offset: offset,
+                total: page.filtered ?? page.total
+            ) { break }
+
         }
         guard accepts(isCurrent) else { throw CancellationError() }
         guard dao.replaceSuiteCatalog(values, projectCode: projectCode, stamp: stamp) else {

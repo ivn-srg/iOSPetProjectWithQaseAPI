@@ -12,16 +12,18 @@ final class FormSectionView: UIView {
         heading.textColor = AppTheme.Palette.secondaryText
         heading.accessibilityTraits.insert(.header)
         let card = UIView()
-        card.backgroundColor = AppTheme.Palette.secondarySurface
-        card.layer.cornerRadius = 16
+        card.backgroundColor = AppTheme.Palette.surface
+        card.layer.cornerRadius = AppTheme.Radius.card
         let stack = UIStackView()
         stack.axis = .vertical
+        let textRows = rows.contains { $0 is GeneralCaseTextField }
+        stack.spacing = textRows ? AppTheme.Space.regular : 0
         stack.alignment = .fill
         for (index, row) in rows.enumerated() {
-            if index > 0 {
+            if index > 0 && !textRows {
                 let divider = UIView()
                 divider.backgroundColor = AppTheme.Palette.border
-                divider.snp.makeConstraints { $0.height.equalTo(1 / UIScreen.main.scale) }
+                divider.snp.makeConstraints { $0.height.equalTo(1 / traitCollection.displayScale) }
                 stack.addArrangedSubview(divider)
             }
             stack.addArrangedSubview(row)
@@ -31,12 +33,12 @@ final class FormSectionView: UIView {
         card.addSubview(stack)
         heading.snp.makeConstraints { $0.top.leading.trailing.equalToSuperview() }
         card.snp.makeConstraints {
-            $0.top.equalTo(heading.snp.bottom).offset(8)
+            $0.top.equalTo(heading.snp.bottom).offset(AppTheme.Space.small)
             $0.leading.trailing.bottom.equalToSuperview()
         }
         stack.snp.makeConstraints {
-            $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.verticalEdges.equalToSuperview().inset(4)
+            $0.horizontalEdges.equalToSuperview().inset(AppTheme.Space.regular)
+            $0.verticalEdges.equalToSuperview().inset(textRows ? AppTheme.Space.regular : AppTheme.Space.tiny)
         }
     }
 

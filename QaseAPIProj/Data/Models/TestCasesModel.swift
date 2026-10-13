@@ -133,15 +133,15 @@ extension TestCaseEntity {
         description = ""
         preconditions = ""
         postconditions = ""
-        severity = Severity(0)
-        priority = Priority(0)
-        type = Types(0)
-        layer = Layer(0)
+        severity = .nothing
+        priority = .nothing
+        type = .other
+        layer = .e2e
         isFlaky = false
-        behavior = Behavior(1)
-        automation = AutomationStatus(0)
-        status = Status(0)
-        suiteId = 0
+        behavior = .positive
+        automation = .manual
+        status = .actual
+        suiteId = nil
         links = []
         customFields = []
         attachments = []
@@ -266,11 +266,7 @@ struct StepsInTestCase: Codable, Equatable {
     }
 }
 
-extension StepsInTestCase: Hashable {
-    static func == (lhs: StepsInTestCase, rhs: StepsInTestCase) -> Bool {
-        lhs.hash == rhs.hash
-    }
-}
+extension StepsInTestCase: Hashable {}
 
 // MARK: - response models
 struct CreateOrUpdateTestCaseModel: Codable {
@@ -321,13 +317,13 @@ struct EncodableTestCase: Encodable {
         self.description = testCase.description
         self.preconditions = testCase.preconditions
         self.postconditions = testCase.postconditions
-        self.severity = testCase.severity.menuItem.id
-        self.priority = testCase.priority.menuItem.id
-        self.type = testCase.type.menuItem.id
-        self.layer = testCase.layer.menuItem.id
-        self.behavior = testCase.behavior.menuItem.id
-        self.automation = testCase.automation.menuItem.id
-        self.status = testCase.status.menuItem.id
+        self.severity = testCase.severity.apiValue
+        self.priority = testCase.priority.apiValue
+        self.type = testCase.type.apiValue
+        self.layer = testCase.layer.apiValue
+        self.behavior = testCase.behavior.apiValue
+        self.automation = testCase.automation.apiValue
+        self.status = testCase.status.apiValue
         self.isFlaky = testCase.isFlaky ? 1 : 0
         self.suiteId = testCase.suiteId == 0 ? nil : testCase.suiteId
         self.attachments = testCase.attachments

@@ -91,7 +91,7 @@ struct HomeDataTests {
     @Test("Mock respects detail routes, include, search, project and pagination")
     @MainActor func mockRoutes() async throws {
         let repository = HomeRepository(
-            network: APIMockManager.shared,
+            network: APIMockManager(),
             session: SessionContext(ownerID: "mock-test")
         )
         #expect(try await repository.project(code: "DEMO").code == "DEMO")

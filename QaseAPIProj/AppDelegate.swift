@@ -8,16 +8,15 @@
 import UIKit
 
 @main
+@MainActor
 class AppDelegate: UIResponder, UIApplicationDelegate {
+    private(set) var compositionRoot: AppCompositionRoot!
 
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        if CommandLine.arguments.contains("UITests") {
-            // Используем мок сервис в тестовом режиме
-            ApiServiceConfiguration.shared.setMockingServiceEnabled()
-        }
+        compositionRoot = AppCompositionRoot()
 
         return true
     }

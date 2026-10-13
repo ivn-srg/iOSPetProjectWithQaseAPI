@@ -45,18 +45,19 @@ xcodebuild test \
 
 Для UI-тестов замените последний аргумент на `-only-testing:QaseAPIProjUITests`. Для отдельного unit-теста используйте `-only-testing:QaseAPIProjTests/QaseAPIProjTests/checkValidURL`.
 
-CI выбирает Xcode 26.3 и симулятор iPhone 16 с iOS 18.6, что соответствует deployment target приложения. SwiftLint и SwiftFormat в проекте не настроены.
+CI выбирает Xcode 26.3 и симулятор iPhone 16 с iOS 18.6, что соответствует deployment target приложения. SwiftFormat настроен в `.swiftformat`. SwiftLint проверяется отдельно выбранными статическими правилами без сборки.
 
 ## Высокоуровневая архитектура
 
-- `SceneDelegate` создаёт `RootViewController`; `AppDelegate` настраивает сервис для UI-тестов. По аргументу запуска `UITests` приложение включает `APIMockManager`; mock читает JSON-файлы из bundle.
-- `RootViewController` слушает `.didChangeAuthStatus` и выбирает экран авторизации или `MainTabbarViewController`. `AuthManager` хранит токен в Keychain, состояние входа в `UserDefaults` и проверяет токен через `APIManager.auth(by:)`.
-- `APIManager` работает с Qase API v1 и передаёт токен в заголовке `Token`. Маршруты перечислены в `API.Operation`, а модели ответов находятся в `Data/Models/`.
-- Сеть, кеш и контекст сессии передаются моделям через init. Демо-сервис выбирается до создания экранов; глобального сетевого экземпляра нет.
-- `RealmDB.swift` и `EntitiesRO.swift` кэшируют проекты, наборы, кейсы и детали кейса. Модели API лежат в `Data/Models/`.
-- Контроллеры UIKit напрямую используют view models. `ProjectsViewModel` загружает и удаляет проекты, `TestEntitiesViewModel` управляет списком наборов и кейсов, `DetailTabbarControllerViewModel` загружает и обновляет детали кейса.
-- Основные вкладки: Home, Repository, Work и Settings. Главная и иерархический Repository написаны на SwiftUI внутри UIKit-навигации. Каждый уровень имеет immutable `RepositoryLocation`; формы и детали кейса остаются UIKit. Общие компоненты находятся в `Views/`, токены — в `AppTheme.swift`.
-- Unit-тесты используют Swift Testing и `APIMockManager`; UI-тесты используют XCTest и page objects из `QaseAPIProjUITests/Screens.swift`.
+- `AppDelegate` создаёт `AppCompositionRoot`; `SceneDelegate` получает из него root и настройки окна. Конкретные auth, credential storage, transport, cache и settings создаются в composition root.
+- `RootViewController` выполняет containment и слушает события своего `SessionContext`. Authenticated graph создаётся после restore/activate, пересоздаётся после token replacement и освобождается при logout. Selection/repositories/router/factory не переживают исходную сессию.
+- `ApplicationRouter` управляет переходами и получает weak UI-host после сборки. `FeatureScreenFactory` собирает экраны с готовыми моделями и узкими repository/cache/auth interfaces; `MainTabbarViewController` управляет UI вкладок и guarded departure.
+- `APIManager` получает источник актуальных credentials и `HTTPTransport`. JSON и multipart запросы читают токен при создании каждого запроса; auth-кандидат проверяется явно переданным токеном. `APIMockManager` создаётся отдельно для каждого окружения; demo/UI-test Realm не используют production cache.
+- `RealmManager` сохраняет schema 5 и owner/project/entity keys. Suite catalog и completeness marker записываются одной транзакцией; полный список кейсов и снимок уровня также сохраняются атомарно. Запись после session-stamp проверки не содержит await. Частичные страницы и результаты поиска не удаляют полный кеш. Страницы кейсов кеширует repository; отказ кеша не блокирует показ свежих данных.
+- Создание использует `EntityCreationViewModel` и `CreatingProjectViewModel`; единый редактор — `TestCaseEditorViewModel`. Input values типизированы; модели не управляют глобальным loader. Loading/saving отображаются экраном.
+- Home, Repository, Work и Settings используют SwiftUI внутри UIKit-навигации; формы остаются UIKit/SnapKit. Общие tokens находятся в `AppTheme`; локальные размеры — в `Layout`, политики — в `AppPolicies`, symbols и UIKit images — в `AppImages`.
+- `AccessibilityID` — один Foundation-only исходник для app и UITests. Unit target получает его через `@testable import`; динамические ключи формируются только внутри enum.
+- Тесты используют отдельные mocks и test factories. Регрессионные исходники покрывают graph lifetime, token headers, numeric Codable, Realm steps, traits и layout; агент их не запускает.
 
 ## Внешние зависимости
 

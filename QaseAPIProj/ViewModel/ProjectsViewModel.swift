@@ -4,28 +4,40 @@ import Foundation
 final class ProjectsViewModel {
     weak var delegate: UpdateTableViewProtocol?
     var projects: [Project] = [] { didSet { delegate?.updateTableView() } }
-    var isLoading = false
+    var isLoading = false { didSet { delegate?.updateTableView() } }
     private var hasMoreProjects = true
     private var offset = 0
+    private var loadGeneration = 0
+    private let onCacheFailure: () -> Void
     private let network: NetworkManager
-    private let dao: HeroDAO
+    private let dao: ProjectsCaching
     private let session: SessionContext
     private let stamp: SessionStamp
 
+    private func reportCacheWrite(_ accepted: Bool) {
+        if !accepted { onCacheFailure() }
+    }
+
     init(
-        network: NetworkManager = ApiServiceConfiguration.shared.apiService,
-        dao: HeroDAO? = nil,
-        session: SessionContext? = nil
+        network: NetworkManager,
+        dao: ProjectsCaching,
+        session: SessionContext,
+        onCacheFailure: @escaping () -> Void = {}
     ) {
-        let session = session ?? .shared
+        self.onCacheFailure = onCacheFailure
         self.network = network
-        self.dao = dao ?? RealmManager.shared
+        self.dao = dao
         self.session = session
         self.stamp = session.capture()
     }
 
+    func cancelLoading() {
+        loadGeneration += 1
+        if isLoading { isLoading = false }
+    }
+
     func requestEntitiesData(place: PlaceOfRequest) async throws {
-        guard session.isCurrent(stamp) else { return }
+        guard session.isCurrent(stamp), !Task.isCancelled else { return }
         if place == .start || place == .refresh {
             hasMoreProjects = true
             offset = 0
@@ -35,21 +47,20 @@ final class ProjectsViewModel {
               let url = network.composeURL(
                   for: .project,
                   urlComponents: nil,
-                  queryItems: [.limit: 50, .offset: offset]
+                  queryItems: [.limit: PaginationPolicy.pageSize, .offset: offset]
               ) else { return }
+        let generation = loadGeneration
         isLoading = true
-        LoadingIndicator.startLoading()
-        defer { isLoading = false
-            if session.isCurrent(stamp) { LoadingIndicator.stopLoading() } }
+        defer { if generation == loadGeneration { isLoading = false } }
         let response = try await network.performRequest(
             with: nil,
             from: url,
             method: .get,
             modelType: ProjectDataModel.self
         )
-        guard session.isCurrent(stamp) else { return }
+        guard session.isCurrent(stamp), !Task.isCancelled, generation == loadGeneration else { return }
         guard response.status else { throw API.NetError.invalidRequest("Projects could not be loaded") }
-        _ = dao.saveProjects(response.result.entities, stamp: stamp)
+        reportCacheWrite(dao.saveProjects(response.result.entities, stamp: stamp))
         if offset == 0 { projects = response.result.entities }
         else { projects.append(contentsOf: response.result.entities.filter { new in
             !projects.contains(where: { $0.code == new.code }) }) }
@@ -61,8 +72,7 @@ final class ProjectsViewModel {
         guard session.isCurrent(stamp) else { throw .invalidRequest("Session ended") }
         guard let url = network.composeURL(for: .project, urlComponents: [project.code], queryItems: nil)
         else { throw .invalidURL }
-        LoadingIndicator.startLoading()
-        defer { if session.isCurrent(stamp) { LoadingIndicator.stopLoading() } }
+
         let response = try await network.performRequest(
             with: nil,
             from: url,
@@ -72,7 +82,7 @@ final class ProjectsViewModel {
         guard session.isCurrent(stamp) else { throw .invalidRequest("Session ended") }
         guard response.status else { throw .invalidRequest("Project deletion failed") }
         if response.status {
-            _ = dao.deleteProject(project, stamp: stamp)
+            reportCacheWrite(dao.deleteProject(project, stamp: stamp))
             projects.removeAll { $0.code == project.code }
         }
     }

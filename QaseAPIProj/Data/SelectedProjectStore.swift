@@ -7,8 +7,8 @@ final class SelectedProjectStore: ObservableObject {
     @Published private(set) var projects: [ProjectSummary] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
-    private let repository: HomeRepository
-    private let cache: RealmManager
+    private let repository: ProjectsReading
+    private let cache: ProjectsCaching
     private let session: SessionContext
     private let defaults: UserDefaults
     private let originStamp: SessionStamp
@@ -16,10 +16,10 @@ final class SelectedProjectStore: ObservableObject {
     var onSelectionChanged: (() -> Void)?
 
     init(
-        repository: HomeRepository,
-        cache: RealmManager,
+        repository: ProjectsReading,
+        cache: ProjectsCaching,
         session: SessionContext,
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults
     ) {
         self.repository = repository
         self.cache = cache
@@ -44,13 +44,22 @@ final class SelectedProjectStore: ObservableObject {
         }
         do {
             var fetched: [ProjectSummary] = []
+            var seen = Set<String>()
             var offset = 0
             while true {
                 let page = try await repository.listProjects(offset: offset)
                 guard session.isCurrent(stamp), !Task.isCancelled else { return }
-                fetched += page.entities
+                let unique = page.entities.filter { seen.insert($0.code).inserted }
+                guard page.entities.isEmpty || !unique.isEmpty else {
+                    throw API.NetError.invalidRequest("The project list did not advance")
+                }
+                fetched += unique
                 offset += page.entities.count
-                if page.entities.isEmpty || offset >= (page.filtered ?? page.total ?? offset) { break }
+                if !PaginationPolicy.hasMore(
+                    received: page.entities.count,
+                    offset: offset,
+                    total: page.filtered ?? page.total
+                ) { break }
             }
             guard session.isCurrent(stamp) else { return }
             projects = fetched

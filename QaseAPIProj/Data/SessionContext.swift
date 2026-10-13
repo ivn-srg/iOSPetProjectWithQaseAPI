@@ -7,7 +7,6 @@ struct SessionStamp: Equatable, Sendable {
 
 @MainActor
 final class SessionContext {
-    static let shared = SessionContext()
     private(set) var ownerID: String?
     private(set) var generation: UInt64 = 0
 

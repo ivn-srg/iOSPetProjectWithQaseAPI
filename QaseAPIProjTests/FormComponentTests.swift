@@ -135,7 +135,7 @@ struct FormSelectionTests {
         var original = TestCaseEntity.empty
         original.title = "Loaded case"
         original.description = String(repeating: "x", count: 900)
-        let model = DetailTabbarControllerViewModel(
+        let model = TestDependencies.detail(
             reference: .init(projectCode: "A", caseID: 1),
             session: SessionContext(ownerID: "owner")
         )
@@ -144,8 +144,7 @@ struct FormSelectionTests {
         let field = GeneralCaseTextField(
             textType: .description,
             textViewValue: original.description,
-            detailVM: model,
-            style: .entityForm
+            detailVM: model
         )
         let input = try #require(descendants(of: field).compactMap { $0 as? UITextView }.first)
         field.textViewDidBeginEditing(input)
@@ -179,7 +178,11 @@ struct FormSelectionTests {
             height: CGFloat.greatestFiniteMagnitude
         )).width
         #expect(value.bounds.width <= intrinsicWidth + 1)
-        control.traitCollectionDidChange(nil)
+        let host = UIViewController()
+        host.view.addSubview(control)
+        host.traitOverrides.preferredContentSizeCategory = .accessibilityExtraExtraExtraLarge
+        host.traitOverrides.userInterfaceStyle = .dark
+        host.view.layoutIfNeeded()
         control.layoutIfNeeded()
         #expect(control.accessibilityValue == Severity.critical.localized)
     }
@@ -215,9 +218,86 @@ struct FormSelectionTests {
 private final class FormSelectionModel: UpdatableEntityProtocol {
     var testCase: TestCaseEntity?
     var changedTestCase: TestCaseEntity?
+    var formCase: TestCaseEntity? { changedTestCase ?? testCase }
+    var formParentID: Int? { formCase?.suiteId }
 
-    func updateValue<T>(for field: FieldType, value: T) {
-        guard field == .priority, let id = value as? Int else { return }
+    func updateValue(for field: FieldType, value: FormFieldValue) {
+        guard field == .priority, let id = value.selectionID else { return }
         changedTestCase?.priority = Priority(id)
+    }
+}
+
+@Suite @MainActor
+struct FormLayoutRegressionTests {
+    private func descendants(_ view: UIView) -> [UIView] {
+        view.subviews.flatMap { [$0] + descendants($0) }
+    }
+
+    @Test func stepNumberKeepsIntrinsicWidthForShortAndLongActions() throws {
+        for action in ["Short", String(repeating: "Long action ", count: 20)] {
+            let step = StepsInTestCase(
+                hash: "step",
+                position: 1,
+                sharedStepHash: nil,
+                sharedStepNestedHash: nil,
+                attachments: [],
+                action: action,
+                expectedResult: "Result",
+                data: nil,
+                steps: []
+            )
+            let card = TestCaseStepView(step: step, number: "1.1")
+            card.frame = CGRect(x: 0, y: 0, width: 320, height: 500)
+            card.layoutIfNeeded()
+            let label = try #require(descendants(card).compactMap { $0 as? UILabel }
+                .first { $0.text == "1.1" })
+            let badge = try #require(label.superview)
+            #expect(abs(badge.bounds.width - badge.intrinsicContentSize.width) < 1)
+            #expect(badge.bounds.width < card.bounds.width / 3)
+            #expect(card.accessibilityIdentifier == AccessibilityID.step("1.1").identifier)
+        }
+    }
+
+    @Test func focusedInputReactsToRealThemeAndContentSizeTraits() async throws {
+        let host = UIViewController()
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 800))
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true }
+        host.traitOverrides.userInterfaceStyle = .light
+        host.traitOverrides.preferredContentSizeCategory = .large
+        let session = SessionContext(ownerID: "owner")
+        let model = TestDependencies.creator(projectCode: "A", session: session)
+        let field = GeneralCaseTextField(textType: .title, detailVM: model)
+        host.view.addSubview(field)
+        field.frame = CGRect(x: 20, y: 80, width: 280, height: 140)
+        host.view.layoutIfNeeded()
+        let input = try #require(descendants(field).compactMap { $0 as? UITextView }.first)
+        #expect(input.textContainer.lineFragmentPadding == 0)
+        #expect(input.accessibilityHint == String.localizedStringWithFormat(
+            "Maximum %lld characters".localized,
+            FormTextInputPolicy.characterLimit
+        ))
+        let counter = try #require(descendants(field).compactMap { $0 as? UILabel }
+            .first { $0.text == "0/500" })
+        #expect(counter.superview?.isHidden == true)
+        #expect(input.becomeFirstResponder())
+        await Task.yield()
+        #expect(input.accessibilityHint == String.localizedStringWithFormat(
+            "Maximum %lld characters".localized,
+            FormTextInputPolicy.characterLimit
+        ))
+        let initialSize = try #require(input.font).pointSize
+        host.traitOverrides.userInterfaceStyle = .dark
+        host.traitOverrides.preferredContentSizeCategory = .accessibilityExtraExtraExtraLarge
+        await Task.yield()
+        host.view.layoutIfNeeded()
+        #expect(try #require(input.font).pointSize > initialSize)
+        #expect(input.layer.borderColor == AppTheme.Palette.accent.resolvedColor(with: input.traitCollection)
+            .cgColor)
+        #expect(counter.superview?.isHidden == false)
+        #expect(model.creatingSuite.title.isEmpty)
+        #expect(!model.hasUnsavedChanges)
+        input.resignFirstResponder()
     }
 }

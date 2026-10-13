@@ -27,7 +27,8 @@ struct Project: Codable {
     var descriptionWasProvided = false
 
     var isEmpty: Bool {
-        self.title.isEmpty || self.code.isEmpty
+        self.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || self.code
+            .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     init() {

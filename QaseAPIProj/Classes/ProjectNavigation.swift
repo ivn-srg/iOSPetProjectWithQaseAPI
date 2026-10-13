@@ -14,36 +14,6 @@ protocol HomeRouting: AnyObject {
 }
 
 @MainActor
-final class WeakHomeRouter: RepositoryRouting {
-    private weak var target: HomeRouting?
-    init(target: HomeRouting) { self.target = target }
-    func selectProject(_ project: ProjectSummary) { target?.selectProject(project) }
-    func manageProjects() { target?.manageProjects() }
-    func showCases(search: Bool) { target?.showCases(search: search) }
-    func showSuites() { target?.showSuites() }
-    func showRuns() { target?.showRuns() }
-    func showRun(id: Int) { target?.showRun(id: id) }
-    func showDefects() { target?.showDefects() }
-    func showCase(reference: TestCaseReference) { target?.showCase(reference: reference) }
-    func openSuite(_ suite: TestListEntity, from model: TestEntitiesViewModel) {
-        (target as? RepositoryRouting)?.openSuite(
-            suite,
-            from: model
-        ) }
-
-    func openAncestor(_ breadcrumb: RepositoryBreadcrumb, from model: TestEntitiesViewModel) {
-        (target as? RepositoryRouting)?.openAncestor(
-            breadcrumb,
-            from: model
-        ) }
-
-    func repositoryBack() { (target as? RepositoryRouting)?.repositoryBack() }
-    func createEntity(in location: RepositoryLocation) {
-        (target as? RepositoryRouting)?.createEntity(in: location) }
-
-}
-
-@MainActor
 protocol ProjectDraft: AnyObject {
     var hasUnsavedChanges: Bool { get }
     var canSaveDraft: Bool { get }
@@ -115,23 +85,26 @@ struct ProjectSwitchGuard {
 @MainActor
 final class ApplicationProjectCoordinator {
     private let store: SelectedProjectStore
-    private weak var shell: MainTabbarViewController?
+    private weak var host: ApplicationNavigationHost?
+    private let session: SessionContext
     private var isSwitching = false
     private var isPreparingChange = false
 
-    init(store: SelectedProjectStore, shell: MainTabbarViewController) {
+    init(store: SelectedProjectStore, session: SessionContext) {
         self.store = store
-        self.shell = shell
+        self.session = session
     }
+
+    func attach(_ host: ApplicationNavigationHost) { self.host = host }
 
     func choose(_ project: ProjectSummary?) async -> Bool {
         guard !isSwitching, project?.code != store.selectedProject?.code else {
             return project?.code == store.selectedProject?.code
         }
-        let stamp = SessionContext.shared.capture()
+        let stamp = session.capture()
         isSwitching = true
         defer { isSwitching = false }
-        guard await prepareForChange(), SessionContext.shared.isCurrent(stamp) else { return false }
+        guard await prepareForChange(), session.isCurrent(stamp) else { return false }
         store.commit(project)
         UISelectionFeedbackGenerator().selectionChanged()
         return true
@@ -141,17 +114,16 @@ final class ApplicationProjectCoordinator {
         in controller: UIViewController? = nil,
         switchingProject: Bool = true
     ) async -> Bool {
-        guard let shell, !isPreparingChange else { return false }
+        guard let shell = host?.navigationRoot, !isPreparingChange else { return false }
         let drafts = participants(in: controller ?? shell)
         guard !drafts.contains(where: \.isSavingDraft) else { return false }
         let dirty = drafts.filter(\.hasUnsavedChanges)
         guard !dirty.isEmpty else { return true }
-        let stamp = SessionContext.shared.capture()
+        let stamp = session.capture()
         isPreparingChange = true
         defer { isPreparingChange = false }
         let decision = await decisionForDrafts(dirty, from: shell, switchingProject: switchingProject)
-        guard SessionContext.shared.isCurrent(stamp),
-              !drafts.contains(where: \.isSavingDraft) else { return false }
+        guard session.isCurrent(stamp), !drafts.contains(where: \.isSavingDraft) else { return false }
         do {
             return try await ProjectSwitchGuard().resolve(drafts, decision: decision)
         } catch {

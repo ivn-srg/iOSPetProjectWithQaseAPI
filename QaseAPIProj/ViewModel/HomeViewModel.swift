@@ -3,7 +3,7 @@ import Foundation
 
 @MainActor
 final class HomeViewModel: ObservableObject {
-    static let recentLimit = 3
+    static let recentLimit = CachePolicy.recentPreview
     @Published private(set) var project: ProjectSummary?
     @Published private(set) var metrics: ProjectMetrics?
     @Published private(set) var activeRun: ActiveRunSummary?
@@ -15,10 +15,11 @@ final class HomeViewModel: ObservableObject {
     @Published private(set) var metricsUpdatedAt: Date?
     @Published private(set) var runUpdatedAt: Date?
 
-    private let repository: HomeRepository
-    private let cache: RealmManager
+    private let repository: HomeReading
+    private let cache: HomeCaching & ProjectsCaching
     private let selection: SelectedProjectStore
     var selectionStore: SelectedProjectStore { selection }
+    private let originStamp: SessionStamp
     private let session: SessionContext
     private let clock: () -> Date
     private var subscription: AnyCancellable?
@@ -33,8 +34,8 @@ final class HomeViewModel: ObservableObject {
     var oldestUpdate: Date? { [metricsUpdatedAt, runUpdatedAt].compactMap { $0 }.min() }
 
     init(
-        repository: HomeRepository,
-        cache: RealmManager,
+        repository: HomeReading,
+        cache: HomeCaching & ProjectsCaching,
         selection: SelectedProjectStore,
         session: SessionContext,
         clock: @escaping () -> Date = Date.init
@@ -43,6 +44,7 @@ final class HomeViewModel: ObservableObject {
         self.cache = cache
         self.selection = selection
         self.session = session
+        originStamp = session.capture()
         self.clock = clock
         project = selection.selectedProject
         subscription = selection.$selectedProject.sink { [weak self] selected in
@@ -68,6 +70,7 @@ final class HomeViewModel: ObservableObject {
     }
 
     func appear() {
+        guard session.isCurrent(originStamp) else { return }
         isVisible = true
         loadCache()
         if task == nil { refresh() }
@@ -76,12 +79,13 @@ final class HomeViewModel: ObservableObject {
     func disappear() { isVisible = false }
 
     func refresh() {
+        guard session.isCurrent(originStamp) else { return }
         task?.cancel()
         task = Task { [weak self] in await self?.reload() }
     }
 
     func reload() async {
-        guard let code = project?.code else { return }
+        guard session.isCurrent(originStamp), let code = project?.code else { return }
         requestGeneration += 1
         let generation = requestGeneration
         let stamp = session.capture()
@@ -135,7 +139,7 @@ final class HomeViewModel: ObservableObject {
     }
 
     private func loadCache() {
-        guard let code = project?.code else { return }
+        guard session.isCurrent(originStamp), let code = project?.code else { return }
         if let cached = cache.getProjectSummaries().first(where: { $0.code == code }),
            metricsUpdatedAt == nil {
             metrics = cached.metrics

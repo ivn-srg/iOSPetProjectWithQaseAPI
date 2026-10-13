@@ -13,7 +13,7 @@ struct FormParentPickerTests {
             0: (1 ... 50).map { suite($0, "Suite \($0)") },
             50: [suite(50, "Duplicate"), suite(51, "Last")]
         ]
-        let model = SuitePickerViewModel(
+        let model = TestDependencies.picker(
             projectCode: "A",
             selectedID: 0,
             network: network,
@@ -40,7 +40,7 @@ struct FormParentPickerTests {
             projectCode: "A",
             stamp: session.capture()
         ))
-        let model = SuitePickerViewModel(
+        let model = TestDependencies.picker(
             projectCode: "A",
             selectedID: 3,
             projectTitle: "Demo",
@@ -68,7 +68,7 @@ struct FormParentPickerTests {
         let session = SessionContext(ownerID: "owner")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
         #expect(dao.replaceSuiteCatalog(values, projectCode: "A", stamp: session.capture()))
-        let model = SuitePickerViewModel(projectCode: "A", dao: dao, session: session)
+        let model = TestDependencies.picker(projectCode: "A", dao: dao, session: session)
         #expect(model.pathTitle(to: 1).contains("#1"))
         #expect(model.pathTitle(to: 3).contains("#3"))
     }
@@ -79,7 +79,7 @@ struct FormParentPickerTests {
         #expect(dao.replaceSuiteCatalog([suite(99, "Saved")], projectCode: "A", stamp: session.capture()))
         let network = FormCatalogNetwork()
         network.pages = [0: [suite(1, "Late")]]
-        let model = SuitePickerViewModel(
+        let model = TestDependencies.picker(
             projectCode: "A",
             selectedID: 99,
             network: network,
@@ -99,7 +99,7 @@ struct FormParentPickerTests {
         #expect(dao.saveTestEntities([suite(99, "Partial")], projectCode: "A", stamp: session.capture()))
         let network = FormCatalogNetwork()
         network.error = .noInternetConnection
-        let model = SuitePickerViewModel(projectCode: "A", network: network, dao: dao, session: session)
+        let model = TestDependencies.picker(projectCode: "A", network: network, dao: dao, session: session)
         await model.load()
         #expect(!model.catalogComplete && model.errorMessage != nil)
         #expect(model.catalog.map(\.id) == [99])
@@ -112,7 +112,7 @@ struct FormParentPickerTests {
         let network = FormCatalogNetwork()
         let page = (1 ... 50).map { suite($0, "Suite") }
         network.pages = [0: page, 50: page]
-        let model = SuitePickerViewModel(projectCode: "A", network: network, dao: dao, session: session)
+        let model = TestDependencies.picker(projectCode: "A", network: network, dao: dao, session: session)
         await model.load()
         #expect(network.offsets == [0, 50])
         #expect(model.errorMessage != nil && !model.catalogComplete)
@@ -124,7 +124,7 @@ struct FormParentPickerTests {
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
         let network = FormCatalogNetwork()
         network.pages = [0: [suite(1, "Old")]]
-        let model = SuitePickerViewModel(projectCode: "A", network: network, dao: dao, session: session)
+        let model = TestDependencies.picker(projectCode: "A", network: network, dao: dao, session: session)
         network.beforeResponse = { session.activate(ownerID: "new") }
         await model.load()
         #expect(!model.catalogComplete && model.catalog.isEmpty)

@@ -24,10 +24,10 @@ final class TestEntitiesViewModel: ObservableObject {
     @Published private(set) var moreSearchSuites = false
     @Published private(set) var moreSearchCases = false
     @Published private(set) var hasMoreCases = true
-    private let catalogLoader: SuiteCatalogLoader
-    private let repository: HomeRepository
+    private let catalogLoader: SuiteCatalogLoading
+    private let repository: RepositoryReading
     private let network: NetworkManager
-    private let dao: RealmManager
+    private let dao: RepositoryCaching
     private let session: SessionContext
     private let stamp: SessionStamp
     private var offset = 0
@@ -52,24 +52,31 @@ final class TestEntitiesViewModel: ObservableObject {
         catalog.first(where: { $0.id == location.suiteID })?.title ?? parentSuite?.title ?? "Project root"
             .localized }
 
-    var levelUnavailable: Bool {
-        location.suiteID != nil && !suitesLoading && suiteError == "Suite unavailable".localized }
+    @Published private(set) var levelUnavailable = false
+    private let onCacheFailure: () -> Void
+    private let clock: () -> Date
 
     init(
         projectCode: String,
         parentSuite: ParentSuite? = nil,
-        network: NetworkManager = ApiServiceConfiguration.shared.apiService,
-        dao: RealmManager? = nil,
-        session: SessionContext? = nil
+        network: NetworkManager,
+        repository: RepositoryReading,
+        catalogLoader: SuiteCatalogLoading,
+        dao: RepositoryCaching,
+        session: SessionContext,
+        clock: @escaping () -> Date = Date.init,
+        onCacheFailure: @escaping () -> Void = {}
     ) {
+        self.onCacheFailure = onCacheFailure
+        self.clock = clock
         self.projectCode = projectCode
         self.parentSuite = parentSuite
         self.network = network
-        self.dao = dao ?? .shared
-        self.session = session ?? .shared
+        self.dao = dao
+        self.session = session
         stamp = self.session.capture()
-        repository = HomeRepository(network: network, session: self.session)
-        catalogLoader = SuiteCatalogLoader(network: network, dao: self.dao, session: self.session)
+        self.repository = repository
+        self.catalogLoader = catalogLoader
         catalog = self.dao.getAllCachedSuites(projectCode: projectCode)
         catalogComplete = self.dao.hasRepositoryCatalog(projectCode: projectCode)
         let cachedCases = self.dao.getAllCachedCases(projectCode: projectCode)
@@ -124,6 +131,7 @@ final class TestEntitiesViewModel: ObservableObject {
         let generation = catalogGeneration
         suitesLoading = true
         suiteError = nil
+        levelUnavailable = false
         defer { if generation == catalogGeneration { suitesLoading = false } }
         do {
             let values = try await catalogLoader.load(projectCode: projectCode, isCurrent: { [weak self] in
@@ -134,7 +142,10 @@ final class TestEntitiesViewModel: ObservableObject {
             catalog = values
             catalogComplete = true
             if let id = location.suiteID,
-               !values.contains(where: { $0.id == id }) { suiteError = "Suite unavailable".localized }
+               !values
+               .contains(where: { $0.id == id }) {
+                levelUnavailable = true
+                suiteError = "Suite unavailable".localized }
         } catch {
             if accepts(generation, catalogGeneration),
                !(error is CancellationError) { suiteError = "Could not load suites".localized }
@@ -157,23 +168,32 @@ final class TestEntitiesViewModel: ObservableObject {
                 )
                 guard accepts(generation, caseGeneration) else { return }
                 let entities = page.entities.map(Self.entity)
-                _ = dao.saveTestEntities(entities, projectCode: projectCode, stamp: stamp)
+                let previousCount = fetchedCases.count
                 appendUnique(entities, to: &fetchedCases)
                 offset += page.entities.count
-                hasMoreCases = !page.entities.isEmpty && offset < (page.filtered ?? page.total ?? offset)
+                hasMoreCases = PaginationPolicy.hasMore(
+                    received: page.entities.count,
+                    offset: offset,
+                    total: page.filtered ?? page.total
+                )
+                guard page.entities.isEmpty || fetchedCases.count > previousCount else {
+                    hasMoreCases = false
+                    throw API.NetError.invalidRequest("The case list did not advance")
+                }
                 let matching = entities.filter { normalized($0.parentId) == location.suiteID }
                 found = !matching.isEmpty
                 cases = fetchedCases.filter { normalized($0.parentId) == location.suiteID }
             } while !found && hasMoreCases
             if !hasMoreCases, accepts(generation, caseGeneration) {
-                _ = dao.replaceRepositoryCases(fetchedCases, location: location, stamp: stamp)
-                caseCount = cases.count
-                updatedAt = Date()
-                _ = dao.saveRepositorySnapshot(
-                    .init(caseIDs: cases.map(\.id), updatedAt: updatedAt!),
+                let timestamp = clock()
+                reportCacheWrite(dao.replaceRepositoryCases(
+                    fetchedCases,
+                    snapshot: .init(caseIDs: cases.map(\.id), updatedAt: timestamp),
                     location: location,
                     stamp: stamp
-                )
+                ))
+                caseCount = cases.count
+                updatedAt = timestamp
             }
         } catch {
             if accepts(generation, caseGeneration),
@@ -190,7 +210,7 @@ final class TestEntitiesViewModel: ObservableObject {
         guard hasQuery else { searchLoading = false
             return }
         searchTask = Task { [weak self] in
-            do { try await Task.sleep(for: .milliseconds(300)) } catch { return }
+            do { try await Task.sleep(for: SearchPolicy.debounce) } catch { return }
             await self?.search(reset: true)
         }
     }
@@ -221,22 +241,26 @@ final class TestEntitiesViewModel: ObservableObject {
                         )
                         guard self.accepts(generation, self.searchGeneration) else { return }
                         if reset { self.searchedSuites = [] }
-                        _ = self.dao.saveTestEntities(
+                        self.reportCacheWrite(self.dao.saveTestEntities(
                             page.entities,
                             projectCode: self.projectCode,
                             stamp: self.stamp
-                        )
+                        ))
                         self.appendUnique(page.entities, to: &self.searchedSuites)
                         self.suiteSearchOffset += page.entities.count
-                        self.moreSearchSuites = !page.entities.isEmpty && self
-                            .suiteSearchOffset < (page.filtered ?? page.total ?? self.suiteSearchOffset)
+                        self.moreSearchSuites = PaginationPolicy.hasMore(
+                            received: page.entities.count,
+                            offset: self.suiteSearchOffset,
+                            total: page.filtered ?? page.total
+                        )
                     } catch {
                         guard self.accepts(generation, self.searchGeneration),
                               !(error is CancellationError) else { return }
                         self.searchedSuites = self.catalog
                             .filter { $0.title.localizedCaseInsensitiveContains(requestedQuery) }
                         self.moreSearchSuites = false
-                        self.searchError = "Search is limited to saved data".localized
+                        self.searchError = "Search is limited to saved data"
+                            .localized
                     }
                 }
             }
@@ -251,16 +275,14 @@ final class TestEntitiesViewModel: ObservableObject {
                         )
                         guard self.accepts(generation, self.searchGeneration) else { return }
                         if reset { self.searchedCases = [] }
-                        _ = self.dao.saveTestEntities(
-                            page.entities.map(Self.entity),
-                            projectCode: self.projectCode,
-                            stamp: self.stamp
-                        )
                         var ids = Set(self.searchedCases.map(\.id))
                         self.searchedCases += page.entities.filter { ids.insert($0.id).inserted }
                         self.caseSearchOffset += page.entities.count
-                        self.moreSearchCases = !page.entities.isEmpty && self
-                            .caseSearchOffset < (page.filtered ?? page.total ?? self.caseSearchOffset)
+                        self.moreSearchCases = PaginationPolicy.hasMore(
+                            received: page.entities.count,
+                            offset: self.caseSearchOffset,
+                            total: page.filtered ?? page.total
+                        )
                     } catch {
                         guard self.accepts(generation, self.searchGeneration),
                               !(error is CancellationError) else { return }
@@ -268,7 +290,8 @@ final class TestEntitiesViewModel: ObservableObject {
                             .map(CaseSummary.init(entity:))
                             .filter { $0.title.localizedCaseInsensitiveContains(requestedQuery) }
                         self.moreSearchCases = false
-                        self.searchError = "Search is limited to saved data".localized
+                        self.searchError = "Search is limited to saved data"
+                            .localized
                     }
                 }
             }
@@ -305,8 +328,12 @@ final class TestEntitiesViewModel: ObservableObject {
             parentId: nil,
             casesCount: nil
         )
-        _ = dao.deleteEntity(entity, projectCode: projectCode, stamp: stamp)
+        reportCacheWrite(dao.deleteEntity(entity, projectCode: projectCode, stamp: stamp))
         await reload()
+    }
+
+    private func reportCacheWrite(_ accepted: Bool) {
+        if !accepted { onCacheFailure() }
     }
 
     private func accepts(_ generation: Int, _ current: Int) -> Bool {

@@ -27,7 +27,7 @@ final class HomeViewController: UIViewController {
             hosting.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             hosting.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hosting.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            hosting.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+            hosting.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         hosting.didMove(toParent: self)
         hostingController = hosting

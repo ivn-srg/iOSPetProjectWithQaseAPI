@@ -27,7 +27,7 @@ struct RepositoryRefinementTests {
 
     @Test func rootCreationDoesNotInventAParentID() {
         let session = SessionContext(ownerID: "owner")
-        let model = CreateSuiteOrCaseViewModel(projectCode: "A", parentSuiteId: nil, session: session)
+        let model = TestDependencies.creator(projectCode: "A", parentSuiteId: nil, session: session)
         #expect(model.creatingSuite.parentId == nil)
         #expect(model.creatingTestCase.suiteId == nil)
     }
@@ -41,9 +41,9 @@ struct RepositoryHierarchyTests {
             configuration: .init(inMemoryIdentifier: UUID().uuidString),
             session: session
         )
-        let model = TestEntitiesViewModel(
+        let model = TestDependencies.entities(
             projectCode: "DEMO",
-            network: APIMockManager.shared,
+            network: APIMockManager(),
             dao: cache,
             session: session
         )
@@ -59,10 +59,10 @@ struct RepositoryHierarchyTests {
             ).key)
         #expect(model.cases.allSatisfy { $0.parentId == nil })
         #expect(model.path(to: 86)?.map(\.id) == [nil, 81, 82, 86])
-        let child = TestEntitiesViewModel(
+        let child = TestDependencies.entities(
             projectCode: "DEMO",
             parentSuite: ParentSuite(id: 81, title: "Suite", codeOfProject: "DEMO"),
-            network: APIMockManager.shared,
+            network: APIMockManager(),
             dao: cache,
             session: session
         )
@@ -96,16 +96,20 @@ struct RepositoryHierarchyTests {
         #expect(cache.saveTestEntities([a, b], projectCode: "A", stamp: session.capture()))
         #expect(cache.replaceRepositoryCases(
             [],
+            snapshot: .init(caseIDs: [], updatedAt: Date(timeIntervalSince1970: 100)),
             location: .init(projectCode: "A", suiteID: 1),
             stamp: session.capture()
         ))
         #expect(cache.getAllCachedCases(projectCode: "A").map(\.id) == [8])
+        #expect(cache.repositorySnapshot(location: .init(projectCode: "A", suiteID: 1))?.caseIDs == [])
         #expect(!cache.replaceRepositoryCases(
             [],
+            snapshot: .init(caseIDs: [], updatedAt: Date(timeIntervalSince1970: 200)),
             location: .init(projectCode: "A", suiteID: nil),
             stamp: SessionStamp(ownerID: "wrong", generation: 0)
         ))
         #expect(cache.getAllCachedCases(projectCode: "A").count == 1)
+        #expect(cache.repositorySnapshot(location: .init(projectCode: "A", suiteID: nil)) == nil)
     }
 
     @Test func malformedParentsDoNotLoop() {
@@ -119,9 +123,41 @@ struct RepositoryHierarchyTests {
             TestListEntity(isSuite: true, id: 2, title: "B", description: nil, parentId: 1, casesCount: nil)
         ]
         #expect(cache.replaceSuiteCatalog(values, projectCode: "A", stamp: session.capture()))
-        let model = TestEntitiesViewModel(projectCode: "A", dao: cache, session: session)
+        let model = TestDependencies.entities(projectCode: "A", dao: cache, session: session)
         #expect(model.path(to: 1) == nil)
         #expect(model.path(to: 99) == nil)
+    }
+
+    @Test func snapshotEncodingFailureDoesNotPruneCachedCases() {
+        let session = SessionContext(ownerID: "atomic-cache")
+        let cache = TestDependencies.cache(session: session)
+        let location = RepositoryLocation(projectCode: "A", suiteID: nil)
+        let timestamp = Date(timeIntervalSince1970: 100)
+        let previous = TestListEntity(
+            isSuite: false,
+            id: 7,
+            title: "Cached case",
+            description: nil,
+            parentId: nil,
+            casesCount: nil
+        )
+        #expect(cache.replaceRepositoryCases(
+            [previous],
+            snapshot: .init(caseIDs: [7], updatedAt: timestamp),
+            location: location,
+            stamp: session.capture()
+        ))
+
+        #expect(!cache.replaceRepositoryCases(
+            [],
+            snapshot: .init(caseIDs: [], updatedAt: Date(timeIntervalSince1970: .infinity)),
+            location: location,
+            stamp: session.capture()
+        ))
+
+        #expect(cache.getAllCachedCases(projectCode: "A").map(\.id) == [7])
+        #expect(cache.repositorySnapshot(location: location)?.caseIDs == [7])
+        #expect(cache.repositorySnapshot(location: location)?.updatedAt == timestamp)
     }
 
     @Test func migrationFromFourPreservesOwnerAndMetrics() throws {
@@ -155,11 +191,78 @@ struct RepositoryHierarchyTests {
 
 @Suite @MainActor
 struct RepositoryPaginationTests {
+    @Test func cacheFailureDoesNotDiscardFreshCasesOrStopPagination() async {
+        let session = SessionContext(ownerID: "cache-failure")
+        let cache = RejectingRepositoryCache()
+        let network = LevelNetwork()
+        let repository = HomeRepository(network: network, session: session)
+        let loader = SuiteCatalogLoader(repository: repository, dao: cache, session: session)
+        let timestamp = Date(timeIntervalSince1970: 100)
+        var cacheFailures = 0
+        let model = TestEntitiesViewModel(
+            projectCode: "A",
+            network: network,
+            repository: repository,
+            catalogLoader: loader,
+            dao: cache,
+            session: session,
+            clock: { timestamp },
+            onCacheFailure: { cacheFailures += 1 }
+        )
+
+        await model.loadMoreCases()
+
+        #expect(network.caseOffsets == [0, 50])
+        #expect(model.cases.map(\.id) == [51])
+        #expect(model.caseError == nil)
+        #expect(model.caseCount == 1 && model.updatedAt == timestamp)
+        #expect(!model.hasMoreCases)
+        #expect(cacheFailures == 1 && cache.snapshotWriteAttempts == 1)
+        #expect(cache.partialWriteAttempts == 0)
+        #expect(cache.repositorySnapshot(location: model.location) == nil)
+    }
+
+    @Test func partialPageUpsertsWithoutReplacingTheCompleteSnapshot() async {
+        let session = SessionContext(ownerID: "partial-page")
+        let cache = TestDependencies.cache(session: session)
+        let location = RepositoryLocation(projectCode: "A", suiteID: 1)
+        let timestamp = Date(timeIntervalSince1970: 100)
+        let previous = TestListEntity(
+            isSuite: false,
+            id: 99,
+            title: "Previously cached",
+            description: nil,
+            parentId: 1,
+            casesCount: nil
+        )
+        #expect(cache.replaceRepositoryCases(
+            [previous],
+            snapshot: .init(caseIDs: [99], updatedAt: timestamp),
+            location: location,
+            stamp: session.capture()
+        ))
+        let model = TestDependencies.entities(
+            projectCode: "A",
+            parentSuite: ParentSuite(id: 1, title: "Suite", codeOfProject: "A"),
+            network: LevelNetwork(),
+            dao: cache,
+            session: session
+        )
+
+        await model.loadMoreCases()
+
+        #expect(model.cases.count == 50 && model.hasMoreCases)
+        #expect(cache.getAllCachedCases(projectCode: "A").count == 51)
+        #expect(cache.getAllCachedCases(projectCode: "A").contains { $0.id == previous.id })
+        #expect(cache.repositorySnapshot(location: location)?.caseIDs == [99])
+        #expect(cache.repositorySnapshot(location: location)?.updatedAt == timestamp)
+    }
+
     @Test func locallyEmptyRootPageIsNotEndOfPagination() async {
         let session = SessionContext(ownerID: "pagination")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
         let network = LevelNetwork()
-        let model = TestEntitiesViewModel(projectCode: "A", network: network, dao: dao, session: session)
+        let model = TestDependencies.entities(projectCode: "A", network: network, dao: dao, session: session)
         await model.reload()
         #expect(network.caseOffsets == [0, 50])
         #expect(model.cases.map(\.id) == [51])
@@ -173,28 +276,29 @@ struct RepositoryPaginationTests {
         let network = LevelNetwork()
         network.onRequest = { session.invalidate()
             session.activate(ownerID: "new") }
-        let model = TestEntitiesViewModel(projectCode: "A", network: network, dao: dao, session: session)
+        let model = TestDependencies.entities(projectCode: "A", network: network, dao: dao, session: session)
         await model.reload()
         #expect(model.cases.isEmpty && model.catalog.isEmpty)
         #expect(dao.getAllCachedCases(projectCode: "A").isEmpty)
     }
 
     @Test func rootCaseCreatedInDemoRemainsAtRoot() async throws {
+        let network = APIMockManager()
         let session = SessionContext(ownerID: "create")
-        let model = CreateSuiteOrCaseViewModel(
+        let model = TestDependencies.creator(
             projectCode: "DEMO",
             parentSuiteId: nil,
-            network: APIMockManager.shared,
+            network: network,
             session: session
         )
         model.creatingEntityIsSuite = false
         model.creatingTestCase.title = "Root fixture case"
         try await model.createNewEntity()
-        let repository = HomeRepository(network: APIMockManager.shared, session: session)
+        let repository = HomeRepository(network: network, session: session)
         let page = try await repository.cases(projectCode: "DEMO", query: "Root fixture case")
         let created = try #require(page.entities.first)
         #expect(created.suiteID == nil)
-        let _: SharedResponseModel = try await APIMockManager.shared.performRequest(
+        let _: SharedResponseModel = try await network.performRequest(
             for: .deleteCase,
             pathParameters: ["code": "DEMO", "id": String(created.id)],
             queryItems: [],
@@ -202,6 +306,44 @@ struct RepositoryPaginationTests {
             modelType: SharedResponseModel.self
         )
     }
+}
+
+@MainActor
+private final class RejectingRepositoryCache: RepositoryCaching {
+    private(set) var partialWriteAttempts = 0
+    private(set) var snapshotWriteAttempts = 0
+
+    func saveTestEntities(_ entities: [TestListEntity], projectCode: String, stamp: SessionStamp) -> Bool {
+        partialWriteAttempts += 1
+        return false
+    }
+
+    func replaceRepositoryCases(
+        _ entities: [TestListEntity],
+        snapshot: RepositoryLevelSnapshot,
+        location: RepositoryLocation,
+        stamp: SessionStamp
+    ) -> Bool {
+        snapshotWriteAttempts += 1
+        return false
+    }
+
+    func repositorySnapshot(location: RepositoryLocation) -> RepositoryLevelSnapshot? { nil }
+    func hasRepositoryCatalog(projectCode: String) -> Bool { false }
+    func getAllCachedSuites(projectCode: String) -> [TestListEntity] { [] }
+    func getAllCachedCases(projectCode: String) -> [TestListEntity] { [] }
+    func replaceSuiteCatalog(
+        _ suites: [TestListEntity],
+        projectCode: String,
+        stamp: SessionStamp
+    ) -> Bool { false }
+    func deleteEntity(_ entity: TestListEntity, projectCode: String, stamp: SessionStamp) -> Bool { false }
+
+    func getTestEntities(
+        projectCode: String,
+        by parentSuite: ParentSuite?,
+        testEntitiesType: TargetTestEntities
+    ) -> [TestListEntity]? { [] }
 }
 
 private final class LevelNetwork: NetworkManager {

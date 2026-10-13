@@ -1,180 +1,154 @@
-//
-//  CreatingProjectViewController.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 18.09.2024.
-//
-
+import SnapKit
 import UIKit
 
 final class CreatingProjectViewController: UIViewController {
-    // MARK: - Fields
-    private var viewModel: CreatingProjectViewModel
-    private var createdCallback: (() -> Void)?
+    private let viewModel: CreatingProjectViewModel
+    private let createdCallback: (() -> Void)?
+    private let scrollView = UIScrollView()
+    private let content = UIStackView()
+    private let message = FormMessageView()
+    private var task: Task<Void, Never>?
+    private weak var focusedField: GeneralCaseTextField?
+    private lazy var createItem = UIBarButtonItem(
+        title: "Create".localized,
+        style: .plain,
+        target: self,
+        action: #selector(createProject)
+    )
+    private lazy var closeItem = UIBarButtonItem(
+        systemItem: .close,
+        primaryAction: UIAction { [weak self] _ in self?.closeForm() }
+    )
+    private let spinner = UIActivityIndicatorView(style: .medium)
+    private var fields: [GeneralCaseTextField] = []
 
-    // MARK: - UI components
-    private lazy var customNavigationView: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-
-    private lazy var closeButton: UIButton = {
-        let button = UIButton(type: .close)
-        var config = button.configuration
-        config?.buttonSize = .medium
-        button.configuration = config
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.tintColor = .lightGray
-        button.addTarget(self, action: #selector(closeViewController), for: .touchUpInside)
-        return button
-    }()
-
-    private lazy var titleLabel: UILabel = {
-        let title = UILabel()
-        title.translatesAutoresizingMaskIntoConstraints = false
-        title.font = .systemFont(ofSize: 20, weight: .bold)
-        title.numberOfLines = 1
-        return title
-    }()
-
-    private lazy var createButton: UIButton = {
-        let uib = UIButton(type: .system)
-        uib.translatesAutoresizingMaskIntoConstraints = false
-        uib.setTitle("Create".localized, for: .normal)
-        uib.isEnabled = false
-        uib.titleLabel?.font = .systemFont(ofSize: 17, weight: .medium)
-        uib.addTarget(self, action: #selector(createNewProject), for: .touchUpInside)
-        return uib
-    }()
-
-    private lazy var scrollView: UIScrollView = {
-        let sv = UIScrollView()
-        sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.showsHorizontalScrollIndicator = false
-        sv.alwaysBounceVertical = true
-        sv.showsVerticalScrollIndicator = false
-        sv.isUserInteractionEnabled = true
-        return sv
-    }()
-
-    private lazy var stackView: UIStackView = {
-        let sv = UIStackView()
-        sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.axis = .vertical
-        sv.spacing = 30
-        sv.alignment = .fill
-        sv.isUserInteractionEnabled = true
-        return sv
-    }()
-
-    private lazy var titleTextView = GeneralCaseTextField(textType: .title, detailVM: viewModel)
-    private lazy var codeTextView = GeneralCaseTextField(textType: .code, detailVM: viewModel)
-    private lazy var descriptionTextView = GeneralCaseTextField(textType: .description, detailVM: viewModel)
-
-    // MARK: - LifeCycle
     init(viewModel: CreatingProjectViewModel, createdCallback: (() -> Void)? = nil) {
         self.viewModel = viewModel
         self.createdCallback = createdCallback
-
         super.init(nibName: nil, bundle: nil)
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        viewModel.delegate = self
-        viewModel.showErrorClosure = { [weak self] title, message in
-            guard let self else { return }
-            UIAlertController.showSimpleAlert(
-                on: self,
-                title: title,
-                message: message
-            )
-        }
-        viewModel.creatingFinishCallback = { [weak self] in
-            guard let self else { return }
-            UIAlertController.showSimpleAlert(
-                on: self,
-                title: "Success".localized,
-                message: "Your project was created successfully".localized
-            ) { _ in
-                self.closeViewController()
-                self.createdCallback?()
-            }
-        }
-        setupView()
-    }
-
-    // MARK: - other block
-    private func setupView() {
-        view.backgroundColor = AppTheme.bgPrimaryColor
-        titleLabel.text = "Creating project".localized
-
-        view.addSubview(customNavigationView)
-        customNavigationView.addSubview(closeButton)
-        closeButton.snp.makeConstraints {
-            $0.centerY.leading.equalToSuperview()
-        }
-        customNavigationView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.horizontalEdges.equalTo(view.safeAreaLayoutGuide.snp.horizontalEdges).inset(16)
-            $0.height.equalTo(closeButton.snp.height)
-        }
-        customNavigationView.addSubview(titleLabel)
-        titleLabel.snp.makeConstraints {
-            $0.center.equalToSuperview()
-        }
-        customNavigationView.addSubview(createButton)
-        createButton.snp.makeConstraints {
-            $0.centerY.trailing.equalToSuperview()
-        }
+        title = "Creating project".localized
+        view.backgroundColor = AppTheme.Palette.canvas
+        navigationItem.largeTitleDisplayMode = .never
+        navigationItem.leftBarButtonItem = closeItem
+        closeItem.accessibilityIdentifier = AccessibilityID.formClose.identifier
+        createItem.accessibilityIdentifier = AccessibilityID.formCreate.identifier
+        scrollView.keyboardDismissMode = .interactive
+        scrollView.contentInsetAdjustmentBehavior = .never
         view.addSubview(scrollView)
         scrollView.snp.makeConstraints {
-            $0.horizontalEdges.equalTo(view.safeAreaLayoutGuide.snp.horizontalEdges)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
-            $0.top.equalTo(customNavigationView.snp.bottom).offset(10)
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(view.keyboardLayoutGuide.snp.top)
         }
-        scrollView.addSubview(stackView)
-        stackView.snp.makeConstraints {
-            $0.verticalEdges.equalToSuperview().inset(30)
-            $0.centerX.equalToSuperview()
-            $0.width.equalToSuperview().inset(AppTheme.horizontalPadding)
+        content.axis = .vertical
+        content.spacing = AppTheme.Space.section
+        scrollView.addSubview(content)
+        content.snp.makeConstraints {
+            $0.edges.equalTo(scrollView.contentLayoutGuide).inset(AppTheme.Space.screen)
+            $0.width.equalTo(scrollView.frameLayoutGuide).offset(-AppTheme.Space.screen * 2)
         }
-        stackView.addArrangedSubview(titleTextView)
-        stackView.addArrangedSubview(descriptionTextView)
-        stackView.addArrangedSubview(codeTextView)
+        fields = [FieldType.title, FieldType.description, FieldType.code].map { type in
+            let field = GeneralCaseTextField(textType: type, detailVM: viewModel)
+            field.onFocusChange = { [weak self, weak field] focused in
+                guard focused, let self, let field else { return }
+                self.focusedField = field
+                self.revealCaret()
+            }
+            return field
+        }
+        content.addArrangedSubview(message)
+        content.addArrangedSubview(FormSectionView(title: "Main information".localized, rows: fields))
+        viewModel.delegate = self
+        viewModel.creatingFinishCallback = { [weak self] in
+            guard let self else { return }
+            self.createdCallback?()
+            self.dismiss(animated: true)
+        }
+        viewModel.showErrorClosure = { [weak self] _, text in self?.message.show(text) }
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(revealCaret),
+            name: UIResponder.keyboardDidChangeFrameNotification,
+            object: nil
+        )
+        checkConditionAndToggleRightBarButton()
     }
 
-    // MARK: - @objc func
-    @objc func closeViewController() {
-        dismiss(animated: true)
+    deinit {
+        task?.cancel()
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func revealCaret() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let field = self.focusedField else { return }
+            self.view.layoutIfNeeded()
+            if let rect = field.focusedCaretRect(in: self.scrollView) {
+                self.scrollView.scrollRectToVisible(
+                    rect.insetBy(dx: 0, dy: -AppTheme.Space.medium),
+                    animated: true
+                )
+            }
+        }
+    }
+
+    private func closeForm() {
+        Task { [weak self] in
+            guard let self, await self.requestDeparture() else { return }
+            self.dismiss(animated: true)
+        }
+    }
+
+    @objc private func createProject() {
+        guard task == nil, canSaveDraft else { return }
+        view.endEditing(true)
+        message.clear()
+        task = Task { [weak self] in
+            guard let self else { return }
+            defer { self.task = nil }
+            do { try await self.viewModel.createNewProject() }
+            catch is CancellationError { }
+            catch { self.message.show("Something went wrong".localized) }
+        }
     }
 }
 
 extension CreatingProjectViewController: CheckEnablingRBBProtocol {
     func checkConditionAndToggleRightBarButton() {
-        createButton.isEnabled = !viewModel.creatingProject.title.isEmpty
-    }
-
-    @objc func createNewProject() {
-        executeWithErrorHandling {
-            try await self.viewModel.createNewProject()
+        createItem.isEnabled = canSaveDraft && hasUnsavedChanges && !viewModel.isSaving
+        closeItem.isEnabled = !viewModel.isSaving
+        fields.forEach { $0.setEditingEnabled(!viewModel.isSaving) }
+        isModalInPresentation = hasUnsavedChanges || viewModel.isSaving
+        if viewModel.isSaving {
+            spinner.startAnimating()
+            navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
+        } else {
+            spinner.stopAnimating()
+            navigationItem.rightBarButtonItem = createItem
         }
     }
 }
 
-extension CreatingProjectViewController: ProjectDraft {
-    var hasUnsavedChanges: Bool {
-        !viewModel.creatingProject.title.isEmpty || !viewModel.creatingProject.code.isEmpty
-            || !(viewModel.creatingProject.description ?? "").isEmpty
+extension CreatingProjectViewController: FormDepartureParticipant {
+    var hasUnsavedChanges: Bool { viewModel.hasUnsavedChanges }
+    var canSaveDraft: Bool { !viewModel.creatingProject.isEmpty }
+    var isSavingDraft: Bool { viewModel.isSaving }
+
+    func requestDeparture() async -> Bool {
+        view.endEditing(true)
+        return await FormDepartureGuard.confirm(
+            self,
+            on: self,
+            message: "Some changes cannot be saved. Stay to finish editing or discard them.".localized
+        )
     }
 
-    var canSaveDraft: Bool { !viewModel.creatingProject.isEmpty }
     func saveDraft() async throws {
         let callback = viewModel.creatingFinishCallback
         viewModel.creatingFinishCallback = {}
@@ -183,5 +157,5 @@ extension CreatingProjectViewController: ProjectDraft {
         guard viewModel.isEntityWasCreated else { throw API.NetError.invalidRequest("Create failed") }
     }
 
-    func discardDraft() { viewModel.creatingProject = .init() }
+    func discardDraft() { viewModel.discardDraft() }
 }

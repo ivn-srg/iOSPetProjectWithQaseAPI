@@ -2,6 +2,7 @@ import Foundation
 
 enum FormTextInputPolicy {
     static let characterLimit = 500
+    private static let combiningBoundaryAllowance = 2
 
     struct Edit: Equatable {
         let text: String
@@ -13,7 +14,7 @@ enum FormTextInputPolicy {
         let before = String(text[..<swiftRange.lowerBound])
         let after = String(text[swiftRange.upperBound...])
         let retainedCount = before.count + after.count
-        let insertionBudget = max(0, characterLimit - retainedCount) + 2
+        let insertionBudget = max(0, characterLimit - retainedCount) + combiningBoundaryAllowance
         var inserted = String(replacement.prefix(insertionBudget))
         while (before + inserted + after).count > characterLimit && !inserted.isEmpty {
             inserted.removeLast()

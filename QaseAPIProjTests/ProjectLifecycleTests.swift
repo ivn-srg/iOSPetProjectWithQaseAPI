@@ -72,9 +72,9 @@ struct ProjectLifecycleTests {
             configuration: .init(inMemoryIdentifier: UUID().uuidString),
             session: session
         )
-        let model = DetailTabbarControllerViewModel(
+        let model = TestDependencies.detail(
             reference: .init(projectCode: "DEMO", caseID: 2),
-            network: APIMockManager.shared,
+            network: APIMockManager(),
             dao: cache,
             session: session
         )

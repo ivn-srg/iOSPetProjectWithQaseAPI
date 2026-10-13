@@ -6,7 +6,7 @@ import Testing
 @Suite @MainActor
 struct FormDraftTests {
     @Test func selectedIDsAndParentAreEncodedFromTheCaseDraft() throws {
-        let model = CreateSuiteOrCaseViewModel(
+        let model = TestDependencies.creator(
             projectCode: "A",
             parentSuiteId: 9,
             session: SessionContext(ownerID: "owner")
@@ -31,7 +31,7 @@ struct FormDraftTests {
 
     @Test func twoDraftsRemainIndependentAndWhitespaceCannotCreate() async {
         let network = FormDraftNetwork()
-        let model = CreateSuiteOrCaseViewModel(
+        let model = TestDependencies.creator(
             projectCode: "A",
             network: network,
             session: SessionContext(ownerID: "owner")
@@ -51,7 +51,7 @@ struct FormDraftTests {
 
     @Test func partialSuccessDoesNotResendTheAlreadyConfirmedSuite() async throws {
         let network = FormDraftNetwork()
-        let model = CreateSuiteOrCaseViewModel(
+        let model = TestDependencies.creator(
             projectCode: "A",
             network: network,
             session: SessionContext(ownerID: "owner")
@@ -69,7 +69,8 @@ struct FormDraftTests {
         model.creatingEntityIsSuite = true
         #expect(!model.canCreate)
         do { try await model.createNewEntity()
-            Issue.record("Confirmed snapshot must not be duplicated") } catch {}
+            Issue.record("Confirmed snapshot must not be duplicated")
+        } catch {}
         #expect(network.methods.count == 2)
         network.error = nil
         model.creatingEntityIsSuite = false
@@ -79,7 +80,7 @@ struct FormDraftTests {
 
     @Test func busyCreateRejectsAnotherRequestAndParentMutation() async throws {
         let network = FormDraftNetwork()
-        let model = CreateSuiteOrCaseViewModel(
+        let model = TestDependencies.creator(
             projectCode: "A",
             network: network,
             session: SessionContext(ownerID: "owner")
@@ -105,7 +106,7 @@ struct FormDraftTests {
     @Test func staleCreateResponseDoesNotPublishSuccessOrConfirmDraft() async throws {
         let session = SessionContext(ownerID: "old")
         let network = FormDraftNetwork()
-        let model = CreateSuiteOrCaseViewModel(projectCode: "A", network: network, session: session)
+        let model = TestDependencies.creator(projectCode: "A", network: network, session: session)
         var finished = false
         model.creatingFinishCallback = { finished = true }
         model.creatingSuite.title = "Old owner"
@@ -122,7 +123,7 @@ struct FormDraftTests {
     @Test func editorNoChangeAndFailureKeepCompleteDraft() async throws {
         let session = SessionContext(ownerID: "owner")
         let network = FormDraftNetwork()
-        let model = DetailTabbarControllerViewModel(
+        let model = TestDependencies.detail(
             reference: .init(projectCode: "A", caseID: 1),
             network: network,
             session: session
@@ -139,7 +140,8 @@ struct FormDraftTests {
         let draft = model.changedTestCase
         network.error = .timeout
         do { try await model.updateTestCaseData()
-            Issue.record("Failed update must preserve draft") } catch {}
+            Issue.record("Failed update must preserve draft")
+        } catch {}
         #expect(model.changedTestCase == draft && model.testCase == initial)
         #expect(model.changedTestCase?.suiteId == 8)
         #expect(model.canSaveChanges && !model.isUploadingSuccess && !model.isSaving)
@@ -152,7 +154,7 @@ struct FormDraftTests {
         let fixtureData = Data(Self.completeCaseFixture.utf8)
         let initial = try JSONDecoder().decode(TestCaseEntity.self, from: fixtureData)
         let fixture = try #require(JSONSerialization.jsonObject(with: fixtureData) as? [String: Any])
-        let model = DetailTabbarControllerViewModel(
+        let model = TestDependencies.detail(
             reference: .init(projectCode: "A", caseID: initial.id),
             network: network,
             dao: dao,
@@ -194,12 +196,9 @@ struct FormDraftTests {
 
     @Test func everyTypeMenuIDRoundTripsThroughBothForms() {
         let session = SessionContext(ownerID: "owner")
-        let creator = CreateSuiteOrCaseViewModel(projectCode: "A", session: session)
+        let creator = TestDependencies.creator(projectCode: "A", session: session)
         creator.creatingEntityIsSuite = false
-        let editor = DetailTabbarControllerViewModel(
-            reference: .init(projectCode: "A", caseID: 1),
-            session: session
-        )
+        let editor = TestDependencies.detail(reference: .init(projectCode: "A", caseID: 1), session: session)
         editor.changedTestCase = .empty
         for type in Types.allCases {
             #expect(Types(type.menuItem.id) == type)
@@ -247,7 +246,7 @@ struct FormDraftTests {
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
         let network = FormDraftNetwork()
         let reference = TestCaseReference(projectCode: "A", caseID: 0)
-        let model = DetailTabbarControllerViewModel(
+        let model = TestDependencies.detail(
             reference: reference,
             network: network,
             dao: dao,

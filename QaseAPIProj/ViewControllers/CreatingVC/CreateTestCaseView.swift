@@ -4,11 +4,11 @@ import UIKit
 final class CreateTestCaseView: UIView {
     let parentButton = FormParentButton()
     var onFocusChange: ((GeneralCaseTextField) -> Void)?
-    private let viewModel: CreateSuiteOrCaseViewModel
+    private let viewModel: EntityCreationViewModel
     private var fields: [FieldType: GeneralCaseTextField] = [:]
     private let properties: CasePropertiesFormView
 
-    init(linkedViewModel: CreateSuiteOrCaseViewModel) {
+    init(linkedViewModel: EntityCreationViewModel) {
         viewModel = linkedViewModel
         properties = CasePropertiesFormView(viewModel: linkedViewModel)
         super.init(frame: .zero)
@@ -33,12 +33,7 @@ final class CreateTestCaseView: UIView {
     }
 
     private func makeField(_ type: FieldType, value: String?) -> GeneralCaseTextField {
-        let field = GeneralCaseTextField(
-            textType: type,
-            textViewValue: value,
-            detailVM: viewModel,
-            style: .entityForm
-        )
+        let field = GeneralCaseTextField(textType: type, textViewValue: value, detailVM: viewModel)
         fields[type] = field
         field.onFocusChange = { [weak self, weak field] focused in
             if focused, let field { self?.onFocusChange?(field) }

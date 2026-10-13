@@ -43,12 +43,30 @@ enum FieldType: String, CaseIterable {
     case isFlaky = "Is Flaky"
     case automation = "Automation status"
 
-    var localized: String {
-        self.rawValue.localized
-    }
+    var localized: String { rawValue.localized }
 }
 
 struct Constants {
-    static let LIMIT_OF_REQUEST = 50
     static let EMPTY_TEXT = "Not set".localized
+}
+
+extension FieldType {
+    var accessibilityField: AccessibilityID.Field {
+        switch self {
+        case .title: return .title
+        case .description: return .description
+        case .precondition: return .precondition
+        case .postcondition: return .postcondition
+        case .code: return .code
+        case .parentSuite: return .parentSuite
+        case .severity: return .severity
+        case .status: return .status
+        case .priority: return .priority
+        case .behavior: return .behavior
+        case .type: return .type
+        case .layer: return .layer
+        case .isFlaky: return .isFlaky
+        case .automation: return .automation
+        }
+    }
 }

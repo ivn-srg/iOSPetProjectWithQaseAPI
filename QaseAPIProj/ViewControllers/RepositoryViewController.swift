@@ -24,7 +24,7 @@ final class RepositoryViewController: UIHostingController<RepositoryView> {
             self.router?.createEntity(in: self.model.location)
         })
         create.accessibilityLabel = "Create entity".localized
-        create.accessibilityIdentifier = "repository.create"
+        create.accessibilityIdentifier = AccessibilityID.repositoryCreate.identifier
         navigationItem.rightBarButtonItem = create
         updateCreateAvailability()
         modelSubscription = model.objectWillChange.receive(on: RunLoop.main).sink { [weak self] _ in

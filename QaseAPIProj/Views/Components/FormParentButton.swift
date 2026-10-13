@@ -5,7 +5,7 @@ final class FormParentButton: UIButton {
     private let caption = UILabel()
     private let valueLabel = UILabel()
     private let pathLabel = UILabel()
-    private let arrow = UIImageView(image: UIImage(systemName: "chevron.right"))
+    private let arrow = UIImageView(image: AppImages.chevronRight)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -25,22 +25,22 @@ final class FormParentButton: UIButton {
         arrow.contentMode = .scaleAspectFit
         let text = UIStackView(arrangedSubviews: [caption, valueLabel, pathLabel])
         text.axis = .vertical
-        text.spacing = 4
+        text.spacing = AppTheme.Space.tiny
         text.isUserInteractionEnabled = false
         addSubview(text)
         addSubview(arrow)
         text.snp.makeConstraints {
             $0.leading.equalToSuperview()
-            $0.top.bottom.equalToSuperview().inset(12)
-            $0.trailing.equalTo(arrow.snp.leading).offset(-12)
+            $0.top.bottom.equalToSuperview().inset(AppTheme.Space.medium)
+            $0.trailing.equalTo(arrow.snp.leading).offset(-AppTheme.Space.medium)
         }
         arrow.snp.makeConstraints {
             $0.trailing.centerY.equalToSuperview()
-            $0.width.equalTo(12)
-            $0.height.equalTo(16)
+            $0.width.equalTo(Layout.chevronWidth)
+            $0.height.equalTo(Layout.chevronHeight)
         }
-        snp.makeConstraints { $0.height.greaterThanOrEqualTo(52) }
-        accessibilityIdentifier = "field." + FieldType.parentSuite.rawValue
+        snp.makeConstraints { $0.height.greaterThanOrEqualTo(Layout.minimumRowHeight) }
+        accessibilityIdentifier = AccessibilityID.field(.parentSuite).identifier
         accessibilityTraits = .button
     }
 
@@ -57,6 +57,13 @@ final class FormParentButton: UIButton {
     }
 
     override var isEnabled: Bool {
-        didSet { alpha = isEnabled ? 1 : 0.5 }
+        didSet { alpha = isEnabled ? 1 : Layout.disabledOpacity }
     }
+}
+
+private struct Layout {
+    static let disabledOpacity: CGFloat = 0.5
+    static let chevronWidth: CGFloat = 12
+    static let chevronHeight: CGFloat = 16
+    static let minimumRowHeight: CGFloat = 52
 }

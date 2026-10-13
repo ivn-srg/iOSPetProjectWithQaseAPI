@@ -24,11 +24,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let windowScene = (scene as? UIWindowScene) else { return }
 
+        guard let compositionRoot = (UIApplication.shared.delegate as? AppDelegate)?.compositionRoot
+        else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.overrideUserInterfaceStyle = AppSettingsStore.shared.appearance.interfaceStyle
-        window.rootViewController = RootViewController()
+        window.overrideUserInterfaceStyle = compositionRoot.preferences.appearance.interfaceStyle
+        window.rootViewController = compositionRoot.makeRootController()
         self.window = window
-        appearanceObservation = AppSettingsStore.shared.$appearance.removeDuplicates()
+        appearanceObservation = compositionRoot.preferences.$appearance.removeDuplicates()
             .sink { [weak window] appearance in
                 Task { @MainActor in window?.overrideUserInterfaceStyle = appearance.interfaceStyle }
             }

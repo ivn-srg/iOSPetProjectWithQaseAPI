@@ -29,21 +29,28 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
             target: self,
             action: #selector(closePicker)
         )
-        navigationItem.leftBarButtonItem?.accessibilityIdentifier = "suitePicker.close"
+        navigationItem.leftBarButtonItem?.accessibilityIdentifier = AccessibilityID.suitePickerClose
+            .identifier
         search.searchResultsUpdater = self
         search.obscuresBackgroundDuringPresentation = false
         search.searchBar.placeholder = "Search suites".localized
-        search.searchBar.accessibilityIdentifier = "suitePicker.search"
+        search.searchBar.accessibilityIdentifier = AccessibilityID.suitePickerSearch.identifier
         navigationItem.searchController = search
         navigationItem.hidesSearchBarWhenScrolling = false
         definesPresentationContext = true
         tableView.backgroundColor = AppTheme.Palette.canvas
         tableView.tintColor = AppTheme.Palette.accent
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 72
-        tableView.accessibilityIdentifier = "suitePicker.list"
+        tableView.estimatedRowHeight = Layout.estimatedRowHeight
+        tableView.accessibilityIdentifier = AccessibilityID.suitePickerList.identifier
         viewModel.onChange = { [weak self] in self?.render() }
         render()
+        registerForTraitChanges([
+            UITraitUserInterfaceStyle.self,
+            UITraitPreferredContentSizeCategory.self
+        ]) { (view: Self, _) in
+            view.refreshTraits()
+        }
         reloadCatalog()
     }
 
@@ -96,8 +103,7 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
         updateFooter()
     }
 
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
+    private func refreshTraits() {
         footerWidth = 0
         if isViewLoaded { updateFooter() }
     }
@@ -134,10 +140,10 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
         label.adjustsFontForContentSizeCategory = true
         label.textColor = AppTheme.Palette.secondaryText
         label.textAlignment = .center
-        label.accessibilityIdentifier = "suitePicker.status"
+        label.accessibilityIdentifier = AccessibilityID.suitePickerStatus.identifier
         let stack = UIStackView(arrangedSubviews: [label])
         stack.axis = .vertical
-        stack.spacing = 12
+        stack.spacing = AppTheme.Space.medium
         stack.isLayoutMarginsRelativeArrangement = true
         stack.layoutMargins = UIEdgeInsets(top: 24, left: 24, bottom: 24, right: 24)
         if viewModel.isLoading {
@@ -151,9 +157,9 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
             retry.tintColor = AppTheme.Palette.accent
             retry.titleLabel?.font = .preferredFont(forTextStyle: .body)
             retry.titleLabel?.adjustsFontForContentSizeCategory = true
-            retry.accessibilityIdentifier = "suitePicker.retry"
+            retry.accessibilityIdentifier = AccessibilityID.suitePickerRetry.identifier
             retry.addTarget(self, action: #selector(reloadCatalog), for: .touchUpInside)
-            retry.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+            retry.heightAnchor.constraint(greaterThanOrEqualToConstant: AppTheme.Size.touch).isActive = true
             stack.addArrangedSubview(retry)
         }
         let size = stack.systemLayoutSizeFitting(
@@ -181,7 +187,8 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
             cell = reused
         } else {
             cell = UITableViewCell(style: .subtitle, reuseIdentifier: "suitePicker.row")
-            cell.contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 52).isActive = true
+            cell.contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: Layout.minimumRowHeight)
+                .isActive = true
         }
         let suite = indexPath.section == 1 ? viewModel.filteredSuites[indexPath.row] : nil
         let id = suite?.id
@@ -195,12 +202,14 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
         cell.detailTextLabel?.numberOfLines = 0
         cell.textLabel?.textColor = AppTheme.Palette.text
         cell.detailTextLabel?.textColor = AppTheme.Palette.secondaryText
-        cell.imageView?.image = UIImage(systemName: "folder")
+        cell.imageView?.image = AppImages.folder
         cell.imageView?.tintColor = id == viewModel.selectedID ? AppTheme.Palette.accent : AppTheme.Palette
             .secondaryText
         cell.backgroundColor = AppTheme.Palette.secondarySurface
         cell.accessoryType = id == viewModel.selectedID ? .checkmark : .none
-        cell.accessibilityIdentifier = id.map { "suitePicker.suite.\($0)" } ?? "suitePicker.root"
+        cell.accessibilityIdentifier = id
+            .map { AccessibilityID.suitePickerSuite($0).identifier } ?? AccessibilityID.suitePickerRoot
+            .identifier
         cell.accessibilityLabel = [cell.textLabel?.text, cell.detailTextLabel?.text].compactMap { $0 }
             .joined(separator: ", ")
         cell.accessibilityTraits = id == viewModel.selectedID ? [.button, .selected] : .button
@@ -215,4 +224,9 @@ final class SuitePickerViewController: UITableViewController, UISearchResultsUpd
         onSelection(id)
         navigationController?.dismiss(animated: true)
     }
+}
+
+private struct Layout {
+    static let estimatedRowHeight: CGFloat = 72
+    static let minimumRowHeight: CGFloat = 52
 }

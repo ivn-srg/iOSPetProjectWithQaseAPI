@@ -1,10 +1,11 @@
 import Foundation
 import Security
 
-enum AuthState: String { case loggedIn = "loggedIn", loggedOutb = "loggedOut" }
+enum AuthOperationError: Error { case cacheCleanupAfterLogout }
+
 enum KeychainError: Error { case noToken, unexpectedTokenData, unhandledError(status: OSStatus) }
 
-struct AuthCredential: Codable, Equatable {
+struct AuthCredential: Codable, Equatable, Sendable {
     let token: String
     let ownerID: String
     static func decode(_ data: Data) -> AuthCredential? {
@@ -20,7 +21,7 @@ protocol AuthCredentialStorage {
     func deleteToken() throws
 }
 
-struct ValidatedTokenCandidate {
+struct ValidatedTokenCandidate: Sendable {
     fileprivate let credential: AuthCredential
     fileprivate let originalCredential: AuthCredential
     fileprivate let sessionStamp: SessionStamp
@@ -30,7 +31,7 @@ struct ValidatedTokenCandidate {
     var requiresSessionChange: Bool { !isSameToken }
 }
 
-struct TokenReplacementResult {
+struct TokenReplacementResult: Sendable {
     let didChange: Bool
     let cacheCleanupFailed: Bool
 }
@@ -43,51 +44,37 @@ struct AuthReplacementDependencies {
     let configureDemoMode: @MainActor (Bool) -> Void
     let notifyAuthChanged: @MainActor (Bool) -> Void
 
-    static var live: Self {
-        Self(session: .shared, authenticate: { token, usesDemo in
-            let network: NetworkManager = usesDemo ? APIMockManager.shared : APIManager.shared
-            return try await network.auth(by: token)
-        }, clearCache: {
-            try RealmManager.shared.clearAll()
-        }, configureDemoMode: { usesDemo in
-            ApiServiceConfiguration.shared.setMockingServiceEnabled(usesDemo)
-            RealmManager.shared.useDemoStore(usesDemo)
-        }, notifyAuthChanged: { cacheCleanupFailed in
-            NotificationCenter.default.post(
-                name: .didChangeAuthStatus,
-                object: nil,
-                userInfo: ["cacheCleanupFailed": cacheCleanupFailed]
-            )
-        })
-    }
 }
 
-final class AuthManager {
-    static let shared = AuthManager()
+@MainActor
+protocol AuthServicing: AnyObject {
+    var isDemoMode: Bool { get }
+    func isUserLoggedIn() -> Bool
+    func loggedIn(token: String?) async throws
+    func logout() async throws
+    func validateReplacementToken(_ token: String) async throws -> ValidatedTokenCandidate
+    func commitReplacementToken(_ candidate: ValidatedTokenCandidate) throws -> TokenReplacementResult
+}
+
+@MainActor
+final class AuthManager: AuthServicing {
     private let userDefaults: UserDefaults
     private let authStatusKey = "isUserLoggedIn"
-    private let keychain = KeychainService.shared
-    private let credentialStore: AuthCredentialStorage?
-    private let replacementDependencies: AuthReplacementDependencies?
+    private let credentialStore: AuthCredentialStorage
+    private let replacementDependencies: AuthReplacementDependencies
     private let managerID = UUID()
-    private let testLock = NSLock()
-    private var testCredential: AuthCredential?
-    private var usesTestTokenStore: Bool {
-        #if DEBUG
-            CommandLine.arguments.contains("UITests")
-        #else
-            false
-        #endif
-    }
+    private let usesTestTokenStore: Bool
 
     init(
-        userDefaults: UserDefaults = .standard,
-        credentialStore: AuthCredentialStorage? = nil,
-        replacementDependencies: AuthReplacementDependencies? = nil
+        userDefaults: UserDefaults,
+        credentialStore: AuthCredentialStorage,
+        replacementDependencies: AuthReplacementDependencies,
+        usesTestTokenStore: Bool = false
     ) {
         self.userDefaults = userDefaults
         self.credentialStore = credentialStore
         self.replacementDependencies = replacementDependencies
+        self.usesTestTokenStore = usesTestTokenStore
     }
 
     @MainActor
@@ -101,7 +88,7 @@ final class AuthManager {
         try Task.checkCancellation()
         let token = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !token.isEmpty else { throw API.NetError.invalidCredantials }
-        let dependencies = replacementDependencies ?? .live
+        let dependencies = replacementDependencies
         let stamp = dependencies.session.capture()
         guard let originalCredential = currentCredential(),
               stamp.ownerID == originalCredential.ownerID,
@@ -127,7 +114,7 @@ final class AuthManager {
     @MainActor
     func commitReplacementToken(_ candidate: ValidatedTokenCandidate) throws -> TokenReplacementResult {
         try Task.checkCancellation()
-        let dependencies = replacementDependencies ?? .live
+        let dependencies = replacementDependencies
         guard candidate.managerID == managerID,
               dependencies.session.capture() == candidate.sessionStamp,
               currentCredential() == candidate.originalCredential,
@@ -152,61 +139,54 @@ final class AuthManager {
     @MainActor
     func isUserLoggedIn() -> Bool {
         let credential = currentCredential()
-        if let credential, SessionContext.shared.ownerID == nil {
+        if let credential, replacementDependencies.session.ownerID == nil {
             let usesDemo = usesTestTokenStore || credential.token == "QASE_DEMO"
-            ApiServiceConfiguration.shared.setMockingServiceEnabled(usesDemo)
-            if usesDemo { RealmManager.shared.useDemoStore(true) }
-            SessionContext.shared.activate(ownerID: credential.ownerID)
+            replacementDependencies.configureDemoMode(usesDemo)
+            replacementDependencies.session.activate(ownerID: credential.ownerID)
         }
         return credential != nil && userDefaults.bool(forKey: authStatusKey)
     }
 
-    // Used by the request transport from arbitrary executors. No Realm or UI access here.
     func getAuthToken() -> String? { currentCredential()?.token }
 
     private func currentCredential() -> AuthCredential? {
-        if let credentialStore { return credentialStore.getCredential() }
-        if usesTestTokenStore {
-            testLock.lock()
-            defer { testLock.unlock() }
-            return testCredential
-        }
-        return keychain.getCredential()
+        credentialStore.getCredential()
     }
 
     @MainActor
     func loggedIn(token: String?) async throws {
         guard let token else { try await logout()
             return }
-        let startingStamp = SessionContext.shared.capture()
+        let dependencies = replacementDependencies
+        let startingStamp = dependencies.session.capture()
         let usesDemo = usesTestTokenStore || token == "QASE_DEMO"
-        let network: NetworkManager = usesDemo ? APIMockManager.shared : APIManager.shared
-        let valid = try await network.auth(by: token)
-        guard valid else { throw API.NetError.invalidCredantials }
-        // A concurrent logout/login supersedes this candidate.
-        guard SessionContext.shared.capture() == startingStamp else { return }
-        SessionContext.shared.invalidate()
-        clearSelectedProjects()
-        try RealmManager.shared.clearAll()
+        guard try await dependencies.authenticate(token, usesDemo)
+        else { throw API.NetError.invalidCredantials }
+        try Task.checkCancellation()
+        guard dependencies.session.capture() == startingStamp else { return }
         let record = AuthCredential(token: token, ownerID: UUID().uuidString)
         try saveCredential(record)
-        ApiServiceConfiguration.shared.setMockingServiceEnabled(usesDemo)
-        RealmManager.shared.useDemoStore(usesDemo)
-        SessionContext.shared.activate(ownerID: record.ownerID)
+        dependencies.session.invalidate()
+        clearSelectedProjects()
+        var cacheCleanupFailed = false
+        do { try dependencies.clearCache() } catch { cacheCleanupFailed = true }
+        dependencies.configureDemoMode(usesDemo)
+        dependencies.session.activate(ownerID: record.ownerID)
         userDefaults.set(true, forKey: authStatusKey)
-        NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
+        dependencies.notifyAuthChanged(cacheCleanupFailed)
     }
 
     @MainActor
     func logout() async throws {
-        SessionContext.shared.invalidate()
-        clearSelectedProjects()
-        var cleanupError: Error?
-        do { try RealmManager.shared.clearAll() } catch { cleanupError = error }
         try deleteCredential()
+        let dependencies = replacementDependencies
+        dependencies.session.invalidate()
+        clearSelectedProjects()
+        var cacheCleanupFailed = false
+        do { try dependencies.clearCache() } catch { cacheCleanupFailed = true }
         userDefaults.set(false, forKey: authStatusKey)
-        NotificationCenter.default.post(name: .didChangeAuthStatus, object: nil)
-        if let cleanupError { throw cleanupError }
+        dependencies.notifyAuthChanged(false)
+        if cacheCleanupFailed { throw AuthOperationError.cacheCleanupAfterLogout }
     }
 
     private func clearSelectedProjects() {
@@ -216,28 +196,15 @@ final class AuthManager {
     }
 
     private func saveCredential(_ record: AuthCredential) throws {
-        if let credentialStore { try credentialStore.saveCredential(record)
-            return }
-        if usesTestTokenStore {
-            testLock.lock()
-            defer { testLock.unlock() }
-            testCredential = record
-        } else { try keychain.saveCredential(record) }
+        try credentialStore.saveCredential(record)
     }
 
     private func deleteCredential() throws {
-        if let credentialStore { try credentialStore.deleteToken()
-            return }
-        if usesTestTokenStore {
-            testLock.lock()
-            defer { testLock.unlock() }
-            testCredential = nil
-        } else { try keychain.deleteToken() }
+        try credentialStore.deleteToken()
     }
 }
 
-private final class KeychainService: AuthCredentialStorage {
-    static let shared = KeychainService()
+final class KeychainService: AuthCredentialStorage {
     private let key = "authToken"
     private let lock = NSLock()
     private var query: [String: Any] {
@@ -287,5 +254,28 @@ private final class KeychainService: AuthCredentialStorage {
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound
         else { throw KeychainError.unhandledError(status: status) }
+    }
+}
+
+final class MemoryCredentialStorage: AuthCredentialStorage {
+    private let lock = NSLock()
+    private var record: AuthCredential?
+
+    func getCredential() -> AuthCredential? {
+        lock.lock()
+        defer { lock.unlock() }
+        return record
+    }
+
+    func saveCredential(_ record: AuthCredential) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        self.record = record
+    }
+
+    func deleteToken() throws {
+        lock.lock()
+        defer { lock.unlock() }
+        record = nil
     }
 }

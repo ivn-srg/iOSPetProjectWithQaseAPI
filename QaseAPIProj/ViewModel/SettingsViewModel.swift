@@ -10,8 +10,8 @@ enum SettingsRoute { case appearance, language, token, cache, about, logout }
 @MainActor
 final class SettingsViewModel: ObservableObject {
     let preferences: AppSettingsStore
-    let auth: AuthManager
-    private let cache: RealmManager
+    let auth: AuthServicing
+    private let cache: CacheMaintaining
     private let session: SessionContext
     private let bundle: Bundle
     @Published private(set) var languageName = ""
@@ -21,10 +21,10 @@ final class SettingsViewModel: ObservableObject {
 
     init(
         preferences: AppSettingsStore,
-        auth: AuthManager = .shared,
-        cache: RealmManager = .shared,
-        session: SessionContext = .shared,
-        bundle: Bundle = .main
+        auth: AuthServicing,
+        cache: CacheMaintaining,
+        session: SessionContext,
+        bundle: Bundle
     ) {
         self.preferences = preferences
         self.auth = auth
@@ -74,11 +74,11 @@ final class TokenReplacementViewModel: ObservableObject {
     @Published private(set) var isSaving = false
     @Published private(set) var errorMessage: String?
     var onClose: (() -> Void)?
-    private let auth: AuthManager
+    private let auth: AuthServicing
     private let prepareForChange: @MainActor () async -> Bool
     private var task: Task<Void, Never>?
 
-    init(auth: AuthManager, prepareForChange: @escaping @MainActor () async -> Bool) {
+    init(auth: AuthServicing, prepareForChange: @escaping @MainActor () async -> Bool) {
         self.auth = auth
         self.prepareForChange = prepareForChange
     }

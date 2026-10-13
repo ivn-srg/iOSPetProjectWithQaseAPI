@@ -3,16 +3,19 @@ import UIKit
 
 final class CasePropertiesFormView: UIView {
     private let viewModel: UpdatableEntityProtocol
-    private var fields: [PropertiesPickerTextField] = []
+    private var fields: [CustomSelectableView] = []
     private let flakySwitch: SwitcherWithTitle
 
     init(viewModel: UpdatableEntityProtocol) {
         self.viewModel = viewModel
-        flakySwitch = SwitcherWithTitle(title: FieldType.isFlaky.localized, testCaseVM: viewModel)
+        flakySwitch = SwitcherWithTitle(
+            title: FieldType.isFlaky.localized,
+            isOn: viewModel.formCase?.isFlaky ?? false
+        )
         super.init(frame: .zero)
         let stack = UIStackView()
         stack.axis = .vertical
-        stack.spacing = 24
+        stack.spacing = AppTheme.Space.section
         addSubview(stack)
         stack.snp.makeConstraints { $0.edges.equalToSuperview() }
         stack.addArrangedSubview(section("Classification", fields: [.severity, .status, .priority]))
@@ -32,8 +35,8 @@ final class CasePropertiesFormView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func makeField(_ type: FieldType) -> PropertiesPickerTextField {
-        let field = PropertiesPickerTextField(textType: type, detailCaseVM: viewModel)
+    private func makeField(_ type: FieldType) -> CustomSelectableView {
+        let field = CustomSelectableView(textFieldType: type, detailCaseVM: viewModel)
         fields.append(field)
         return field
     }
@@ -43,9 +46,8 @@ final class CasePropertiesFormView: UIView {
     }
 
     func updateValues() {
-        fields.forEach { $0.updateValue() }
-        let draft = (viewModel as? CreateSuiteOrCaseViewModel)?.creatingTestCase ?? viewModel
-            .changedTestCase ?? viewModel.testCase
+        fields.forEach { $0.updateSelectedValue() }
+        let draft = viewModel.formCase
         flakySwitch.configure(with: draft?.isFlaky ?? false)
     }
 

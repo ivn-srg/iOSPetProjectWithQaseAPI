@@ -10,11 +10,11 @@ final class FormMessageView: UIView {
         super.init(frame: frame)
         backgroundColor = AppTheme.Palette.dangerBackground
         layer.cornerRadius = AppTheme.Radius.control
-        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.circle"))
+        let icon = UIImageView(image: AppImages.exclamationmarkCircle)
         icon.tintColor = AppTheme.Palette.danger
         icon.contentMode = .scaleAspectFit
         icon.snp.makeConstraints {
-            $0.width.height.equalTo(20)
+            $0.width.height.equalTo(Layout.iconSize)
         }
         label.font = .preferredFont(forTextStyle: .body)
         label.adjustsFontForContentSizeCategory = true
@@ -25,15 +25,15 @@ final class FormMessageView: UIView {
         retryButton.titleLabel?.font = .preferredFont(forTextStyle: .body)
         retryButton.titleLabel?.adjustsFontForContentSizeCategory = true
         retryButton.addTarget(self, action: #selector(retry), for: .touchUpInside)
-        retryButton.snp.makeConstraints { $0.height.greaterThanOrEqualTo(44) }
+        retryButton.snp.makeConstraints { $0.height.greaterThanOrEqualTo(AppTheme.Size.touch) }
         let message = UIStackView(arrangedSubviews: [icon, label])
         message.alignment = .top
-        message.spacing = 8
+        message.spacing = AppTheme.Space.small
         let stack = UIStackView(arrangedSubviews: [message, retryButton])
         stack.axis = .vertical
-        stack.spacing = 8
+        stack.spacing = AppTheme.Space.small
         addSubview(stack)
-        stack.snp.makeConstraints { $0.edges.equalToSuperview().inset(12) }
+        stack.snp.makeConstraints { $0.edges.equalToSuperview().inset(AppTheme.Space.medium) }
         isHidden = true
     }
 
@@ -55,4 +55,8 @@ final class FormMessageView: UIView {
     }
 
     @objc private func retry() { retryAction?() }
+}
+
+private struct Layout {
+    static let iconSize: CGFloat = 20
 }

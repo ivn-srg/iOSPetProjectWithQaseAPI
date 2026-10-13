@@ -3,7 +3,7 @@ import UIKit
 
 final class GeneralDetailCaseViewController: UIViewController {
     var onKeyboardVisibilityChanged: ((Bool) -> Void)?
-    private let vm: DetailTabbarControllerViewModel
+    private let vm: TestCaseEditorViewModel
     private let projectTitle: String
     private let scrollView = UIScrollView()
     private let content = UIStackView()
@@ -15,7 +15,7 @@ final class GeneralDetailCaseViewController: UIViewController {
     private weak var focusedField: GeneralCaseTextField?
     private lazy var properties = CasePropertiesFormView(viewModel: vm)
 
-    init(vm: DetailTabbarControllerViewModel, projectTitle: String? = nil) {
+    init(vm: TestCaseEditorViewModel, projectTitle: String? = nil) {
         self.vm = vm
         self.projectTitle = projectTitle ?? vm.reference.projectCode
         super.init(nibName: nil, bundle: nil)
@@ -28,6 +28,7 @@ final class GeneralDetailCaseViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = AppTheme.Palette.canvas
+        view.keyboardLayoutGuide.usesBottomSafeArea = false
         scrollView.contentInsetAdjustmentBehavior = .never
         scrollView.keyboardDismissMode = .interactive
         view.addSubview(scrollView)
@@ -67,10 +68,10 @@ final class GeneralDetailCaseViewController: UIViewController {
         heading.textColor = AppTheme.Palette.secondaryText
         heading.accessibilityTraits.insert(.header)
         steps.axis = .vertical
-        steps.spacing = 12
+        steps.spacing = AppTheme.Space.medium
         let stepGroup = UIStackView(arrangedSubviews: [heading, steps])
         stepGroup.axis = .vertical
-        stepGroup.spacing = 8
+        stepGroup.spacing = AppTheme.Space.small
         content.addArrangedSubview(stepGroup)
         dataSections = [main, conditions, properties, stepGroup]
         NotificationCenter.default.addObserver(
@@ -92,12 +93,13 @@ final class GeneralDetailCaseViewController: UIViewController {
             object: nil
         )
         updateValues()
+        updateBottomInsets()
     }
 
     deinit { NotificationCenter.default.removeObserver(self) }
 
     private func makeField(_ type: FieldType) -> GeneralCaseTextField {
-        let field = GeneralCaseTextField(textType: type, detailVM: vm, style: .entityForm)
+        let field = GeneralCaseTextField(textType: type, detailVM: vm)
         fields[type] = field
         field.onFocusChange = { [weak self, weak field] focused in
             guard focused, let self, let field else { return }
@@ -112,8 +114,31 @@ final class GeneralDetailCaseViewController: UIViewController {
             guard let self, let field = self.focusedField else { return }
             self.view.layoutIfNeeded()
             if let rect = field.focusedCaretRect(in: self.scrollView) {
-                self.scrollView.scrollRectToVisible(rect.insetBy(dx: 0, dy: -12), animated: true)
+                self.scrollView.scrollRectToVisible(
+                    rect.insetBy(dx: 0, dy: -AppTheme.Space.medium),
+                    animated: true
+                )
             }
+        }
+    }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        updateBottomInsets()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateBottomInsets()
+    }
+
+    private func updateBottomInsets() {
+        let keyboardTop = view.keyboardLayoutGuide.layoutFrame.minY
+        let keyboardVisible = keyboardTop < view.bounds.maxY - view.safeAreaInsets.bottom
+        let bottom = keyboardVisible ? 0 : view.safeAreaInsets.bottom
+        if scrollView.contentInset.bottom != bottom {
+            scrollView.contentInset.bottom = bottom
+            scrollView.verticalScrollIndicatorInsets.bottom = bottom
         }
     }
 
@@ -153,7 +178,7 @@ final class GeneralDetailCaseViewController: UIViewController {
         label.adjustsFontForContentSizeCategory = true
         label.numberOfLines = 0
         label.textColor = AppTheme.Palette.secondaryText
-        label.accessibilityIdentifier = "case.steps.empty"
+        label.accessibilityIdentifier = AccessibilityID.caseStepsEmpty.identifier
         steps.addArrangedSubview(label)
     }
 

@@ -1,133 +1,38 @@
 import Combine
 import SwiftUI
 
-@MainActor
-final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
-    @Published private(set) var items: [Item] = []
-    @Published private(set) var isLoading = false
-    @Published private(set) var errorMessage: String?
-    @Published private(set) var usingCache = false
-    @Published private(set) var hasMore = true
-    @Published var query = ""
-
-    private let session: SessionContext
-    private let fetch: (String, Int) async throws -> QaseAPIListResult<Item>
-    private let cached: ((String) -> [Item]?)?
-    private var generation = 0
-    private var nextOffset = 0
-    private var hasAppeared = false
-    private var searchTask: Task<Void, Never>?
-    private var sessionSubscription: AnyCancellable?
-
-    init(
-        session: SessionContext,
-        cached: ((String) -> [Item]?)? = nil,
-        fetch: @escaping (String, Int) async throws -> QaseAPIListResult<Item>
-    ) {
-        self.session = session
-        self.cached = cached
-        self.fetch = fetch
-        sessionSubscription = NotificationCenter.default.publisher(for: .didInvalidateSession)
-            .sink { [weak self] notification in
-                guard let self, notification.object as AnyObject? === self.session else { return }
-                self.generation += 1
-                self.searchTask?.cancel()
-                self.items = []
-                self.isLoading = false
-                self.usingCache = false
-                self.errorMessage = nil
-                self.hasMore = false
-            }
-    }
-
-    func appear() async {
-        guard !hasAppeared else { return }
-        hasAppeared = true
-        items = cached?(query) ?? []
-        await reload()
-    }
-
-    func searchChanged() {
-        generation += 1
-        searchTask?.cancel()
-        items = cached?(query) ?? []
-        usingCache = false
-        errorMessage = nil
-        isLoading = false
-        searchTask = Task { [weak self] in
-            do { try await Task.sleep(for: .milliseconds(300)) }
-            catch { return }
-            await self?.reload()
-        }
-    }
-
-    func reload() async {
-        guard session.ownerID != nil else { return }
-        generation += 1
-        nextOffset = 0
-        hasMore = true
-        await load(reset: true)
-    }
-
-    func loadMore() async {
-        guard !isLoading, hasMore, !usingCache else { return }
-        await load(reset: false)
-    }
-
-    private func load(reset: Bool) async {
-        let requestGeneration = generation
-        let requestedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        let offset = reset ? 0 : nextOffset
-        let stamp = session.capture()
-        isLoading = true
-        errorMessage = nil
-        defer {
-            if generation == requestGeneration { isLoading = false }
-        }
-        do {
-            let page = try await fetch(requestedQuery, offset)
-            guard generation == requestGeneration,
-                  query.trimmingCharacters(in: .whitespacesAndNewlines) == requestedQuery,
-                  session.isCurrent(stamp), !Task.isCancelled else { return }
-            if reset { items = [] }
-            var ids = Set(items.map(\.id))
-            items.append(contentsOf: page.entities.filter { ids.insert($0.id).inserted })
-            nextOffset = offset + page.entities.count
-            hasMore = !page.entities
-                .isEmpty &&
-                ((page.filtered ?? page.total).map { nextOffset < $0 } ?? (page.entities.count == 50))
-            usingCache = false
-        } catch {
-            guard generation == requestGeneration, session.isCurrent(stamp), !Task.isCancelled,
-                  !(error is CancellationError) else { return }
-            if reset, let cachedItems = cached?(requestedQuery) {
-                items = cachedItems
-                usingCache = true
-                hasMore = false
-            }
-            errorMessage = "Could not load data".localized
-        }
-    }
-}
-
 private struct ReadListSkeleton: View {
     var body: some View {
         VStack(spacing: 0) {
-            ForEach(0 ..< 3, id: \.self) { index in
+            ForEach(0 ..< Layout.rows, id: \.self) { index in
                 HStack(alignment: .top, spacing: AppTheme.Space.medium) {
                     RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                         .fill(Color(uiColor: AppTheme.Palette.secondarySurface))
                         .frame(width: AppTheme.Size.touch, height: AppTheme.Size.touch)
                     VStack(alignment: .leading, spacing: AppTheme.Space.tiny) {
-                        RoundedRectangle(cornerRadius: AppTheme.Space.tiny).frame(width: 160, height: 20)
-                        RoundedRectangle(cornerRadius: AppTheme.Space.tiny).frame(width: 80, height: 12)
-                        RoundedRectangle(cornerRadius: AppTheme.Space.tiny).frame(width: 120, height: 12)
+                        RoundedRectangle(cornerRadius: AppTheme.Space.tiny)
+                            .frame(
+                                width: Layout.titleWidth,
+                                height: Layout.titleHeight
+                            )
+                        RoundedRectangle(cornerRadius: AppTheme.Space.tiny)
+                            .frame(
+                                width: Layout.identifierWidth,
+                                height: Layout.metadataHeight
+                            )
+                        RoundedRectangle(cornerRadius: AppTheme.Space.tiny)
+                            .frame(
+                                width: Layout.metadataWidth,
+                                height: Layout.metadataHeight
+                            )
                     }
                     .foregroundStyle(Color(uiColor: AppTheme.Palette.secondarySurface))
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(AppTheme.Space.regular).frame(minHeight: 80)
-                if index < 2 { Divider().padding(.leading, AppTheme.Space.regular) }
+                .padding(AppTheme.Space.regular)
+                .frame(minHeight: Layout.minimumRowHeight)
+                if index < Layout.rows - 1 { Divider()
+                    .padding(.leading, AppTheme.Space.regular) }
             }
         }
         .background(
@@ -136,8 +41,9 @@ private struct ReadListSkeleton: View {
         )
         .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
             .stroke(Color(uiColor: AppTheme.Palette.border)))
-        .accessibilityElement(children: .ignore).accessibilityLabel("Loading".localized)
-        .accessibilityIdentifier("work.loading")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Loading".localized)
+        .accessibilityIdentifier(AccessibilityID.workLoading.identifier)
         .allowsHitTesting(false)
     }
 }
@@ -151,28 +57,30 @@ private struct ReadListContent<Item: Codable & Identifiable, Row: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppTheme.Space.regular) {
-                Text(projectTitle).font(.subheadline)
+                Text(projectTitle)
+                    .font(.subheadline)
                     .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText))
-                    .accessibilityIdentifier("work.project")
+                    .accessibilityIdentifier(AccessibilityID.workProject.identifier)
                 if model.usingCache {
                     HomeStateView(
                         title: "Showing saved data".localized,
-                        symbol: "arrow.triangle.2.circlepath",
+                        symbol: .arrowTriangle2Circlepath,
                         message: "Some data could not be refreshed".localized
                     )
                 }
                 if model.isLoading && model.items.isEmpty { ReadListSkeleton() }
                 else if model.items.isEmpty && model.errorMessage == nil {
-                    HomeStateView(title: emptyTitle, symbol: "tray")
+                    HomeStateView(title: emptyTitle, symbol: .tray)
                 }
                 if !model.items.isEmpty {
                     LazyVStack(spacing: 0) {
                         ForEach(model.items) { item in
                             row(item)
-                            if item.id != model.items.last?.id { Divider().padding(
-                                .leading,
-                                AppTheme.Space.regular
-                            ) }
+                            if item.id != model.items.last?.id { Divider()
+                                .padding(
+                                    .leading,
+                                    AppTheme.Space.regular
+                                ) }
                         }
                     }
                     .background(
@@ -185,12 +93,13 @@ private struct ReadListContent<Item: Codable & Identifiable, Row: View>: View {
                 if let error = model.errorMessage {
                     HomeStateView(
                         title: error,
-                        symbol: "exclamationmark.triangle",
+                        symbol: .exclamationmarkTriangle,
                         actionTitle: "Retry".localized
                     ) { Task { await model.reload() } }
                 }
                 if model.hasMore && !model.items.isEmpty && !model.usingCache {
-                    if model.isLoading { ProgressView().frame(maxWidth: .infinity) }
+                    if model.isLoading { ProgressView()
+                        .frame(maxWidth: .infinity) }
                     else { Button("Load more".localized) { Task { await model.loadMore() } }.frame(
                         maxWidth: .infinity,
                         minHeight: AppTheme.Size.touch
@@ -198,7 +107,8 @@ private struct ReadListContent<Item: Codable & Identifiable, Row: View>: View {
                 }
             }
             .frame(maxWidth: AppTheme.Size.content)
-            .padding(AppTheme.Space.screen).frame(maxWidth: .infinity)
+            .padding(AppTheme.Space.screen)
+            .frame(maxWidth: .infinity)
         }
         .background(Color(uiColor: AppTheme.Palette.canvas))
         .foregroundStyle(Color(uiColor: AppTheme.Palette.text))
@@ -212,24 +122,18 @@ struct RunListView: View {
     private let projectCode: String
     @ObservedObject private var selection: SelectedProjectStore
     private let onRun: (Int) -> Void
-    @StateObject private var model: PagedReadViewModel<RunReadDTO>
+    @ObservedObject private var model: PagedReadViewModel<RunReadDTO>
 
     init(
         projectCode: String,
         selection: SelectedProjectStore,
-        repository: HomeRepository,
-        session: SessionContext = .shared,
+        model: PagedReadViewModel<RunReadDTO>,
         onRun: @escaping (Int) -> Void
     ) {
         self.projectCode = projectCode
         self.selection = selection
+        self.model = model
         self.onRun = onRun
-        _model = StateObject(wrappedValue: PagedReadViewModel(session: session, cached: { _ in
-            repository.hasCachedRuns(projectCode: projectCode) ? repository
-                .cachedRuns(projectCode: projectCode) : nil
-        }) { _, offset in
-            try await repository.runs(projectCode: projectCode, offset: offset)
-        })
     }
 
     var body: some View {
@@ -242,7 +146,7 @@ struct RunListView: View {
                 identifier: "\(projectCode)-\(run.id)",
                 title: run.title,
                 description: run.statusText?.localized,
-                symbol: "play.circle"
+                symbol: .playCircle
             ) { onRun(run.id) }
         }
     }
@@ -252,24 +156,18 @@ struct DefectListView: View {
     private let projectCode: String
     @ObservedObject private var selection: SelectedProjectStore
     private let onDefect: (Int) -> Void
-    @StateObject private var model: PagedReadViewModel<DefectReadDTO>
+    @ObservedObject private var model: PagedReadViewModel<DefectReadDTO>
 
     init(
         projectCode: String,
         selection: SelectedProjectStore,
-        repository: HomeRepository,
-        session: SessionContext = .shared,
+        model: PagedReadViewModel<DefectReadDTO>,
         onDefect: @escaping (Int) -> Void
     ) {
         self.projectCode = projectCode
         self.selection = selection
+        self.model = model
         self.onDefect = onDefect
-        _model = StateObject(wrappedValue: PagedReadViewModel(session: session, cached: { _ in
-            repository.hasCachedDefects(projectCode: projectCode) ? repository
-                .cachedDefects(projectCode: projectCode) : nil
-        }) { _, offset in
-            try await repository.defects(projectCode: projectCode, offset: offset)
-        })
     }
 
     var body: some View {
@@ -283,7 +181,7 @@ struct DefectListView: View {
                 title: defect.title,
                 description: [defect.severity, defect.status].compactMap { $0?.localized }
                     .joined(separator: " · "),
-                symbol: "ladybug"
+                symbol: .ladybug
             ) { onDefect(defect.id) }
         }
     }
@@ -291,14 +189,12 @@ struct DefectListView: View {
 
 struct RunDetailView: View {
     let projectCode: String
-    let runID: Int
-    let repository: HomeRepository
-    var session: SessionContext = .shared
+    @ObservedObject var model: ReadDetailViewModel<RunReadDTO>
     let onCase: (TestCaseReference) -> Void
-    @State private var run: RunReadDTO?
-    @State private var errorMessage: String?
-    @State private var loading = false
-    @State private var usingCache = false
+    private var run: RunReadDTO? { model.item }
+    private var errorMessage: String? { model.errorMessage }
+    private var loading: Bool { model.loading }
+    private var usingCache: Bool { model.usingCache }
 
     var body: some View {
         ScrollView {
@@ -306,24 +202,25 @@ struct RunDetailView: View {
                 if let run {
                     if usingCache { HomeStateView(
                         title: "Showing saved data".localized,
-                        symbol: "arrow.triangle.2.circlepath"
+                        symbol: .arrowTriangle2Circlepath
                     ) }
-                    Text(run.title).font(AppTheme.Typography.screen)
+                    Text(run.title)
+                        .font(AppTheme.Typography.screen)
                     if let status = run.statusText { StatusBadge(
                         title: status.localized,
-                        symbol: "play.circle",
+                        symbol: .playCircle,
                         tone: .neutral
                     ) }
                     if let startTime = run.startTime { Text("Started".localized + " " + startTime.formatted(
                         date: .abbreviated,
                         time: .shortened
-                    )).font(.footnote) }
+                    ))
+                    .font(.footnote) }
                     if let progress = run.stats?
-                        .progress { ProgressRing(progress: progress).frame(maxWidth: .infinity) }
-                    else { HomeStateView(
-                        title: "Progress unavailable".localized,
-                        symbol: "questionmark.circle"
-                    ) }
+                        .progress { ProgressRing(progress: progress)
+                        .frame(maxWidth: .infinity) }
+                    else {
+                        HomeStateView(title: "Progress unavailable".localized, symbol: .questionmarkCircle) }
                     SectionHeader(title: "Cases".localized)
                     if let cases = run.cases, !cases.isEmpty {
                         VStack(spacing: 0) {
@@ -332,7 +229,10 @@ struct RunDetailView: View {
                                     identifier: "\(projectCode)-\(id)",
                                     title: "Case".localized + " \(id.formatted())"
                                 ) { onCase(TestCaseReference(projectCode: projectCode, caseID: id)) }
-                                    .accessibilityIdentifier("\(projectCode)-\(id)")
+                                    .accessibilityIdentifier(AccessibilityID.entity(
+                                        project: projectCode,
+                                        id: id
+                                    ).identifier)
                                 if id != cases.last { Divider() }
                             }
                         }.background(
@@ -342,54 +242,36 @@ struct RunDetailView: View {
                     } else {
                         HomeStateView(
                             title: (run.cases == nil ? "Cases unavailable" : "No cases").localized,
-                            symbol: "doc"
+                            symbol: .doc
                         )
                     }
                 } else if loading { HomeSkeleton() }
                 if let errorMessage {
                     HomeStateView(
                         title: errorMessage,
-                        symbol: "exclamationmark.triangle",
+                        symbol: .exclamationmarkTriangle,
                         actionTitle: "Retry".localized
-                    ) { Task { await load() } }
+                    ) { Task { await model.load() } }
                 }
-            }.frame(maxWidth: AppTheme.Size.content).padding(AppTheme.Space.screen).frame(maxWidth: .infinity)
+            }.frame(maxWidth: AppTheme.Size.content)
+                .padding(AppTheme.Space.screen)
+                .frame(maxWidth: .infinity)
         }
         .background(Color(uiColor: AppTheme.Palette.canvas))
         .foregroundStyle(Color(uiColor: AppTheme.Palette.text))
         .tint(Color(uiColor: AppTheme.Palette.accent))
-        .task { await load() }.refreshable { await load() }
+        .task { await model.load() }.refreshable { await model.load() }
     }
 
-    private func load() async {
-        guard !loading else { return }
-        let stamp = session.capture()
-        if run == nil { run = repository.cachedRun(projectCode: projectCode, id: runID) }
-        loading = true
-        errorMessage = nil
-        defer { loading = false }
-        do {
-            let result = try await repository.run(projectCode: projectCode, id: runID)
-            guard session.isCurrent(stamp), !Task.isCancelled else { return }
-            run = result
-            usingCache = false
-        } catch {
-            guard session.isCurrent(stamp), !Task.isCancelled, !(error is CancellationError) else { return }
-            errorMessage = "Could not load run".localized
-            usingCache = run != nil
-        }
-    }
 }
 
 struct DefectDetailView: View {
     let projectCode: String
-    let defectID: Int
-    let repository: HomeRepository
-    var session: SessionContext = .shared
-    @State private var defect: DefectReadDTO?
-    @State private var errorMessage: String?
-    @State private var loading = false
-    @State private var usingCache = false
+    @ObservedObject var model: ReadDetailViewModel<DefectReadDTO>
+    private var defect: DefectReadDTO? { model.item }
+    private var errorMessage: String? { model.errorMessage }
+    private var loading: Bool { model.loading }
+    private var usingCache: Bool { model.usingCache }
 
     var body: some View {
         ScrollView {
@@ -397,54 +279,40 @@ struct DefectDetailView: View {
                 if let defect {
                     if usingCache { HomeStateView(
                         title: "Showing saved data".localized,
-                        symbol: "arrow.triangle.2.circlepath"
+                        symbol: .arrowTriangle2Circlepath
                     ) }
-                    Text(defect.title).font(AppTheme.Typography.screen)
+                    Text(defect.title)
+                        .font(AppTheme.Typography.screen)
                     if let severity = defect.severity { StatusBadge(
                         title: "Severity".localized + ": " + severity.localized,
-                        symbol: "exclamationmark.circle"
+                        symbol: .exclamationmarkCircle
                     ) }
                     if let status = defect.status { StatusBadge(
                         title: "Status".localized + ": " + status.localized,
-                        symbol: "circle"
+                        symbol: .circle
                     ) }
                     SectionHeader(title: "Actual result".localized)
-                    Text(defect.actualResult ?? "Unavailable".localized).font(AppTheme.Typography.body)
+                    Text(defect.actualResult ?? "Unavailable".localized)
+                        .font(AppTheme.Typography.body)
                         .textSelection(.enabled)
                 } else if loading { HomeSkeleton() }
                 if let errorMessage {
                     HomeStateView(
                         title: errorMessage,
-                        symbol: "exclamationmark.triangle",
+                        symbol: .exclamationmarkTriangle,
                         actionTitle: "Retry".localized
-                    ) { Task { await load() } }
+                    ) { Task { await model.load() } }
                 }
-            }.frame(maxWidth: AppTheme.Size.content).padding(AppTheme.Space.screen).frame(maxWidth: .infinity)
+            }.frame(maxWidth: AppTheme.Size.content)
+                .padding(AppTheme.Space.screen)
+                .frame(maxWidth: .infinity)
         }
         .background(Color(uiColor: AppTheme.Palette.canvas))
         .foregroundStyle(Color(uiColor: AppTheme.Palette.text))
         .tint(Color(uiColor: AppTheme.Palette.accent))
-        .task { await load() }.refreshable { await load() }
+        .task { await model.load() }.refreshable { await model.load() }
     }
 
-    private func load() async {
-        guard !loading else { return }
-        let stamp = session.capture()
-        if defect == nil { defect = repository.cachedDefect(projectCode: projectCode, id: defectID) }
-        loading = true
-        errorMessage = nil
-        defer { loading = false }
-        do {
-            let result = try await repository.defect(projectCode: projectCode, id: defectID)
-            guard session.isCurrent(stamp), !Task.isCancelled else { return }
-            defect = result
-            usingCache = false
-        } catch {
-            guard session.isCurrent(stamp), !Task.isCancelled, !(error is CancellationError) else { return }
-            errorMessage = "Could not load defect".localized
-            usingCache = defect != nil
-        }
-    }
 }
 
 struct WorkHomeView: View {
@@ -464,14 +332,10 @@ struct WorkHomeView: View {
                     style: .compact
                 )
                 VStack(spacing: 0) {
-                    EntityRow(identifier: "", title: "Runs".localized, symbol: "play.circle", action: onRuns)
-                    Divider().padding(.leading, AppTheme.Space.regular)
-                    EntityRow(
-                        identifier: "",
-                        title: "Defects".localized,
-                        symbol: "ladybug",
-                        action: onDefects
-                    )
+                    EntityRow(identifier: "", title: "Runs".localized, symbol: .playCircle, action: onRuns)
+                    Divider()
+                        .padding(.leading, AppTheme.Space.regular)
+                    EntityRow(identifier: "", title: "Defects".localized, symbol: .ladybug, action: onDefects)
                 }
                 .background(
                     Color(uiColor: AppTheme.Palette.surface),
@@ -479,9 +343,21 @@ struct WorkHomeView: View {
                 )
                 .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
                     .stroke(Color(uiColor: AppTheme.Palette.border)))
-            }.frame(maxWidth: AppTheme.Size.content).padding(AppTheme.Space.screen).frame(maxWidth: .infinity)
+            }.frame(maxWidth: AppTheme.Size.content)
+                .padding(AppTheme.Space.screen)
+                .frame(maxWidth: .infinity)
         }.background(Color(uiColor: AppTheme.Palette.canvas))
             .foregroundStyle(Color(uiColor: AppTheme.Palette.text))
             .tint(Color(uiColor: AppTheme.Palette.accent))
     }
+}
+
+private struct Layout {
+    static let rows = 3
+    static let titleWidth: CGFloat = 160
+    static let titleHeight: CGFloat = 20
+    static let identifierWidth: CGFloat = 80
+    static let metadataHeight: CGFloat = 12
+    static let metadataWidth: CGFloat = 120
+    static let minimumRowHeight: CGFloat = 80
 }

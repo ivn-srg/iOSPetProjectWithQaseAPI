@@ -5,7 +5,7 @@ final class SwitcherWithTitle: UIView {
     var switchValueChanged: ((Bool) -> Void)?
     private let switcher = UISwitch()
 
-    init(title: String, testCaseVM: UpdatableEntityProtocol?) {
+    init(title: String, isOn: Bool) {
         super.init(frame: .zero)
         let titleLabel = UILabel()
         titleLabel.text = title
@@ -21,29 +21,27 @@ final class SwitcherWithTitle: UIView {
         helper.adjustsFontForContentSizeCategory = true
         let labels = UIStackView(arrangedSubviews: [titleLabel, helper])
         labels.axis = .vertical
-        labels.spacing = 4
+        labels.spacing = AppTheme.Space.tiny
         addSubview(labels)
         addSubview(switcher)
         switcher.onTintColor = AppTheme.Palette.accent
-        switcher.accessibilityIdentifier = "field." + FieldType.isFlaky.rawValue
+        switcher.accessibilityIdentifier = AccessibilityID.field(.isFlaky).identifier
         switcher.accessibilityLabel = title
         switcher.accessibilityHint = helper.text
         titleLabel.isAccessibilityElement = false
         helper.isAccessibilityElement = false
         labels.snp.makeConstraints {
             $0.leading.equalToSuperview()
-            $0.top.bottom.equalToSuperview().inset(12)
-            $0.trailing.equalTo(switcher.snp.leading).offset(-16)
+            $0.top.bottom.equalToSuperview().inset(AppTheme.Space.medium)
+            $0.trailing.equalTo(switcher.snp.leading).offset(-AppTheme.Space.regular)
         }
         switcher.snp.makeConstraints {
             $0.trailing.equalToSuperview()
             $0.centerY.equalTo(titleLabel)
-            $0.bottom.lessThanOrEqualToSuperview().inset(12)
+            $0.bottom.lessThanOrEqualToSuperview().inset(AppTheme.Space.medium)
         }
-        snp.makeConstraints { $0.height.greaterThanOrEqualTo(52) }
-        let draft = (testCaseVM as? CreateSuiteOrCaseViewModel)?.creatingTestCase ?? testCaseVM?
-            .changedTestCase ?? testCaseVM?.testCase
-        switcher.isOn = draft?.isFlaky ?? false
+        snp.makeConstraints { $0.height.greaterThanOrEqualTo(Layout.minimumRowHeight) }
+        switcher.isOn = isOn
         switcher.addTarget(self, action: #selector(switchValueDidChange(_:)), for: .valueChanged)
     }
 
@@ -62,4 +60,8 @@ final class SwitcherWithTitle: UIView {
     func setEditingEnabled(_ enabled: Bool) {
         switcher.isEnabled = enabled
     }
+}
+
+private struct Layout {
+    static let minimumRowHeight: CGFloat = 52
 }

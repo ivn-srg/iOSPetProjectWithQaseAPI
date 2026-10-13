@@ -41,7 +41,7 @@ extension String {
             if attributes[.link] == nil {
                 var updatedAttributes = attributes
                 updatedAttributes[.foregroundColor] = UIColor.label
-                updatedAttributes[.font] = UIFont.systemFont(ofSize: 14)
+                updatedAttributes[.font] = UIFont.preferredFont(forTextStyle: .body)
                 attributedString.setAttributes(updatedAttributes, range: range)
             }
         }

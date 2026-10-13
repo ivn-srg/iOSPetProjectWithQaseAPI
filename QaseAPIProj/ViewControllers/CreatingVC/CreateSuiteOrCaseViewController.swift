@@ -1,187 +1,318 @@
-//
-//  CreateSuiteOrCaseViewController.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 21.09.2024.
-//
-
+import SnapKit
 import UIKit
 
-enum CreatingEntitySelect: String {
-    case suite = "Test suite"
-    case testCase = "Test case"
-    
-    var localized: String {
-        self.rawValue.localized
-    }
-}
-
 final class CreateSuiteOrCaseViewController: UIViewController {
-    // MARK: - Fields
-    private var viewModel: CreateSuiteOrCaseViewModel
-    
-    // MARK: - UI components
-    private lazy var customNavigationView: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
+    private let viewModel: EntityCreationViewModel
+    private let projectTitle: String
+    private let onEntityCreated: (() -> Void)?
+    private let scrollView = UIScrollView()
+    private let content = UIStackView()
+    private let message = FormMessageView()
+    private var isSavingSequence = false
+    private var isSubmitting = false
+    private var isConfirmingDeparture = false
+    private var loadTask: Task<Void, Never>?
+    private weak var focusedField: GeneralCaseTextField?
+    private var parentCatalog: SuitePickerViewModel
+    private let makeParentPicker: (Int?, String, @escaping (SuitePickerViewModel, Int?) -> Void)
+        -> UIViewController
+    private lazy var suiteView = CreateSuiteView(linkedViewModel: viewModel)
+    private lazy var caseView = CreateTestCaseView(linkedViewModel: viewModel)
+    private lazy var createItem = UIBarButtonItem(
+        title: "Create".localized,
+        style: .plain,
+        target: self,
+        action: #selector(createEntity)
+    )
+    private lazy var closeItem = UIBarButtonItem(
+        barButtonSystemItem: .close,
+        target: self,
+        action: #selector(closeForm)
+    )
+    private lazy var spinner: UIActivityIndicatorView = {
+        let value = UIActivityIndicatorView(style: .medium)
+        value.color = AppTheme.Palette.accent
+        value.accessibilityLabel = "Saving".localized
+        return value
     }()
-    
-    private lazy var closeButton: UIButton = {
-        let button = UIButton(type: .close)
-        var config = button.configuration
-        config?.buttonSize = .medium
-        button.configuration = config
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.tintColor = .lightGray
-        button.addTarget(self, action: #selector(closeViewController), for: .touchUpInside)
-        return button
+
+    private lazy var segment: UISegmentedControl = {
+        let value = UISegmentedControl(items: ["Suite".localized, "Case".localized])
+        value.selectedSegmentIndex = 0
+        value.accessibilityIdentifier = AccessibilityID.formEntityType.identifier
+        value.addTarget(self, action: #selector(changeEntity), for: .valueChanged)
+        return value
     }()
-    
-    private lazy var titleLabel: UILabel = {
-        let title = UILabel()
-        title.translatesAutoresizingMaskIntoConstraints = false
-        title.font = .systemFont(ofSize: 18, weight: .bold)
-        title.numberOfLines = 1
-        return title
-    }()
-    
-    private lazy var createButton: UIButton = {
-        let uib = UIButton(type: .system)
-        uib.translatesAutoresizingMaskIntoConstraints = false
-        uib.setTitle("Create".localized, for: .normal)
-        uib.isEnabled = false
-        uib.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        uib.addTarget(self, action: #selector(createNewEntity), for: .touchUpInside)
-        return uib
-    }()
-    
-    private lazy var segmentControll: UISegmentedControl = {
-        let segmentItems = [CreatingEntitySelect.suite.localized, CreatingEntitySelect.testCase.localized]
-        let segment = UISegmentedControl(items: segmentItems)
-        segment.isUserInteractionEnabled = true
-        segment.translatesAutoresizingMaskIntoConstraints = false
-        segment.selectedSegmentIndex = 0
-        segment.addTarget(self, action: #selector(changeAppearingView), for: .valueChanged)
-        return segment
-    }()
-    
-    private lazy var suiteView: UIView = {
-        let av = CreateSuiteView(linkedViewModel: viewModel)
-        av.translatesAutoresizingMaskIntoConstraints = false
-        return av
-    }()
-    
-    private lazy var testCaseView: UIView = {
-        let av = CreateTestCaseView(linkedViewModel: viewModel)
-        av.translatesAutoresizingMaskIntoConstraints = false
-        av.isHidden = true
-        return av
-    }()
-    
-    // MARK: - LifeCycle
-    init(viewModel: CreateSuiteOrCaseViewModel) {
+
+    init(
+        viewModel: EntityCreationViewModel,
+        parentCatalog: SuitePickerViewModel,
+        makeParentPicker: @escaping (Int?, String, @escaping (SuitePickerViewModel, Int?) -> Void)
+            -> UIViewController,
+        projectTitle: String? = nil,
+        onEntityCreated: (() -> Void)? = nil
+    ) {
         self.viewModel = viewModel
+        self.parentCatalog = parentCatalog
+        self.makeParentPicker = makeParentPicker
+        self.projectTitle = projectTitle ?? viewModel.projectCode
+        self.onEntityCreated = onEntityCreated
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        viewModel.delegate = self
-        viewModel.showErrorClosure = { title, message in
-            UIAlertController.showSimpleAlert(
-                on: self,
-                title: title,
-                message: message
-            )
+        title = "Creation".localized
+        navigationItem.largeTitleDisplayMode = .never
+        navigationItem.leftBarButtonItem = closeItem
+        closeItem.accessibilityIdentifier = AccessibilityID.formClose.identifier
+        createItem.accessibilityIdentifier = AccessibilityID.formCreate.identifier
+        view.backgroundColor = AppTheme.Palette.canvas
+        scrollView.keyboardDismissMode = .interactive
+        scrollView.contentInsetAdjustmentBehavior = .never
+        view.addSubview(scrollView)
+        scrollView.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(view.keyboardLayoutGuide.snp.top)
         }
-        viewModel.creatingFinishCallback = {
-            UIAlertController.showSimpleAlert(
-                on: self,
-                title: "Success".localized,
-                message: "Your entity was created successfully".localized
-            ) { _ in
-                self.closeViewController()
+        content.axis = .vertical
+        content.spacing = AppTheme.Space.section
+        scrollView.addSubview(content)
+        content.snp.makeConstraints {
+            $0.edges.equalTo(scrollView.contentLayoutGuide).inset(AppTheme.Space.screen)
+            $0.width.equalTo(scrollView.frameLayoutGuide).offset(-2 * AppTheme.Space.screen)
+        }
+        let project = UILabel()
+        project.text = projectTitle
+        project.font = .preferredFont(forTextStyle: .body)
+        project.adjustsFontForContentSizeCategory = true
+        project.numberOfLines = 0
+        project.textColor = AppTheme.Palette.secondaryText
+        content.addArrangedSubview(segment)
+        content.addArrangedSubview(project)
+        content.addArrangedSubview(message)
+        content.addArrangedSubview(suiteView)
+        content.addArrangedSubview(caseView)
+        suiteView.onFocusChange = { [weak self] field in self?.revealCaret(in: field) }
+        caseView.onFocusChange = { [weak self] field in self?.revealCaret(in: field) }
+        suiteView.parentButton.addTarget(self, action: #selector(chooseParent), for: .touchUpInside)
+        caseView.parentButton.addTarget(self, action: #selector(chooseParent), for: .touchUpInside)
+        viewModel.delegate = self
+        viewModel.showErrorClosure = { [weak self] _, _ in
+            self?.message.show("A title is required".localized)
+        }
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardShown),
+            name: UIResponder.keyboardDidShowNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardShown),
+            name: UIResponder.keyboardDidChangeFrameNotification,
+            object: nil
+        )
+        checkConditionAndToggleRightBarButton()
+    }
+
+    deinit {
+        loadTask?.cancel()
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func revealCaret(in field: GeneralCaseTextField) {
+        focusedField = field
+        DispatchQueue.main.async { [weak self, weak field] in
+            guard let self, let field else { return }
+            self.view.layoutIfNeeded()
+            if let rect = field.focusedCaretRect(in: self.scrollView) {
+                self.scrollView.scrollRectToVisible(
+                    rect.insetBy(dx: 0, dy: -AppTheme.Space.medium),
+                    animated: true
+                )
             }
         }
-        setupView()
     }
-    
-    // MARK: - other block
-    private func setupView() {
-        view.backgroundColor = AppTheme.bgPrimaryColor
-        titleLabel.text = "Creating entity".localized
-        
-        view.addSubview(customNavigationView)
-        customNavigationView.addSubview(closeButton)
-        closeButton.snp.makeConstraints {
-            $0.centerY.leading.equalToSuperview()
+
+    @objc private func keyboardShown() {
+        if let field = focusedField { revealCaret(in: field) }
+    }
+
+    private func finishEditing() {
+        if viewModel.creatingEntityIsSuite { suiteView.finishEditing() }
+        else { caseView.finishEditing() }
+        view.endEditing(true)
+    }
+
+    @objc private func changeEntity() {
+        guard !isSavingDraft else { return }
+        finishEditing()
+        viewModel.creatingEntityIsSuite = segment.selectedSegmentIndex == 0
+        message.clear()
+        scrollView.setContentOffset(.zero, animated: false)
+    }
+
+    @objc private func chooseParent() {
+        guard !isSavingDraft, viewModel.isSessionCurrent else { return }
+        finishEditing()
+        let forSuite = viewModel.creatingEntityIsSuite
+        let id = forSuite ? viewModel.creatingSuite.parentId : viewModel.creatingTestCase.suiteId
+        let picker = makeParentPicker(id, projectTitle) { [weak self] model, selected in
+            guard let self, self.viewModel.isSessionCurrent, !self.isSavingDraft else { return }
+            self.parentCatalog = model
+            self.viewModel.selectParent(selected, forSuite: forSuite)
         }
-        customNavigationView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.horizontalEdges.equalTo(view.safeAreaLayoutGuide.snp.horizontalEdges).inset(16)
-            $0.height.equalTo(closeButton.snp.height)
-        }
-        customNavigationView.addSubview(titleLabel)
-        titleLabel.snp.makeConstraints {
-            $0.center.equalToSuperview()
-        }
-        customNavigationView.addSubview(createButton)
-        createButton.snp.makeConstraints {
-            $0.centerY.trailing.equalToSuperview()
-        }
-        view.addSubview(segmentControll)
-        segmentControll.snp.makeConstraints {
-            $0.top.equalTo(customNavigationView.snp.bottom).offset(30)
-            $0.horizontalEdges.equalToSuperview().inset(16)
-        }
-        view.addSubview(testCaseView)
-        testCaseView.snp.makeConstraints {
-            $0.top.equalTo(segmentControll.snp.bottom).offset(10)
-            $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.bottom.equalToSuperview()
-        }
-        view.addSubview(suiteView)
-        suiteView.snp.makeConstraints {
-            $0.top.equalTo(segmentControll.snp.bottom).offset(10)
-            $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.bottom.equalToSuperview()
+        present(picker, animated: true)
+    }
+
+    @objc private func createEntity() {
+        finishEditing()
+        guard viewModel.canCreate, !isSavingDraft else { return }
+        message.clear()
+        isSubmitting = true
+        checkConditionAndToggleRightBarButton()
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            defer {
+                self.isSubmitting = false
+                self.checkConditionAndToggleRightBarButton()
+            }
+            do {
+                try await self.viewModel.createNewEntity()
+                guard self.viewModel.isSessionCurrent, self.viewModel.isEntityWasCreated else { return }
+                self.isSubmitting = false
+                self.checkConditionAndToggleRightBarButton()
+                self.onEntityCreated?()
+                if self.viewModel.hasAnyUnsavedChanges {
+                    let allowed = await self
+                        .confirmDeparture(message: "Entity created. Unsaved changes in the other form remain."
+                            .localized)
+                    if allowed { self.navigationController?.dismiss(animated: true) }
+                    else { self.showRemainingDraft() }
+                } else {
+                    UIAlertController.showSimpleAlert(
+                        on: self,
+                        title: "Success".localized,
+                        message: "Your entity was created successfully"
+                            .localized
+                    ) { [weak self] _ in
+                        self?.navigationController?.dismiss(animated: true)
+                    }
+                }
+            } catch {
+                guard self.viewModel.isSessionCurrent else { return }
+                self.message.show("Could not create the entity. Try again.".localized)
+                self.scrollView.setContentOffset(.zero, animated: true)
+            }
+            self.checkConditionAndToggleRightBarButton()
         }
     }
-    
-    // MARK: - @objc func
-    @objc func closeViewController() {
-        dismiss(animated: true)
+
+    private func showRemainingDraft() {
+        guard viewModel.hasAnyUnsavedChanges else { return }
+        viewModel.creatingEntityIsSuite = viewModel.suiteHasUnsavedChanges
+        segment.selectedSegmentIndex = viewModel.creatingEntityIsSuite ? 0 : 1
+        scrollView.setContentOffset(.zero, animated: true)
     }
-    
-    @objc func changeAppearingView(_ sender: UISegmentedControl) {
-        if sender.selectedSegmentIndex == 0 {
-            suiteView.isHidden = false
-            testCaseView.isHidden = true
-            viewModel.creatingEntityIsSuite = true
-        } else {
-            suiteView.isHidden = true
-            testCaseView.isHidden = false
-            viewModel.creatingEntityIsSuite = false
+
+    @objc private func closeForm() {
+        Task { [weak self] in
+            guard let self, await self.requestDeparture() else { return }
+            self.navigationController?.dismiss(animated: true)
         }
+    }
+
+    private func confirmDeparture(message: String) async -> Bool {
+        guard !isConfirmingDeparture, !isSavingDraft, viewModel.isSessionCurrent else { return false }
+        isConfirmingDeparture = true
+        defer { isConfirmingDeparture = false }
+        let allowed = await FormDepartureGuard.confirm(self, on: self, message: message)
+        return allowed && viewModel.isSessionCurrent && !isSavingDraft
     }
 }
 
 extension CreateSuiteOrCaseViewController: CheckEnablingRBBProtocol {
     func checkConditionAndToggleRightBarButton() {
-        self.createButton.isEnabled = viewModel.creatingEntityIsSuite
-        ? !viewModel.creatingSuite.title.isEmpty
-        : !viewModel.creatingTestCase.title.isEmpty
-    }
-    
-    @objc func createNewEntity() {
-        executeWithErrorHandling {
-            try await self.viewModel.createNewEntity()
+        guard isViewLoaded else { return }
+        let busy = isSavingDraft
+        closeItem.isEnabled = !busy
+        createItem.isEnabled = viewModel.canCreate && !busy
+        if busy {
+            spinner.startAnimating()
+            navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
+        } else {
+            spinner.stopAnimating()
+            navigationItem.rightBarButtonItem = createItem
         }
+        segment.isEnabled = !busy
+        segment.selectedSegmentIndex = viewModel.creatingEntityIsSuite ? 0 : 1
+        suiteView.isHidden = !viewModel.creatingEntityIsSuite
+        caseView.isHidden = viewModel.creatingEntityIsSuite
+        suiteView.accessibilityElementsHidden = suiteView.isHidden
+        caseView.accessibilityElementsHidden = caseView.isHidden
+        suiteView.updateValues()
+        caseView.updateValues()
+        suiteView.setEditingEnabled(!busy && viewModel.isSessionCurrent)
+        caseView.setEditingEnabled(!busy && viewModel.isSessionCurrent)
+        suiteView.parentButton.update(
+            title: parentCatalog.title(for: viewModel.creatingSuite.parentId),
+            path: parentCatalog.ancestorTitle(to: viewModel.creatingSuite.parentId)
+        )
+        caseView.parentButton.update(
+            title: parentCatalog.title(for: viewModel.creatingTestCase.suiteId),
+            path: parentCatalog
+                .ancestorTitle(to: viewModel.creatingTestCase.suiteId)
+        )
+    }
+}
+
+extension CreateSuiteOrCaseViewController: FormDepartureParticipant {
+    var isSavingDraft: Bool { viewModel.isSaving || isSavingSequence || isSubmitting }
+    var hasUnsavedChanges: Bool { viewModel.hasAnyUnsavedChanges }
+    var canSaveDraft: Bool { viewModel.canSaveAllDrafts && !isSavingSequence }
+
+    func requestDeparture() async -> Bool {
+        finishEditing()
+        return await confirmDeparture(message: "There are unsaved changes in the suite or case form."
+            .localized)
+    }
+
+    func saveDraft() async throws {
+        finishEditing()
+        guard canSaveDraft,
+              !isSavingDraft else { throw API.NetError.invalidRequest("The drafts cannot be saved") }
+        let previous = viewModel.creatingEntityIsSuite
+        let callback = viewModel.creatingFinishCallback
+        isSavingSequence = true
+        viewModel.creatingFinishCallback = {}
+        checkConditionAndToggleRightBarButton()
+        defer {
+            viewModel.creatingFinishCallback = callback
+            viewModel.creatingEntityIsSuite = previous
+            isSavingSequence = false
+            checkConditionAndToggleRightBarButton()
+        }
+        for forSuite in [true, false] {
+            let dirty = forSuite ? viewModel.suiteHasUnsavedChanges : viewModel.caseHasUnsavedChanges
+            guard dirty else { continue }
+            viewModel.creatingEntityIsSuite = forSuite
+            try await viewModel.createNewEntity()
+            guard viewModel.isEntityWasCreated, viewModel.isSessionCurrent else {
+                throw API.NetError.invalidRequest("The draft was not created")
+            }
+            onEntityCreated?()
+        }
+    }
+
+    func discardDraft() {
+        guard !isSavingDraft else { return }
+        viewModel.discardDraft()
+        checkConditionAndToggleRightBarButton()
     }
 }

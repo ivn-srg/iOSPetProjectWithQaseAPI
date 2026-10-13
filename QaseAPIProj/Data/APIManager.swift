@@ -364,15 +364,14 @@ final class APIManager: NetworkManager {
         request.httpMethod = "GET"
         request.addValue(token, forHTTPHeaderField: "Token")
 
-        let (_, response) = try await transport.send(request)
+        let (data, response) = try await transport.send(request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
 
-        guard (200 ... 299).contains(httpResponse.statusCode) else {
-            return false
-        }
+        if httpResponse.statusCode == 401 { return false }
+        if let error = API.httpError(from: httpResponse, data: data) { throw error }
 
         return true
     }

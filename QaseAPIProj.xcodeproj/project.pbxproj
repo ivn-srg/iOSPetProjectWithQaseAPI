@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		852BEE8082D54D26B9900A38 /* AuthHTTPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */; };
 		C3BF4A81C01641C5B13403F3 /* ApplicationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4A9E8978B6186C1B937FD57 /* ApplicationRouter.swift */; };
 		367458A90BD735AAFFB0B1E1 /* ArchitectureRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1643D8A9C35B004429685822 /* ArchitectureRegressionTests.swift */; };
 		85FB89F2C1D002B3C74C47B3 /* HTTPTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04736CD01A5C45538DFC51D /* HTTPTransport.swift */; };
@@ -157,6 +158,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthHTTPTests.swift; sourceTree = "<group>"; };
 		B4A9E8978B6186C1B937FD57 /* ApplicationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ApplicationRouter.swift; path = QaseAPIProj/Classes/ApplicationRouter.swift; sourceTree = SOURCE_ROOT; };
 		1643D8A9C35B004429685822 /* ArchitectureRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ArchitectureRegressionTests.swift; path = QaseAPIProjTests/ArchitectureRegressionTests.swift; sourceTree = SOURCE_ROOT; };
 		F04736CD01A5C45538DFC51D /* HTTPTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HTTPTransport.swift; path = QaseAPIProj/Data/HTTPTransport.swift; sourceTree = SOURCE_ROOT; };
@@ -509,6 +511,7 @@
 		93F866382D9DBD24006F6F5C /* QaseAPIProjTests */ = {
 			isa = PBXGroup;
 			children = (
+				162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */,
 				FCEB7260B65056A25F3B4894 /* FormComponentTests.swift */,
 				6B61522BFD97C27159BD673C /* FormParentPickerTests.swift */,
 				6387D313D61BEDBE072F7C7D /* FormDraftTests.swift */,
@@ -774,6 +777,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				852BEE8082D54D26B9900A38 /* AuthHTTPTests.swift in Sources */,
 				367458A90BD735AAFFB0B1E1 /* ArchitectureRegressionTests.swift in Sources */,
 				0088E39668A6CF029F9D7B00 /* TestDependencies.swift in Sources */,
 				4519AE061F2A6C950219F735 /* FormComponentTests.swift in Sources */,

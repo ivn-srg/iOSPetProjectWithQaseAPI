@@ -11,7 +11,6 @@
 		931E89C12CC92942006A41C7 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 931E89C02CC92942006A41C7 /* Localizable.xcstrings */; };
 		931E89C32CC930FD006A41C7 /* TextFieldWithPadding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 931E89C22CC930FD006A41C7 /* TextFieldWithPadding.swift */; };
 		932447392CA484A800998B94 /* SharedResponseModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932447382CA4848C00998B94 /* SharedResponseModel.swift */; };
-		934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */; };
 		935DCFE22B516BAA00F08ECF /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE12B516BAA00F08ECF /* Constants.swift */; };
 		935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935DCFE32B518A4000F08ECF /* LoaderView.swift */; };
 		935F2BA52CCFC73800546162 /* Ext+String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935F2BA42CCFC73800546162 /* Ext+String.swift */; };
@@ -47,7 +46,6 @@
 		93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045522C9E948B00EE125B /* CreateSuiteView.swift */; };
 		93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B045542C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift */; };
 		93B23D0A2CC9259400FA7509 /* Ext+UIAlertController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B23D092CC9259400FA7509 /* Ext+UIAlertController.swift */; };
-		93BCD2472CD00CF900C6D6EE /* ButtonWithLeadingImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BCD2462CD00CF900C6D6EE /* ButtonWithLeadingImage.swift */; };
 		93C03CFF2DB80EFB00D1869B /* EmptyListLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C03CFE2DB80EFB00D1869B /* EmptyListLabel.swift */; };
 		93C8095C2CCBCA23006BCCC9 /* MainTabbarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */; };
 		93C8095E2CCBDEB9006BCCC9 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C8095D2CCBDEB9006BCCC9 /* SettingsViewController.swift */; };
@@ -61,9 +59,6 @@
 		93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DCDF5E2BE51C2900D4F365 /* Protocols.swift */; };
 		93EE421F2D9B24400028E085 /* Ext+UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9399A0AA2D2D313F00347130 /* Ext+UIColor.swift */; };
 		93F1F37F2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */; };
-		93F84C823048B6A8003A5227 /* TestRunsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C813048B6A8003A5227 /* TestRunsViewController.swift */; };
-		93F84C843048B7F8003A5227 /* SearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C833048B7F8003A5227 /* SearchViewController.swift */; };
-		93F84C863048C7FF003A5227 /* TilesCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */; };
 		93F84C883048CF60003A5227 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F84C873048CF60003A5227 /* HomeViewModel.swift */; };
 		93F866392D9DBD24006F6F5C /* project_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 93F866332D9DBD24006F6F5C /* project_data.json */; };
 		93F8663A2D9DBD24006F6F5C /* suites_data.json in Resources */ = {isa = PBXBuildFile; fileRef = 93F866342D9DBD24006F6F5C /* suites_data.json */; };
@@ -158,7 +153,6 @@
 		931E89C02CC92942006A41C7 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		931E89C22CC930FD006A41C7 /* TextFieldWithPadding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextFieldWithPadding.swift; sourceTree = "<group>"; };
 		932447382CA4848C00998B94 /* SharedResponseModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedResponseModel.swift; sourceTree = "<group>"; };
-		934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropDownListPickerView.swift; sourceTree = "<group>"; };
 		935DCFE12B516BAA00F08ECF /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		935DCFE32B518A4000F08ECF /* LoaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoaderView.swift; sourceTree = "<group>"; };
 		935F2BA42CCFC73800546162 /* Ext+String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+String.swift"; sourceTree = "<group>"; };
@@ -193,7 +187,6 @@
 		93B045522C9E948B00EE125B /* CreateSuiteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteView.swift; sourceTree = "<group>"; };
 		93B045542C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSuiteOrCaseViewModel.swift; sourceTree = "<group>"; };
 		93B23D092CC9259400FA7509 /* Ext+UIAlertController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ext+UIAlertController.swift"; sourceTree = "<group>"; };
-		93BCD2462CD00CF900C6D6EE /* ButtonWithLeadingImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonWithLeadingImage.swift; sourceTree = "<group>"; };
 		93C03CFE2DB80EFB00D1869B /* EmptyListLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyListLabel.swift; sourceTree = "<group>"; };
 		93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabbarViewController.swift; sourceTree = "<group>"; };
 		93C8095D2CCBDEB9006BCCC9 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
@@ -208,9 +201,6 @@
 		93EE41FC2D9B10600028E085 /* QaseAPIProjTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QaseAPIProjTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93EE42092D9B107B0028E085 /* QaseAPIProjUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QaseAPIProjUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93F1F37E2B5987DB00667DB9 /* GeneralDetailCaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralDetailCaseViewController.swift; sourceTree = "<group>"; };
-		93F84C813048B6A8003A5227 /* TestRunsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRunsViewController.swift; sourceTree = "<group>"; };
-		93F84C833048B7F8003A5227 /* SearchViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewController.swift; sourceTree = "<group>"; };
-		93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilesCollectionViewController.swift; sourceTree = "<group>"; };
 		93F84C873048CF60003A5227 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		93F866332D9DBD24006F6F5C /* project_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = project_data.json; sourceTree = "<group>"; };
 		93F866342D9DBD24006F6F5C /* suites_data.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = suites_data.json; sourceTree = "<group>"; };
@@ -316,7 +306,6 @@
 				938C47E72C9A0C0000B75BE8 /* SwitcherWithTitle.swift */,
 				936A2B182C8A2820007F7C72 /* GeneralCaseTextField.swift */,
 				931E89C22CC930FD006A41C7 /* TextFieldWithPadding.swift */,
-				93BCD2462CD00CF900C6D6EE /* ButtonWithLeadingImage.swift */,
 				93195E7B2CD2717F00DD4299 /* CustomSelectableView.swift */,
 				93C03CFE2DB80EFB00D1869B /* EmptyListLabel.swift */,
 			);
@@ -359,8 +348,6 @@
 				93C8095B2CCBCA23006BCCC9 /* MainTabbarViewController.swift */,
 				93C8095D2CCBDEB9006BCCC9 /* SettingsViewController.swift */,
 				93CB37E03047830400054726 /* HomeViewController.swift */,
-				93F84C813048B6A8003A5227 /* TestRunsViewController.swift */,
-				93F84C833048B7F8003A5227 /* SearchViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -375,10 +362,8 @@
 				1B0D15EA1352B401AB67469E /* HomeComponents.swift */,
 				939522992D2BF6E600CCA497 /* TestCaseStepsCell.swift */,
 				936A2B172C8A27BE007F7C72 /* Components */,
-				934A36DD2B682190001E4F24 /* DropDownListPickerView.swift */,
 				935DCFE32B518A4000F08ECF /* LoaderView.swift */,
 				93748C3F2B481C8600BE7FFB /* ProjectTableViewCell.swift */,
-				93F84C853048C7FF003A5227 /* TilesCollectionViewController.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -710,13 +695,11 @@
 				93C8095C2CCBCA23006BCCC9 /* MainTabbarViewController.swift in Sources */,
 				9399A0AB2D2D315000347130 /* Ext+UIColor.swift in Sources */,
 				93DCDF5D2BE5159500D4F365 /* TestEntitiesViewModel.swift in Sources */,
-				93F84C863048C7FF003A5227 /* TilesCollectionViewController.swift in Sources */,
 				93B23D0A2CC9259400FA7509 /* Ext+UIAlertController.swift in Sources */,
 				9370855C2BEB3C49002316B8 /* ProjectDataModel.swift in Sources */,
 				9370855A2BEB3C49002316B8 /* EntitiesRO.swift in Sources */,
 				938C47E32C9A0BC600B75BE8 /* AppTheme.swift in Sources */,
 				935DCFE42B518A4000F08ECF /* LoaderView.swift in Sources */,
-				93BCD2472CD00CF900C6D6EE /* ButtonWithLeadingImage.swift in Sources */,
 				931E89C32CC930FD006A41C7 /* TextFieldWithPadding.swift in Sources */,
 				93DCDF592BE4EC3800D4F365 /* ProjectsViewModel.swift in Sources */,
 				93195E7C2CD2717F00DD4299 /* CustomSelectableView.swift in Sources */,
@@ -731,13 +714,11 @@
 				93B0454E2C9E92C200EE125B /* CreateSuiteOrCaseViewController.swift in Sources */,
 				93CB37E13047830400054726 /* HomeViewController.swift in Sources */,
 				93C03CFF2DB80EFB00D1869B /* EmptyListLabel.swift in Sources */,
-				934A36DE2B682190001E4F24 /* DropDownListPickerView.swift in Sources */,
 				93DCDF5F2BE51C2900D4F365 /* Protocols.swift in Sources */,
 				93CA94762CCA8A3900D99517 /* Ext+UIViewController.swift in Sources */,
 				937F04282AD84E3D006DDB28 /* SceneDelegate.swift in Sources */,
 				93F9584F2DB95EAE00EA8D96 /* TestCaseFieldEnums.swift in Sources */,
 				932447392CA484A800998B94 /* SharedResponseModel.swift in Sources */,
-				93F84C843048B7F8003A5227 /* SearchViewController.swift in Sources */,
 				93B045532C9E948B00EE125B /* CreateSuiteView.swift in Sources */,
 				93F84C883048CF60003A5227 /* HomeViewModel.swift in Sources */,
 				93748C402B481C8600BE7FFB /* ProjectTableViewCell.swift in Sources */,
@@ -748,7 +729,6 @@
 				939175222D11A8A600AA38A4 /* TestCaseViewController.swift in Sources */,
 				9370855E2BEB3C49002316B8 /* SuitesDataModel.swift in Sources */,
 				93C809622CCC0FC8006BCCC9 /* Ext+NotificationName.swift in Sources */,
-				93F84C823048B6A8003A5227 /* TestRunsViewController.swift in Sources */,
 				93748C332B480F4400BE7FFB /* AuthViewController.swift in Sources */,
 				93B045552C9E99D400EE125B /* CreateSuiteOrCaseViewModel.swift in Sources */,
 				93C8095E2CCBDEB9006BCCC9 /* SettingsViewController.swift in Sources */,

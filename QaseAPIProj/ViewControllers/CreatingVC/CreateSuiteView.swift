@@ -14,9 +14,9 @@ final class CreateSuiteView: UIView {
         let description = makeField(.description, value: linkedViewModel.creatingSuite.itemDescription)
         let precondition = makeField(.precondition, value: linkedViewModel.creatingSuite.preconditions)
         let stack = UIStackView(arrangedSubviews: [
-            FormSectionView(title: "Main information".localized, rows: [title, description]),
-            FormSectionView(title: "Conditions".localized, rows: [precondition]),
-            FormSectionView(title: "Location".localized, rows: [parentButton])
+            FormSectionView(title: "Main information".localized, rows: [title, description], style: .grouped),
+            FormSectionView(title: "Conditions".localized, rows: [precondition], style: .grouped),
+            FormSectionView(title: "Location".localized, rows: [parentButton], style: .grouped)
         ])
         stack.axis = .vertical
         stack.spacing = AppTheme.Space.section
@@ -29,7 +29,12 @@ final class CreateSuiteView: UIView {
     }
 
     private func makeField(_ type: FieldType, value: String?) -> GeneralCaseTextField {
-        let field = GeneralCaseTextField(textType: type, textViewValue: value, detailVM: viewModel)
+        let field = GeneralCaseTextField(
+            textType: type,
+            textViewValue: value,
+            detailVM: viewModel,
+            style: .grouped
+        )
         fields[type] = field
         field.onFocusChange = { [weak self, weak field] focused in
             if focused, let field { self?.onFocusChange?(field) }

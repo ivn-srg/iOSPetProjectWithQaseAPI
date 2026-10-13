@@ -10,16 +10,24 @@ final class CreateTestCaseView: UIView {
 
     init(linkedViewModel: EntityCreationViewModel) {
         viewModel = linkedViewModel
-        properties = CasePropertiesFormView(viewModel: linkedViewModel)
+        properties = CasePropertiesFormView(viewModel: linkedViewModel, style: .grouped)
         super.init(frame: .zero)
         let title = makeField(.title, value: linkedViewModel.creatingTestCase.title)
         let description = makeField(.description, value: linkedViewModel.creatingTestCase.description)
         let precondition = makeField(.precondition, value: linkedViewModel.creatingTestCase.preconditions)
         let postcondition = makeField(.postcondition, value: linkedViewModel.creatingTestCase.postconditions)
         let stack = UIStackView(arrangedSubviews: [
-            FormSectionView(title: "Main information".localized, rows: [title, description]),
-            FormSectionView(title: "Conditions".localized, rows: [precondition, postcondition]),
-            FormSectionView(title: "Location".localized, rows: [parentButton]),
+            FormSectionView(
+                title: "Main information".localized,
+                rows: [title, description],
+                style: .grouped
+            ),
+            FormSectionView(
+                title: "Conditions".localized,
+                rows: [precondition, postcondition],
+                style: .grouped
+            ),
+            FormSectionView(title: "Location".localized, rows: [parentButton], style: .grouped),
             properties
         ])
         stack.axis = .vertical
@@ -33,7 +41,12 @@ final class CreateTestCaseView: UIView {
     }
 
     private func makeField(_ type: FieldType, value: String?) -> GeneralCaseTextField {
-        let field = GeneralCaseTextField(textType: type, textViewValue: value, detailVM: viewModel)
+        let field = GeneralCaseTextField(
+            textType: type,
+            textViewValue: value,
+            detailVM: viewModel,
+            style: .grouped
+        )
         fields[type] = field
         field.onFocusChange = { [weak self, weak field] focused in
             if focused, let field { self?.onFocusChange?(field) }

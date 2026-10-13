@@ -13,7 +13,7 @@ final class GeneralDetailCaseViewController: UIViewController {
     private var renderedSteps: [StepsInTestCase]?
     private var dataSections: [UIView] = []
     private weak var focusedField: GeneralCaseTextField?
-    private lazy var properties = CasePropertiesFormView(viewModel: vm)
+    private lazy var properties = CasePropertiesFormView(viewModel: vm, style: .grouped)
 
     init(vm: TestCaseEditorViewModel, projectTitle: String? = nil) {
         self.vm = vm
@@ -55,8 +55,16 @@ final class GeneralDetailCaseViewController: UIViewController {
         let description = makeField(.description)
         let precondition = makeField(.precondition)
         let postcondition = makeField(.postcondition)
-        let main = FormSectionView(title: "Main information".localized, rows: [title, description])
-        let conditions = FormSectionView(title: "Conditions".localized, rows: [precondition, postcondition])
+        let main = FormSectionView(
+            title: "Main information".localized,
+            rows: [title, description],
+            style: .grouped
+        )
+        let conditions = FormSectionView(
+            title: "Conditions".localized,
+            rows: [precondition, postcondition],
+            style: .grouped
+        )
         content.addArrangedSubview(main)
         content.addArrangedSubview(conditions)
         content.addArrangedSubview(properties)
@@ -99,7 +107,7 @@ final class GeneralDetailCaseViewController: UIViewController {
     deinit { NotificationCenter.default.removeObserver(self) }
 
     private func makeField(_ type: FieldType) -> GeneralCaseTextField {
-        let field = GeneralCaseTextField(textType: type, detailVM: vm)
+        let field = GeneralCaseTextField(textType: type, detailVM: vm, style: .grouped)
         fields[type] = field
         field.onFocusChange = { [weak self, weak field] focused in
             guard focused, let self, let field else { return }

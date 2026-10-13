@@ -15,11 +15,12 @@ struct AuthScreen: Screen {
     let app: XCUIApplication
 
     func openProjects() -> ProjectsListScreen {
-        let logoImage = app.images["logoImg"]
-        XCTAssertTrue(logoImage.waitForExistence(timeout: 5))
-        logoImage.press(forDuration: 2)
+        let demo = app.buttons[AccessibilityID.authDemo.identifier]
+        XCTAssertTrue(demo.waitForExistence(timeout: 5))
+        if !demo.isHittable { app.swipeUp() }
+        demo.tap()
 
-        let picker = app.buttons["project.picker"]
+        let picker = app.buttons[AccessibilityID.projectPicker.identifier]
         XCTAssertTrue(picker.waitForExistence(timeout: 10))
         picker.tap()
         let manage = app.buttons["Manage projects"]
@@ -34,8 +35,8 @@ struct ProjectsListScreen: Screen {
     let app: XCUIApplication
 
     private enum Identifiers {
-        static let rbbButtonName = "addNewProjectRBB"
-        static let navBar = "navigationBar"
+        static let rbbButtonName = AccessibilityID.addNewProjectRBB.identifier
+        static let navBar = AccessibilityID.navigationBar.identifier
     }
 
     func checkNavigationTitle() {
@@ -64,20 +65,20 @@ struct EntityFormScreen: Screen {
     let app: XCUIApplication
 
     func selectCase() {
-        let segment = app.segmentedControls["form.entityType"]
+        let segment = app.segmentedControls[AccessibilityID.formEntityType.identifier]
         XCTAssertTrue(segment.waitForExistence(timeout: 5))
         segment.buttons.element(boundBy: 1).tap()
     }
 
     func enterTitle(_ value: String) {
-        let field = app.textViews["field.Title"]
+        let field = app.textViews[AccessibilityID.field(.title).identifier]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.tap()
         field.typeText(value)
     }
 
     func openParentPicker() -> SuiteParentPickerScreen {
-        let parent = app.buttons["field.Parent suite"]
+        let parent = app.buttons[AccessibilityID.field(.parentSuite).identifier]
         XCTAssertTrue(parent.waitForExistence(timeout: 5))
         if !parent.isHittable { app.swipeUp() }
         parent.tap()
@@ -85,7 +86,7 @@ struct EntityFormScreen: Screen {
     }
 
     func checkCreateEnabled(_ enabled: Bool) {
-        let create = app.buttons["form.create"]
+        let create = app.buttons[AccessibilityID.formCreate.identifier]
         XCTAssertTrue(create.waitForExistence(timeout: 5))
         XCTAssertEqual(create.isEnabled, enabled)
     }
@@ -95,13 +96,13 @@ struct SuiteParentPickerScreen: Screen {
     let app: XCUIApplication
 
     func chooseRoot() {
-        let root = app.cells["suitePicker.root"]
+        let root = app.cells[AccessibilityID.suitePickerRoot.identifier]
         XCTAssertTrue(root.waitForExistence(timeout: 5))
         root.tap()
     }
 
     func cancel() {
-        let close = app.buttons["suitePicker.close"]
+        let close = app.buttons[AccessibilityID.suitePickerClose.identifier]
         XCTAssertTrue(close.waitForExistence(timeout: 5))
         close.tap()
     }

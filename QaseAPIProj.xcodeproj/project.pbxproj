@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1CF14DD728EF49E6B3A57F1A /* AuthScreenUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924D3BCCA002491AA60552AB /* AuthScreenUITests.swift */; };
 		852BEE8082D54D26B9900A38 /* AuthHTTPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */; };
+		FB876ACC41674A388A6A8B37 /* AuthScreenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57190279074442FBBECCBF8A /* AuthScreenTests.swift */; };
 		C3BF4A81C01641C5B13403F3 /* ApplicationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4A9E8978B6186C1B937FD57 /* ApplicationRouter.swift */; };
 		367458A90BD735AAFFB0B1E1 /* ArchitectureRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1643D8A9C35B004429685822 /* ArchitectureRegressionTests.swift */; };
 		85FB89F2C1D002B3C74C47B3 /* HTTPTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04736CD01A5C45538DFC51D /* HTTPTransport.swift */; };
@@ -158,7 +160,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		924D3BCCA002491AA60552AB /* AuthScreenUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthScreenUITests.swift; sourceTree = "<group>"; };
 		162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthHTTPTests.swift; sourceTree = "<group>"; };
+		57190279074442FBBECCBF8A /* AuthScreenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthScreenTests.swift; sourceTree = "<group>"; };
 		B4A9E8978B6186C1B937FD57 /* ApplicationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ApplicationRouter.swift; path = QaseAPIProj/Classes/ApplicationRouter.swift; sourceTree = SOURCE_ROOT; };
 		1643D8A9C35B004429685822 /* ArchitectureRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ArchitectureRegressionTests.swift; path = QaseAPIProjTests/ArchitectureRegressionTests.swift; sourceTree = SOURCE_ROOT; };
 		F04736CD01A5C45538DFC51D /* HTTPTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HTTPTransport.swift; path = QaseAPIProj/Data/HTTPTransport.swift; sourceTree = SOURCE_ROOT; };
@@ -512,6 +516,7 @@
 			isa = PBXGroup;
 			children = (
 				162A2D305D824553AA96DA3E /* AuthHTTPTests.swift */,
+				57190279074442FBBECCBF8A /* AuthScreenTests.swift */,
 				FCEB7260B65056A25F3B4894 /* FormComponentTests.swift */,
 				6B61522BFD97C27159BD673C /* FormParentPickerTests.swift */,
 				6387D313D61BEDBE072F7C7D /* FormDraftTests.swift */,
@@ -534,6 +539,7 @@
 		93F866432D9DBD2A006F6F5C /* QaseAPIProjUITests */ = {
 			isa = PBXGroup;
 			children = (
+				924D3BCCA002491AA60552AB /* AuthScreenUITests.swift */,
 				EF57F4672254B6EAA484FC07 /* HomeScreenUITests.swift */,
 				93F866402D9DBD2A006F6F5C /* QaseAPIProjUITests.swift */,
 				93F866412D9DBD2A006F6F5C /* QaseAPIProjUITestsLaunchTests.swift */,
@@ -778,6 +784,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				852BEE8082D54D26B9900A38 /* AuthHTTPTests.swift in Sources */,
+				FB876ACC41674A388A6A8B37 /* AuthScreenTests.swift in Sources */,
 				367458A90BD735AAFFB0B1E1 /* ArchitectureRegressionTests.swift in Sources */,
 				0088E39668A6CF029F9D7B00 /* TestDependencies.swift in Sources */,
 				4519AE061F2A6C950219F735 /* FormComponentTests.swift in Sources */,
@@ -802,6 +809,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1CF14DD728EF49E6B3A57F1A /* AuthScreenUITests.swift in Sources */,
 				0DCC8BA3C7FEA2C34D408355 /* AccessibilityID.swift in Sources */,
 				4A392523AE3ACB3D9C689ED6 /* HomeScreenUITests.swift in Sources */,
 				93F866442D9DBD2A006F6F5C /* QaseAPIProjUITests.swift in Sources */,

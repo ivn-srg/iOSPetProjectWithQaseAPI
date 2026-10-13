@@ -9,21 +9,21 @@ import Foundation
 
 struct API {
     static let BASE_URL = "https://api.qase.io/v1"
-    
+
     enum NetError: Error {
         case invalidURL, parsingError(String), serializationError(String),
              noInternetConnection, timeout, otherNetworkError(String), invalidCredantials,
              invalidRequest(String),
              httpError(statusCode: Int, message: String, retryAfter: TimeInterval?)
     }
-    
+
     enum HTTPMethod: String {
         case get = "GET"
         case post = "POST"
         case patch = "PATCH"
         case delete = "DELETE"
     }
-    
+
     enum Endpoint: String, CaseIterable {
         case attachment
         case author
@@ -44,7 +44,7 @@ struct API {
         case cases = "case"
         case systemField = "system_field"
         case user
-        
+
     }
 
     enum Operation: String, CaseIterable {
@@ -150,7 +150,7 @@ struct API {
             self == .uploadAttachment
         }
     }
-    
+
     enum QueryParams: String {
         case limit = "limit"
         case offset = "offset"
@@ -196,6 +196,7 @@ struct API {
     ) -> URL? {
         var url = URL(string: BASE_URL)
 
+        // TODO: - шляпа надо переделать на норм компоновку url
         for pathComponent in operation.pathTemplate.split(separator: "/") {
             let component = String(pathComponent)
             if component.first == "{", component.last == "}" {
@@ -216,7 +217,7 @@ struct API {
     }
 
     static func httpError(from response: HTTPURLResponse, data: Data) -> NetError? {
-        guard !(200...299).contains(response.statusCode) else { return nil }
+        guard !(200 ... 299).contains(response.statusCode) else { return nil }
 
         let errorModel = try? JSONDecoder().decode(ResponseWithErrorModel.self, from: data)
         let message = errorModel?.errorMessage ?? errorModel?.message ?? "Qase API request failed."
@@ -224,7 +225,10 @@ struct API {
         return .httpError(statusCode: response.statusCode, message: message, retryAfter: retryAfter)
     }
 
-    static func decodeResponse<Response: Decodable>(from data: Data, as type: Response.Type) throws(NetError) -> Response {
+    static func decodeResponse<Response: Decodable>(
+        from data: Data,
+        as type: Response.Type
+    ) throws(NetError) -> Response {
         do {
             return try JSONDecoder().decode(type, from: data)
         } catch let error as DecodingError {
@@ -269,7 +273,9 @@ struct API {
         var body = Data()
         body.reserveCapacity(bodySize)
         for (file, fileName) in safeFiles {
-            body.append(Data(multipartHeader(boundary: boundary, fileName: fileName, mimeType: file.mimeType).utf8))
+            body
+                .append(Data(multipartHeader(boundary: boundary, fileName: fileName, mimeType: file.mimeType)
+                        .utf8))
             body.append(file.data)
             body.append(Data("\r\n".utf8))
         }
@@ -291,7 +297,10 @@ struct API {
     private static func isValidMIMEType(_ value: String) -> Bool {
         let parts = value.split(separator: "/", omittingEmptySubsequences: false)
         guard parts.count == 2 else { return false }
-        let tokenCharacters = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$&^_.+-")
+        let tokenCharacters =
+            CharacterSet(
+                charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$&^_.+-"
+            )
         return parts.allSatisfy { !$0.isEmpty && $0.unicodeScalars.allSatisfy(tokenCharacters.contains) }
     }
 }
@@ -318,17 +327,31 @@ protocol NetworkManager: AnyObject {
         with data: Encodable?,
         modelType: T.Type
     ) async throws(API.NetError) -> T
-    
-    func composeURL(for method: API.Endpoint, urlComponents: [String?]?, queryItems: [API.QueryParams: Int?]?) -> URL?
 
-    func composeURL(for operation: API.Operation, pathParameters: [String: String], queryItems: [URLQueryItem]) -> URL?
-    
+    func composeURL(
+        for method: API.Endpoint,
+        urlComponents: [String?]?,
+        queryItems: [API.QueryParams: Int?]?
+    ) -> URL?
+
+    func composeURL(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem]
+    ) -> URL?
+
     func auth(by token: String) async throws -> Bool
 }
 
 final class APIManager: NetworkManager {
-    static let shared = APIManager()
-    
+    private let tokenProvider: () -> String?
+    private let transport: HTTPTransport
+
+    init(tokenProvider: @escaping () -> String?, transport: HTTPTransport) {
+        self.tokenProvider = tokenProvider
+        self.transport = transport
+    }
+
     func auth(by token: String) async throws -> Bool {
         guard
             !token.isEmpty,
@@ -336,24 +359,23 @@ final class APIManager: NetworkManager {
         else {
             return false
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.addValue(token, forHTTPHeaderField: "Token")
-        
-        let (_, response) = try await URLSession.shared.data(for: request)
-        
+
+        let (data, response) = try await transport.send(request)
+
         guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-        
-        guard (200...299).contains(httpResponse.statusCode) else {
-            return false
-        }
-        
+
+        if httpResponse.statusCode == 401 { return false }
+        if let error = API.httpError(from: httpResponse, data: data) { throw error }
+
         return true
     }
-    
+
     func performRequest<T: Decodable>(
         with data: Encodable? = nil,
         from urlString: URL?,
@@ -362,13 +384,13 @@ final class APIManager: NetworkManager {
     ) async throws(API.NetError) -> T {
         guard
             let url = urlString,
-            let authToken = AuthManager.shared.getAuthToken()
+            let authToken = tokenProvider()
         else { throw .invalidURL }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.addValue(authToken, forHTTPHeaderField: "Token")
-        
+
         if let data = data {
             let encoder = JSONEncoder()
             let jsonData: Data
@@ -381,11 +403,11 @@ final class APIManager: NetworkManager {
                 throw .serializationError(error.localizedDescription)
             }
         }
-        
+
         if method == .delete || method == .get {
             request.addValue("application/json", forHTTPHeaderField: "accept")
         }
-        
+
         return try await makeHTTPRequest(for: request, codableModelType: modelType)
     }
 
@@ -396,11 +418,17 @@ final class APIManager: NetworkManager {
         with data: Encodable? = nil,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        guard let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems) else {
+        guard let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
+        else {
             throw .invalidURL
         }
 
-        return try await performRequest(with: data, from: url, method: operation.httpMethod, modelType: modelType)
+        return try await performRequest(
+            with: data,
+            from: url,
+            method: operation.httpMethod,
+            modelType: modelType
+        )
     }
 
     func performMultipartRequest<T: Decodable>(
@@ -411,7 +439,7 @@ final class APIManager: NetworkManager {
     ) async throws(API.NetError) -> T {
         guard operation.usesMultipartFormData,
               let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: []),
-              let authToken = AuthManager.shared.getAuthToken() else {
+              let authToken = tokenProvider() else {
             throw .invalidURL
         }
 
@@ -426,13 +454,13 @@ final class APIManager: NetworkManager {
         request.addValue("application/json", forHTTPHeaderField: "Accept")
         return try await makeHTTPRequest(for: request, codableModelType: modelType)
     }
-    
+
     private func makeHTTPRequest<T: Decodable>(
         for request: URLRequest,
         codableModelType: T.Type
     ) async throws(API.NetError) -> T {
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await transport.send(request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw API.NetError.otherNetworkError(URLError(.badServerResponse).localizedDescription)
             }
@@ -452,44 +480,35 @@ final class APIManager: NetworkManager {
             throw .otherNetworkError(error.localizedDescription)
         }
     }
-    
-    func composeURL(for method: API.Endpoint, urlComponents: [String?]?, queryItems: [API.QueryParams: Int?]? = nil) -> URL? {
-        
-        var resultUrl = URL(string: "\(API.BASE_URL)/\(method.rawValue)")
-        
-        if let urlComponents = urlComponents {
-            for component in urlComponents {
-                guard let component = component else { continue }
-                
-                resultUrl = resultUrl?.appendingPathComponent(component)
-            }
-        }
-        
-        if let queryItems = queryItems {
-            var queryDict = [URLQueryItem]()
-            
-            for item in queryItems {
-                guard let itemValue = item.value else { continue }
-                
-                queryDict.append(URLQueryItem(name: item.key.rawValue, value: "\(itemValue)"))
-            }
-            
-            resultUrl?.append(queryItems: queryDict)
-        }
-        
-        return resultUrl
+
+    func composeURL(
+        for method: API.Endpoint,
+        urlComponents: [String?]?,
+        queryItems: [API.QueryParams: Int?]? = nil
+    ) -> URL? {
+        API.makeLegacyURL(for: method, urlComponents: urlComponents, queryItems: queryItems)
     }
 
-    func composeURL(for operation: API.Operation, pathParameters: [String: String], queryItems: [URLQueryItem]) -> URL? {
+    func composeURL(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem]
+    ) -> URL? {
         API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
     }
 }
 
 final class APIMockManager: NetworkManager {
-    static let shared = APIMockManager()
-    
+    private let bundle: Bundle
+    private let lock = NSLock()
+    private var records: [String: [[String: Any]]] = [:]
+
+    init(bundle: Bundle = .main) {
+        self.bundle = bundle
+    }
+
     func auth(by token: String) async throws -> Bool { true }
-    
+
     func performRequest<T: Decodable>(
         with data: Encodable? = nil,
         from urlString: URL?,
@@ -497,8 +516,19 @@ final class APIMockManager: NetworkManager {
         modelType: T.Type
     ) async throws(API.NetError) -> T {
         guard let url = urlString else { throw .invalidURL }
-        
-        return try await makeHTTPRequest(for: URLRequest(url: url), codableModelType: modelType)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = method.rawValue
+        if let data {
+            do {
+                let encoder = JSONEncoder()
+                encoder.keyEncodingStrategy = .convertToSnakeCase
+                request.httpBody = try encoder.encode(data)
+            } catch {
+                throw .serializationError(error.localizedDescription)
+            }
+        }
+        return try await makeHTTPRequest(for: request, codableModelType: modelType)
     }
 
     func performRequest<T: Decodable>(
@@ -508,10 +538,16 @@ final class APIMockManager: NetworkManager {
         with data: Encodable? = nil,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        guard let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems) else {
+        guard let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
+        else {
             throw .invalidURL
         }
-        return try await performRequest(with: data, from: url, method: operation.httpMethod, modelType: modelType)
+        return try await performRequest(
+            with: data,
+            from: url,
+            method: operation.httpMethod,
+            modelType: modelType
+        )
     }
 
     func performMultipartRequest<T: Decodable>(
@@ -520,101 +556,213 @@ final class APIMockManager: NetworkManager {
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        guard let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: []) else {
+        guard composeURL(for: operation, pathParameters: pathParameters, queryItems: []) != nil else {
             throw .invalidURL
         }
-        return try await makeHTTPRequest(for: URLRequest(url: url), codableModelType: modelType)
+        throw .invalidRequest("The demo does not support attachment uploads.")
     }
-    
+
     private func makeHTTPRequest<T: Decodable>(
         for request: URLRequest,
         codableModelType: T.Type
     ) async throws(API.NetError) -> T {
         do {
-            try await Task.sleep(nanoseconds: 2000)
-            
-            let pathComponents = request.url?.pathComponents ?? []
-            let endpointComponent = pathComponents.first { API.Endpoint(rawValue: $0) != nil }
-            let inputCase = endpointComponent.flatMap(API.Endpoint.init(rawValue:))
-            var resourceName: String
-            
-            switch inputCase {
-            case .project:
-                resourceName = "project_data"
-            case .suites:
-                resourceName = "suites_data"
-            case .cases:
-                resourceName = "test_cases_data"
-            default:
-                resourceName = "project_data"
-            }
-            
-            guard let filePath = Bundle.main.path(forResource: "\(resourceName)", ofType: "json")
-            else {
-                throw API.NetError.invalidURL
-            }
-            
-            let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
-            
-            let result = try JSONDecoder().decode(codableModelType, from: data)
-            return result
-            
-        } catch let error as DecodingError {
-            throw .parsingError(error.errorDescription ?? error.localizedDescription)
+            let result = try routedResponse(for: request)
+            let data = try JSONSerialization.data(withJSONObject: ["status": true, "result": result])
+            return try API.decodeResponse(from: data, as: codableModelType)
+        } catch let error as API.NetError {
+            throw error
         } catch {
             throw .otherNetworkError(error.localizedDescription)
         }
     }
-    
-    func composeURL(for method: API.Endpoint, urlComponents: [String?]?, queryItems: [API.QueryParams: Int?]? = nil) -> URL? {
-        
-        var resultUrl = URL(string: "\(API.BASE_URL)/\(method.rawValue)")
-        
-        if let urlComponents = urlComponents {
-            for component in urlComponents {
-                guard let component = component else { continue }
-                
-                resultUrl = resultUrl?.appendingPathComponent(component)
+
+    /// Route by the complete method/path, so a detail cannot accidentally decode a list.
+    private func routedResponse(for request: URLRequest) throws -> Any {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let url = request.url, url.host == "api.qase.io" else { throw API.NetError.invalidURL }
+        let path = url.path.split(separator: "/").map(String.init)
+        guard path.first == "v1", (2 ... 4).contains(path.count) else { throw API.NetError.invalidURL }
+        let endpoint = path[1]
+        guard ["project", "suite", "case", "run", "defect"].contains(endpoint) else {
+            throw API.NetError.invalidRequest("Unsupported demo endpoint.")
+        }
+        let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        func value(_ name: String) -> String? { query.first { $0.name == name }?.value }
+        let method = request.httpMethod ?? "GET"
+        let projectCode = endpoint == "project" ? nil : path.count >= 3 ? path[2] : nil
+        if endpoint != "project" {
+            guard let projectCode,
+                  ["DEMO", "1F"].contains(projectCode) || (records["project"] ?? [])
+                  .contains(where: { $0["code"] as? String == projectCode }) else {
+                throw API.NetError.httpError(statusCode: 404, message: "Project not found.", retryAfter: nil)
             }
         }
-        
-        if let queryItems = queryItems {
-            var queryDict = [URLQueryItem]()
-            
-            for item in queryItems {
-                guard let itemValue = item.value else { continue }
-                
-                queryDict.append(URLQueryItem(name: item.key.rawValue, value: "\(itemValue)"))
-            }
-            
-            resultUrl?.append(queryItems: queryDict)
+        let key = endpoint == "project" ? "project" : "\(endpoint)/\(projectCode ?? "")"
+        if records[key] == nil { records[key] = try initialRecords(
+            endpoint: endpoint,
+            projectCode: projectCode
+        ) }
+        var entities = records[key] ?? []
+        let detailID = endpoint == "project" ? (path.count == 3 ? path[2] : nil) :
+            (path.count == 4 ? path[3] : nil)
+        if endpoint == "project", path.count > 3 { throw API.NetError.invalidURL }
+        func matchesID(_ entity: [String: Any]) -> Bool {
+            if endpoint == "project" { return entity["code"] as? String == detailID }
+            return (entity["id"] as? Int).map(String.init) == detailID
         }
-        
-        return resultUrl
+        switch method {
+        case "GET":
+            if detailID != nil {
+                guard var entity = entities.first(where: matchesID) else {
+                    throw API.NetError.httpError(
+                        statusCode: 404,
+                        message: "Entity not found.",
+                        retryAfter: nil
+                    )
+                }
+                if endpoint == "run", value("include") != "cases" { entity.removeValue(forKey: "cases") }
+                return entity
+            }
+            let total = entities.count
+            if let search = value("search"), !search.isEmpty {
+                entities = entities
+                    .filter { ($0["title"] as? String ?? "").localizedCaseInsensitiveContains(search) }
+            }
+            if endpoint == "run", let status = value("status") {
+                entities = entities.filter { $0["status_text"] as? String == status }
+            }
+            if endpoint == "case", let suite = value("suite_id"), let suiteID = Int(suite) {
+                entities = entities.filter { $0["suite_id"] as? Int == suiteID }
+            }
+            if endpoint == "suite", let parent = value("parent_id"), let parentID = Int(parent) {
+                entities = entities.filter { ($0["parent_id"] as? Int ?? 0) == parentID }
+            }
+            let filtered = entities.count
+            let offset = max(0, Int(value("offset") ?? "0") ?? 0)
+            let limit = max(
+                0,
+                min(
+                    PaginationPolicy.mockMaximumPageSize,
+                    Int(value("limit") ?? "") ?? PaginationPolicy.pageSize
+                )
+            )
+            let page = Array(entities.dropFirst(offset).prefix(limit))
+            return ["total": total, "filtered": filtered, "count": page.count,
+                    "entities": page] as [String: Any]
+        case "POST" where detailID == nil:
+            var entity = try body(of: request)
+            if endpoint == "project" {
+                guard let code = entity["code"] as? String,
+                      !code.isEmpty else { throw API.NetError.invalidRequest("Project code is required.") }
+                entity["counts"] = [
+                    "cases": 0,
+                    "suites": 0,
+                    "milestones": 0,
+                    "runs": ["total": 0, "active": 0],
+                    "defects": ["total": 0, "open": 0]
+                ] as [String: Any]
+                entities.append(entity)
+                records[key] = entities
+                return ["code": code]
+            }
+            let id = (entities.compactMap { $0["id"] as? Int }.max() ?? 0) + 1
+            if endpoint == "case", var template = try fixture("test_cases_data").first {
+                entity["suite_id"] = entity["suite_id"] ?? NSNull()
+                template.merge(entity) { _, new in new }
+                entity = template
+            }
+            entity["id"] = id
+            entity["position"] = entities.count + 1
+            entities.append(entity)
+            records[key] = entities
+            return ["id": id]
+        case "PATCH" where detailID != nil:
+            guard let index = entities.firstIndex(where: matchesID)
+            else { throw API.NetError.invalidRequest("Entity not found.") }
+            entities[index].merge(try body(of: request)) { _, new in new }
+            records[key] = entities
+            return ["id": entities[index]["id"] ?? 0]
+        case "DELETE" where detailID != nil:
+            guard entities.contains(where: matchesID)
+            else { throw API.NetError.invalidRequest("Entity not found.") }
+            entities.removeAll(where: matchesID)
+            records[key] = entities
+            return [:] as [String: Any]
+        default:
+            throw API.NetError.invalidRequest("Unsupported demo operation.")
+        }
     }
 
-    func composeURL(for operation: API.Operation, pathParameters: [String: String], queryItems: [URLQueryItem]) -> URL? {
+    private func body(of request: URLRequest) throws -> [String: Any] {
+        guard let data = request.httpBody else { return [:] }
+        return try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
+    }
+
+    private func fixture(_ name: String) throws -> [[String: Any]] {
+        guard let url = bundle.url(forResource: name, withExtension: "json") else {
+            throw API.NetError.invalidRequest("Missing demo fixture: \(name)")
+        }
+        let root = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any]
+        return (root?["result"] as? [String: Any])?["entities"] as? [[String: Any]] ?? []
+    }
+
+    private func initialRecords(endpoint: String, projectCode: String?) throws -> [[String: Any]] {
+        switch endpoint {
+        case "project":
+            return try fixture("project_data")
+        case "case":
+            let cases = try fixture("test_cases_data")
+            guard projectCode == "DEMO" else { return projectCode == "1F" ? cases : [] }
+            return cases.map { source in
+                var entity = source
+                entity["title"] = "Demo · \(source["title"] as? String ?? "")"
+                entity["suite_id"] = source["suite_id"] ?? NSNull()
+                return entity
+            }
+        case "suite":
+            let suites = try fixture("suites_data")
+            return ["DEMO", "1F"].contains(projectCode ?? "") ? suites : []
+        case "run", "defect":
+            return try fixture(endpoint == "run" ? "runs_data" : "defects_data")
+                .filter { $0["project_code"] as? String == projectCode }
+        default:
+            return []
+        }
+    }
+
+    func composeURL(
+        for method: API.Endpoint,
+        urlComponents: [String?]?,
+        queryItems: [API.QueryParams: Int?]? = nil
+    ) -> URL? {
+        API.makeLegacyURL(for: method, urlComponents: urlComponents, queryItems: queryItems)
+    }
+
+    func composeURL(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem]
+    ) -> URL? {
         API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
     }
 }
 
-
-final class ApiServiceConfiguration {
-    public static let shared = ApiServiceConfiguration()
-    
-    private init() {}
-    
-    var apiService: NetworkManager {
-        if shouldUseMockingService {
-            return APIMockManager.shared
-        } else {
-            return APIManager.shared
+extension API {
+    static func makeLegacyURL(
+        for endpoint: Endpoint,
+        urlComponents: [String?]?,
+        queryItems: [QueryParams: Int?]?
+    ) -> URL? {
+        guard var url = URL(string: "\(BASE_URL)/\(endpoint.rawValue)") else { return nil }
+        for component in urlComponents ?? [] {
+            if let component { url.appendPathComponent(component) }
         }
-    }
-    
-    private var shouldUseMockingService: Bool = false
-    
-    func setMockingServiceEnabled() {
-        shouldUseMockingService = true
+        let items = (queryItems ?? [:]).compactMap { parameter, value in
+            value.map { URLQueryItem(name: parameter.rawValue, value: String($0)) }
+        }
+        if !items.isEmpty { url.append(queryItems: items) }
+        return url
     }
 }

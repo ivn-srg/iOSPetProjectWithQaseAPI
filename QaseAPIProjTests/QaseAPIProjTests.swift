@@ -5,30 +5,30 @@
 //  Created by Sergey Ivanov on 01.04.2025.
 //
 
+@testable import QaseAPIProj
 import Testing
 import UIKit
-@testable import QaseAPIProj
 
 struct QaseAPIProjTests {
-    
-    let apiManager = APIMockManager.shared
-    
+
+    let apiManager = APIMockManager()
+
     @Test func example() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
         let whiteColor = UIColor.white
         let blackColor = UIColor.black
-        
+
         #expect(whiteColor.toHex() == "#FFFFFF")
         #expect(blackColor.toHex() == "#000000")
-        
+
         #expect(UIColor(hex: "#0000FF") == .blue)
         #expect(UIColor(hex: "#996633") == .brown)
     }
-    
+
     @Test("API compose method checking")
     func checkValidURL() async throws {
         let projectUrl = apiManager.composeURL(for: .project, urlComponents: nil, queryItems: [.limit: 10])!
-        
+
         #expect(projectUrl.absoluteString == "https://api.qase.io/v1/project?limit=10")
     }
 
@@ -78,7 +78,10 @@ struct QaseAPIProjTests {
 
     @Test("Qase user DTO decodes title and numeric status")
     func checkUserDTOFields() async throws {
-        let data = Data("{\"id\":12,\"name\":\"Ada\",\"email\":\"ada@example.com\",\"title\":\"QA\",\"status\":1}".utf8)
+        let data = Data(
+            "{\"id\":12,\"name\":\"Ada\",\"email\":\"ada@example.com\",\"title\":\"QA\",\"status\":1}"
+                .utf8
+        )
         let user = try JSONDecoder().decode(QaseAPIUserDTO.self, from: data)
 
         #expect(user.title == "QA")
@@ -108,10 +111,16 @@ struct QaseAPIProjTests {
     func checkRequiredCreateDTOs() async throws {
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
-        let run = try JSONSerialization.jsonObject(with: encoder.encode(QaseAPIRunCreateRequest(title: "Run"))) as? [String: Any]
-        let result = try JSONSerialization.jsonObject(with: encoder.encode(QaseAPIResultCreateRequest(status: "passed"))) as? [String: Any]
-        let suite = try JSONSerialization.jsonObject(with: encoder.encode(QaseAPISuiteCreateRequest(title: "Suite"))) as? [String: Any]
-        let plan = try JSONSerialization.jsonObject(with: encoder.encode(QaseAPIPlanCreateRequest(title: "Plan", cases: []))) as? [String: Any]
+        let run = try JSONSerialization
+            .jsonObject(with: encoder.encode(QaseAPIRunCreateRequest(title: "Run"))) as? [String: Any]
+        let result = try JSONSerialization
+            .jsonObject(with: encoder.encode(QaseAPIResultCreateRequest(status: "passed"))) as? [String: Any]
+        let suite = try JSONSerialization
+            .jsonObject(with: encoder.encode(QaseAPISuiteCreateRequest(title: "Suite"))) as? [String: Any]
+        let plan = try JSONSerialization.jsonObject(with: encoder.encode(QaseAPIPlanCreateRequest(
+            title: "Plan",
+            cases: []
+        ))) as? [String: Any]
         let sharedParameter = try JSONSerialization.jsonObject(with: encoder.encode(
             QaseAPISharedParameterCreateRequest(
                 title: "Browser",
@@ -189,12 +198,16 @@ struct QaseAPIProjTests {
             #expect(Bool(false))
         }
     }
-    
+
     @Test func checkFirstProjectTitle() async throws {
         let dataURL = apiManager.composeURL(for: .project, urlComponents: nil)!
-        let projectsData = try await apiManager.performRequest(from: dataURL, method: .get, modelType: ProjectDataModel.self)
+        let projectsData = try await apiManager.performRequest(
+            from: dataURL,
+            method: .get,
+            modelType: ProjectDataModel.self
+        )
         let projects = projectsData.result.entities
-        
+
         #expect(projects.count == 2)
         #expect(projects[0].title == "Demo Project")
         #expect(projects[1].title == "1Forma")

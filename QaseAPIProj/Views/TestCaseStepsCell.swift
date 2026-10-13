@@ -1,88 +1,159 @@
-//
-//  TestCaseStepsCell.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 06.01.2025.
-//
-
+import SnapKit
 import UIKit
 
-final class StepCell: UICollectionViewCell {
-    // MARK: - Fields
-    static let identifier = "StepCell"
-    
-    var stepHash = ""
-    
-    // MARK: - UI components
-    private lazy var digitalInBoxLbl: PaddedLabel = {
-        let view = PaddedLabel()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.backgroundColor = AppTheme.additionTintColor
-        view.layer.masksToBounds = true
-        view.layer.cornerRadius = 8
-        view.setContentHuggingPriority(.required, for: .horizontal)
-        view.setContentCompressionResistancePriority(.required, for: .horizontal)
-        return view
-    }()
-    
-    
-    private lazy var titleLabel: UILabel = {
-        let lbl = UILabel()
-        lbl.translatesAutoresizingMaskIntoConstraints = false
-        lbl.font = .systemFont(ofSize: 14, weight: .regular)
-        lbl.numberOfLines = 2
-        return lbl
-    }()
-    
-    // MARK: - Lifecycle
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupView()
+final class TestCaseStepView: UIView {
+    private struct Layout {
+        static let contentInset = AppTheme.Space.regular
+        static let bodySpacing = AppTheme.Space.medium
+        static let captionSpacing: CGFloat = 6
+        static let badgeOpacity: CGFloat = 0.12
     }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func setupView() {
-        contentView.addSubview(digitalInBoxLbl)
-        contentView.addSubview(titleLabel)
-        
-        digitalInBoxLbl.snp.makeConstraints {
-            $0.leading.equalToSuperview().inset(10)
-            $0.centerY.equalToSuperview()
+
+    private let step: StepsInTestCase
+    private let action = UILabel()
+    private let expected = UILabel()
+    private let badge: StepNumberBadge
+    private let body = UIStackView()
+
+    init(step: StepsInTestCase, number: String) {
+        self.step = step
+        badge = StepNumberBadge(number: number)
+        super.init(frame: .zero)
+        backgroundColor = AppTheme.Palette.secondarySurface
+        layer.cornerRadius = AppTheme.Radius.card
+        body.axis = .vertical
+        body.spacing = Layout.captionSpacing
+        for label in [action, expected] {
+            label.font = .preferredFont(forTextStyle: .body)
+            label.adjustsFontForContentSizeCategory = true
+            label.numberOfLines = 0
+            label.textColor = AppTheme.Palette.text
+            label.isAccessibilityElement = false
         }
-        
-        titleLabel.snp.makeConstraints {
-            $0.leading.equalTo(digitalInBoxLbl.snp.trailing).offset(10)
-            $0.verticalEdges.trailing.equalToSuperview().inset(10)
+        [caption("Action"), action, caption("Expected result"), expected].forEach(body.addArrangedSubview)
+        body.setCustomSpacing(Layout.bodySpacing, after: action)
+        addSubview(badge)
+        addSubview(body)
+        registerForTraitChanges([
+            UITraitPreferredContentSizeCategory.self,
+            UITraitUserInterfaceStyle.self
+        ]) { (view: Self, _) in
+            view.refreshTraits()
+        }
+        refreshTraits()
+        isAccessibilityElement = true
+        accessibilityLabel = [
+            number,
+            "Action".localized,
+            action.attributedText?.string ?? action.text ?? "",
+            "Expected result".localized,
+            expected.attributedText?.string ?? expected.text ?? ""
+        ].joined(separator: ", ")
+        accessibilityIdentifier = AccessibilityID.step(number).identifier
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    private func refreshTraits() {
+        badge.refreshFont()
+        updateText()
+        let vertical = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        badge.snp.remakeConstraints {
+            $0.leading.top.equalToSuperview().inset(Layout.contentInset)
+            $0.trailing.lessThanOrEqualToSuperview().inset(Layout.contentInset)
+            $0.bottom.lessThanOrEqualToSuperview().inset(Layout.contentInset)
+        }
+        body.snp.remakeConstraints {
+            $0.trailing.bottom.equalToSuperview().inset(Layout.contentInset)
+            if vertical {
+                $0.leading.equalToSuperview().inset(Layout.contentInset)
+                $0.top.equalTo(badge.snp.bottom).offset(Layout.bodySpacing)
+            } else {
+                $0.top.equalToSuperview().inset(Layout.contentInset)
+                $0.leading.equalTo(badge.snp.trailing).offset(Layout.bodySpacing)
+            }
         }
     }
-    
-    func configure(with step: StepsInTestCase, at index: Int) {
-        digitalInBoxLbl.text = "\(index + 1)"
-        stepHash = step.hash
-        if let attributedString = step.action?.withoutLineBreaks.toAttributedString() {
-            titleLabel.attributedText = attributedString
+
+    private func caption(_ key: String) -> UILabel {
+        let label = UILabel()
+        label.text = key.localized
+        label.font = .preferredFont(forTextStyle: .footnote)
+        label.adjustsFontForContentSizeCategory = true
+        label.numberOfLines = 0
+        label.textColor = AppTheme.Palette.secondaryText
+        label.isAccessibilityElement = false
+        return label
+    }
+
+    private func setText(_ text: String?, in label: UILabel, fallback: String) {
+        guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            label.attributedText = nil
+            label.text = fallback.localized
+            label.textColor = AppTheme.Palette.secondaryText
+            return
+        }
+        label.textColor = AppTheme.Palette.text
+        if let rendered = text.toAttributedString() {
+            let value = NSMutableAttributedString(attributedString: rendered)
+            value.addAttribute(
+                .font,
+                value: UIFont.preferredFont(forTextStyle: .body, compatibleWith: traitCollection),
+                range: NSRange(location: 0, length: value.length)
+            )
+            label.attributedText = value
         } else {
-            titleLabel.text = step.action
+            label.text = text
         }
+    }
+
+    private func updateText() {
+        setText(step.action, in: action, fallback: "Action not provided")
+        setText(step.expectedResult, in: expected, fallback: "Expected result not provided")
     }
 }
 
-final class PaddedLabel: UILabel {
-    
-    var textInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-    
-    override func drawText(in rect: CGRect) {
-        let insetsRect = rect.inset(by: textInsets)
-        super.drawText(in: insetsRect)
+private final class StepNumberBadge: UIView {
+    private struct Layout {
+        static let padding = AppTheme.Space.small
+        static let minimum = AppTheme.Space.large
+        static let opacity: CGFloat = 0.12
     }
-    
+
+    private let label = UILabel()
+
+    init(number: String) {
+        super.init(frame: .zero)
+        label.text = number
+        label.textColor = AppTheme.Palette.accent
+        label.textAlignment = .center
+        label.adjustsFontForContentSizeCategory = true
+        label.isAccessibilityElement = false
+        backgroundColor = AppTheme.Palette.accent.withAlphaComponent(Layout.opacity)
+        layer.cornerRadius = AppTheme.Radius.badge
+        addSubview(label)
+        label.snp.makeConstraints {
+            $0.center.equalToSuperview()
+            $0.leading.greaterThanOrEqualToSuperview().inset(Layout.padding)
+            $0.trailing.lessThanOrEqualToSuperview().inset(Layout.padding)
+        }
+        setContentHuggingPriority(.required, for: .horizontal)
+        setContentCompressionResistancePriority(.required, for: .horizontal)
+        refreshFont()
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
     override var intrinsicContentSize: CGSize {
-        let size = super.intrinsicContentSize
-        let width = size.width + textInsets.left + textInsets.right
-        let height = size.height + textInsets.top + textInsets.bottom
-        return CGSize(width: width, height: height)
+        let size = label.intrinsicContentSize
+        return CGSize(
+            width: max(Layout.minimum, size.width + Layout.padding * 2),
+            height: max(Layout.minimum, size.height + Layout.padding * 2)
+        )
+    }
+
+    func refreshFont() {
+        label.font = .preferredFont(forTextStyle: .footnote, compatibleWith: traitCollection)
+        invalidateIntrinsicContentSize()
     }
 }

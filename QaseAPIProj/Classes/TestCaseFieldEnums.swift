@@ -13,13 +13,13 @@ enum Severity: String, CaseIterable, MenuDataSource, Codable {
     case normal = "Normal"
     case minor = "Minor"
     case trivial = "Trivial"
-    
+
     var localized: String {
         self.rawValue.localized
     }
-    
-    var menuItem: MenuItem {
-        let index = switch self {
+
+    var apiValue: Int {
+        switch self {
         case .nothing: 0
         case .blocker: 1
         case .critical: 2
@@ -28,19 +28,52 @@ enum Severity: String, CaseIterable, MenuDataSource, Codable {
         case .minor: 5
         case .trivial: 6
         }
-        return Self.dataSource[index]
     }
-    
-    static var dataSource = [
-        MenuItem(id: 0, title: Severity.nothing.localized, image: AppTheme.minusImage),
-        MenuItem(id: 1, title: Severity.blocker.localized, image: AppTheme.nosignImage),
-        MenuItem(id: 2, title: Severity.critical.localized, image: AppTheme.chevronDoubleUpImage),
-        MenuItem(id: 3, title: Severity.major.localized, image: AppTheme.chevronUpImage),
-        MenuItem(id: 4, title: Severity.normal.localized, image: AppTheme.circleImage),
-        MenuItem(id: 5, title: Severity.minor.localized, image: AppTheme.chevronDownImage),
-        MenuItem(id: 6, title: Severity.trivial.localized, image: AppTheme.chevronDoubleDownImage),
-    ]
-    
+
+    @MainActor
+    var menuItem: MenuItem { Self.dataSource[apiValue] }
+
+    @MainActor
+    static var dataSource: [MenuItem] {
+        [
+            MenuItem(
+                id: Severity.nothing.apiValue,
+                title: Severity.nothing.localized,
+                image: AppImages.minus
+            ),
+            MenuItem(
+                id: Severity.blocker.apiValue,
+                title: Severity.blocker.localized,
+                image: AppImages.nosign
+            ),
+            MenuItem(
+                id: Severity.critical.apiValue,
+                title: Severity.critical.localized,
+                image: AppImages.chevronUp2
+            ),
+            MenuItem(
+                id: Severity.major.apiValue,
+                title: Severity.major.localized,
+                image: AppImages.arrowUp
+            ),
+            MenuItem(
+                id: Severity.normal.apiValue,
+                title: Severity.normal.localized,
+                image: AppImages.circle
+            ),
+            MenuItem(
+                id: Severity.minor.apiValue,
+                title: Severity.minor.localized,
+                image: AppImages.arrowDown
+            ),
+            MenuItem(
+                id: Severity.trivial.apiValue,
+                title: Severity.trivial.localized,
+                image: AppImages.chevronDown2
+            ),
+        ]
+    }
+
     init(_ number: Int) {
         self = switch number {
         case 1: .blocker
@@ -52,40 +85,49 @@ enum Severity: String, CaseIterable, MenuDataSource, Codable {
         default: .nothing
         }
     }
-    
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(apiValue)
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(Int.self)
-        
+
         self.init(rawValue)
     }
 }
-
 
 enum Status: String, CaseIterable, MenuDataSource, Codable {
     case actual = "Actual"
     case draft = "Draft"
     case deprecated = "Deprecated"
-    
+
     var localized: String {
         self.rawValue.localized
     }
-    
-    var menuItem: MenuItem {
-        let index = switch self {
+
+    var apiValue: Int {
+        switch self {
         case .actual: 0
         case .draft: 1
         case .deprecated: 2
         }
-        return Self.dataSource[index]
     }
-    
-    static var dataSource = [
-        MenuItem(id: 0, title: Status.actual.localized),
-        MenuItem(id: 1, title: Status.draft.localized),
-        MenuItem(id: 2, title: Status.deprecated.localized)
-    ]
-    
+
+    @MainActor
+    var menuItem: MenuItem { Self.dataSource[apiValue] }
+
+    @MainActor
+    static var dataSource: [MenuItem] {
+        [
+            MenuItem(id: Status.actual.apiValue, title: Status.actual.localized),
+            MenuItem(id: Status.draft.apiValue, title: Status.draft.localized),
+            MenuItem(id: Status.deprecated.apiValue, title: Status.deprecated.localized)
+        ]
+    }
+
     init(_ number: Int) {
         self = switch number {
         case 1: .draft
@@ -93,11 +135,16 @@ enum Status: String, CaseIterable, MenuDataSource, Codable {
         default: .actual
         }
     }
-    
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(apiValue)
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(Int.self)
-        
+
         self.init(rawValue)
     }
 }
@@ -107,28 +154,49 @@ enum Priority: String, CaseIterable, MenuDataSource, Codable {
     case high = "High"
     case medium = "Medium"
     case low = "Low"
-    
+
     var localized: String {
         self.rawValue.localized
     }
-    
-    var menuItem: MenuItem {
-        let index = switch self {
+
+    var apiValue: Int {
+        switch self {
         case .nothing: 0
         case .high: 1
         case .medium: 2
         case .low: 3
         }
-        return Self.dataSource[index]
     }
-    
-    static var dataSource = [
-        MenuItem(id: 0, title: Priority.nothing.localized, image: AppTheme.minusImage),
-        MenuItem(id: 1, title: Priority.high.localized, image: AppTheme.arrowUpImage),
-        MenuItem(id: 2, title: Priority.medium.localized, image: AppTheme.circleImage),
-        MenuItem(id: 3, title: Priority.low.localized, image: AppTheme.arrowDownImage)
-    ]
-    
+
+    @MainActor
+    var menuItem: MenuItem { Self.dataSource[apiValue] }
+
+    @MainActor
+    static var dataSource: [MenuItem] {
+        [
+            MenuItem(
+                id: Priority.nothing.apiValue,
+                title: Priority.nothing.localized,
+                image: AppImages.minus
+            ),
+            MenuItem(
+                id: Priority.high.apiValue,
+                title: Priority.high.localized,
+                image: AppImages.arrowUp
+            ),
+            MenuItem(
+                id: Priority.medium.apiValue,
+                title: Priority.medium.localized,
+                image: AppImages.circle
+            ),
+            MenuItem(
+                id: Priority.low.apiValue,
+                title: Priority.low.localized,
+                image: AppImages.arrowDown
+            )
+        ]
+    }
+
     init(_ number: Int) {
         self = switch number {
         case 1: .high
@@ -137,11 +205,16 @@ enum Priority: String, CaseIterable, MenuDataSource, Codable {
         default: .nothing
         }
     }
-    
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(apiValue)
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(Int.self)
-        
+
         self.init(rawValue)
     }
 }
@@ -151,28 +224,33 @@ enum Behavior: String, CaseIterable, MenuDataSource, Codable {
     case positive = "Positive"
     case negative = "Negative"
     case destructive = "Destructive"
-    
+
     var localized: String {
         self.rawValue.localized
     }
-    
-    var menuItem: MenuItem {
-        let index = switch self {
+
+    var apiValue: Int {
+        switch self {
         case .nothing: 0
         case .positive: 1
         case .negative: 2
         case .destructive: 3
         }
-        return Self.dataSource[index]
     }
-    
-    static var dataSource = [
-        MenuItem(id: 0, title: Behavior.nothing.localized),
-        MenuItem(id: 1, title: Behavior.positive.localized),
-        MenuItem(id: 2, title: Behavior.negative.localized),
-        MenuItem(id: 3, title: Behavior.destructive.localized)
-    ]
-    
+
+    @MainActor
+    var menuItem: MenuItem { Self.dataSource[apiValue] }
+
+    @MainActor
+    static var dataSource: [MenuItem] {
+        [
+            MenuItem(id: Behavior.nothing.apiValue, title: Behavior.nothing.localized),
+            MenuItem(id: Behavior.positive.apiValue, title: Behavior.positive.localized),
+            MenuItem(id: Behavior.negative.apiValue, title: Behavior.negative.localized),
+            MenuItem(id: Behavior.destructive.apiValue, title: Behavior.destructive.localized)
+        ]
+    }
+
     init(_ number: Int) {
         self = switch number {
         case 1: .positive
@@ -181,11 +259,16 @@ enum Behavior: String, CaseIterable, MenuDataSource, Codable {
         default: .nothing
         }
     }
-    
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(apiValue)
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(Int.self)
-        
+
         self.init(rawValue)
     }
 }
@@ -202,13 +285,13 @@ enum Types: String, CaseIterable, MenuDataSource, Codable {
     case compatibility = "Compatibility"
     case exploratory = "Exploratory"
     case integration = "Integration"
-    
+
     var localized: String {
         self.rawValue.localized
     }
-    
-    var menuItem: MenuItem {
-        let index = switch self {
+
+    var apiValue: Int {
+        switch self {
         case .other: 0
         case .functional: 1
         case .smoke: 2
@@ -221,23 +304,28 @@ enum Types: String, CaseIterable, MenuDataSource, Codable {
         case .exploratory: 9
         case .integration: 10
         }
-        return Self.dataSource[index]
     }
-    
-    static var dataSource = [
-        MenuItem(id: 0, title: Types.other.localized),
-        MenuItem(id: 1, title: Types.functional.localized),
-        MenuItem(id: 2, title: Types.smoke.localized),
-        MenuItem(id: 3, title: Types.regression.localized),
-        MenuItem(id: 4, title: Types.security.localized),
-        MenuItem(id: 5, title: Types.utility.localized),
-        MenuItem(id: 6, title: Types.perfomance.localized),
-        MenuItem(id: 7, title: Types.accertance.localized),
-        MenuItem(id: 7, title: Types.compatibility.localized),
-        MenuItem(id: 8, title: Types.exploratory.localized),
-        MenuItem(id: 9, title: Types.integration.localized),
-    ]
-    
+
+    @MainActor
+    var menuItem: MenuItem { Self.dataSource[apiValue] }
+
+    @MainActor
+    static var dataSource: [MenuItem] {
+        [
+            MenuItem(id: Types.other.apiValue, title: Types.other.localized),
+            MenuItem(id: Types.functional.apiValue, title: Types.functional.localized),
+            MenuItem(id: Types.smoke.apiValue, title: Types.smoke.localized),
+            MenuItem(id: Types.regression.apiValue, title: Types.regression.localized),
+            MenuItem(id: Types.security.apiValue, title: Types.security.localized),
+            MenuItem(id: Types.utility.apiValue, title: Types.utility.localized),
+            MenuItem(id: Types.perfomance.apiValue, title: Types.perfomance.localized),
+            MenuItem(id: Types.accertance.apiValue, title: Types.accertance.localized),
+            MenuItem(id: Types.compatibility.apiValue, title: Types.compatibility.localized),
+            MenuItem(id: Types.exploratory.apiValue, title: Types.exploratory.localized),
+            MenuItem(id: Types.integration.apiValue, title: Types.integration.localized),
+        ]
+    }
+
     init(_ number: Int) {
         self = switch number {
         case 1: .functional
@@ -253,11 +341,16 @@ enum Types: String, CaseIterable, MenuDataSource, Codable {
         default: .other
         }
     }
-    
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(apiValue)
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(Int.self)
-        
+
         self.init(rawValue)
     }
 }
@@ -266,26 +359,39 @@ enum Layer: String, CaseIterable, MenuDataSource, Codable {
     case e2e = "E2E"
     case api = "API"
     case unit = "Unit"
-    
+
     var localized: String {
         self.rawValue.localized
     }
-    
-    var menuItem: MenuItem {
-        let index = switch self {
+
+    var apiValue: Int {
+        switch self {
         case .e2e: 0
         case .api: 1
         case .unit: 2
         }
-        return Self.dataSource[index]
     }
-    
-    static var dataSource = [
-        MenuItem(id: 0, title: Layer.e2e.localized, image: AppTheme.computerImage),
-        MenuItem(id: 1, title: Layer.api.localized, image: AppTheme.apiImage),
-        MenuItem(id: 2, title: Layer.unit.localized, image: AppTheme.gearDoubleFillImage)
-    ]
-    
+
+    @MainActor
+    var menuItem: MenuItem { Self.dataSource[apiValue] }
+
+    @MainActor
+    static var dataSource: [MenuItem] {
+        [
+            MenuItem(id: Layer.e2e.apiValue, title: Layer.e2e.localized, image: AppImages.desktopcomputer),
+            MenuItem(
+                id: Layer.api.apiValue,
+                title: Layer.api.localized,
+                image: AppImages.externaldriveConnectedToLineBelowFill
+            ),
+            MenuItem(
+                id: Layer.unit.apiValue,
+                title: Layer.unit.localized,
+                image: AppImages.gearshape2Fill
+            )
+        ]
+    }
+
     init(_ number: Int) {
         self = switch number {
         case 1: .api
@@ -293,11 +399,16 @@ enum Layer: String, CaseIterable, MenuDataSource, Codable {
         default: .e2e
         }
     }
-    
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(apiValue)
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(Int.self)
-        
+
         self.init(rawValue)
     }
 }
@@ -306,26 +417,43 @@ enum AutomationStatus: String, CaseIterable, MenuDataSource, Codable {
     case manual = "Manual"
     case toBeAutomated = "To be automated"
     case automation = "Automated"
-    
+
     var localized: String {
         self.rawValue.localized
     }
-    
-    var menuItem: MenuItem {
-        let index = switch self {
+
+    var apiValue: Int {
+        switch self {
         case .manual: 0
         case .toBeAutomated: 1
         case .automation: 2
         }
-        return Self.dataSource[index]
     }
-    
-    static var dataSource = [
-        MenuItem(id: 0, title: AutomationStatus.manual.localized, image: AppTheme.handRaisedImage),
-        MenuItem(id: 1, title: AutomationStatus.toBeAutomated.localized, image: AppTheme.personWithGearshapeImage),
-        MenuItem(id: 2, title: AutomationStatus.automation.localized, image: AppTheme.gearshapeFillImage)
-    ]
-    
+
+    @MainActor
+    var menuItem: MenuItem { Self.dataSource[apiValue] }
+
+    @MainActor
+    static var dataSource: [MenuItem] {
+        [
+            MenuItem(
+                id: AutomationStatus.manual.apiValue,
+                title: AutomationStatus.manual.localized,
+                image: AppImages.handRaised
+            ),
+            MenuItem(
+                id: AutomationStatus.toBeAutomated.apiValue,
+                title: AutomationStatus.toBeAutomated.localized,
+                image: AppImages.person2BadgeGearshapeFill
+            ),
+            MenuItem(
+                id: AutomationStatus.automation.apiValue,
+                title: AutomationStatus.automation.localized,
+                image: AppImages.gearshapeFill
+            )
+        ]
+    }
+
     init(_ number: Int) {
         self = switch number {
         case 1: .toBeAutomated
@@ -333,11 +461,16 @@ enum AutomationStatus: String, CaseIterable, MenuDataSource, Codable {
         default: .manual
         }
     }
-    
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(apiValue)
+    }
+
     init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(Int.self)
-        
+
         self.init(rawValue)
     }
 }

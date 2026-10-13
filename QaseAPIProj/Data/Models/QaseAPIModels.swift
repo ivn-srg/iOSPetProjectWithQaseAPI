@@ -303,7 +303,8 @@ struct QaseAPIResultCreateRequest: Codable {
     var authorId: Int?
 
     enum CodingKeys: String, CodingKey {
-        case caseId, status, startTime, time, timeMs, defect, attachments, stacktrace, comment, steps, param, authorId
+        case caseId, status, startTime, time, timeMs, defect, attachments, stacktrace, comment, steps, param,
+             authorId
         case caseObject = "case"
         case paramGroups = "param_groups"
     }
@@ -385,7 +386,13 @@ struct QaseAPISharedParameterCreateRequest: Codable {
     let isEnabledForAllProjects: Bool
     let parameters: [QaseAPIJSONValue]
 
-    init?(title: String, type: QaseAPISharedParameterType, projectCodes: [String]?, isEnabledForAllProjects: Bool, parameters: [QaseAPIJSONValue]) {
+    init?(
+        title: String,
+        type: QaseAPISharedParameterType,
+        projectCodes: [String]?,
+        isEnabledForAllProjects: Bool,
+        parameters: [QaseAPIJSONValue]
+    ) {
         guard !parameters.isEmpty else { return nil }
         self.title = title
         self.type = type
@@ -466,7 +473,10 @@ struct QaseAPIResourceDTO: Codable {
         let dynamicContainer = try decoder.container(keyedBy: QaseAPIAnyCodingKey.self)
         var additionalFields = [String: QaseAPIJSONValue]()
         for key in dynamicContainer.allKeys where CodingKeys(stringValue: key.stringValue) == nil {
-            additionalFields[key.stringValue] = try dynamicContainer.decode(QaseAPIJSONValue.self, forKey: key)
+            additionalFields[key.stringValue] = try dynamicContainer.decode(
+                QaseAPIJSONValue.self,
+                forKey: key
+            )
         }
         fields = additionalFields.isEmpty ? nil : additionalFields
     }

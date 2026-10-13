@@ -1,210 +1,214 @@
-//
-//  GeneralDetailCaseViewController.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 18.01.2024.
-//
-
+import SnapKit
 import UIKit
 
 final class GeneralDetailCaseViewController: UIViewController {
-    
-    private let vm: DetailTabbarControllerViewModel
-    weak var delegate: DetailTestCaseProtocol?
-    private var isDataEditing = false
-    
-    private var dataSource: UICollectionViewDiffableDataSource<Int, StepsInTestCase>!
-    private var steps: [StepsInTestCase] = []
-    
-    // MARK: - UI components
-    private lazy var scrollView: UIScrollView = {
-        let sv = UIScrollView()
-        sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.showsHorizontalScrollIndicator = false
-        sv.alwaysBounceVertical = true
-        sv.showsVerticalScrollIndicator = false
-        return sv
-    }()
-    
-    private lazy var stackView: UIStackView = {
-        let sv = UIStackView()
-        sv.translatesAutoresizingMaskIntoConstraints = false
-        sv.axis = .vertical
-        sv.spacing = 30
-        sv.alignment = .fill
-        return sv
-    }()
-    
-    private lazy var titleField = GeneralCaseTextField(
-        textType: .title,
-        textViewValue: vm.testCase?.title,
-        detailVM: vm
-    )
-    
-    private lazy var descriptionField = GeneralCaseTextField(
-        textType: .description,
-        textViewValue: vm.testCase?.description,
-        detailVM: vm
-    )
-    
-    private lazy var preconditionField = GeneralCaseTextField(
-        textType: .precondition,
-        textViewValue: vm.testCase?.preconditions,
-        detailVM: vm
-    )
-    
-    private lazy var postconditionField = GeneralCaseTextField(
-        textType: .postcondition,
-        textViewValue: vm.testCase?.postconditions,
-        detailVM: vm
-    )
-    
-    private lazy var stepsCollectionViewTitle: UILabel = {
-        let vc = UILabel()
-        vc.translatesAutoresizingMaskIntoConstraints = false
-        vc.font = .systemFont(ofSize: 16, weight: .bold)
-        vc.numberOfLines = 0
-        vc.text = "Steps".localized
-        return vc
-    }()
-    
-    private lazy var stepsCollectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: view.frame.width - 40, height: 60)
-        layout.minimumLineSpacing = 10
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.translatesAutoresizingMaskIntoConstraints = false
-        collectionView.backgroundColor = .clear
-        collectionView.delegate = self
-        collectionView.register(StepCell.self, forCellWithReuseIdentifier: StepCell.identifier)
-        return collectionView
-    }()
-    
-    private lazy var panRecognize: UISwipeGestureRecognizer = {
-        let gestureRecognizer = UISwipeGestureRecognizer()
-        gestureRecognizer.addTarget(self, action: #selector(swipeBetweenViewsDelegate))
-        return gestureRecognizer
-    }()
-    
-    // MARK: - Lifecycle
-    
-    init(vm: DetailTabbarControllerViewModel) {
+    var onKeyboardVisibilityChanged: ((Bool) -> Void)?
+    private let vm: TestCaseEditorViewModel
+    private let projectTitle: String
+    private let scrollView = UIScrollView()
+    private let content = UIStackView()
+    private let message = FormMessageView()
+    private let steps = UIStackView()
+    private var fields: [FieldType: GeneralCaseTextField] = [:]
+    private var renderedSteps: [StepsInTestCase]?
+    private var dataSections: [UIView] = []
+    private weak var focusedField: GeneralCaseTextField?
+    private lazy var properties = CasePropertiesFormView(viewModel: vm, style: .grouped)
+
+    init(vm: TestCaseEditorViewModel, projectTitle: String? = nil) {
         self.vm = vm
+        self.projectTitle = projectTitle ?? vm.reference.projectCode
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        setupView()
-        setupCustomFields()
-        setupCollectionView()
-        loadSteps()
-        updateUI()
-    }
-    
-    // MARK: - Setup Methods for UI
-    private func setupView() {
+        view.backgroundColor = AppTheme.Palette.canvas
+        view.keyboardLayoutGuide.usesBottomSafeArea = false
+        scrollView.contentInsetAdjustmentBehavior = .never
+        scrollView.keyboardDismissMode = .interactive
         view.addSubview(scrollView)
-        
         scrollView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.top.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(view.keyboardLayoutGuide.snp.top)
         }
-        
-        scrollView.addSubview(stackView)
-        
-        stackView.snp.makeConstraints {
-            $0.edges.equalTo(scrollView.contentLayoutGuide.snp.edges).inset(AppTheme.horizontalPadding)
-            $0.width.equalToSuperview().inset(AppTheme.horizontalPadding)
+        content.axis = .vertical
+        content.spacing = AppTheme.Space.section
+        scrollView.addSubview(content)
+        content.snp.makeConstraints {
+            $0.edges.equalTo(scrollView.contentLayoutGuide).inset(AppTheme.Space.screen)
+            $0.width.equalTo(scrollView.frameLayoutGuide).offset(-2 * AppTheme.Space.screen)
         }
-        
-        view.addGestureRecognizer(panRecognize)
-    }
-    
-    private func setupCustomFields() {
-        stackView.addArrangedSubview(titleField)
-        stackView.addArrangedSubview(descriptionField)
-        stackView.addArrangedSubview(preconditionField)
-        stackView.addArrangedSubview(postconditionField)
-        stackView.addArrangedSubview(stepsCollectionViewTitle)
-        stackView.addArrangedSubview(stepsCollectionView)
-    }
-    
-    // MARK: - CollectionView Diffable logic
-    private func setupCollectionView() {
-        dataSource = UICollectionViewDiffableDataSource<Int, StepsInTestCase>(
-            collectionView: stepsCollectionView,
-            cellProvider: { collectionView, indexPath, step in
-                guard let cell = collectionView.dequeueReusableCell(
-                    withReuseIdentifier: StepCell.identifier,
-                    for: indexPath
-                ) as? StepCell else {
-                    fatalError("Could not dequeue StepCell")
-                }
-                cell.configure(with: step, at: indexPath.row)
-                return cell
-            }
+        let project = UILabel()
+        project.text = projectTitle
+        project.font = .preferredFont(forTextStyle: .body)
+        project.adjustsFontForContentSizeCategory = true
+        project.numberOfLines = 0
+        project.textColor = AppTheme.Palette.secondaryText
+        content.addArrangedSubview(project)
+        content.addArrangedSubview(message)
+        let title = makeField(.title)
+        let description = makeField(.description)
+        let precondition = makeField(.precondition)
+        let postcondition = makeField(.postcondition)
+        let main = FormSectionView(
+            title: "Main information".localized,
+            rows: [title, description],
+            style: .grouped
         )
+        let conditions = FormSectionView(
+            title: "Conditions".localized,
+            rows: [precondition, postcondition],
+            style: .grouped
+        )
+        content.addArrangedSubview(main)
+        content.addArrangedSubview(conditions)
+        content.addArrangedSubview(properties)
+        let heading = UILabel()
+        heading.text = "Steps".localized
+        heading.font = .preferredFont(forTextStyle: .headline)
+        heading.adjustsFontForContentSizeCategory = true
+        heading.numberOfLines = 0
+        heading.textColor = AppTheme.Palette.secondaryText
+        heading.accessibilityTraits.insert(.header)
+        steps.axis = .vertical
+        steps.spacing = AppTheme.Space.medium
+        let stepGroup = UIStackView(arrangedSubviews: [heading, steps])
+        stepGroup.axis = .vertical
+        stepGroup.spacing = AppTheme.Space.small
+        content.addArrangedSubview(stepGroup)
+        dataSections = [main, conditions, properties, stepGroup]
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardShown),
+            name: UIResponder.keyboardDidShowNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardShown),
+            name: UIResponder.keyboardDidChangeFrameNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardHidden),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+        updateValues()
+        updateBottomInsets()
     }
-    
-    private func updateCollectionViewHeight() {
-        let contentHeight = stepsCollectionView.contentSize.height
-        stepsCollectionView.snp.updateConstraints { make in
-            make.height.equalTo(contentHeight)
-        }
-    }
-    
-    private func loadSteps() {
-        steps = vm.testCase?.steps ?? []
-        
-        var snapshot = NSDiffableDataSourceSnapshot<Int, StepsInTestCase>()
-        snapshot.appendSections([0])
-        snapshot.appendItems(steps)
-        dataSource.apply(snapshot, animatingDifferences: true)
-        
-        updateCollectionViewHeight()
-    }
-    
-    // MARK: - objc funcs for responder
-    @objc func swipeBetweenViewsDelegate() {
-        guard let delegate = delegate else { return }
-        delegate.swipeBetweenViews(panRecognize)
-    }
-}
 
-extension GeneralDetailCaseViewController: DetailTestCaseProtocol {
-    func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer) {
-        print("swipeBetweenViews called")
+    deinit { NotificationCenter.default.removeObserver(self) }
+
+    private func makeField(_ type: FieldType) -> GeneralCaseTextField {
+        let field = GeneralCaseTextField(textType: type, detailVM: vm, style: .grouped)
+        fields[type] = field
+        field.onFocusChange = { [weak self, weak field] focused in
+            guard focused, let self, let field else { return }
+            self.focusedField = field
+            self.revealCaret()
+        }
+        return field
     }
-    
-    func checkConditionAndToggleRightBarButton() {
-        print("checkConditionAndToggleRightBarButton called")
-    }
-    
-    func updateUI() {
-        Task { @MainActor in
-            if let testCase = vm.testCase {
-                titleField.updateTextViewValue(testCase.title)
-                descriptionField.updateTextViewValue(testCase.description)
-                preconditionField.updateTextViewValue(testCase.preconditions)
-                postconditionField.updateTextViewValue(testCase.postconditions)
-                loadSteps()
+
+    private func revealCaret() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let field = self.focusedField else { return }
+            self.view.layoutIfNeeded()
+            if let rect = field.focusedCaretRect(in: self.scrollView) {
+                self.scrollView.scrollRectToVisible(
+                    rect.insetBy(dx: 0, dy: -AppTheme.Space.medium),
+                    animated: true
+                )
             }
         }
     }
-    
-    @objc func pull2Refresh() {
-        Task { @MainActor in updateUI() }
-    }
-}
 
-// MARK: - UICollectionViewDelegate
-extension GeneralDetailCaseViewController: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        print(indexPath)
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        updateBottomInsets()
     }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateBottomInsets()
+    }
+
+    private func updateBottomInsets() {
+        let keyboardTop = view.keyboardLayoutGuide.layoutFrame.minY
+        let keyboardVisible = keyboardTop < view.bounds.maxY - view.safeAreaInsets.bottom
+        let bottom = keyboardVisible ? 0 : view.safeAreaInsets.bottom
+        if scrollView.contentInset.bottom != bottom {
+            scrollView.contentInset.bottom = bottom
+            scrollView.verticalScrollIndicatorInsets.bottom = bottom
+        }
+    }
+
+    @objc private func keyboardShown() {
+        guard focusedField?.focusedCaretRect(in: scrollView) != nil else { return }
+        onKeyboardVisibilityChanged?(true)
+        revealCaret()
+    }
+
+    @objc private func keyboardHidden() { onKeyboardVisibilityChanged?(false) }
+
+    func updateValues() {
+        guard isViewLoaded else { return }
+        let draft = vm.changedTestCase ?? vm.testCase
+        dataSections.forEach { $0.isHidden = draft == nil }
+        fields[.title]?.updateTextViewValue(draft?.title)
+        fields[.description]?.updateTextViewValue(draft?.description)
+        fields[.precondition]?.updateTextViewValue(draft?.preconditions)
+        fields[.postcondition]?.updateTextViewValue(draft?.postconditions)
+        properties.updateValues()
+        if let draft, renderedSteps != draft.steps {
+            renderedSteps = draft.steps
+            steps.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            if !draft.steps.isEmpty {
+                appendSteps(draft.steps, prefix: nil)
+            } else {
+                updateEmptySteps()
+            }
+        }
+    }
+
+    private func updateEmptySteps() {
+        guard steps.arrangedSubviews.isEmpty else { return }
+        let label = UILabel()
+        label.text = "No steps yet".localized
+        label.font = .preferredFont(forTextStyle: .body)
+        label.adjustsFontForContentSizeCategory = true
+        label.numberOfLines = 0
+        label.textColor = AppTheme.Palette.secondaryText
+        label.accessibilityIdentifier = AccessibilityID.caseStepsEmpty.identifier
+        steps.addArrangedSubview(label)
+    }
+
+    private func appendSteps(_ values: [StepsInTestCase], prefix: String?) {
+        for (index, step) in values.enumerated() {
+            let number = prefix.map { $0 + "." + String(index + 1) } ?? String(index + 1)
+            steps.addArrangedSubview(TestCaseStepView(step: step, number: number))
+            if let children = step.steps, !children.isEmpty { appendSteps(children, prefix: number) }
+        }
+    }
+
+    func setEditingEnabled(_ enabled: Bool) {
+        fields.values.forEach { $0.setEditingEnabled(enabled) }
+        properties.setEditingEnabled(enabled)
+    }
+
+    func finishEditing() { fields.values.forEach { $0.finishEditing() } }
+
+    func showError(_ text: String, retry: (() -> Void)? = nil) {
+        message.show(text, retry: retry)
+        scrollView.setContentOffset(.zero, animated: true)
+    }
+
+    func clearError() { message.clear() }
 }

@@ -1,24 +1,33 @@
-# CLAUDE.md
+# Памятка разработки
 
-Рабочие заметки для разработки приложения. Перед изменением сетевого слоя или навигации проверьте связанные тесты и mock-данные.
+Обязательные правила проекта находятся в [AGENTS.md](AGENTS.md). Агентам запрещены сборка, компиляция, тестовые прогоны, анализ через сборочную систему и запуск CI. Все команды ниже предназначены **для самостоятельного запуска пользователем**.
 
-## Проект
+## Архитектура
 
-UIKit-приложение для Qase TMS: авторизация по API-токену, проекты, наборы и тест-кейсы, создание сущностей и редактирование кейса. Демо-режим описан в `README.md`; он запускается долгим нажатием на логотип на экране авторизации.
+`AppDelegate` создаёт `AppCompositionRoot`; `SceneDelegate` получает root и настройки окна. Composition root собирает авторизацию, transport, Realm и настройки, а после входа — зависимости конкретной сессии. `RootViewController` обновляет содержимое по событиям своего `SessionContext`.
 
-## Команды разработки
+`ApplicationRouter` управляет переходами, `FeatureScreenFactory` собирает экраны с готовыми зависимостями. Основные разделы используют SwiftUI внутри UIKit-навигации; формы остаются UIKit/SnapKit. Создание использует `EntityCreationViewModel` и `CreatingProjectViewModel`, редактор кейса — `TestCaseEditorViewModel`.
 
-Откройте проект и проверьте доступные симуляторы:
+`APIManager` получает актуальные credentials и `HTTPTransport`. `HomeRepository` и модели экранов согласуют загрузку с кешем и сессией. Realm сейчас сохраняет schema 5; миграция на SwiftData — план развития, а не текущая реализация.
+
+Подробности и карта исходников: [архитектура](docs/ARCHITECTURE.md). Демо запускается кнопкой «Попробовать демо»; описание возможностей — в [README](README.md).
+
+## Инварианты при изменениях
+
+- Не добавлять реальные токены в код. Проверка кандидата токена не изменяет действующую сессию при отказе. В HTTP-проверке авторизации `401` означает неверный токен; остальные HTTP-отказы передаются типизированными ошибками.
+- Передавать явный `projectCode` или reference. После смены токена/выхода старые модели и поздние ответы не обслуживают новую сессию.
+- Ключи кеша включают владельца, проект и тип сущности; корневой родитель — `nil`. Частичные страницы и поиск не заменяют полный кеш. Полный каталог и маркер полноты сохраняются атомарно.
+- Сохранять два независимых черновика создания, защиту ухода и повторного сохранения. Успешная часть операции не отправляется повторно после ошибки второй части; шаги редактора кейса остаются read-only.
+- Для network/cache изменений учитывать реальные и mock-пути. Demo и UI-тесты не используют production-кеш; JSON fixtures нужны приложению и проверкам.
+- Общие tokens — `AppTheme`, политики — `AppPolicies`, символы — `AppImages`, идентификаторы доступности — `AccessibilityID`. Размеры конкретного компонента остаются локальными.
+
+## Справочные команды пользователя
+
+Открытие проекта и выбор установленного симулятора:
 
 ```bash
 open QaseAPIProj.xcodeproj
 xcrun simctl list devices available
-```
-
-Список схем:
-
-```bash
-xcodebuild -list -project QaseAPIProj.xcodeproj
 ```
 
 Сборка без привязки к устройству:
@@ -31,39 +40,16 @@ xcodebuild build \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Unit-тесты на установленном симуляторе с iOS не ниже 18.6:
+Unit-проверки на установленном симуляторе с iOS не ниже 18.6:
 
 ```bash
 xcodebuild test \
   -project QaseAPIProj.xcodeproj \
   -scheme QaseAPIProj \
-  -destination 'platform=iOS Simulator,name=iPhone 14,OS=18.6' \
+  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' \
   -only-testing:QaseAPIProjTests
 ```
 
-Для UI-тестов замените последний аргумент на `-only-testing:QaseAPIProjUITests`. Для отдельного unit-теста используйте `-only-testing:QaseAPIProjTests/QaseAPIProjTests/checkValidURL`.
+Замените имя/OS на установленный симулятор; для UI-проверок используйте `-only-testing:QaseAPIProjUITests`. Полные инструкции и список ручной приёмки — в [DEVELOPMENT](docs/DEVELOPMENT.md).
 
-CI выбирает Xcode 26.3 и симулятор iPhone 16 с iOS 18.6, что соответствует deployment target приложения. SwiftLint и SwiftFormat в проекте не настроены.
-
-## Высокоуровневая архитектура
-
-- `AppDelegate` и `SceneDelegate` создают `RootViewController`. По аргументу запуска `UITests` приложение включает `APIMockManager`; mock читает JSON-файлы из bundle.
-- `RootViewController` слушает `.didChangeAuthStatus` и выбирает экран авторизации или `MainTabbarViewController`. `AuthManager` хранит токен в Keychain, состояние входа в `UserDefaults` и проверяет токен через `APIManager.auth(by:)`.
-- `APIManager` работает с Qase API v1 и передаёт токен в заголовке `Token`. Маршруты перечислены в `API.Operation`, а модели ответов находятся в `Data/Models/`.
-- Глобальный `apiManager` из `Classes/Constants.swift` получает реализацию от `ApiServiceConfiguration`. Mock-сервис нужно включить до первого обращения к этой константе.
-- `RealmDB.swift` и `EntitiesRO.swift` кэшируют проекты, наборы, кейсы и детали кейса. Модели API лежат в `Data/Models/`.
-- Контроллеры UIKit напрямую используют view models. `ProjectsViewModel` загружает и удаляет проекты, `TestEntitiesViewModel` управляет списком наборов и кейсов, `DetailTabbarControllerViewModel` загружает и обновляет детали кейса.
-- Основные вкладки сейчас: Home, Repository, Test Runs и Settings. Из Repository открываются вложенные наборы и экран кейса с разделами General и Properties. Интерфейс строится программно, в основном через SnapKit; общие элементы находятся в `Views/`, тема — в `AppTheme.swift`.
-- Unit-тесты используют Swift Testing и `APIMockManager`; UI-тесты используют XCTest и page objects из `QaseAPIProjUITests/Screens.swift`.
-
-## Внешние зависимости
-
-Проект использует SnapKit и Realm Swift через Swift Package Manager. Ограничения версий заданы в `project.pbxproj`, а точные ревизии сохранены в `QaseAPIProj.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`.
-
-
-## Важные замечания для изменений
-
-- Не добавлять реальные API-токены в код. Текущий демонстрационный вход из `AuthViewController` следует проверять отдельно от авторизации пользователя.
-- При изменениях auth/root flow проверять связку `AuthManager` → `.didChangeAuthStatus` → `RootViewController`.
-- При изменениях network/cache flow проверять и real API path, и mock path (`UITests`/`APIMockManager`), потому что тесты зависят от локальных JSON fixtures.
-- При изменениях списка suites/cases учитывать глобальный `PROJECT_NAME` из `Classes/Constants.swift`: он используется в запросах к Qase и ключах Realm для test entities/test cases.
+Зависимости: SnapKit и Realm Swift через SPM, точные ревизии — в [Package.resolved](QaseAPIProj.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved). Новые зависимости без отдельного запроса не добавлять. [API-каталог](docs/API_V1.md), [roadmap](docs/ROADMAP.md) и [дизайн-система](Design/DESIGN_SYSTEM.md) описывают соответствующие области без истории промежуточных работ.

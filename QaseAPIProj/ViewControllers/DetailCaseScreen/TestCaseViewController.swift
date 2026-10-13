@@ -1,221 +1,271 @@
-//
-//  DeatilTabBarController.swift
-//  QaseAPIProj
-//
-//  Created by Sergey Ivanov on 18.01.2024.
-//
-
+import SnapKit
 import UIKit
-import Foundation
 
 final class TestCaseViewController: UIViewController {
-    // MARK: - Fields
-    let viewModel: DetailTabbarControllerViewModel
-    private var viewControllers = [UIViewController]()
-    
-    // MARK: - UI components
-    private lazy var tabbar: UITabBar = {
-        let tb = UITabBar()
-        tb.translatesAutoresizingMaskIntoConstraints = false
-        tb.delegate = self
-        return tb
-    }()
-    
-    private lazy var containerView: UIView = {
-        let cv = UIView()
-        cv.translatesAutoresizingMaskIntoConstraints = false
-        return cv
-    }()
-    
-    // MARK: - Lifecycle
-    
-    init(caseUniqueKey: String) {
-        self.viewModel = DetailTabbarControllerViewModel(caseUniqueKey: caseUniqueKey)
+    let viewModel: TestCaseEditorViewModel
+    private let session: SessionContext
+    private var fetchTask: Task<Void, Never>?
+    private var saveTask: Task<Void, Never>?
+    private var isFetching = false
+    private var isSubmitting = false
+    private var isConfirmingDeparture = false
+    private var previousTabVisibility: Bool?
+    private weak var previousPopDelegate: UIGestureRecognizerDelegate?
+    private let form: GeneralDetailCaseViewController
+    private lazy var saveItem = UIBarButtonItem(
+        title: "Save".localized,
+        style: .plain,
+        target: self,
+        action: #selector(saveChanges)
+    )
+    private lazy var backItem = UIBarButtonItem(
+        image: AppImages.chevronLeft,
+        style: .plain,
+        target: self,
+        action: #selector(goBack)
+    )
+    private let spinner = UIActivityIndicatorView(style: .medium)
+
+    init(
+        viewModel: TestCaseEditorViewModel,
+        form: GeneralDetailCaseViewController,
+        session: SessionContext
+    ) {
+        self.viewModel = viewModel
+        self.form = form
+        self.session = session
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        title = "\(viewModel.reference.projectCode)-\(viewModel.caseId)"
+        navigationItem.largeTitleDisplayMode = .never
+        navigationItem.leftBarButtonItem = backItem
+        backItem.accessibilityLabel = "Back".localized
+        backItem.accessibilityIdentifier = AccessibilityID.formBack.identifier
+        saveItem.accessibilityIdentifier = AccessibilityID.formSave.identifier
+        spinner.color = AppTheme.Palette.accent
+        spinner.accessibilityLabel = "Saving".localized
+        view.backgroundColor = AppTheme.Palette.canvas
+        addChild(form)
+        view.addSubview(form.view)
+        form.view.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.leading.trailing.bottom.equalToSuperview()
+        }
+        form.didMove(toParent: self)
+        form.onKeyboardVisibilityChanged = { [weak self] visible in self?.setKeyboardVisible(visible) }
         viewModel.delegate = self
-        executeWithErrorHandling {
-            try await self.viewModel.fetchCaseDataJSON()
+        viewModel.checkDataChanged = { [weak self] in self?.checkConditionAndToggleRightBarButton() }
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(sessionInvalidated(_:)),
+            name: .didInvalidateSession,
+            object: session
+        )
+        checkConditionAndToggleRightBarButton()
+        fetchCase()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if viewModel.testCase == nil { fetchCase() }
+        if let gesture = navigationController?.interactivePopGestureRecognizer {
+            if gesture.delegate !== self {
+                previousPopDelegate = gesture.delegate
+                gesture.delegate = self
+            }
+            gesture.isEnabled = (navigationController?.viewControllers.count ?? 0) > 1
         }
-        viewModel.updatingFinishCallback = {
-            UIAlertController.showSimpleAlert(
-                on: self, title: "Data has been saved ✅".localized,
-                message: String(
-                    format: "Your changes for %@-%d test case with successfully saved".localized,
-                    PROJECT_NAME, self.viewModel.caseId
-                )
-            )
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        cancelFetching()
+        form.finishEditing()
+        view.endEditing(true)
+        restoreTabVisibility()
+        if let gesture = navigationController?.interactivePopGestureRecognizer, gesture.delegate === self {
+            gesture.delegate = previousPopDelegate
         }
-        viewModel.checkDataChanged = {
-            self.checkConditionAndToggleRightBarButton()
-        }
-        
-        setupTopTabBar()
-        configureView()
-        setupInitialViewController()
-        setupGestures()
+    }
+
+    deinit {
+        fetchTask?.cancel()
+        saveTask?.cancel()
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func cancelFetching() {
+        fetchTask?.cancel()
+        fetchTask = nil
+        isFetching = false
         checkConditionAndToggleRightBarButton()
     }
-    
-    // MARK: - View Configuration
-    func setupTopTabBar() {
-        let generalInfoVC = GeneralDetailCaseViewController(vm: viewModel)
-        let propertiesInfoVC = PropertiesDetailCaseViewController(vm: viewModel)
-        viewControllers = [generalInfoVC, propertiesInfoVC]
-        
-        let tabbarItems = [
-            UITabBarItem(title: "General".localized, image: nil, tag: 0),
-            UITabBarItem(title: "Properties".localized, image: nil, tag: 1),
-        ]
-        
-        tabbar.items = tabbarItems.map {
-            $0.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: -6)
-            $0.setTitleTextAttributes([.font: UIFont.systemFont(ofSize: 15)], for: .normal)
-            return $0
-        }
-        
-        tabbar.backgroundColor = AppTheme.bgPrimaryColor
-        tabbar.barTintColor = AppTheme.bgPrimaryColor
-        tabbar.selectedItem = tabbar.items?.first
-        
-        view.addSubview(tabbar)
-        tabbar.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.horizontalEdges.equalTo(view.snp.horizontalEdges)
-            $0.height.equalTo(30)
+
+    @objc private func sessionInvalidated(_ notification: Notification) {
+        cancelFetching()
+        saveTask?.cancel()
+        restoreTabVisibility()
+    }
+
+    private func setKeyboardVisible(_ visible: Bool) {
+        if visible {
+            guard navigationController?.topViewController === self, view.window != nil else { return }
+            if previousTabVisibility == nil { previousTabVisibility = tabBarController?.isTabBarHidden }
+            tabBarController?.setTabBarHidden(true, animated: false)
+        } else {
+            restoreTabVisibility()
         }
     }
-    
-    private func configureView() {
-        view.addSubview(containerView)
-        
-        containerView.snp.makeConstraints {
-            $0.top.equalTo(tabbar.snp.bottom)
-            $0.horizontalEdges.equalTo(view.snp.horizontalEdges)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom)
+
+    private func restoreTabVisibility() {
+        if let previousTabVisibility { tabBarController?.setTabBarHidden(
+            previousTabVisibility,
+            animated: false
+        ) }
+        previousTabVisibility = nil
+    }
+
+    private func fetchCase() {
+        guard !isFetching, !isSavingDraft, viewModel.isSessionCurrent else { return }
+        isFetching = true
+        form.clearError()
+        checkConditionAndToggleRightBarButton()
+        fetchTask = Task { [weak self, viewModel] in
+            do {
+                try await viewModel.fetchCaseDataJSON()
+            } catch {
+                guard !Task.isCancelled, viewModel.isSessionCurrent, let self else { return }
+                self.form.showError(
+                    "Could not load the test case. Try again.".localized,
+                    retry: { [weak self] in
+                        self?.fetchCase()
+                    }
+                )
+            }
+            guard !Task.isCancelled, let self else { return }
+            self.fetchTask = nil
+            self.isFetching = false
+            self.checkConditionAndToggleRightBarButton()
         }
-        
-        title = "\(PROJECT_NAME)-\(viewModel.caseId)"
     }
-    
-    private func setupInitialViewController() {
-        guard let firstVC = viewControllers.first else { return }
-        addChildVC(firstVC)
-    }
-    
-    private func addChildVC(_ viewController: UIViewController) {
-        addChild(viewController)
-        containerView.addSubview(viewController.view)
-        viewController.view.frame = containerView.bounds
-        viewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        viewController.didMove(toParent: self)
-    }
-    
-    private func removeCurrentViewController() {
-        if let currentChild = children.first {
-            currentChild.willMove(toParent: nil)
-            currentChild.view.removeFromSuperview()
-            currentChild.removeFromParent()
+
+    @objc private func saveChanges() {
+        form.finishEditing()
+        view.endEditing(true)
+        guard viewModel.canSaveChanges, !isSavingDraft else { return }
+        form.clearError()
+        isSubmitting = true
+        checkConditionAndToggleRightBarButton()
+        saveTask = Task { [weak self] in
+            guard let self else { return }
+            defer {
+                self.saveTask = nil
+                self.isSubmitting = false
+                self.checkConditionAndToggleRightBarButton()
+            }
+            do {
+                try await self.viewModel.updateTestCaseData()
+                guard self.viewModel.isSessionCurrent, self.viewModel.isUploadingSuccess else { return }
+                self.isSubmitting = false
+                self.checkConditionAndToggleRightBarButton()
+                UIAlertController.showSimpleAlert(
+                    on: self,
+                    title: "Success".localized,
+                    message: "Changes saved".localized
+                )
+            } catch {
+                guard self.viewModel.isSessionCurrent else { return }
+                self.form.showError("Could not save the test case. Try again.".localized)
+            }
         }
     }
-    
-    private func changeCurrentView(to item: UITabBarItem?) {
-        guard let item = item else { return }
-        
-        removeCurrentViewController()
-        switch item.tag {
-        case 0:
-            addChildVC(viewControllers[0])
-        case 1:
-            addChildVC(viewControllers[1])
-        case 2:
-            addChildVC(viewControllers[2])
-        default:
-            break
+
+    @objc private func goBack() {
+        Task { [weak self] in
+            guard let self, await self.requestDeparture() else { return }
+            self.navigationController?.popViewController(animated: true)
         }
     }
 }
 
-// MARK: - UITabBarDelegate
-extension TestCaseViewController: UITabBarDelegate {
-    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
-        changeCurrentView(to: item)
-    }
-}
-
-// MARK: - DetailTestCaseProtocol
 extension TestCaseViewController: DetailTestCaseProtocol {
-    func updateUI() {
-        Task { @MainActor in
-            title = "\(PROJECT_NAME)-\(viewModel.caseId)"
-            for viewC in viewControllers {
-                guard let viewC = viewC as? DetailTestCaseProtocol else { continue }
-                viewC.updateUI()
-            }
-        }
-    }
-    
-    // MARK: - setuping gestures for VCs
-    private func setupGestures() {
-        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeBetweenViews(_:)))
-        swipeLeft.direction = .left
-        view.addGestureRecognizer(swipeLeft)
-        
-        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(swipeBetweenViews(_:)))
-        swipeRight.direction = .right
-        view.addGestureRecognizer(swipeRight)
-    }
-    
-    @objc func swipeBetweenViews(_ gesture: UISwipeGestureRecognizer) {
-        let tabsCount = viewControllers.count
-        
-        if let selectedItem = tabbar.selectedItem, let tabbarItems = tabbar.items {
-            if gesture.direction == .right {
-                if selectedItem.tag > 0 {
-                    tabbar.selectedItem = tabbarItems[selectedItem.tag - 1]
-                } else if selectedItem.tag == 0 {
-                    tabbar.selectedItem = tabbarItems[tabsCount - 1]
-                }
-                changeCurrentView(to: tabbar.selectedItem)
-            } else if gesture.direction == .left {
-                if selectedItem.tag < tabsCount - 1 {
-                    tabbar.selectedItem = tabbarItems[selectedItem.tag + 1]
-                } else if selectedItem.tag == tabsCount - 1 {
-                    tabbar.selectedItem = tabbarItems[0]
-                }
-                changeCurrentView(to: tabbar.selectedItem)
-            }
-        }
-    }
+    func updateUI() { checkConditionAndToggleRightBarButton() }
 }
 
 extension TestCaseViewController: CheckEnablingRBBProtocol {
-    // MARK: - setuping save bar buttons into VC's navItem
     func checkConditionAndToggleRightBarButton() {
-        let shouldShowButton = viewModel.testCase != viewModel.changedTestCase
-        
-        if shouldShowButton {
-            let rightBarButton = UIBarButtonItem(title: "Save".localized,
-                                                 style: .plain,
-                                                 target: self,
-                                                 action: #selector(rightBarButtonTapped))
-            navigationItem.setRightBarButton(rightBarButton, animated: true)
+        guard isViewLoaded else { return }
+        backItem.isEnabled = !isSavingDraft
+        saveItem.isEnabled = viewModel.canSaveChanges && !isSavingDraft && !isFetching
+        if isSavingDraft {
+            spinner.startAnimating()
+            navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
         } else {
-            navigationItem.rightBarButtonItem = nil
+            spinner.stopAnimating()
+            navigationItem.rightBarButtonItem = saveItem
+        }
+        form.updateValues()
+        form
+            .setEditingEnabled(viewModel.changedTestCase != nil && !isSavingDraft && !isFetching && viewModel
+                .isSessionCurrent)
+    }
+}
+
+extension TestCaseViewController: FormDepartureParticipant {
+    var isSavingDraft: Bool { viewModel.isSaving || isSubmitting }
+    var hasUnsavedChanges: Bool { viewModel.hasUnsavedChanges }
+    var canSaveDraft: Bool { viewModel.canSaveChanges && !isSubmitting }
+
+    func requestDeparture() async -> Bool {
+        form.finishEditing()
+        view.endEditing(true)
+        guard !isSavingDraft, !isConfirmingDeparture, viewModel.isSessionCurrent else { return false }
+        isConfirmingDeparture = true
+        defer { isConfirmingDeparture = false }
+        let allowed = await FormDepartureGuard.confirm(
+            self,
+            on: self,
+            message: "Unsaved test case changes will be lost."
+                .localized
+        )
+        return allowed && viewModel.isSessionCurrent && !isSavingDraft
+    }
+
+    func saveDraft() async throws {
+        form.finishEditing()
+        view.endEditing(true)
+        guard !isSavingDraft else { throw API.NetError.invalidRequest("A save is already in progress") }
+        let callback = viewModel.updatingFinishCallback
+        viewModel.updatingFinishCallback = {}
+        defer { viewModel.updatingFinishCallback = callback }
+        try await viewModel.updateTestCaseData()
+        guard viewModel.isUploadingSuccess, viewModel.isSessionCurrent else {
+            throw API.NetError.invalidRequest("The draft was not saved")
         }
     }
-    
-    @objc func rightBarButtonTapped() {
-        executeWithErrorHandling {
-            try await self.viewModel.updateTestCaseData()
+
+    func discardDraft() {
+        viewModel.discardDraft()
+        checkConditionAndToggleRightBarButton()
+    }
+}
+
+extension TestCaseViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard (navigationController?.viewControllers.count ?? 0) > 1, !isSavingDraft else { return false }
+        form.finishEditing()
+        view.endEditing(true)
+        if hasUnsavedChanges {
+            goBack()
+            return false
         }
+        return previousPopDelegate?.gestureRecognizerShouldBegin?(gestureRecognizer) ?? true
     }
 }

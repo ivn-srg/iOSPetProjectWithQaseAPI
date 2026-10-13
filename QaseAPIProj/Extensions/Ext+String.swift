@@ -20,7 +20,7 @@ extension String {
     var withoutLineBreaks: String {
         self.replacingOccurrences(of: "\n", with: " ")
     }
-    
+
     func toAttributedString() -> NSAttributedString? {
         let attributedString = try? NSMutableAttributedString(
             markdown: self,
@@ -30,9 +30,9 @@ extension String {
                 failurePolicy: .returnPartiallyParsedIfPossible
             )
         )
-        
+
         guard let attributedString = attributedString else { return nil }
-        
+
         attributedString.beginEditing()
         attributedString.enumerateAttributes(
             in: NSRange(location: 0, length: attributedString.length),
@@ -41,14 +41,12 @@ extension String {
             if attributes[.link] == nil {
                 var updatedAttributes = attributes
                 updatedAttributes[.foregroundColor] = UIColor.label
-                updatedAttributes[.font] = UIFont.systemFont(ofSize: 14)
+                updatedAttributes[.font] = UIFont.preferredFont(forTextStyle: .body)
                 attributedString.setAttributes(updatedAttributes, range: range)
             }
         }
         attributedString.endEditing()
-        
+
         return attributedString
     }
 }
-
-

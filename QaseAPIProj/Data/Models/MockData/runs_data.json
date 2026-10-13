@@ -1,0 +1,30 @@
+{
+  "status": true,
+  "result": {
+    "total": 2,
+    "filtered": 2,
+    "count": 2,
+    "entities": [
+      {
+        "project_code": "DEMO",
+        "id": 7,
+        "title": "Smoke · iOS 26",
+        "status": 0,
+        "status_text": "in_progress",
+        "start_time": "2026-10-03T08:00:00Z",
+        "stats": {"total": 32, "statuses": {"passed": 16, "failed": 2, "untested": 10, "in_progress": 3, "retest": 1}},
+        "cases": [2, 3]
+      },
+      {
+        "project_code": "DEMO",
+        "id": 6,
+        "title": "Регрессия · авторизация",
+        "status": 1,
+        "status_text": "complete",
+        "start_time": "2026-10-02T08:00:00Z",
+        "stats": {"total": 12, "statuses": {"passed": 12}},
+        "cases": [2]
+      }
+    ]
+  }
+}

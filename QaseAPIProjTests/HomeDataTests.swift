@@ -166,16 +166,18 @@ struct HomeDataTests {
             pathParameters: ["code": "DEMO", "id": String(id)],
             modelType: QaseAPIResponse<QaseAPIEmptyResult>.self
         )
-        do {
+        let error = try await #require(throws: API.NetError.self) { () async throws -> Void in
             _ = try await network.performRequest(
                 for: .getCase,
                 pathParameters: ["code": "DEMO", "id": String(id)],
                 modelType: QaseAPIResponse<CaseSummary>.self
             )
-            Issue.record("Deleted case was returned")
-        } catch API.NetError.httpError(let status, _, _) {
-            #expect(status == 404)
         }
+        guard case .httpError(let status, _, _) = error else {
+            Issue.record("Expected an HTTP error for a deleted case")
+            return
+        }
+        #expect(status == 404)
     }
 
     @Test("Repository rejects a response from an invalidated session")

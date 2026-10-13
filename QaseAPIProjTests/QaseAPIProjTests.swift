@@ -140,12 +140,14 @@ struct QaseAPIProjTests {
 
     @Test("Successful response parse errors keep the decoding reason")
     func checkResponseDecodingError() async throws {
-        do {
+        let error = try #require(throws: API.NetError.self) { () throws -> Void in
             _ = try API.decodeResponse(from: Data("{}".utf8), as: ProjectDataModel.self)
-            #expect(Bool(false))
-        } catch API.NetError.parsingError(let message) {
-            #expect(!message.isEmpty)
         }
+        guard case .parsingError(let message) = error else {
+            Issue.record("Expected a response parsing error")
+            return
+        }
+        #expect(!message.isEmpty)
     }
 
     @Test("Multipart builder escapes filenames and enforces file count")
@@ -160,11 +162,12 @@ struct QaseAPIProjTests {
 
         #expect(!bodyText.contains("\r\nX-Qase: injected"))
 
-        do {
+        let error = try #require(throws: API.NetError.self) { () throws -> Void in
             _ = try API.makeMultipartBody(files: Array(repeating: file, count: 21), boundary: "test-boundary")
-            #expect(Bool(false))
-        } catch API.NetError.invalidRequest {
-            #expect(Bool(true))
+        }
+        guard case .invalidRequest = error else {
+            Issue.record("Expected an invalid request for too many files")
+            return
         }
     }
 

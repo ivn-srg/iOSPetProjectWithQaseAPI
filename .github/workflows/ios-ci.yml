@@ -35,7 +35,7 @@ jobs:
             -derivedDataPath DerivedData \
             -disableAutomaticPackageResolution \
             CODE_SIGNING_ALLOWED=NO \
-            | tee Logs/build.log
+            2>&1 | tee Logs/build.log
 
       - name: Run Unit Tests
         run: |
@@ -50,7 +50,7 @@ jobs:
             -derivedDataPath DerivedData \
             -disableAutomaticPackageResolution \
             CODE_SIGNING_ALLOWED=NO \
-            | tee Logs/unit-tests.log
+            2>&1 | tee Logs/unit-tests.log
 
       - name: Run UI Tests
         run: |
@@ -66,7 +66,7 @@ jobs:
             -disableAutomaticPackageResolution \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO \
-            | tee Logs/ui-tests.log
+            2>&1 | tee Logs/ui-tests.log
 
       - name: Prepare artifacts
         if: always()

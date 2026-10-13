@@ -15,7 +15,7 @@ struct CacheManagementTests {
         let realm = try Realm(configuration: configuration)
         return (session, dao, realm)
     }
-
+    
     private func seedDownloads(owner: String, in realm: Realm) throws -> ProjectRO {
         let project = ProjectRO()
         project.cacheKey = "\(owner)|PROJECT"
@@ -26,7 +26,7 @@ struct CacheManagementTests {
         counts.runs = TestRunsRO()
         counts.defects = BugReportsRO()
         project.counts = counts
-
+        
         let entity = TestListEntity(
             isSuite: true,
             id: 1,
@@ -86,7 +86,7 @@ struct CacheManagementTests {
         try realm.write { realm.add([project, suite, detail, home, read] as [Object]) }
         return project
     }
-
+    
     @Test(arguments: [0, 1, 2, 3, 4])
     func eachDownloadRootIsDetectedAndCleared(rootIndex: Int) throws {
         let (session, dao, realm) = try store()
@@ -108,7 +108,7 @@ struct CacheManagementTests {
         #expect(roots[rootIndex].isInvalidated)
         #expect(try !dao.hasDownloadedData(stamp: stamp))
     }
-
+    
     @Test func clearingDownloadsPreservesHistoryOtherOwnersAndSession() throws {
         let (session, dao, realm) = try store()
         let ownerProject = try seedDownloads(owner: "A", in: realm)
@@ -130,10 +130,10 @@ struct CacheManagementTests {
         #expect(dao.recordRecentCase(history, stamp: session.capture()))
         session.activate(ownerID: "A")
         let stamp = session.capture()
-
+        
         #expect(try dao.hasDownloadedData(stamp: stamp))
         try dao.clearDownloadedData(stamp: stamp)
-
+        
         #expect(try !dao.hasDownloadedData(stamp: stamp))
         #expect(realm.objects(ProjectRO.self).filter("ownerID == %@", "A").isEmpty)
         #expect(realm.objects(TestEntitiesDataRO.self).filter("ownerID == %@", "A").isEmpty)
@@ -155,7 +155,7 @@ struct CacheManagementTests {
         #expect(dao.getRecentCases(projectCode: "PROJECT") == [history])
         #expect(session.capture() == stamp)
     }
-
+    
     @Test func staleOwnerAndGenerationCannotReadOrClearDownloads() throws {
         let (session, dao, realm) = try store()
         _ = try seedDownloads(owner: "A", in: realm)
@@ -175,7 +175,7 @@ struct CacheManagementTests {
         #expect(realm.objects(TestEntityRO.self).count == 1)
         #expect(realm.objects(StepsInTestCaseRO.self).count == 3)
     }
-
+    
     @Test func missingOwnerCannotReadOrClearDownloads() throws {
         let (session, dao, realm) = try store(ownerID: nil)
         _ = try seedDownloads(owner: "A", in: realm)
@@ -185,7 +185,7 @@ struct CacheManagementTests {
         #expect(realm.objects(ProjectRO.self).count == 1)
         #expect(session.capture() == stamp)
     }
-
+    
     @Test func emptyCacheClearingIsIdempotentAndHistoryIsNotADownload() throws {
         let (session, dao, _) = try store()
         let stamp = session.capture()

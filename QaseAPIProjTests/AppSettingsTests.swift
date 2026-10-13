@@ -24,7 +24,7 @@ struct AppSettingsTests {
         store.appearance = .system
         #expect(AppSettingsStore(defaults: defaults).appearance == .system)
     }
-
+    
     @Test func invalidStoredAppearanceFallsBackAndDoesNotTouchOtherPreferences() throws {
         let name = "AppSettingsTests." + UUID().uuidString
         let defaults = try #require(UserDefaults(suiteName: name))

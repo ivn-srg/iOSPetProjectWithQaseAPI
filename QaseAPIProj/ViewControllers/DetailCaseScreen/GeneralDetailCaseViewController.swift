@@ -84,13 +84,13 @@ final class GeneralDetailCaseViewController: UIViewController {
         dataSections = [main, conditions, properties, stepGroup]
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(keyboardShown),
+            selector: #selector(keyboardShown(_:)),
             name: UIResponder.keyboardDidShowNotification,
             object: nil
         )
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(keyboardShown),
+            selector: #selector(keyboardShown(_:)),
             name: UIResponder.keyboardDidChangeFrameNotification,
             object: nil
         )
@@ -150,8 +150,13 @@ final class GeneralDetailCaseViewController: UIViewController {
         }
     }
 
-    @objc private func keyboardShown() {
-        guard focusedField?.focusedCaretRect(in: scrollView) != nil else { return }
+    @objc private func keyboardShown(_ notification: Notification) {
+        guard focusedField?.focusedCaretRect(in: scrollView) != nil,
+              let screen = notification.object as? UIScreen,
+              let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect
+        else { return }
+        let keyboardFrame = screen.coordinateSpace.convert(frame, to: view)
+        guard view.bounds.intersection(keyboardFrame).height > 0 else { return }
         onKeyboardVisibilityChanged?(true)
         revealCaret()
     }

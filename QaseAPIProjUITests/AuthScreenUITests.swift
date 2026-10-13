@@ -36,8 +36,11 @@ final class AuthScreenUITests: XCTestCase {
         XCTAssertEqual(visible.value as? String, "fixture-token")
         reveal(.authTokenVisibility).tap()
         XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
         field.typeText("X")
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
         reveal(.authTokenVisibility).tap()
+        XCTAssertTrue(visible.waitForExistence(timeout: 5))
         XCTAssertEqual(visible.value as? String, "fixture-tokenX")
     }
 

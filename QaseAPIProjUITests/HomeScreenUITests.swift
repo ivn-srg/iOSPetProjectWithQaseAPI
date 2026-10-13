@@ -21,6 +21,13 @@ final class HomeScreenUITests: XCTestCase {
 
     override func tearDownWithError() throws { app.terminate() }
 
+    private func selectTab(_ identifier: AccessibilityID, title: String) {
+        let identified = app.tabBars.buttons[identifier.identifier]
+        let button = identified.exists ? identified : app.tabBars.buttons[title]
+        XCTAssertTrue(button.waitForExistence(timeout: 5), app.debugDescription)
+        button.tap()
+    }
+
     private func reveal(_ identifier: AccessibilityID) -> XCUIElement {
         let item = app.descendants(matching: .any).matching(identifier: identifier.identifier).firstMatch
         for _ in 0 ..< 8 {
@@ -40,10 +47,10 @@ final class HomeScreenUITests: XCTestCase {
         XCTAssertTrue(choice.waitForExistence(timeout: 5))
         choice.tap()
         XCTAssertTrue(app.buttons[AccessibilityID.projectPicker.identifier].label.contains("1Forma"))
-        app.tabBars.buttons[AccessibilityID.tabRepository.identifier].tap()
+        selectTab(.tabRepository, title: "Репозиторий")
         XCTAssertTrue(app.buttons[AccessibilityID.projectPicker.identifier].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons[AccessibilityID.projectPicker.identifier].label.contains("1Forma"))
-        app.tabBars.buttons[AccessibilityID.tabWork.identifier].tap()
+        selectTab(.tabWork, title: "Работа")
         XCTAssertTrue(app.buttons[AccessibilityID.projectPicker.identifier].label.contains("1Forma"))
     }
 
@@ -53,7 +60,7 @@ final class HomeScreenUITests: XCTestCase {
         row.tap()
         XCTAssertTrue(app.navigationBars.staticTexts["DEMO-81"].waitForExistence(timeout: 8))
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.tabBars.buttons[AccessibilityID.tabHome.identifier].tap()
+        selectTab(.tabHome, title: "Главная")
         XCTAssertTrue(app.buttons[AccessibilityID.recent(project: "DEMO", caseID: 81).identifier]
             .waitForExistence(timeout: 5))
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -108,7 +115,7 @@ final class HomeScreenUITests: XCTestCase {
         add(screenshot)
     }
 
-    func testHiddenDraftSurvivesCancelledRootNavigation() {
+    func testDraftSurvivesCancelledTabAndBackNavigation() {
         app.buttons[AccessibilityID.homeAllCases.identifier].tap()
         let row = reveal(.repositoryCase(81))
         row.tap()
@@ -116,12 +123,14 @@ final class HomeScreenUITests: XCTestCase {
         XCTAssertTrue(title.waitForExistence(timeout: 8))
         title.tap()
         title.typeText(" Edited")
-        app.tabBars.buttons[AccessibilityID.tabHome.identifier].tap()
-        app.buttons[AccessibilityID.homeAllCases.identifier].tap()
-        let stay = app.alerts.buttons["Остаться"]
+        app.navigationBars.buttons[AccessibilityID.formBack.identifier].tap()
+        let stay = app.alerts.buttons["Продолжить редактирование"]
         XCTAssertTrue(stay.waitForExistence(timeout: 5))
         stay.tap()
-        app.tabBars.buttons[AccessibilityID.tabRepository.identifier].tap()
+        XCTAssertTrue(app.navigationBars.staticTexts["DEMO-81"].waitForExistence(timeout: 5))
+        selectTab(.tabHome, title: "Главная")
+        XCTAssertTrue(stay.waitForExistence(timeout: 5))
+        stay.tap()
         XCTAssertTrue(app.navigationBars.staticTexts["DEMO-81"].waitForExistence(timeout: 5))
         XCTAssertTrue((app.textViews[AccessibilityID.field(.title).identifier].value as? String)?
             .contains("Edited") == true)

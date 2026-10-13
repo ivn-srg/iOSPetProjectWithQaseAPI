@@ -24,7 +24,7 @@ struct AuthHTTPTests {
         }
         #expect(await transport.tokens == ["candidate"])
     }
-
+    
     @Test func emptyInputDoesNotSendAndTransportFailuresPropagate() async throws {
         let transport = AuthHTTPTransport(status: 200, error: URLError(.notConnectedToInternet))
         let network = APIManager(tokenProvider: { "stored" }, transport: transport)
@@ -37,7 +37,7 @@ struct AuthHTTPTests {
             #expect(error.code == .notConnectedToInternet)
         }
     }
-
+    
     @Test @MainActor
     func missingHTTPResponseIsNotReportedAsInvalidCredentials() async throws {
         let transport = AuthHTTPTransport(status: 200, nonHTTP: true)
@@ -49,7 +49,7 @@ struct AuthHTTPTests {
             #expect(error.code == .badServerResponse)
         }
     }
-
+    
     @Test @MainActor
     func loginAndReplacementFailuresDoNotCommitCredentials() async throws {
         for status in [401, 403, 429, 500] {
@@ -80,7 +80,7 @@ struct AuthHTTPTests {
             } catch {}
             #expect(storage.getCredential() == nil && session.ownerID == nil)
             #expect(!defaults.bool(forKey: "isUserLoggedIn") && sideEffects == 0)
-
+            
             let original = AuthCredential(token: "original", ownerID: "owner")
             try storage.saveCredential(original)
             session.activate(ownerID: "owner")
@@ -101,13 +101,13 @@ private actor AuthHTTPTransport: HTTPTransport {
     let error: URLError?
     let nonHTTP: Bool
     private(set) var tokens: [String] = []
-
+    
     init(status: Int, error: URLError? = nil, nonHTTP: Bool = false) {
         self.status = status
         self.error = error
         self.nonHTTP = nonHTTP
     }
-
+    
     func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
         tokens.append(request.value(forHTTPHeaderField: "Token") ?? "")
         if let error { throw error }

@@ -85,7 +85,10 @@ struct FormComponentTests {
         #expect(edit.selection == NSRange(location: 1, length: 0))
         #expect(FormTextInputPolicy
             .replacing("ABC", range: NSRange(location: 4, length: 1), with: "X") == nil)
-        #expect(FormTextInputPolicy.replacing("😀", range: NSRange(location: 1, length: 1), with: "X") == nil)
+        for range in [NSRange(location: 1, length: 1), NSRange(location: 0, length: 1),
+                      NSRange(location: 1, length: 0)] {
+            #expect(FormTextInputPolicy.replacing("😀", range: range, with: "X") == nil)
+        }
     }
 
     @Test func committedCompositionTruncatesOnceAndClampsSelection() {
@@ -335,7 +338,8 @@ struct FormLayoutRegressionTests {
         await Task.yield()
         host.view.layoutIfNeeded()
         fit(section, width: 280)
-        #expect(try #require(placeholder.font).pointSize > initialFontSize)
+        let scaledPlaceholderFont = try #require(placeholder.font)
+        #expect(scaledPlaceholderFont.pointSize > initialFontSize)
         #expect(section.bounds.height > initialHeight)
         #expect(!placeholder.isHidden)
         #expect(input.bounds.height >= placeholder.bounds.height)
@@ -442,7 +446,8 @@ struct FormLayoutRegressionTests {
         host.traitOverrides.preferredContentSizeCategory = .accessibilityExtraExtraExtraLarge
         await Task.yield()
         host.view.layoutIfNeeded()
-        #expect(try #require(input.font).pointSize > initialSize)
+        let scaledInputFont = try #require(input.font)
+        #expect(scaledInputFont.pointSize > initialSize)
         #expect(input.layer.borderColor == AppTheme.Palette.accent.resolvedColor(with: input.traitCollection)
             .cgColor)
         #expect(counter.superview?.isHidden == false)

@@ -8,11 +8,12 @@ private struct TransportResponse: Decodable { let status: Bool }
 
 private actor RecordingTransport: HTTPTransport {
     private(set) var requests: [URLRequest] = []
-
+    
     func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
         requests.append(request)
+        let url = try #require(request.url)
         let response = try #require(HTTPURLResponse(
-            url: try #require(request.url),
+            url: url,
             statusCode: 200,
             httpVersion: nil,
             headerFields: nil
@@ -41,15 +42,15 @@ struct ArchitectureRegressionTests {
         weak var releasedController = controller
         controller?.loadViewIfNeeded()
         await transport.waitUntilStarted()
-
+        
         controller?.viewWillDisappear(false)
         controller = nil
         await transport.waitUntilCancelled()
-
+        
         #expect(releasedController == nil)
         #expect(model.testCase == nil && model.changedTestCase == nil)
     }
-
+    
     @Test(.timeLimit(.minutes(1))) func invalidatingSessionCancelsPendingEditorRequest() async throws {
         let session = SessionContext(ownerID: "editor")
         let transport = SuspendedEditorTransport()
@@ -67,21 +68,21 @@ struct ArchitectureRegressionTests {
         )
         controller.loadViewIfNeeded()
         await transport.waitUntilStarted()
-
+        
         session.invalidate()
         await transport.waitUntilCancelled()
-
+        
         #expect(model.testCase == nil && model.changedTestCase == nil)
         #expect(!model.isSessionCurrent)
     }
-
+    
     @Test(.timeLimit(.minutes(1))) func cancelledFetchIgnoresLateSuccessfulResponse() async throws {
         let fixtureURL = try #require(Bundle(for: TestCaseViewController.self).url(
             forResource: "test_cases_data",
             withExtension: "json"
         ))
         let fixture = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: fixtureURL))
-            as? [String: Any])
+                                   as? [String: Any])
         let result = try #require(fixture["result"] as? [String: Any])
         let entities = try #require(result["entities"] as? [[String: Any]])
         let entity = try #require(entities.first)
@@ -101,17 +102,17 @@ struct ArchitectureRegressionTests {
         )
         let request = Task { try await model.fetchCaseDataJSON() }
         await transport.waitUntilStarted()
-
+        
         request.cancel()
         await transport.waitUntilCancelled()
         await transport.finish(data: body)
         try await request.value
-
+        
         #expect(model.testCase == nil && model.changedTestCase == nil)
         #expect(cache.getTestCase(reference: reference) == nil)
         #expect(cache.getRecentCases(projectCode: "A").isEmpty)
     }
-
+    
     @Test func jsonAndMultipartReadCurrentCredentials() async throws {
         let storage = MemoryCredentialStorage()
         try storage.saveCredential(.init(token: "first", ownerID: "owner"))
@@ -142,7 +143,7 @@ struct ArchitectureRegressionTests {
         #expect(headers == ["first", "replacement", "replacement", "candidate"])
         #expect(storage.getCredential()?.token == "replacement")
     }
-
+    
     @Test func authenticatedGraphIsReplacedOnTokenChangeAndReleasedOnLogout() async throws {
         let domain = "ArchitectureRegressionTests." + UUID().uuidString
         let defaults = try #require(UserDefaults(suiteName: domain))
@@ -168,7 +169,7 @@ struct ArchitectureRegressionTests {
         #expect(root.children.first is AuthViewController)
         #expect(composition.session.ownerID == nil)
     }
-
+    
     @Test func demoCachesAndCredentialsAreIsolatedBetweenEnvironments() async throws {
         let firstSession = SessionContext(ownerID: "first")
         let secondSession = SessionContext(ownerID: "second")
@@ -185,7 +186,7 @@ struct ArchitectureRegressionTests {
         try second.clearAll()
         #expect(first.getProjects()?.count == 1)
     }
-
+    
     @Test func fixedAndDynamicIdentifiersPreserveLegacyValues() {
         #expect(AccessibilityID.field(.title).identifier == "field.Title")
         #expect(AccessibilityID.breadcrumb(nil).identifier == "repository.breadcrumb.root")
@@ -195,8 +196,8 @@ struct ArchitectureRegressionTests {
         #expect(Set(fields).count == fields.count)
         #expect(Set(AppTab.allCases.map { $0.accessibilityID.identifier }).count == AppTab.allCases.count)
     }
-
-    @Test func unchangedIdentityStillRoundTripsFullStepContentThroughRealm() {
+    
+    @Test func unchangedIdentityStillRoundTripsFullStepContentThroughRealm() throws {
         let session = SessionContext(ownerID: "owner")
         let cache = TestDependencies.cache(session: session)
         let child = StepsInTestCase(
@@ -210,8 +211,10 @@ struct ArchitectureRegressionTests {
             data: "data",
             steps: []
         )
-        var value = TestCaseEntity.empty
-        value.id = 42
+        let reference = TestCaseReference(projectCode: "A", caseID: 42)
+        let fixture = TestEntityRO(testCaseData: .empty, reference: reference, ownerID: "owner")
+        fixture.id = 42
+        var value = try #require(TestCaseEntity(realmObject: fixture))
         value.title = "Regression"
         value.steps = [StepsInTestCase(
             hash: "same-parent",
@@ -231,7 +234,6 @@ struct ArchitectureRegressionTests {
         value.type = .integration
         value.layer = .api
         value.automation = .toBeAutomated
-        let reference = TestCaseReference(projectCode: "A", caseID: 42)
         #expect(cache.saveTestCase(value, reference: reference, stamp: session.capture()))
         #expect(cache.getTestCase(reference: reference) == value)
     }
@@ -244,10 +246,10 @@ private actor SuspendedEditorTransport: HTTPTransport {
     private var cancelled = false
     private var startWaiter: CheckedContinuation<Void, Never>?
     private var cancellationWaiter: CheckedContinuation<Void, Never>?
-
+    
     func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
         url = request.url
-        try await withTaskCancellationHandler {
+        return try await withTaskCancellationHandler {
             try Task.checkCancellation()
             return try await withCheckedThrowingContinuation { continuation in
                 self.request = continuation
@@ -259,7 +261,7 @@ private actor SuspendedEditorTransport: HTTPTransport {
             Task { await self.recordCancellation() }
         }
     }
-
+    
     func waitUntilStarted() async {
         await withTaskCancellationHandler {
             if !started && !Task.isCancelled {
@@ -269,7 +271,7 @@ private actor SuspendedEditorTransport: HTTPTransport {
             Task { await self.cancelWaits() }
         }
     }
-
+    
     func waitUntilCancelled() async {
         await withTaskCancellationHandler {
             if !cancelled && !Task.isCancelled {
@@ -279,20 +281,20 @@ private actor SuspendedEditorTransport: HTTPTransport {
             Task { await self.cancelWaits() }
         }
     }
-
+    
     private func recordCancellation() {
         cancelled = true
         cancellationWaiter?.resume()
         cancellationWaiter = nil
     }
-
+    
     private func cancelWaits() {
         startWaiter?.resume()
         startWaiter = nil
         cancellationWaiter?.resume()
         cancellationWaiter = nil
     }
-
+    
     func finish(data: Data? = nil) {
         let continuation = request
         request = nil
@@ -316,14 +318,14 @@ private final class FailingCredentialStorage: AuthCredentialStorage {
     private var record: AuthCredential?
     var failsWrite = false
     var failsDelete = false
-
+    
     init(record: AuthCredential) { self.record = record }
     func getCredential() -> AuthCredential? { record }
     func saveCredential(_ record: AuthCredential) throws {
         if failsWrite { throw CredentialFixtureError.write }
         self.record = record
     }
-
+    
     func deleteToken() throws {
         if failsDelete { throw CredentialFixtureError.delete }
         record = nil
@@ -393,7 +395,7 @@ struct SessionScopeRegressionTests {
         #expect(cacheReads == 0 && requests == 0)
         #expect(model.items.isEmpty)
     }
-
+    
     @Test func unknownTotalsRequireAnEmptyOrShortPageBeforeCompletion() {
         #expect(PaginationPolicy.hasMore(received: 50, offset: 50, total: nil))
         #expect(!PaginationPolicy.hasMore(received: 49, offset: 99, total: nil))

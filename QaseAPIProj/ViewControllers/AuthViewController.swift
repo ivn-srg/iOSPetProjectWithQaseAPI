@@ -322,7 +322,12 @@ final class AuthViewController: UIViewController {
             )
         }
         inputTokenField.isSecureTextEntry.toggle()
-        inputTokenField.text = text
+        if inputTokenField.isFirstResponder {
+            inputTokenField.text = nil
+            inputTokenField.insertText(text)
+        } else {
+            inputTokenField.text = text
+        }
         if let selected,
            let start = inputTokenField.position(
                from: inputTokenField.beginningOfDocument,

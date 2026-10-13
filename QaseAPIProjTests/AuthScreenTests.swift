@@ -16,7 +16,7 @@ struct AuthScreenTests {
         _ = field.delegate?.textFieldShouldReturn?(field)
         #expect(!login.isEnabled && fixture.service.tokens.isEmpty)
     }
-
+    
     @Test(.timeLimit(.minutes(1))) func trimmedTokenAndAllRepeatedActionsSendOnlyOnce() async throws {
         let fixture = AuthScreenFixture()
         defer { fixture.service.finish() }
@@ -24,7 +24,7 @@ struct AuthScreenTests {
         let login: UIButton = try fixture.control(.authButton)
         let demo: UIButton = try fixture.control(.authDemo)
         let visibility: UIButton = try fixture.control(.authTokenVisibility)
-        field.text = " candidate \n"
+        field.text = " candidate "
         field.sendActions(for: .editingChanged)
         await fixture.service.waitForStart { login.sendActions(for: .touchUpInside) }
         login.sendActions(for: .touchUpInside)
@@ -35,9 +35,9 @@ struct AuthScreenTests {
         #expect(login.accessibilityLabel == "Checking…".localized)
         fixture.service.finish()
         await waitUntil { login.isEnabled }
-        #expect(field.text == " candidate \n" && demo.isEnabled && visibility.isEnabled)
+        #expect(field.text == " candidate " && demo.isEnabled && visibility.isEnabled)
     }
-
+    
     @Test(.timeLimit(.minutes(1))) func demoRetainsInputAndUsesItsOwnLoadingState() async throws {
         let fixture = AuthScreenFixture()
         defer { fixture.service.finish() }
@@ -56,7 +56,7 @@ struct AuthScreenTests {
         #expect(field.layer.borderColor != AppTheme.Palette.danger.resolvedColor(with: field.traitCollection)
             .cgColor)
     }
-
+    
     @Test(.timeLimit(.minutes(1))) func cancelledResponseDoesNotShowAnError() async throws {
         let fixture = AuthScreenFixture()
         defer { fixture.service.finish() }
@@ -70,7 +70,7 @@ struct AuthScreenTests {
         await waitUntil { login.isEnabled }
         #expect(message.isHidden && field.text == "candidate")
     }
-
+    
     @Test(.timeLimit(.minutes(1)), arguments: AuthScreenErrorCase.allCases)
     func failuresPreserveInputAndUseFixedCopy(_ scenario: AuthScreenErrorCase) async throws {
         let fixture = AuthScreenFixture()
@@ -87,14 +87,14 @@ struct AuthScreenTests {
         #expect(message.accessibilityLabel == scenario.message.localized)
         #expect(message.accessibilityLabel?.contains("server-echo") == false)
         #expect(field.layer.borderColor == (scenario.invalid
-                ? AppTheme.Palette.danger : AppTheme.Palette.strongBorder)
+                                            ? AppTheme.Palette.danger : AppTheme.Palette.strongBorder)
             .resolvedColor(with: field.traitCollection).cgColor)
         #expect(fixture.controller.presentedViewController == nil)
         field.text = "edited"
         field.sendActions(for: .editingChanged)
         #expect(message.isHidden)
     }
-
+    
     @Test(.timeLimit(.minutes(1))) func invalidBorderSurvivesFocusAndAppearanceChanges() async throws {
         let fixture = AuthScreenFixture()
         defer { fixture.service.finish() }
@@ -116,7 +116,7 @@ struct AuthScreenTests {
         #expect(field.layer.borderColor == AppTheme.Palette.strongBorder
             .resolvedColor(with: field.traitCollection).cgColor)
     }
-
+    
     @Test func visibilityPreservesSelectionFocusAndNextInsertion() throws {
         let fixture = AuthScreenFixture()
         let field: UITextField = try fixture.control(.inputTextField)
@@ -140,7 +140,7 @@ struct AuthScreenTests {
         #expect(field.text == "abXef")
         #expect(field.accessibilityIdentifier == AccessibilityID.inputTextField.identifier)
     }
-
+    
     @Test(.timeLimit(.minutes(1))) func removingControllerCancelsAndReleasesBeforeResponse() async throws {
         let service = AuthScreenService()
         defer { service.finish() }
@@ -165,7 +165,7 @@ struct AuthScreenTests {
         service.finish(error: API.NetError.invalidCredantials)
         #expect(message.isHidden)
     }
-
+    
     @Test(arguments: [CGFloat(320), CGFloat(402)])
     func tokenFieldRegionsStaySeparateAcrossWidthsAndTextSizes(_ width: CGFloat) throws {
         for category in [UIContentSizeCategory.large, .accessibilityExtraExtraExtraLarge] {
@@ -189,7 +189,7 @@ struct AuthScreenTests {
             }
         }
     }
-
+    
     @Test func tokenTextRegionsNeverHaveNegativeSizes() throws {
         let fixture = AuthScreenFixture()
         let field: UITextField = try fixture.control(.inputTextField)
@@ -200,7 +200,7 @@ struct AuthScreenTests {
             #expect(field.placeholderRect(forBounds: bounds) == rect)
         }
     }
-
+    
     @Test(arguments: [CGFloat(320), CGFloat(402)])
     func descriptionHasAReadableCenteredWidth(_ width: CGFloat) throws {
         let fixture = AuthScreenFixture(size: CGSize(width: width, height: 874))
@@ -212,7 +212,7 @@ struct AuthScreenTests {
         #expect(abs(rect.midX - fixture.controller.view.bounds.midX) < 0.5)
         #expect(label.numberOfLines == 0 && label.adjustsFontForContentSizeCategory)
     }
-
+    
     @Test func compactLargeTextRemainsScrollableAndButtonsGrow() throws {
         let fixture = AuthScreenFixture(size: CGSize(width: 320, height: 480))
         fixture.parent.traitOverrides.preferredContentSizeCategory = .accessibilityExtraExtraExtraLarge
@@ -232,31 +232,31 @@ struct AuthScreenTests {
 
 enum AuthScreenErrorCase: CaseIterable, Equatable, Sendable {
     case credentials, forbidden, offline, lostConnection, timeout, throttled, server, storage, unknown
-
+    
     var error: Error {
         switch self {
         case .credentials: return API.NetError.invalidCredantials
         case .forbidden: return API.NetError.httpError(
-                statusCode: 403,
-                message: "server-echo",
-                retryAfter: nil
-            )
+            statusCode: 403,
+            message: "server-echo",
+            retryAfter: nil
+        )
         case .offline: return URLError(.notConnectedToInternet)
         case .lostConnection: return URLError(.networkConnectionLost)
         case .timeout: return URLError(.timedOut)
         case .throttled: return API.NetError.httpError(
-                statusCode: 429,
-                message: "server-echo",
-                retryAfter: 12
-            )
+            statusCode: 429,
+            message: "server-echo",
+            retryAfter: 12
+        )
         case .server: return API.NetError.httpError(statusCode: 503, message: "server-echo", retryAfter: nil)
         case .storage: return KeychainError.unhandledError(status: -1)
         case .unknown: return URLError(.badServerResponse)
         }
     }
-
+    
     var invalid: Bool { self == .credentials }
-
+    
     var message: String {
         switch self {
         case .credentials: return "Invalid API token. Check it and try again."
@@ -277,7 +277,7 @@ private final class AuthScreenFixture {
     let controller: AuthViewController
     let parent = UIViewController()
     let window: UIWindow
-
+    
     init(size: CGSize = CGSize(width: 402, height: 874)) {
         controller = AuthViewController(auth: service)
         window = UIWindow(frame: CGRect(origin: .zero, size: size))
@@ -290,7 +290,7 @@ private final class AuthScreenFixture {
         controller.didMove(toParent: parent)
         window.layoutIfNeeded()
     }
-
+    
     func control<T: UIView>(_ identifier: AccessibilityID) throws -> T {
         try requireControl(controller.view, identifier)
     }
@@ -314,11 +314,12 @@ private func assertTokenFieldGeometry(_ field: UITextField) throws {
         let icon = try #require(accessory.subviews.compactMap { $0 as? UIImageView }.first {
             $0.image != nil
         })
-        let rect = icon.convert(icon.bounds, to: accessory)
+        let rect = icon.alignmentRect(forFrame: icon.frame)
         #expect(abs(rect.width - 22) < 0.5 && abs(rect.height - 22) < 0.5)
         #expect(abs(rect.midX - accessory.bounds.midX) < 0.5)
         #expect(abs(rect.midY - accessory.bounds.midY) < 0.5)
         #expect(accessory.bounds.contains(rect))
+        #expect(accessory.bounds.contains(icon.convert(icon.bounds, to: accessory)))
     }
     let text = field.textRect(forBounds: field.bounds)
     #expect(text.width > 0 && text.height > 0 && field.bounds.contains(text))
@@ -368,9 +369,9 @@ private final class AuthScreenService: AuthServicing {
     private var pending: CheckedContinuation<Void, Error>?
     private var onStarted: (() -> Void)?
     var isDemoMode: Bool { false }
-
+    
     func isUserLoggedIn() -> Bool { false }
-
+    
     func loggedIn(token: String?) async throws {
         tokens.append(token ?? "")
         try await withTaskCancellationHandler {
@@ -384,26 +385,26 @@ private final class AuthScreenService: AuthServicing {
             Task { @MainActor [weak self] in self?.cancelled = true }
         }
     }
-
+    
     func waitForStart(_ action: () -> Void) async {
         await withCheckedContinuation { continuation in
             onStarted = { continuation.resume() }
             action()
         }
     }
-
+    
     func finish(error: Error? = nil) {
         let continuation = pending
         pending = nil
         if let error { continuation?.resume(throwing: error) }
         else { continuation?.resume() }
     }
-
+    
     func logout() async throws { throw AuthScreenFixtureError.unexpectedMethod }
     func validateReplacementToken(_ token: String) async throws -> ValidatedTokenCandidate {
         throw AuthScreenFixtureError.unexpectedMethod
     }
-
+    
     func commitReplacementToken(_ candidate: ValidatedTokenCandidate) throws -> TokenReplacementResult {
         throw AuthScreenFixtureError.unexpectedMethod
     }

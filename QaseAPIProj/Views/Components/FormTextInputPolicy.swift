@@ -10,6 +10,14 @@ enum FormTextInputPolicy {
     }
 
     static func replacing(_ text: String, range: NSRange, with replacement: String) -> Edit? {
+        let utf16 = text.utf16
+        guard range.location >= 0, range.length >= 0,
+              range.location <= utf16.count,
+              range.length <= utf16.count - range.location else { return nil }
+        for offset in [range.location, range.location + range.length] where offset < utf16.count {
+            let index = utf16.index(utf16.startIndex, offsetBy: offset)
+            guard !(0xDC00 ... 0xDFFF).contains(utf16[index]) else { return nil }
+        }
         guard let swiftRange = Range(range, in: text) else { return nil }
         let before = String(text[..<swiftRange.lowerBound])
         let after = String(text[swiftRange.upperBound...])

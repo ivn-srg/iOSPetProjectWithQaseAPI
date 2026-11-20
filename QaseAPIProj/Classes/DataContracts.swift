@@ -99,25 +99,6 @@ protocol RepositoryReading {
         -> QaseAPIListResult<TestListEntity>
 }
 
-extension RepositoryReading {
-    func cases(
-        projectCode: String,
-        query: String = "",
-        offset: Int = 0,
-        suiteID: Int? = nil
-    ) async throws -> QaseAPIListResult<CaseSummary> {
-        try await cases(projectCode: projectCode, query: query, offset: offset, suiteID: suiteID)
-    }
-
-    func suites(
-        projectCode: String,
-        query: String = "",
-        offset: Int = 0
-    ) async throws -> QaseAPIListResult<TestListEntity> {
-        try await suites(projectCode: projectCode, query: query, offset: offset)
-    }
-}
-
 @MainActor
 protocol WorkReading {
     func runs(projectCode: String, offset: Int) async throws -> QaseAPIListResult<RunReadDTO>

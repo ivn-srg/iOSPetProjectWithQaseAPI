@@ -144,7 +144,7 @@ final class CreateSuiteOrCaseViewController: UIViewController {
         if let field = focusedField { revealCaret(in: field) }
     }
 
-    private func finishEditing() {
+    func finishEditing() {
         if viewModel.creatingEntityIsSuite { suiteView.finishEditing() }
         else { caseView.finishEditing() }
         view.endEditing(true)

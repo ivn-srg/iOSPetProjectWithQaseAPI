@@ -140,8 +140,13 @@ extension CreatingProjectViewController: FormDepartureParticipant {
     var canSaveDraft: Bool { !viewModel.creatingProject.isEmpty }
     var isSavingDraft: Bool { viewModel.isSaving }
 
-    func requestDeparture() async -> Bool {
+    func finishEditing() {
+        fields.forEach { $0.finishEditing() }
         view.endEditing(true)
+    }
+
+    func requestDeparture() async -> Bool {
+        finishEditing()
         return await FormDepartureGuard.confirm(
             self,
             on: self,

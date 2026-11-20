@@ -265,23 +265,64 @@ final class RealmManager: AppCache {
         ).map(TestListEntity.init(suiteRO:))
     }
 
+    /// Удаляет детали кейсов со шагами и записи «недавних» для переданных идентификаторов.
+    private func deleteCaseDetails(caseIDs: [Int], projectCode: String, owner: String, in realm: Realm) {
+        let detailKeys = caseIDs.map {
+            "\(owner)|\(TestCaseReference(projectCode: projectCode, caseID: $0).cacheKey)"
+        }
+        deleteCases(Array(realm.objects(TestEntityRO.self).filter("uniqueKey IN %@", detailKeys)), in: realm)
+        realm.delete(realm.objects(RecentCaseRO.self).filter("cacheKey IN %@", detailKeys))
+    }
+
+    /// Ключ снимка уровня репозитория; корень проекта хранится как `root`.
+    private static func levelKind(_ suiteID: Int?) -> String {
+        "repository.level.\(suiteID.map(String.init) ?? "root")"
+    }
+
+    /// Удаляет набор вместе с вложенными наборами, их кейсами, деталями кейсов, недавними и снимками уровней.
+    private func deleteSuiteSubtree(rootID: Int, projectCode: String, owner: String, in realm: Realm) {
+        let suites = realm.objects(TestEntitiesDataRO.self)
+            .filter("ownerID == %@ AND codeOfProject == %@ AND isSuites == true", owner, projectCode)
+            .map(TestListEntity.init(suiteRO:))
+        let suiteList = Array(SuiteCatalogLoader.subtreeIDs(of: rootID, in: Array(suites)))
+        let caseRows = realm.objects(TestEntitiesDataRO.self).filter(
+            "ownerID == %@ AND codeOfProject == %@ AND isSuites == false AND parentId IN %@",
+            owner,
+            projectCode,
+            suiteList
+        )
+        let detailRows = realm.objects(TestEntityRO.self).filter(
+            "ownerID == %@ AND projectCode == %@ AND suiteId IN %@",
+            owner,
+            projectCode,
+            suiteList
+        )
+        let caseIDs = Array(Set(caseRows.map(\.id)).union(detailRows.map(\.id)))
+        deleteCaseDetails(caseIDs: caseIDs, projectCode: projectCode, owner: owner, in: realm)
+        realm.delete(realm.objects(ReadCacheRO.self).filter(
+            "cacheKey IN %@",
+            suiteList.map { "\(owner)|\(projectCode)|\(Self.levelKind($0))" }
+        ))
+        realm.delete(caseRows)
+        realm.delete(realm.objects(TestEntitiesDataRO.self).filter(
+            "ownerID == %@ AND codeOfProject == %@ AND isSuites == true AND id IN %@",
+            owner,
+            projectCode,
+            suiteList
+        ))
+    }
+
     func deleteEntity(_ entity: TestListEntity, projectCode: String, stamp: SessionStamp) -> Bool {
         commit(stamp) { realm, owner in
+            if entity.isSuite {
+                deleteSuiteSubtree(rootID: entity.id, projectCode: projectCode, owner: owner, in: realm)
+                return
+            }
             if let object = realm.object(
                 ofType: TestEntitiesDataRO.self,
                 forPrimaryKey: entityKey(entity, code: projectCode, owner: owner)
             ) { realm.delete(object) }
-            if !entity.isSuite {
-                let reference = TestCaseReference(projectCode: projectCode, caseID: entity.id)
-                if let object = realm.object(
-                    ofType: TestEntityRO.self,
-                    forPrimaryKey: "\(owner)|\(reference.cacheKey)"
-                ) { deleteCases([object], in: realm) }
-                if let recent = realm.object(
-                    ofType: RecentCaseRO.self,
-                    forPrimaryKey: "\(owner)|\(reference.cacheKey)"
-                ) { realm.delete(recent) }
-            }
+            deleteCaseDetails(caseIDs: [entity.id], projectCode: projectCode, owner: owner, in: realm)
         }
     }
 
@@ -619,7 +660,8 @@ extension RealmManager {
             // Root requests scan every project case, so a completed scan is authoritative project-wide.
             let removed = existing.filter { !ids.contains($0.id) }
             for entity in removed {
-                let key = "\(owner)|\(TestCaseReference(projectCode: location.projectCode, caseID: entity.id).cacheKey)"
+                let reference = TestCaseReference(projectCode: location.projectCode, caseID: entity.id)
+                let key = "\(owner)|\(reference.cacheKey)"
                 if let detail = realm.object(ofType: TestEntityRO.self, forPrimaryKey: key) { deleteCases(
                     [detail],
                     in: realm
@@ -637,8 +679,7 @@ extension RealmManager {
             let marker = ReadCacheRO()
             marker.ownerID = owner
             marker.projectCode = location.projectCode
-            let level = location.suiteID.map(String.init) ?? "root"
-            marker.cacheKey = "\(owner)|\(location.projectCode)|repository.level.\(level)"
+            marker.cacheKey = "\(owner)|\(location.projectCode)|\(Self.levelKind(location.suiteID))"
             marker.payload = data
             realm.add(marker, update: .modified)
         }
@@ -648,7 +689,7 @@ extension RealmManager {
         readPayload(
             RepositoryLevelSnapshot.self,
             projectCode: location.projectCode,
-            kind: "repository.level.\(location.suiteID.map(String.init) ?? "root")"
+            kind: Self.levelKind(location.suiteID)
         )
     }
 

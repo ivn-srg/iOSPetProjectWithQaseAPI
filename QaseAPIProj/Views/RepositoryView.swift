@@ -8,12 +8,24 @@ protocol RepositoryRouting: HomeRouting {
     func createEntity(in location: RepositoryLocation)
 }
 
+/// Запрошенное удаление: ссылка и число кейсов в поддереве набора, известное на момент запроса.
+private struct PendingDelete {
+    let reference: RepositoryItemReference
+    let casesCount: Int?
+
+    var title: String {
+        guard reference.isSuite else { return "Delete case?".localized }
+        guard let casesCount else { return "Delete suite and its cases?".localized }
+        return String.localizedStringWithFormat("Delete suite and its %lld cases?".localized, casesCount)
+    }
+}
+
 struct RepositoryView: View {
     @ObservedObject var model: TestEntitiesViewModel
     @ObservedObject var selection: SelectedProjectStore
     let router: RepositoryRouting
     @FocusState private var searchFocused: Bool
-    @State private var pendingDelete: RepositoryItemReference?
+    @State private var pendingDelete: PendingDelete?
     @State private var deletionError: String?
 
     var body: some View {
@@ -118,16 +130,19 @@ struct RepositoryView: View {
                 }
             }
             .confirmationDialog(
-                "Delete entity?".localized,
+                // Пустой заголовок при закрытии не подменяет текст на «Delete case?».
+                pendingDelete?.title ?? "",
                 isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
-                titleVisibility: .visible
-            ) {
-                if let reference = pendingDelete {
-                    Button("Delete".localized, role: .destructive) {
-                        pendingDelete = nil
-                        Task {
-                            do { try await model.delete(reference) } catch {
-                                deletionError = "Could not delete entity".localized } }
+                titleVisibility: .visible,
+                presenting: pendingDelete
+            ) { pending in
+                Button("Delete".localized, role: .destructive) {
+                    pendingDelete = nil
+                    deletionError = nil
+                    Task {
+                        do { try await model.delete(pending.reference) }
+                        catch is CancellationError {}
+                        catch { deletionError = "Could not delete entity".localized }
                     }
                 }
                 Button("Cancel".localized, role: .cancel) { pendingDelete = nil }
@@ -281,7 +296,12 @@ struct RepositoryView: View {
     }
 
     private func deleteAction(_ reference: RepositoryItemReference) -> some View {
-        Button("Delete".localized, role: .destructive) { pendingDelete = reference }.tint(.red)
+        Button("Delete".localized, role: .destructive) {
+            pendingDelete = PendingDelete(
+                reference: reference,
+                casesCount: reference.isSuite ? model.casesCountInSubtree(of: reference.id) : nil
+            )
+        }.tint(Color(uiColor: AppTheme.Palette.danger))
     }
 
     private func retry(_ message: String) -> some View {

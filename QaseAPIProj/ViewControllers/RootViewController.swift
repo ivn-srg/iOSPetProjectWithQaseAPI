@@ -75,8 +75,9 @@ final class RootViewController: UIViewController {
 
     private func showSettingsError(_ message: String) {
         Task { @MainActor [weak self] in
-            guard let self, self.presentedViewController == nil else { return }
-            UIAlertController.showSimpleAlert(on: self, title: "Error".localized, message: message)
+            guard let self else { return }
+            guard let presenter = await self.presenterWhenReady() else { return }
+            UIAlertController.showSimpleAlert(on: presenter, title: "Error".localized, message: message)
         }
     }
 }

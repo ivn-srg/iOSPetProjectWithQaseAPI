@@ -10,12 +10,19 @@ import UIKit
 @main
 @MainActor
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    private(set) var compositionRoot: AppCompositionRoot!
+    private(set) var compositionRoot: AppCompositionRoot?
 
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        let info = ProcessInfo.processInfo
+        let isUITesting = info.arguments.contains(AppCompositionRoot.uiTestingArgument)
+        // Unit-тесты в хост-приложении не должны открывать production Keychain и Realm.
+        // Переменная окружения есть не при каждом запуске, поэтому проверяется и класс XCTestCase.
+        let isUnitTesting = info.environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
+        if isUnitTesting, !isUITesting { return true }
         compositionRoot = AppCompositionRoot()
 
         return true

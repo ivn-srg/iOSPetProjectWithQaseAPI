@@ -424,3 +424,59 @@ private final class LevelNetwork: NetworkManager {
         #expect(nested["suite_id"] as? Int == 81)
     }
 }
+
+@MainActor
+private struct FixedSuitesRepository: RepositoryReading {
+    let values: [TestListEntity]
+
+    func cases(projectCode: String, query: String, offset: Int, suiteID: Int?) async throws
+        -> QaseAPIListResult<CaseSummary> {
+        QaseAPIListResult(total: 0, filtered: 0, count: 0, entities: [])
+    }
+
+    func suites(projectCode: String, query: String, offset: Int) async throws
+        -> QaseAPIListResult<TestListEntity> {
+        let page = offset == 0 ? values : []
+        return QaseAPIListResult(
+            total: values.count,
+            filtered: values.count,
+            count: page.count,
+            entities: page
+        )
+    }
+}
+
+@Suite @MainActor
+struct SuiteCatalogLoaderCacheFailureTests {
+    @Test func rejectedCatalogWriteReturnsValuesAndReportsOnce() async throws {
+        let session = SessionContext(ownerID: "catalog-cache-failure")
+        let values = [
+            TestListEntity(
+                isSuite: true,
+                id: 1,
+                title: "A",
+                description: nil,
+                parentId: nil,
+                casesCount: nil
+            ),
+            TestListEntity(
+                isSuite: true,
+                id: 2,
+                title: "B",
+                description: nil,
+                parentId: 1,
+                casesCount: nil
+            )
+        ]
+        var failures = 0
+        let loader = SuiteCatalogLoader(
+            repository: FixedSuitesRepository(values: values),
+            dao: RejectingRepositoryCache(),
+            session: session,
+            onCacheFailure: { failures += 1 }
+        )
+        let loaded = try await loader.load(projectCode: "A", isCurrent: { true })
+        #expect(loaded.map(\.id) == [1, 2])
+        #expect(failures == 1)
+    }
+}

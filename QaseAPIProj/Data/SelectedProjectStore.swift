@@ -12,6 +12,8 @@ final class SelectedProjectStore: ObservableObject {
     private let session: SessionContext
     private let defaults: UserDefaults
     private let originStamp: SessionStamp
+    /// Выбор сделан офлайн как временный и не сохранён; при восстановлении главнее сохранённое предпочтение.
+    private var isProvisionalSelection = false
     var onSelectionRequested: ((ProjectSummary?) async -> Bool)?
     var onSelectionChanged: (() -> Void)?
 
@@ -40,7 +42,7 @@ final class SelectedProjectStore: ObservableObject {
         errorMessage = nil
         if projects.isEmpty {
             projects = cache.getProjectSummaries()
-            await restoreSelection()
+            await restoreSelection(listIsAuthoritative: false)
         }
         do {
             var fetched: [ProjectSummary] = []
@@ -63,22 +65,27 @@ final class SelectedProjectStore: ObservableObject {
             }
             guard session.isCurrent(stamp) else { return }
             projects = fetched
-            await restoreSelection()
+            await restoreSelection(listIsAuthoritative: true)
         } catch is CancellationError {
         } catch {
             guard session.isCurrent(stamp) else { return }
             errorMessage = "Could not load projects".localized
+            // Офлайн: без выбора берём первый проект из кеша, не перезаписывая сохранённое предпочтение.
+            if selectedProject == nil, let first = projects.first { commit(first, persist: false) }
         }
     }
 
-    func commit(_ project: ProjectSummary?) {
+    func commit(_ project: ProjectSummary?, persist: Bool = true) {
         guard session.isCurrent(originStamp) else { return }
         let changed = selectedProject?.code != project?.code
         selectedProject = project
-        if let project {
-            defaults.set(project.code, forKey: preferenceKey)
-        } else {
-            defaults.removeObject(forKey: preferenceKey)
+        isProvisionalSelection = !persist
+        if persist {
+            if let project {
+                defaults.set(project.code, forKey: preferenceKey)
+            } else {
+                defaults.removeObject(forKey: preferenceKey)
+            }
         }
         if changed { onSelectionChanged?() }
     }
@@ -86,7 +93,7 @@ final class SelectedProjectStore: ObservableObject {
     func didDeleteProject(code: String) async {
         guard session.isCurrent(originStamp) else { return }
         projects.removeAll { $0.code == code }
-        await restoreSelection()
+        await restoreSelection(listIsAuthoritative: true)
     }
 
     func refreshSelection(_ project: ProjectSummary) {
@@ -96,9 +103,13 @@ final class SelectedProjectStore: ObservableObject {
         if let index = projects.firstIndex(where: { $0.code == project.code }) { projects[index] = project }
     }
 
-    private func restoreSelection() async {
-        let code = selectedProject?.code ?? defaults.string(forKey: preferenceKey)
+    private func restoreSelection(listIsAuthoritative: Bool) async {
+        let current = isProvisionalSelection ? nil : selectedProject?.code
+        let code = current ?? defaults.string(forKey: preferenceKey)
         let candidate = projects.first(where: { $0.code == code }) ?? projects.first
+        // Кеш мог быть очищен: пока сеть не подтвердила список, сохранённое предпочтение не трогаем.
+        let savedCodeIsMissing = code != nil && candidate?.code != code
+        if !listIsAuthoritative, candidate == nil || savedCodeIsMissing { return }
         if selectedProject != nil && selectedProject?.code != candidate?.code,
            let request = onSelectionRequested {
             _ = await request(candidate)

@@ -687,7 +687,26 @@ final class APIMockManager: NetworkManager {
         case "DELETE" where detailID != nil:
             guard entities.contains(where: matchesID)
             else { throw API.NetError.invalidRequest("Entity not found.") }
-            entities.removeAll(where: matchesID)
+            if endpoint == "suite", let projectCode, let rootID = detailID.flatMap(Int.init) {
+                // DELETE /suite удаляет набор вместе с кейсами: developers.qase.io/reference/delete-suite
+                // Вложенные наборы удаляются так же; parent_id 0 означает корень, как в SuiteCatalogLoader.
+                var removed: Set<Int> = [rootID]
+                var changed = true
+                while changed {
+                    changed = false
+                    for suite in entities {
+                        if let id = suite["id"] as? Int, let parent = suite["parent_id"] as? Int, parent != 0,
+                           removed.contains(parent), removed.insert(id).inserted { changed = true }
+                    }
+                }
+                entities.removeAll { ($0["id"] as? Int).map(removed.contains) ?? false }
+                let caseKey = "case/\(projectCode)"
+                var cases = try records[caseKey] ?? initialRecords(endpoint: "case", projectCode: projectCode)
+                cases.removeAll { ($0["suite_id"] as? Int).map(removed.contains) ?? false }
+                records[caseKey] = cases
+            } else {
+                entities.removeAll(where: matchesID)
+            }
             records[key] = entities
             return [:] as [String: Any]
         default:

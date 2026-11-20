@@ -87,8 +87,7 @@ final class TestCaseViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         cancelFetching()
-        form.finishEditing()
-        view.endEditing(true)
+        finishEditing()
         restoreTabVisibility()
         if let gesture = navigationController?.interactivePopGestureRecognizer, gesture.delegate === self {
             gesture.delegate = previousPopDelegate
@@ -157,8 +156,7 @@ final class TestCaseViewController: UIViewController {
     }
 
     @objc private func saveChanges() {
-        form.finishEditing()
-        view.endEditing(true)
+        finishEditing()
         guard viewModel.canSaveChanges, !isSavingDraft else { return }
         form.clearError()
         isSubmitting = true
@@ -223,9 +221,13 @@ extension TestCaseViewController: FormDepartureParticipant {
     var hasUnsavedChanges: Bool { viewModel.hasUnsavedChanges }
     var canSaveDraft: Bool { viewModel.canSaveChanges && !isSubmitting }
 
-    func requestDeparture() async -> Bool {
+    func finishEditing() {
         form.finishEditing()
         view.endEditing(true)
+    }
+
+    func requestDeparture() async -> Bool {
+        finishEditing()
         guard !isSavingDraft, !isConfirmingDeparture, viewModel.isSessionCurrent else { return false }
         isConfirmingDeparture = true
         defer { isConfirmingDeparture = false }
@@ -239,8 +241,7 @@ extension TestCaseViewController: FormDepartureParticipant {
     }
 
     func saveDraft() async throws {
-        form.finishEditing()
-        view.endEditing(true)
+        finishEditing()
         guard !isSavingDraft else { throw API.NetError.invalidRequest("A save is already in progress") }
         let callback = viewModel.updatingFinishCallback
         viewModel.updatingFinishCallback = {}
@@ -260,8 +261,7 @@ extension TestCaseViewController: FormDepartureParticipant {
 extension TestCaseViewController: UIGestureRecognizerDelegate {
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard (navigationController?.viewControllers.count ?? 0) > 1, !isSavingDraft else { return false }
-        form.finishEditing()
-        view.endEditing(true)
+        finishEditing()
         if hasUnsavedChanges {
             goBack()
             return false

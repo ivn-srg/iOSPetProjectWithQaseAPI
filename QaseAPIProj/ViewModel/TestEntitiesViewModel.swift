@@ -163,6 +163,7 @@ final class TestEntitiesViewModel: ObservableObject {
             repeat {
                 let page = try await repository.cases(
                     projectCode: projectCode,
+                    query: "",
                     offset: offset,
                     suiteID: location.suiteID
                 )
@@ -271,7 +272,8 @@ final class TestEntitiesViewModel: ObservableObject {
                         let page = try await self.repository.cases(
                             projectCode: self.projectCode,
                             query: requestedQuery,
-                            offset: self.caseSearchOffset
+                            offset: self.caseSearchOffset,
+                            suiteID: nil
                         )
                         guard self.accepts(generation, self.searchGeneration) else { return }
                         if reset { self.searchedCases = [] }
@@ -306,6 +308,22 @@ final class TestEntitiesViewModel: ObservableObject {
         catalog: catalog,
         suiteID: suiteID
     ) }
+
+    /// Число кейсов в наборе и во всём его поддереве; `nil`, если каталог неполон или счётчик неизвестен.
+    func casesCountInSubtree(of suiteID: Int) -> Int? {
+        guard catalogComplete else { return nil }
+        return Self.casesCount(inSubtreeOf: suiteID, catalog: catalog)
+    }
+
+    static func casesCount(inSubtreeOf suiteID: Int, catalog: [TestListEntity]) -> Int? {
+        let byID = Dictionary(catalog.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var total = 0
+        for id in SuiteCatalogLoader.subtreeIDs(of: suiteID, in: catalog) {
+            guard let count = byID[id]?.casesCount else { return nil }
+            total += count
+        }
+        return total
+    }
 
     func delete(_ reference: RepositoryItemReference) async throws {
         guard session.isCurrent(stamp),

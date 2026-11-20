@@ -87,6 +87,7 @@ struct SettingsRootView: View {
     @ObservedObject var model: SettingsViewModel
     @ObservedObject var preferences: AppSettingsStore
     var onRoute: (SettingsRoute) -> Void = { _ in }
+    @State private var confirmingLogout = false
 
     var body: some View {
         List {
@@ -157,7 +158,7 @@ struct SettingsRootView: View {
                 .accessibilityIdentifier(AccessibilityID.settingsAbout.identifier)
             }
             Section {
-                Button { onRoute(.logout) } label: { SettingsRow(
+                Button { confirmingLogout = true } label: { SettingsRow(
                     title: "Sign out".localized,
                     symbol: .rectanglePortraitAndArrowRight,
                     destructive: true,
@@ -169,6 +170,14 @@ struct SettingsRootView: View {
         }
         .modifier(SettingsListStyle())
         .accessibilityIdentifier(AccessibilityID.settingsScreen.identifier)
+        .confirmationDialog(
+            "Sign out?".localized,
+            isPresented: $confirmingLogout,
+            titleVisibility: .visible
+        ) {
+            Button("Sign out".localized, role: .destructive) { onRoute(.logout) }
+            Button("Cancel".localized, role: .cancel) { }
+        } message: { Text("You will need your API token to sign in again.".localized) }
         .onReceive(NotificationCenter.default.publisher(
             for: UIApplication.didBecomeActiveNotification
         )) { _ in

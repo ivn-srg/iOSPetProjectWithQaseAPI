@@ -147,13 +147,14 @@ struct FormDraftTests {
         #expect(model.canSaveChanges && !model.isUploadingSuccess && !model.isSaving)
     }
 
-    @Test func priorityPatchPreservesNestedStepsAndEveryExistingPayloadField() async throws {
+    /// Сервер не меняет поля, отсутствующие в теле PATCH (проверено на тестовом проекте 2026-11-20),
+    /// поэтому шаги, теги, вложения и набор остаются нетронутыми, только если их нет в теле.
+    @Test func priorityPatchSendsOnlyPriorityAndKeepsUneditedFieldsLocally() async throws {
         let session = SessionContext(ownerID: "owner")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
         let network = FormDraftNetwork()
         let fixtureData = Data(Self.completeCaseFixture.utf8)
         let initial = try JSONDecoder().decode(TestCaseEntity.self, from: fixtureData)
-        let fixture = try #require(JSONSerialization.jsonObject(with: fixtureData) as? [String: Any])
         let model = TestDependencies.detail(
             reference: .init(projectCode: "A", caseID: initial.id),
             network: network,
@@ -166,42 +167,42 @@ struct FormDraftTests {
         try await model.updateTestCaseData()
         let body = try #require(network.capturedBodies.last)
         let payload = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
-        #expect(network.methods == [.patch])
-        #expect(payload["priority"] as? Int == Priority.high.menuItem.id)
-        #expect(payload["suite_id"] as? Int == 8)
-        #expect(payload["attachments"] as? [String] == ["case-attachment-a", "case-attachment-b"])
-        #expect(payload["tags"] as? [String] == ["regression", "mobile"])
-        let actualSteps = try #require(payload["steps"] as? NSArray)
-        let fixtureSteps = try #require(fixture["steps"] as? NSArray)
-        #expect(actualSteps.isEqual(fixtureSteps))
-        let firstStep = try #require((payload["steps"] as? [[String: Any]])?.first)
-        let nestedStep = try #require((firstStep["steps"] as? [[String: Any]])?.first)
-        #expect(firstStep["attachments"] as? [Int] == [101, 102])
-        #expect(nestedStep["attachments"] as? [Int] == [201])
-        #expect(nestedStep["expected_result"] as? String == "Nested result\nremains intact")
-        #expect(nestedStep["shared_step_nested_hash"] as? String == "shared-nested")
-        for key in ["title", "description", "preconditions", "postconditions"] {
-            #expect(payload[key] as? String == fixture[key] as? String)
-        }
-        for key in ["severity", "type", "layer", "behavior", "automation", "status", "is_flaky"] {
-            #expect(payload[key] as? Int == fixture[key] as? Int)
-        }
-        #expect(model.changedTestCase?.links == initial.links)
-        #expect(model.changedTestCase?.customFields == initial.customFields)
-        #expect(model.changedTestCase?.params == initial.params)
-        #expect(model.changedTestCase?.stepsType == initial.stepsType)
-        #expect(model.testCase?.attachments == initial.attachments)
-        #expect(!model.hasUnsavedChanges)
+        #expect(Set(payload.keys) == ["priority"])
+        #expect(payload["priority"] as? Int == 1)
+        // Фейк отвечает на перечитывание телом без кейса — сохранение откатывается на черновик.
+        #expect(network.methods == [.patch, .get])
+        var expected = initial
+        expected.priority = .high
+        #expect(model.testCase == expected && model.changedTestCase == expected)
+        #expect(dao.getTestCase(reference: .init(projectCode: "A", caseID: initial.id))?.priority == .high)
+        #expect(model.isUploadingSuccess && !model.hasUnsavedChanges)
     }
 
-    @Test func everyTypeMenuIDRoundTripsThroughBothForms() {
+    @Test func everyFieldMenuIDRoundTripsThroughBothForms() {
+        func checkMenu<T: CaseIterable & MenuDataSource & Equatable>(
+            _ type: T.Type,
+            apiValue: (T) -> Int,
+            make: (Int) -> T
+        ) {
+            for value in T.allCases {
+                #expect(value.menuItem.id == apiValue(value))
+                #expect(make(value.menuItem.id) == value)
+            }
+        }
+        checkMenu(Severity.self, apiValue: { $0.apiValue }, make: { Severity($0) })
+        checkMenu(Priority.self, apiValue: { $0.apiValue }, make: { Priority($0) })
+        checkMenu(Status.self, apiValue: { $0.apiValue }, make: { Status($0) })
+        checkMenu(AutomationStatus.self, apiValue: { $0.apiValue }, make: { AutomationStatus($0) })
+        checkMenu(Behavior.self, apiValue: { $0.apiValue }, make: { Behavior($0) })
+        checkMenu(Layer.self, apiValue: { $0.apiValue }, make: { Layer($0) })
+        checkMenu(Types.self, apiValue: { $0.apiValue }, make: { Types($0) })
+
         let session = SessionContext(ownerID: "owner")
         let creator = TestDependencies.creator(projectCode: "A", session: session)
         creator.creatingEntityIsSuite = false
         let editor = TestDependencies.detail(reference: .init(projectCode: "A", caseID: 1), session: session)
         editor.changedTestCase = .empty
         for type in Types.allCases {
-            #expect(Types(type.menuItem.id) == type)
             creator.updateValue(for: .type, value: type.menuItem.id)
             editor.updateValue(for: .type, value: type.menuItem)
             #expect(creator.creatingTestCase.type == type)
@@ -299,12 +300,7 @@ private final class FormDraftNetwork: NetworkManager {
         modelType: T.Type
     ) async throws(API.NetError) -> T {
         methods.append(method)
-        if let data {
-            let encoder = JSONEncoder()
-            encoder.keyEncodingStrategy = .convertToSnakeCase
-            do { capturedBodies.append(try encoder.encode(data)) }
-            catch { throw .serializationError("Fixture payload encoding failed") }
-        }
+        if let data { capturedBodies.append(try API.encodeBody(data)) }
         if shouldSuspend {
             await withCheckedContinuation { continuation in release = continuation
                 onStarted?() }

@@ -67,16 +67,18 @@ struct TestCaseEntity: Codable, Equatable {
         behavior = try container.decode(Behavior.self, forKey: .behavior)
         automation = try container.decode(AutomationStatus.self, forKey: .automation)
         status = try container.decode(Status.self, forKey: .status)
-        suiteId = try container.decode(Int?.self, forKey: .suiteId)
-        links = try container.decode([String].self, forKey: .links)
-        customFields = try container.decode([String].self, forKey: .customFields)
-        attachments = try container.decode([String].self, forKey: .attachments)
+        // Qase отдаёт tags, attachments, custom_fields и params объектами, а links и suite_id может не прислать:
+        // эти коллекции приложение не использует, поэтому читаются терпимо и при несовпадении формы пусты.
+        suiteId = try container.decodeIfPresent(Int.self, forKey: .suiteId)
+        links = (try? container.decodeIfPresent([String].self, forKey: .links)) ?? []
+        customFields = (try? container.decodeIfPresent([String].self, forKey: .customFields)) ?? []
+        attachments = (try? container.decodeIfPresent([String].self, forKey: .attachments)) ?? []
         stepsType = try container.decodeIfPresent(String.self, forKey: .stepsType)
         steps = try container.decode([StepsInTestCase].self, forKey: .steps)
-        params = try container.decode([String].self, forKey: .params)
-        memberId = try container.decode(Int.self, forKey: .memberId)
+        params = (try? container.decodeIfPresent([String].self, forKey: .params)) ?? []
+        memberId = try container.decodeIfPresent(Int.self, forKey: .memberId) ?? 0
         authorId = try container.decode(Int.self, forKey: .authorId)
-        tags = try container.decode([String].self, forKey: .tags)
+        tags = (try? container.decodeIfPresent([String].self, forKey: .tags)) ?? []
     }
 
     static func == (lhs: TestCaseEntity, rhs: TestCaseEntity) -> Bool {
@@ -133,12 +135,12 @@ extension TestCaseEntity {
         description = ""
         preconditions = ""
         postconditions = ""
-        severity = .nothing
+        severity = .normal
         priority = .nothing
         type = .other
-        layer = .e2e
+        layer = .nothing
         isFlaky = false
-        behavior = .positive
+        behavior = .nothing
         automation = .manual
         status = .actual
         suiteId = nil
@@ -192,11 +194,16 @@ struct StepsInTestCase: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        hash = try container.decode(String.self, forKey: .hash)
-        position = try container.decode(Int.self, forKey: .position)
+        // hash и position объявлены deprecated в схеме Qase TestStep.yaml и могут отсутствовать:
+        // позиция и стабильный ключ берутся из пути декодирования (индексные ключи массива).
+        let path = decoder.codingPath
+        let pathKey = path.map { $0.intValue.map(String.init) ?? $0.stringValue }.joined(separator: ".")
+        let pathPosition = (path.last?.intValue ?? 0) + 1
+        hash = try container.decodeIfPresent(String.self, forKey: .hash) ?? "path:" + pathKey
+        position = try container.decodeIfPresent(Int.self, forKey: .position) ?? pathPosition
         sharedStepHash = try container.decodeIfPresent(String.self, forKey: .sharedStepHash)
         sharedStepNestedHash = try container.decodeIfPresent(String.self, forKey: .sharedStepNestedHash)
-        attachments = try container.decode([Int].self, forKey: .attachments)
+        attachments = (try? container.decodeIfPresent([Int].self, forKey: .attachments)) ?? []
         action = try container.decodeIfPresent(String.self, forKey: .action)
         expectedResult = try container.decodeIfPresent(String.self, forKey: .expectedResult)
         data = try container.decodeIfPresent(String.self, forKey: .data)
@@ -267,6 +274,47 @@ struct StepsInTestCase: Codable, Equatable {
 }
 
 extension StepsInTestCase: Hashable {}
+
+/// Тело `PATCH /case/{code}/{id}`: только поля, изменённые относительно базы. Отсутствующий ключ сервер
+/// не меняет; шаги, теги, вложения и набор редактор не правит и не отправляет.
+struct TestCaseUpdatePayload: Encodable, ExplicitCodingKeys {
+    var title, description, preconditions, postconditions: String?
+    var severity, priority, type, layer, behavior, status, isFlaky: Int?
+    var isManual, isToBeAutomated: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case title, description, preconditions, postconditions,
+             severity, priority, type, layer, behavior, status, isManual, isToBeAutomated
+        case isFlaky = "is_flaky"
+    }
+
+    init(from base: TestCaseEntity, to draft: TestCaseEntity) {
+        func changed<Value: Equatable>(_ field: KeyPath<TestCaseEntity, Value>) -> Value? {
+            base[keyPath: field] == draft[keyPath: field] ? nil : draft[keyPath: field]
+        }
+        title = changed(\.title)
+        description = changed(\.description).map { $0 ?? "" }
+        preconditions = changed(\.preconditions).map { $0 ?? "" }
+        postconditions = changed(\.postconditions).map { $0 ?? "" }
+        severity = changed(\.severity)?.apiValue
+        priority = changed(\.priority)?.apiValue
+        type = changed(\.type)?.apiValue
+        layer = changed(\.layer)?.apiValue
+        behavior = changed(\.behavior)?.apiValue
+        status = changed(\.status)?.apiValue
+        isFlaky = changed(\.isFlaky).map { $0 ? 1 : 0 }
+        if let automation = changed(\.automation) {
+            isManual = automation != .automation
+            isToBeAutomated = automation == .toBeAutomated
+        }
+    }
+
+    var isEmpty: Bool {
+        [title, description, preconditions, postconditions].allSatisfy { $0 == nil }
+            && [severity, priority, type, layer, behavior, status, isFlaky].allSatisfy { $0 == nil }
+            && isManual == nil
+    }
+}
 
 // MARK: - response models
 struct CreateOrUpdateTestCaseModel: Codable {

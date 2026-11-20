@@ -1791,7 +1791,7 @@
         }
       }
     },
-    "Accertance": {
+    "Acceptance": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
@@ -3220,7 +3220,7 @@
         }
       }
     },
-    "Perfomance": {
+    "Performance": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
@@ -3972,13 +3972,13 @@
         }
       }
     },
-    "Utility": {
+    "Usability": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Полезность"
+            "value": "Удобство использования"
           }
         }
       }

@@ -28,24 +28,17 @@ struct DesignTokenTests {
 }
 
 struct DomainSerializationRegressionTests {
-    @Test func fieldEnumsEncodeServerIntegers() throws {
-        func check<T: Codable & Equatable>(_ values: [T], ids: [Int]) throws {
-            for (value, id) in zip(values, ids) {
-                let data = try JSONEncoder().encode(value)
-                #expect(try JSONDecoder().decode(Int.self, from: data) == id)
-                #expect(try JSONDecoder().decode(T.self, from: data) == value)
-            }
-        }
-        try check(Severity.allCases, ids: Array(0 ... 6))
-        try check(Status.allCases, ids: Array(0 ... 2))
-        try check(Priority.allCases, ids: Array(0 ... 3))
-        try check(Behavior.allCases, ids: Array(0 ... 3))
-        try check(Types.allCases, ids: Array(0 ... 10))
-        try check(Layer.allCases, ids: Array(0 ... 2))
-        try check(AutomationStatus.allCases, ids: Array(0 ... 2))
+    @Test func everyFieldEnumMatchesServerSystemFieldOptionsByIDAndTitle() throws {
+        try checkFieldEnum(Severity.self, slug: "severity", make: { Severity($0) })
+        try checkFieldEnum(Priority.self, slug: "priority", make: { Priority($0) })
+        try checkFieldEnum(Status.self, slug: "status", make: { Status($0) })
+        try checkFieldEnum(AutomationStatus.self, slug: "automation", make: { AutomationStatus($0) })
+        try checkFieldEnum(Behavior.self, slug: "behavior", make: { Behavior($0) })
+        try checkFieldEnum(Layer.self, slug: "layer", make: { Layer($0) })
+        try checkFieldEnum(Types.self, slug: "type", make: { Types($0) })
     }
 
-    @Test func unknownFieldIDsKeepExistingFallbacks() throws {
+    @Test func unknownFieldIDsFallBackToNotSetOrServerDefault() throws {
         let data = Data("999".utf8)
         let decoder = JSONDecoder()
         #expect(try decoder.decode(Severity.self, from: data) == .nothing)
@@ -53,8 +46,26 @@ struct DomainSerializationRegressionTests {
         #expect(try decoder.decode(Priority.self, from: data) == .nothing)
         #expect(try decoder.decode(Behavior.self, from: data) == .nothing)
         #expect(try decoder.decode(Types.self, from: data) == .other)
-        #expect(try decoder.decode(Layer.self, from: data) == .e2e)
+        #expect(try decoder.decode(Layer.self, from: data) == .nothing)
         #expect(try decoder.decode(AutomationStatus.self, from: data) == .manual)
+    }
+
+    @Test func newCaseDefaultsMatchServerIsDefaultOptions() throws {
+        let empty = TestCaseEntity.empty
+        let severity = try defaultOptionID("severity")
+        let priority = try defaultOptionID("priority")
+        let type = try defaultOptionID("type")
+        let layer = try defaultOptionID("layer")
+        let behavior = try defaultOptionID("behavior")
+        let automation = try defaultOptionID("automation")
+        let status = try defaultOptionID("status")
+        #expect(empty.severity.apiValue == severity)
+        #expect(empty.priority.apiValue == priority)
+        #expect(empty.type.apiValue == type)
+        #expect(empty.layer.apiValue == layer)
+        #expect(empty.behavior.apiValue == behavior)
+        #expect(empty.automation.apiValue == automation)
+        #expect(empty.status.apiValue == status)
     }
 
     @Test func stableStepIdentityDoesNotHideContentChanges() {
@@ -88,5 +99,60 @@ struct DomainSerializationRegressionTests {
         #expect(json["priority"] as? Int == 2)
         #expect(json["is_flaky"] as? Int == 1)
         #expect(json["suite_id"] is NSNull)
+    }
+}
+
+/// Якорь для `Bundle(for:)`: наборы Swift Testing — структуры, а класс приложения дал бы бандл приложения.
+private final class TestBundleToken {}
+
+private struct SystemFieldsResponse: Decodable {
+    struct Field: Decodable {
+        let slug: String
+        let options: [Option]?
+    }
+
+    struct Option: Decodable {
+        let id: Int
+        let title: String
+        let isDefault: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case id, title
+            case isDefault = "is_default"
+        }
+    }
+
+    let result: [Field]
+}
+
+private func systemFieldOptions(_ slug: String) throws -> [SystemFieldsResponse.Option] {
+    let url = try #require(Bundle(for: TestBundleToken.self).url(forResource: "system_field", withExtension: "json"))
+    let response = try JSONDecoder().decode(SystemFieldsResponse.self, from: Data(contentsOf: url))
+    let field = try #require(response.result.first { $0.slug == slug })
+    return try #require(field.options)
+}
+
+private func defaultOptionID(_ slug: String) throws -> Int {
+    let defaults = try systemFieldOptions(slug).filter(\.isDefault)
+    #expect(defaults.count == 1)
+    return try #require(defaults.first).id
+}
+
+/// Сверяет enum с опциями поля сервера: биекция по id, `rawValue` == `title`, кодирование туда и обратно.
+private func checkFieldEnum<T: CaseIterable & Codable & Equatable & RawRepresentable>(
+    _ type: T.Type,
+    slug: String,
+    make: (Int) -> T
+) throws where T.RawValue == String {
+    let options = try systemFieldOptions(slug)
+    let apiValues = try T.allCases.map { try JSONDecoder().decode(Int.self, from: JSONEncoder().encode($0)) }
+    #expect(T.allCases.count == options.count, "\(slug): число case не равно числу опций сервера")
+    #expect(Set(apiValues) == Set(options.map(\.id)), "\(slug): id case не совпадают с id опций")
+    for option in options {
+        let value = make(option.id)
+        let data = try JSONEncoder().encode(value)
+        #expect(try JSONDecoder().decode(Int.self, from: data) == option.id, "\(slug): \(option.title)")
+        #expect(try JSONDecoder().decode(T.self, from: data) == value, "\(slug): \(option.title)")
+        #expect(value.rawValue == option.title, "\(slug): rawValue не равен title опции \(option.id)")
     }
 }

@@ -201,7 +201,9 @@ extension TestCaseViewController: CheckEnablingRBBProtocol {
     func checkConditionAndToggleRightBarButton() {
         guard isViewLoaded else { return }
         backItem.isEnabled = !isSavingDraft
-        saveItem.isEnabled = viewModel.canSaveChanges && !isSavingDraft && !isFetching
+        // Кеш уже на экране — сверка с сервером идёт в фоне и не блокирует правку.
+        let isLoadingContent = isFetching && viewModel.testCase == nil
+        saveItem.isEnabled = viewModel.canSaveChanges && !isSavingDraft && !isLoadingContent
         if isSavingDraft {
             spinner.startAnimating()
             navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
@@ -211,7 +213,7 @@ extension TestCaseViewController: CheckEnablingRBBProtocol {
         }
         form.updateValues()
         form
-            .setEditingEnabled(viewModel.changedTestCase != nil && !isSavingDraft && !isFetching && viewModel
+            .setEditingEnabled(viewModel.changedTestCase != nil && !isSavingDraft && !isLoadingContent && viewModel
                 .isSessionCurrent)
     }
 }

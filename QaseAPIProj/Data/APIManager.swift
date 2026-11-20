@@ -225,6 +225,17 @@ struct API {
         return .httpError(statusCode: response.statusCode, message: message, retryAfter: retryAfter)
     }
 
+    /// Тело запроса: ключи в snake_case, кроме тел с `ExplicitCodingKeys` — их ключи уходят как объявлены.
+    static func encodeBody(_ body: Encodable) throws(NetError) -> Data {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = body is ExplicitCodingKeys ? .useDefaultKeys : .convertToSnakeCase
+        do {
+            return try encoder.encode(body)
+        } catch {
+            throw .serializationError(error.localizedDescription)
+        }
+    }
+
     static func decodeResponse<Response: Decodable>(
         from data: Data,
         as type: Response.Type
@@ -304,6 +315,10 @@ struct API {
         return parts.allSatisfy { !$0.isEmpty && $0.unicodeScalars.allSatisfy(tokenCharacters.contains) }
     }
 }
+
+/// Тело объявляет ключи в итоговом виде: Qase ждёт смесь snake_case и camelCase (`is_flaky`, `isManual`),
+/// а `.convertToSnakeCase` переписал бы и явные `CodingKeys`.
+protocol ExplicitCodingKeys {}
 
 protocol NetworkManager: AnyObject {
     func performRequest<T: Decodable>(
@@ -392,16 +407,8 @@ final class APIManager: NetworkManager {
         request.addValue(authToken, forHTTPHeaderField: "Token")
 
         if let data = data {
-            let encoder = JSONEncoder()
-            let jsonData: Data
-            encoder.keyEncodingStrategy = .convertToSnakeCase
-            do {
-                jsonData = try encoder.encode(data)
-                request.httpBody = jsonData
-                request.addValue("application/json", forHTTPHeaderField: "content-type")
-            } catch {
-                throw .serializationError(error.localizedDescription)
-            }
+            request.httpBody = try API.encodeBody(data)
+            request.addValue("application/json", forHTTPHeaderField: "content-type")
         }
 
         if method == .delete || method == .get {
@@ -519,15 +526,7 @@ final class APIMockManager: NetworkManager {
 
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        if let data {
-            do {
-                let encoder = JSONEncoder()
-                encoder.keyEncodingStrategy = .convertToSnakeCase
-                request.httpBody = try encoder.encode(data)
-            } catch {
-                throw .serializationError(error.localizedDescription)
-            }
-        }
+        if let data { request.httpBody = try API.encodeBody(data) }
         return try await makeHTTPRequest(for: request, codableModelType: modelType)
     }
 
@@ -681,7 +680,13 @@ final class APIMockManager: NetworkManager {
         case "PATCH" where detailID != nil:
             guard let index = entities.firstIndex(where: matchesID)
             else { throw API.NetError.invalidRequest("Entity not found.") }
-            entities[index].merge(try body(of: request)) { _, new in new }
+            var changes = try body(of: request)
+            if endpoint == "case", let isManual = changes["isManual"] as? Bool {
+                // Как сервер: устаревший `automation` следует за isManual/isToBeAutomated.
+                let toBeAutomated = changes["isToBeAutomated"] as? Bool ?? false
+                changes["automation"] = isManual ? (toBeAutomated ? 1 : 0) : 2
+            }
+            entities[index].merge(changes) { _, new in new }
             records[key] = entities
             return ["id": entities[index]["id"] ?? 0]
         case "DELETE" where detailID != nil:

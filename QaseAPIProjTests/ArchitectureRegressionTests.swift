@@ -143,6 +143,42 @@ struct ArchitectureRegressionTests {
         #expect(headers == ["first", "replacement", "replacement", "candidate"])
         #expect(storage.getCredential()?.token == "replacement")
     }
+
+    /// Qase ждёт `isManual`/`isToBeAutomated` в camelCase рядом с `is_flaky`; остальные тела — snake_case.
+    @Test func requestBodyKeepsExplicitKeysAndConvertsOrdinaryKeysToSnakeCase() async throws {
+        struct OrdinaryBody: Encodable { let parentId: Int }
+        let transport = RecordingTransport()
+        let network = APIManager(tokenProvider: { "fixture" }, transport: transport)
+        var base = TestCaseEntity.empty
+        base.automation = .automation
+        var draft = base
+        draft.automation = .toBeAutomated
+        draft.isFlaky = true
+        let _: TransportResponse = try await network.performRequest(
+            for: .updateCase,
+            pathParameters: ["code": "A", "id": "7"],
+            with: TestCaseUpdatePayload(from: base, to: draft),
+            modelType: TransportResponse.self
+        )
+        let _: TransportResponse = try await network.performRequest(
+            for: .createSuite,
+            pathParameters: ["code": "A"],
+            with: OrdinaryBody(parentId: 3),
+            modelType: TransportResponse.self
+        )
+        let bodies = await transport.requests.compactMap { request in
+            request.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+        }
+        try #require(bodies.count == 2)
+        #expect(Set(bodies[0].keys) == ["isManual", "isToBeAutomated", "is_flaky"])
+        #expect(bodies[0]["isManual"] as? Bool == true && bodies[0]["isToBeAutomated"] as? Bool == true)
+        #expect(bodies[0]["is_flaky"] as? Int == 1)
+        #expect(Set(bodies[1].keys) == ["parent_id"])
+        // JSONSerialization не отличает true от 1: тип по схеме Qase проверяется по сырому телу.
+        let patch = await transport.requests.first?.httpBody.map { String(decoding: $0, as: UTF8.self) } ?? ""
+        #expect(patch.contains(#""isManual":true"#) && patch.contains(#""isToBeAutomated":true"#))
+        #expect(patch.contains(#""is_flaky":1"#))
+    }
     
     @Test func authenticatedGraphIsReplacedOnTokenChangeAndReleasedOnLogout() async throws {
         let domain = "ArchitectureRegressionTests." + UUID().uuidString

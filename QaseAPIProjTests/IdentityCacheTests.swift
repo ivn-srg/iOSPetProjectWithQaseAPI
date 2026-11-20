@@ -274,8 +274,9 @@ struct IdentityCacheTests {
         #expect(dao.getRecentCases(projectCode: "A").count == 1)
         vm.changedTestCase?.title = "Edited"
         try await vm.updateTestCaseData()
-        #expect(network.urls.last?.path == "/v1/case/A/0")
-        #expect(network.methods.last == .patch)
+        // После PATCH кейс перечитывается: оба запроса идут в захваченный проект.
+        #expect(Array(network.methods.suffix(2)) == [.patch, .get])
+        #expect(network.urls.suffix(2).allSatisfy { $0.path == "/v1/case/A/0" })
         #expect(dao.getRecentCases(projectCode: "A").first?.viewedAt == Date(timeIntervalSince1970: 10))
     }
 
@@ -395,7 +396,14 @@ private final class IdentityRecordingNetwork: NetworkManager {
         queryItems: [URLQueryItem],
         with data: Encodable?,
         modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
+    ) async throws(API.NetError) -> T {
+        try await performRequest(
+            with: data,
+            from: API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems),
+            method: operation.httpMethod,
+            modelType: modelType
+        )
+    }
     func composeURL(
         for method: API.Endpoint,
         urlComponents: [String?]?,

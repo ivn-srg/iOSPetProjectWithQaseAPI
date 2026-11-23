@@ -21,29 +21,6 @@ final class HomeScreenUITests: XCTestCase {
 
     override func tearDownWithError() throws { app.terminate() }
 
-    private func selectTab(_ identifier: AccessibilityID, title: String) {
-        let identified = app.tabBars.buttons[identifier.identifier]
-        let button = identified.exists ? identified : app.tabBars.buttons[title]
-        XCTAssertTrue(button.waitForExistence(timeout: 5), app.debugDescription)
-        button.tap()
-    }
-
-    private func waitForLabel(_ element: XCUIElement, containing text: String, timeout: TimeInterval = 12) {
-        let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "label CONTAINS %@", text),
-            object: element
-        )
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed, app.debugDescription)
-    }
-
-    private func waitForDisappearance(_ element: XCUIElement, timeout: TimeInterval = 5) {
-        let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "exists == false"),
-            object: element
-        )
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed, app.debugDescription)
-    }
-
     private func reveal(_ identifier: AccessibilityID) -> XCUIElement {
         let item = app.descendants(matching: .any).matching(identifier: identifier.identifier).firstMatch
         for _ in 0 ..< 8 {
@@ -63,13 +40,13 @@ final class HomeScreenUITests: XCTestCase {
         XCTAssertTrue(choice.waitForExistence(timeout: 5))
         choice.tap()
         let picker = app.buttons[AccessibilityID.projectPicker.identifier]
-        waitForLabel(picker, containing: "1Forma")
-        selectTab(.tabRepository, title: "Репозиторий")
+        app.waitForLabel(picker, containing: "1Forma")
+        app.selectTab(.tabRepository, title: "Репозиторий")
         XCTAssertTrue(picker.waitForExistence(timeout: 5))
-        waitForLabel(picker, containing: "1Forma")
-        selectTab(.tabWork, title: "Работа")
+        app.waitForLabel(picker, containing: "1Forma")
+        app.selectTab(.tabWork, title: "Работа")
         XCTAssertTrue(picker.waitForExistence(timeout: 5))
-        waitForLabel(picker, containing: "1Forma")
+        app.waitForLabel(picker, containing: "1Forma")
     }
 
     func testCaseOpenAddsRecentEntryAndSearchWorks() {
@@ -78,7 +55,7 @@ final class HomeScreenUITests: XCTestCase {
         row.tap()
         XCTAssertTrue(app.navigationBars.staticTexts["DEMO-81"].waitForExistence(timeout: 8))
         app.navigationBars.buttons[AccessibilityID.formBack.identifier].tap()
-        selectTab(.tabHome, title: "Главная")
+        app.selectTab(.tabHome, title: "Главная")
         XCTAssertTrue(app.buttons[AccessibilityID.recent(project: "DEMO", caseID: 81).identifier]
             .waitForExistence(timeout: 5))
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -130,7 +107,7 @@ final class HomeScreenUITests: XCTestCase {
     }
 
     func testLongPressOffersDeleteWithConfirmation() {
-        selectTab(.tabRepository, title: "Репозиторий")
+        app.selectTab(.tabRepository, title: "Репозиторий")
         let row = reveal(.repositoryCase(1000))
         row.press(forDuration: 1.0)
         let delete = app.buttons["Удалить"].firstMatch
@@ -141,7 +118,7 @@ final class HomeScreenUITests: XCTestCase {
         let cancel = app.buttons["Отмена"].firstMatch
         XCTAssertTrue(cancel.waitForExistence(timeout: 5), app.debugDescription)
         cancel.tap()
-        waitForDisappearance(title)
+        app.waitForDisappearance(title)
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.repositoryCase(1000).identifier]
             .waitForExistence(timeout: 5), app.debugDescription)
     }
@@ -199,7 +176,7 @@ final class HomeScreenUITests: XCTestCase {
         XCTAssertTrue(stay.waitForExistence(timeout: 5))
         stay.tap()
         XCTAssertTrue(app.navigationBars.staticTexts["DEMO-81"].waitForExistence(timeout: 5))
-        selectTab(.tabHome, title: "Главная")
+        app.selectTab(.tabHome, title: "Главная")
         XCTAssertTrue(stay.waitForExistence(timeout: 5))
         stay.tap()
         XCTAssertTrue(app.navigationBars.staticTexts["DEMO-81"].waitForExistence(timeout: 5))

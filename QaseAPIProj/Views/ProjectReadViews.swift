@@ -332,9 +332,11 @@ struct WorkHomeView: View {
                 )
                 VStack(spacing: 0) {
                     EntityRow(identifier: "", title: "Runs".localized, symbol: .playCircle, action: onRuns)
+                        .accessibilityIdentifier(AccessibilityID.workRuns.identifier)
                     Divider()
                         .padding(.leading, AppTheme.Space.regular)
                     EntityRow(identifier: "", title: "Defects".localized, symbol: .ladybug, action: onDefects)
+                        .accessibilityIdentifier(AccessibilityID.workDefects.identifier)
                 }
                 .cardSurface()
             }.frame(maxWidth: AppTheme.Size.content)

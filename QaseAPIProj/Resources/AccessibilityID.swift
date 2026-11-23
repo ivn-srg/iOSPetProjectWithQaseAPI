@@ -50,8 +50,10 @@ enum AccessibilityID: Hashable, Sendable {
     case tabRepository
     case tabSettings
     case tabWork
+    case workDefects
     case workLoading
     case workProject
+    case workRuns
     case field(Field)
     case breadcrumb(Int?)
     case repositoryCase(Int)
@@ -132,8 +134,10 @@ enum AccessibilityID: Hashable, Sendable {
         case .tabRepository: return "tab.repository"
         case .tabSettings: return "tab.settings"
         case .tabWork: return "tab.work"
+        case .workDefects: return "work.defects"
         case .workLoading: return "work.loading"
         case .workProject: return "work.project"
+        case .workRuns: return "work.runs"
         case .field(let field): return "field." + field.rawValue
         case .breadcrumb(let id): return "repository.breadcrumb." + (id.map(String.init) ?? "root")
         case .repositoryCase(let id): return "repository.case.\(id)"

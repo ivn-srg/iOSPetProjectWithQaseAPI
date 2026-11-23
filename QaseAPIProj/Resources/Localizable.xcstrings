@@ -256,6 +256,40 @@
         }
       }
     },
+    "Check your API token in Settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check your API token in Settings."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверьте API-токен в Настройках."
+          }
+        }
+      }
+    },
+    "Too many requests. Try again in a moment.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many requests. Try again in a moment."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слишком много запросов. Повторите через несколько секунд."
+          }
+        }
+      }
+    },
     "Qase is temporarily unavailable. Try again later.": {
       "extractionState": "manual",
       "localizations": {
@@ -2684,23 +2718,6 @@
         }
       }
     },
-    "Internet connection problem": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check your internet connection"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Проверьте интернет соединение"
-          }
-        }
-      }
-    },
     "invalid": {
       "extractionState": "stale",
       "localizations": {
@@ -2708,17 +2725,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отклонён"
-          }
-        }
-      }
-    },
-    "Invalid credentials": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Некорректые данные"
           }
         }
       }
@@ -3708,6 +3714,12 @@
     "Something went wrong": {
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",

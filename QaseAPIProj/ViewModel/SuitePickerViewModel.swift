@@ -74,7 +74,7 @@ final class SuitePickerViewModel {
             onChange?()
         } catch {
             guard accepts(requestedGeneration), !(error is CancellationError) else { return }
-            errorMessage = "Could not load suites".localized
+            errorMessage = API.userMessage(for: error, fallback: "Could not load suites".localized)
             onChange?()
         }
     }

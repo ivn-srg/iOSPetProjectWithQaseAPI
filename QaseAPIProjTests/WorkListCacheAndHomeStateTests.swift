@@ -121,7 +121,9 @@ struct HomeNoProjectStateTests {
     @Test func failureOffersRetryThatSelectsProject() async {
         let fixture = HomeFixture(.failure)
         await fixture.selection.load()
-        #expect(fixture.model.noProjectState == .failed("Could not load projects".localized))
+        // Фикстура `.failure` бросает `noInternetConnection` — Home называет причину ошибки.
+        let offline = "Could not connect. Check your internet connection and try again.".localized
+        #expect(fixture.model.noProjectState == .failed(offline))
         fixture.source.mode = .projects([ProjectSummary(title: "A", code: "A")])
         await fixture.model.reloadProjects().value
         #expect(fixture.source.requests == 2)
@@ -240,31 +242,12 @@ private final class WorkNetwork: NetworkManager {
         return try API.decodeResponse(from: Data(body.utf8), as: modelType)
     }
 
-    func performRequest<T: Decodable>(
-        with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
-
     func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
-
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? { nil }
-
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? { API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems) }
 
     func auth(by token: String) async throws -> Bool { true }
 }

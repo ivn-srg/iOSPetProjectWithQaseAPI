@@ -19,27 +19,8 @@ extension UIViewController {
                 try await action()
             } catch {
                 guard !Task.isCancelled, !(error is CancellationError) else { return }
-                var errorMessage = "Unknown Error".localized
-
-                if let error = error as? API.NetError {
-                    switch error {
-                    case .invalidURL, .timeout:
-                        errorMessage = "Something went wrong".localized
-                    case .parsingError(let message), .otherNetworkError(let message),
-                         .serializationError(let message):
-                        errorMessage = message
-                    case .noInternetConnection:
-                        errorMessage = "Internet connection problem".localized
-                    case .invalidCredantials:
-                        errorMessage = "Invalid credentials".localized
-                    case .invalidRequest(let message):
-                        errorMessage = message
-                    case .httpError(_, let message, _):
-                        errorMessage = message
-                    }
-                } else {
-                    errorMessage = error.localizedDescription
-                }
+                // Серверный текст и технические сообщения пользователю не показываются.
+                let errorMessage = API.userMessage(for: error, fallback: "Something went wrong".localized)
 
                 await MainActor.run {
                     UIAlertController.showSimpleAlert(

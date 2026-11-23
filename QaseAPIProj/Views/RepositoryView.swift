@@ -142,7 +142,12 @@ struct RepositoryView: View {
                     Task {
                         do { try await model.delete(pending.reference) }
                         catch is CancellationError {}
-                        catch { deletionError = "Could not delete entity".localized }
+                        catch {
+                            deletionError = API.userMessage(
+                                for: error,
+                                fallback: "Could not delete entity".localized
+                            )
+                        }
                     }
                 }
                 Button("Cancel".localized, role: .cancel) { pendingDelete = nil }

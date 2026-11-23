@@ -39,7 +39,55 @@ struct ProjectLifecycleTests {
         model.projects.reverse()
         try await model.deleteProject(confirmedProject)
         #expect(network.requestedURLs.last?.path == "/v1/project/A")
+        #expect(network.operations.last == .deleteProject)
         #expect(model.projects.map(\.code) == ["B"])
+    }
+
+    @Test func projectListRequestKeepsGetPathAndPaginationQuery() async throws {
+        let session = SessionContext(ownerID: "owner")
+        let cache = RealmManager(
+            configuration: .init(inMemoryIdentifier: UUID().uuidString),
+            session: session
+        )
+        let network = LifecycleNetwork()
+        network.responseBody = #"{"status":true,"result":{"total":0,"filtered":0,"count":0,"entities":[]}}"#
+        let model = ProjectsViewModel(network: network, dao: cache, session: session)
+        try await model.requestEntitiesData(place: .start)
+        #expect(network.operations == [.getProjects])
+        let url = try #require(network.requestedURLs.last)
+        #expect(url.path == "/v1/project")
+        let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        #expect(query.first { $0.name == "limit" }?.value == "50")
+        #expect(query.first { $0.name == "offset" }?.value == "0")
+    }
+
+    @Test func projectCreationPostsToTheProjectCollection() async throws {
+        let session = SessionContext(ownerID: "owner")
+        let network = LifecycleNetwork()
+        network.responseBody = #"{"status":true,"result":{"code":"NEW"}}"#
+        let model = CreatingProjectViewModel(network: network, session: session)
+        model.creatingProject.title = "New project"
+        model.creatingProject.code = "NEW"
+        try await model.createNewProject()
+        #expect(network.operations == [.createProject])
+        #expect(network.requestedURLs.last?.path == "/v1/project")
+    }
+
+    @Test func suiteAndCaseCreationUseTheirOwnOperationsAndProjectCode() async throws {
+        let session = SessionContext(ownerID: "owner")
+        let network = LifecycleNetwork()
+        network.responseBody = #"{"status":true,"result":{"id":1}}"#
+        let model = TestDependencies.creator(projectCode: "A", network: network, session: session)
+        model.creatingSuite.title = "Suite"
+        model.creatingTestCase.title = "Case"
+        model.creatingEntityIsSuite = true
+        try await model.createNewEntity()
+        #expect(network.operations == [.createSuite])
+        #expect(network.requestedURLs.last?.path == "/v1/suite/A")
+        model.creatingEntityIsSuite = false
+        try await model.createNewEntity()
+        #expect(network.operations == [.createSuite, .createCase])
+        #expect(network.requestedURLs.last?.path == "/v1/case/A")
     }
 
     @Test func deletionUpdatesSelectionEvenIfRefreshIsOffline() async {
@@ -95,18 +143,9 @@ struct ProjectLifecycleTests {
 
 private final class LifecycleNetwork: NetworkManager {
     var requestedURLs: [URL] = []
+    var operations: [API.Operation] = []
     var offline = false
-    func performRequest<T: Decodable>(
-        with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T {
-        if let urlString { requestedURLs.append(urlString) }
-        if offline { throw .noInternetConnection }
-        return try API.decodeResponse(from: Data("{\"status\":true}".utf8), as: modelType)
-    }
-
+    var responseBody = #"{"status":true}"#
     func performRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
@@ -114,12 +153,12 @@ private final class LifecycleNetwork: NetworkManager {
         with data: Encodable?,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        try await performRequest(
-            with: data,
-            from: API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems),
-            method: operation.httpMethod,
-            modelType: modelType
-        )
+        operations.append(operation)
+        if let url = API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems) {
+            requestedURLs.append(url)
+        }
+        if offline { throw .noInternetConnection }
+        return try API.decodeResponse(from: Data(responseBody.utf8), as: modelType)
     }
 
     func performMultipartRequest<T: Decodable>(
@@ -128,23 +167,5 @@ private final class LifecycleNetwork: NetworkManager {
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidRequest("No multipart fixture") }
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? {
-        var components = URLComponents(string: API.BASE_URL + "/" + method.rawValue)
-        components?.path += "/" + (urlComponents ?? []).compactMap { $0 }.joined(separator: "/")
-        return components?.url
-    }
-
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? {
-        API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
-    }
-
     func auth(by token: String) async throws -> Bool { true }
 }

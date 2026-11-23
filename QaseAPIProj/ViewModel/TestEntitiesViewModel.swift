@@ -148,7 +148,9 @@ final class TestEntitiesViewModel: ObservableObject {
                 suiteError = "Suite unavailable".localized }
         } catch {
             if accepts(generation, catalogGeneration),
-               !(error is CancellationError) { suiteError = "Could not load suites".localized }
+               !(error is CancellationError) {
+                suiteError = API.userMessage(for: error, fallback: "Could not load suites".localized)
+            }
         }
     }
 
@@ -198,7 +200,9 @@ final class TestEntitiesViewModel: ObservableObject {
             }
         } catch {
             if accepts(generation, caseGeneration),
-               !(error is CancellationError) { caseError = "Could not load cases".localized }
+               !(error is CancellationError) {
+                caseError = API.userMessage(for: error, fallback: "Could not load cases".localized)
+            }
         }
     }
 

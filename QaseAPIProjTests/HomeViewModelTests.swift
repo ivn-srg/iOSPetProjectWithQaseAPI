@@ -193,31 +193,11 @@ private final class HomeStateNetwork: NetworkManager {
         catch { throw .otherNetworkError(error.localizedDescription) }
     }
 
-    func performRequest<T: Decodable>(
-        with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidRequest("Operation required") }
     func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidRequest("No multipart fixture") }
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? { nil }
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? { API.makeURL(
-        for: operation,
-        pathParameters: pathParameters,
-        queryItems: queryItems
-    ) }
     func auth(by token: String) async throws -> Bool { true }
 }

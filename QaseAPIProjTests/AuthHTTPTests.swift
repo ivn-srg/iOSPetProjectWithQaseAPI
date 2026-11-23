@@ -23,6 +23,10 @@ struct AuthHTTPTests {
             }
         }
         #expect(await transport.tokens == ["candidate"])
+        let requests = await transport.requests
+        let request = try #require(requests.last)
+        #expect(request.url?.path == "/v1/project")
+        #expect(request.httpMethod == "GET")
     }
     
     @Test func emptyInputDoesNotSendAndTransportFailuresPropagate() async throws {
@@ -101,6 +105,7 @@ private actor AuthHTTPTransport: HTTPTransport {
     let error: URLError?
     let nonHTTP: Bool
     private(set) var tokens: [String] = []
+    private(set) var requests: [URLRequest] = []
     
     init(status: Int, error: URLError? = nil, nonHTTP: Bool = false) {
         self.status = status
@@ -110,6 +115,7 @@ private actor AuthHTTPTransport: HTTPTransport {
     
     func send(_ request: URLRequest) async throws -> (Data, URLResponse) {
         tokens.append(request.value(forHTTPHeaderField: "Token") ?? "")
+        requests.append(request)
         if let error { throw error }
         let url = try #require(request.url)
         if nonHTTP {

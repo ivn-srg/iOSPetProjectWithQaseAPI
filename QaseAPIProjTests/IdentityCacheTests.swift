@@ -363,13 +363,16 @@ private final class IdentityRecordingNetwork: NetworkManager {
     var beforeResponse: (() -> Void)?
     var caseStatus = true
     func performRequest<T: Decodable>(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem],
         with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        if let urlString { urls.append(urlString) }
-        methods.append(method)
+        if let url = API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems) {
+            urls.append(url)
+        }
+        methods.append(operation.httpMethod)
         await Task.yield()
         beforeResponse?()
         if modelType == TestCaseModel.self {
@@ -390,38 +393,6 @@ private final class IdentityRecordingNetwork: NetworkManager {
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
-    func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T {
-        try await performRequest(
-            with: data,
-            from: API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems),
-            method: operation.httpMethod,
-            modelType: modelType
-        )
-    }
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? { API.makeLegacyURL(
-        for: method,
-        urlComponents: urlComponents,
-        queryItems: queryItems
-    ) }
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? { API.makeURL(
-        for: operation,
-        pathParameters: pathParameters,
-        queryItems: queryItems
-    ) }
     func auth(by token: String) async throws -> Bool { true }
 }
 

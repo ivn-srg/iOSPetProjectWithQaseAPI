@@ -72,15 +72,14 @@ final class CreatingProjectViewModel {
 
         isEntityWasCreated = false
         let stamp = originStamp
-        guard let urlString = network.composeURL(for: .project, urlComponents: nil, queryItems: nil)
-        else { throw API.NetError.invalidURL }
 
         isSaving = true
         defer { isSaving = false }
         let response = try await network.performRequest(
+            for: .createProject,
+            pathParameters: [:],
+            queryItems: [],
             with: creatingProject,
-            from: urlString,
-            method: .post,
             modelType: ServerResponseModel<CreateOrUpdateProjectModel>.self
         )
 

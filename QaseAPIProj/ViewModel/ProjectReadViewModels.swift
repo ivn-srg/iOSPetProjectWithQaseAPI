@@ -111,7 +111,7 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
                 usingCache = true
                 hasMore = false
             }
-            errorMessage = "Could not load data".localized
+            errorMessage = API.userMessage(for: error, fallback: "Could not load data".localized)
         }
     }
 }
@@ -154,7 +154,7 @@ final class ReadDetailViewModel<Item>: ObservableObject {
             usingCache = false
         } catch {
             guard session.isCurrent(stamp), !Task.isCancelled, !(error is CancellationError) else { return }
-            errorMessage = failureMessage
+            errorMessage = API.userMessage(for: error, fallback: failureMessage)
             usingCache = item != nil
         }
     }

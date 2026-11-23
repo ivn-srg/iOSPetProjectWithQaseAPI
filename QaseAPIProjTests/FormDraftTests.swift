@@ -294,12 +294,13 @@ private final class FormDraftNetwork: NetworkManager {
     var release: CheckedContinuation<Void, Never>?
 
     func performRequest<T: Decodable>(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem],
         with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        methods.append(method)
+        methods.append(operation.httpMethod)
         if let data { capturedBodies.append(try API.encodeBody(data)) }
         if shouldSuspend {
             await withCheckedContinuation { continuation in release = continuation
@@ -310,44 +311,11 @@ private final class FormDraftNetwork: NetworkManager {
         return try API.decodeResponse(from: Data(#"{"status":true,"result":{"id":1}}"#.utf8), as: modelType)
     }
 
-    func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T {
-        try await performRequest(
-            with: data,
-            from: API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems),
-            method: operation.httpMethod,
-            modelType: modelType
-        )
-    }
-
     func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? {
-        URL(string: API.BASE_URL + "/" + method.rawValue + "/" + (urlComponents ?? []).compactMap { $0 }
-            .joined(separator: "/"))
-    }
-
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? { API.makeURL(
-        for: operation,
-        pathParameters: pathParameters,
-        queryItems: queryItems
-    ) }
     func auth(by token: String) async throws -> Bool { true }
 }

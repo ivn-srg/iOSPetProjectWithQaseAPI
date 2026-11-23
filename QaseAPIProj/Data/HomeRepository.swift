@@ -9,6 +9,7 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
     private let originStamp: SessionStamp
     private let session: SessionContext
     private let clock: () -> Date
+    private let sleep: (Duration) async throws -> Void
     private let pageSize = PaginationPolicy.pageSize
     private var projectPageStamp: SessionStamp?
     private var projectPageOffset = 0
@@ -24,6 +25,7 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
         dao: HomeRepositoryCache? = nil,
         session: SessionContext,
         clock: @escaping () -> Date = Date.init,
+        sleep: @escaping (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
         onCacheFailure: @escaping () -> Void = {}
     ) {
         self.onCacheFailure = onCacheFailure
@@ -32,6 +34,7 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
         self.session = session
         originStamp = session.capture()
         self.clock = clock
+        self.sleep = sleep
     }
 
     func listProjects(offset: Int = 0) async throws -> QaseAPIListResult<ProjectSummary> {
@@ -322,13 +325,29 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
     ) async throws -> T {
         try Task.checkCancellation()
         guard session.isCurrent(originStamp) else { throw CancellationError() }
-        let response = try await network.performRequest(
-            for: operation,
-            pathParameters: path,
-            queryItems: query,
-            with: nil,
-            modelType: QaseAPIResponse<T>.self
-        )
+        func send() async throws -> QaseAPIResponse<T> {
+            try await network.performRequest(
+                for: operation,
+                pathParameters: path,
+                queryItems: query,
+                with: nil,
+                modelType: QaseAPIResponse<T>.self
+            )
+        }
+        let response: QaseAPIResponse<T>
+        do {
+            response = try await send()
+        } catch let error as API.NetError {
+            // Один повтор той же страницы: полный обход не должен обрываться на коротком окне лимита Qase.
+            // Повторяется только чтение: запись не должна уходить дважды.
+            guard operation.httpMethod == .get,
+                  case .httpError(statusCode: 429, message: _, retryAfter: let retryAfter) = error,
+                  let delay = RateLimitPolicy.retryDelay(retryAfter: retryAfter) else { throw error }
+            try await sleep(delay)
+            try Task.checkCancellation()
+            guard session.isCurrent(originStamp), session.isCurrent(stamp) else { throw CancellationError() }
+            response = try await send()
+        }
         try Task.checkCancellation()
         guard session.isCurrent(stamp) else { throw CancellationError() }
         guard let result = response.result, response.status?.value != false else {

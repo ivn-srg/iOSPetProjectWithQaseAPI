@@ -43,19 +43,18 @@ final class ProjectsViewModel {
             offset = 0
             projects = dao.getProjects() ?? []
         }
-        guard hasMoreProjects, !isLoading,
-              let url = network.composeURL(
-                  for: .project,
-                  urlComponents: nil,
-                  queryItems: [.limit: PaginationPolicy.pageSize, .offset: offset]
-              ) else { return }
+        guard hasMoreProjects, !isLoading else { return }
         let generation = loadGeneration
         isLoading = true
         defer { if generation == loadGeneration { isLoading = false } }
         let response = try await network.performRequest(
+            for: .getProjects,
+            pathParameters: [:],
+            queryItems: [
+                API.QueryParams.limit.item(String(PaginationPolicy.pageSize)),
+                API.QueryParams.offset.item(String(offset))
+            ],
             with: nil,
-            from: url,
-            method: .get,
             modelType: ProjectDataModel.self
         )
         guard session.isCurrent(stamp), !Task.isCancelled, generation == loadGeneration else { return }
@@ -70,13 +69,12 @@ final class ProjectsViewModel {
 
     func deleteProject(_ project: Project) async throws(API.NetError) {
         guard session.isCurrent(stamp) else { throw .invalidRequest("Session ended") }
-        guard let url = network.composeURL(for: .project, urlComponents: [project.code], queryItems: nil)
-        else { throw .invalidURL }
 
         let response = try await network.performRequest(
+            for: .deleteProject,
+            pathParameters: ["code": project.code],
+            queryItems: [],
             with: nil,
-            from: url,
-            method: .delete,
             modelType: SharedResponseModel.self
         )
         guard session.isCurrent(stamp) else { throw .invalidRequest("Session ended") }

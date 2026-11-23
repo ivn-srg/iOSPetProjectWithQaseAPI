@@ -89,12 +89,10 @@ final class TestCaseEditorViewModel {
                 with: nil,
                 modelType: TestCaseModel.self
             )
-        } catch let error as API.NetError {
+        } catch {
+            // `performRequest` бросает только `API.NetError`: тип ошибки здесь выводится компилятором.
             guard session.isCurrent(stamp), !Task.isCancelled else { return nil }
             return .failure(error)
-        } catch {
-            guard session.isCurrent(stamp), !Task.isCancelled else { return nil }
-            return .failure(.otherNetworkError(error.localizedDescription))
         }
         guard session.isCurrent(stamp), !Task.isCancelled else { return nil }
         guard response.status, response.result.id == reference.caseID

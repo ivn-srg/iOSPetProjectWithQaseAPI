@@ -69,7 +69,7 @@ final class SelectedProjectStore: ObservableObject {
         } catch is CancellationError {
         } catch {
             guard session.isCurrent(stamp) else { return }
-            errorMessage = "Could not load projects".localized
+            errorMessage = API.userMessage(for: error, fallback: "Could not load projects".localized)
             // Офлайн: без выбора берём первый проект из кеша, не перезаписывая сохранённое предпочтение.
             if selectedProject == nil, let first = projects.first { commit(first, persist: false) }
         }

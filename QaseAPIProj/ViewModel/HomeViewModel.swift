@@ -142,7 +142,7 @@ final class HomeViewModel: ObservableObject {
                 } catch {
                     guard self.accepts(code: code, generation: generation, stamp: stamp),
                           !(error is CancellationError) else { return }
-                    self.metricsError = "Could not load overview".localized
+                    self.metricsError = API.userMessage(for: error, fallback: "Could not load overview".localized)
                 }
                 if self
                     .accepts(code: code, generation: generation, stamp: stamp) { self.metricsLoading = false }
@@ -157,7 +157,7 @@ final class HomeViewModel: ObservableObject {
                 } catch {
                     guard self.accepts(code: code, generation: generation, stamp: stamp),
                           !(error is CancellationError) else { return }
-                    self.runError = "Could not load active run".localized
+                    self.runError = API.userMessage(for: error, fallback: "Could not load active run".localized)
                 }
                 if self.accepts(code: code, generation: generation, stamp: stamp) { self.runLoading = false }
             }

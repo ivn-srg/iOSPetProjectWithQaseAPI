@@ -3,7 +3,7 @@ import Foundation
 import RealmSwift
 import Testing
 
-@MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct HomeViewModelTests {
     @Test("Metrics can refresh while a failed run section retains its cached value")
     func partialRefresh() async {
@@ -144,21 +144,18 @@ struct HomeViewModelTests {
 @MainActor
 private final class HomeResponseControl {
     private var projectAResponse: CheckedContinuation<Data, Never>?
-    private var suspendedWaiter: CheckedContinuation<Void, Never>?
     func projectResponse(code: String) async -> Data {
         if code == "A" {
             return await withCheckedContinuation { continuation in
                 projectAResponse = continuation
-                suspendedWaiter?.resume()
-                suspendedWaiter = nil
             }
         }
         return payload(code: code, count: 2)
     }
 
+    /// Ограниченное ожидание: без приостановки тест падает по `waitForCondition`, а не висит.
     func waitUntilSuspended() async {
-        guard projectAResponse == nil else { return }
-        await withCheckedContinuation { suspendedWaiter = $0 }
+        await waitForCondition { projectAResponse != nil }
     }
 
     func resumeA() {

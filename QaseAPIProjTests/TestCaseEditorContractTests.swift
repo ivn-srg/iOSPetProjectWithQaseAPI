@@ -286,6 +286,7 @@ private final class EditorFixture {
 
 /// Сеть редактора: N-й GET получает `getReplies[N-1]` (выбранные вызовы можно приостановить),
 /// PATCH кодирует тело тем же `API.encodeBody`, что и `APIManager`.
+/// Состояние на MainActor; методы протокола `nonisolated`, чтобы `T.Type` не пересекал границу акторов.
 @MainActor
 private final class EditorNetwork: NetworkManager {
     var getReplies: [Result<TestCaseEntity, API.NetError>] = []
@@ -302,50 +303,63 @@ private final class EditorNetwork: NetworkManager {
         continuation?.resume()
     }
 
-    func performRequest<T: Decodable>(
+    nonisolated func performRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         queryItems: [URLQueryItem],
         with data: Encodable?,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        methods.append(operation.httpMethod)
         switch operation {
         case .getCase:
-            getCalls += 1
-            let call = getCalls
-            if suspendedGetCalls.contains(call) {
-                await withCheckedContinuation { pendingGet = $0 }
-            }
-            guard call <= getReplies.count else { throw .invalidRequest("Unexpected GET #\(call)") }
-            switch getReplies[call - 1] {
-            case .failure(let error):
-                throw error
-            case .success(let value):
-                guard let response = TestCaseModel(status: true, result: value) as? T
-                else { throw .serializationError("Fixture type mismatch") }
-                return response
-            }
+            let value = try await nextGetReply(method: operation.httpMethod)
+            guard let response = TestCaseModel(status: true, result: value) as? T
+            else { throw .serializationError("Fixture type mismatch") }
+            return response
         case .updateCase:
-            var object: [String: Any] = [:]
-            if let data {
-                let encoded = try API.encodeBody(data)
-                object = (try? JSONSerialization.jsonObject(with: encoded) as? [String: Any]) ?? [:]
-            }
-            patchBodies.append(object)
-            let reply = #"{"status":\#(patchStatus),"result":{"id":7}}"#
-            return try API.decodeResponse(from: Data(reply.utf8), as: modelType)
+            var encoded: Data?
+            if let data { encoded = try API.encodeBody(data) }
+            let reply = await recordPatch(method: operation.httpMethod, body: encoded)
+            return try API.decodeResponse(from: reply, as: modelType)
         default:
+            await recordMethod(operation.httpMethod)
             throw .invalidRequest("Unexpected operation \(operation.rawValue)")
         }
     }
 
-    func performMultipartRequest<T: Decodable>(
+    private func recordMethod(_ method: API.HTTPMethod) {
+        methods.append(method)
+    }
+
+    /// Регистрирует GET, при необходимости ждёт `resumePendingGet()` и отдаёт ответ по номеру вызова.
+    private func nextGetReply(method: API.HTTPMethod) async throws(API.NetError) -> TestCaseEntity {
+        methods.append(method)
+        getCalls += 1
+        let call = getCalls
+        if suspendedGetCalls.contains(call) {
+            await withCheckedContinuation { pendingGet = $0 }
+        }
+        guard call <= getReplies.count else { throw .invalidRequest("Unexpected GET #\(call)") }
+        switch getReplies[call - 1] {
+        case .failure(let error): throw error
+        case .success(let value): return value
+        }
+    }
+
+    /// Регистрирует PATCH с телом и возвращает ответ с текущим `patchStatus`.
+    private func recordPatch(method: API.HTTPMethod, body: Data?) -> Data {
+        methods.append(method)
+        let object = body.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+        patchBodies.append(object ?? [:])
+        return Data(#"{"status":\#(patchStatus),"result":{"id":7}}"#.utf8)
+    }
+
+    nonisolated func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
 
-    func auth(by token: String) async throws -> Bool { true }
+    nonisolated func auth(by token: String) async throws -> Bool { true }
 }

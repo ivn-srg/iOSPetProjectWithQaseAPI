@@ -3,7 +3,7 @@ import Foundation
 import RealmSwift
 import Testing
 
-@Suite @MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct FormDraftTests {
     @Test func selectedIDsAndParentAreEncodedFromTheCaseDraft() throws {
         let model = TestDependencies.creator(
@@ -87,11 +87,9 @@ struct FormDraftTests {
         )
         model.creatingSuite.title = "Suite"
         var request: Task<Void, Error>?
-        await withCheckedContinuation { started in
-            network.onStarted = { started.resume() }
-            network.shouldSuspend = true
-            request = Task { try await model.createNewEntity() }
-        }
+        network.shouldSuspend = true
+        request = Task { try await model.createNewEntity() }
+        await waitForCondition { network.release != nil }
         #expect(model.isSaving && !model.canCreate)
         model.selectParent(7, forSuite: true)
         #expect(model.creatingSuite.parentId == nil)
@@ -262,11 +260,9 @@ struct FormDraftTests {
         var finished = false
         model.updatingFinishCallback = { finished = true }
         var request: Task<Void, Error>?
-        await withCheckedContinuation { started in
-            network.onStarted = { started.resume() }
-            network.shouldSuspend = true
-            request = Task { try await model.updateTestCaseData() }
-        }
+        network.shouldSuspend = true
+        request = Task { try await model.updateTestCaseData() }
+        await waitForCondition { network.release != nil }
         #expect(model.isSaving && !model.canSaveChanges)
         do { try await model.updateTestCaseData()
             Issue.record("Busy editor must not patch twice") } catch {}
@@ -282,40 +278,181 @@ struct FormDraftTests {
         #expect(dao.getTestCase(reference: reference)?.title == "Original")
     }
 
+    // MARK: - Создание набора и кейса: тело запроса и ответ с status:false
+
+    /// Ловит: `parentId` выпал из тела набора; ключ ушёл не в snake_case (`parentId`);
+    /// `description` и `preconditions` перепутаны местами.
+    @Test func suiteBodyCarriesDraftFieldsAndParentID() async throws {
+        let network = FormDraftNetwork()
+        let model = TestDependencies.creator(
+            projectCode: "A",
+            parentSuiteId: 9,
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
+        model.creatingSuite.title = "Suite title"
+        model.creatingSuite.itemDescription = "Suite description"
+        model.creatingSuite.preconditions = "Suite preconditions"
+        try await model.createNewEntity()
+        let payload = try lastPayload(of: network)
+        #expect(Set(payload.keys) == ["title", "description", "preconditions", "parent_id"])
+        #expect(payload["title"] as? String == "Suite title")
+        #expect(payload["description"] as? String == "Suite description")
+        #expect(payload["preconditions"] as? String == "Suite preconditions")
+        #expect(payload["parent_id"] as? Int == 9)
+    }
+
+    /// Ловит: набор в корне отправляет `parent_id` (0 или null) вместо отсутствия ключа.
+    @Test func rootSuiteBodyHasNoParentIDKey() async throws {
+        let network = FormDraftNetwork()
+        let model = TestDependencies.creator(
+            projectCode: "A",
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
+        model.creatingSuite.title = "Root suite"
+        try await model.createNewEntity()
+        let payload = try lastPayload(of: network)
+        #expect(Set(payload.keys) == ["title", "description", "preconditions"])
+        #expect(payload["title"] as? String == "Root suite")
+    }
+
+    /// Ловит: в тело кейса уходит черновик набора, либо `suite_id` теряется или меняет имя.
+    @Test func caseBodyCarriesTitleAndSuiteID() async throws {
+        let network = FormDraftNetwork()
+        let model = TestDependencies.creator(
+            projectCode: "A",
+            parentSuiteId: 9,
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
+        model.creatingSuite.title = "Suite title that must not be sent"
+        model.creatingEntityIsSuite = false
+        model.creatingTestCase.title = "Case title"
+        try await model.createNewEntity()
+        let payload = try lastPayload(of: network)
+        #expect(payload["title"] as? String == "Case title")
+        #expect(payload["suite_id"] as? Int == 9)
+        #expect(payload["parent_id"] == nil)
+    }
+
+    /// Ловит: кейс в корне пропускает `suite_id` вместо явного `null`.
+    @Test func rootCaseBodySendsNullSuiteID() async throws {
+        let network = FormDraftNetwork()
+        let model = TestDependencies.creator(
+            projectCode: "A",
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
+        model.creatingEntityIsSuite = false
+        model.creatingTestCase.title = "Root case"
+        try await model.createNewEntity()
+        let payload = try lastPayload(of: network)
+        #expect(payload["title"] as? String == "Root case")
+        #expect(payload["suite_id"] is NSNull)
+    }
+
+    /// Ловит: удалён guard `status` у набора (или `baselineSuite` обновляется до проверки) —
+    /// отказ сервера считается успехом, черновик «сохранён», колбэк закрытия формы вызван.
+    @Test func suiteCreationWithFalseStatusFailsAndKeepsTheDraftUnsaved() async {
+        let network = FormDraftNetwork()
+        network.responseBody = #"{"status":false,"result":{"id":1}}"#
+        let model = TestDependencies.creator(
+            projectCode: "A",
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
+        var finished = 0
+        model.creatingFinishCallback = { finished += 1 }
+        model.creatingSuite.title = "Suite"
+        let error = await thrownNetError { try await model.createNewEntity() }
+        #expect(invalidRequestMessage(error) == "The entity could not be created")
+        #expect(network.methods == [.post])
+        #expect(!model.isEntityWasCreated && !model.isSaving && finished == 0)
+        #expect(model.suiteHasUnsavedChanges && model.canCreate)
+    }
+
+    /// Ловит: удалён guard `status` у кейса (или `baselineCase` обновляется до проверки).
+    @Test func caseCreationWithFalseStatusFailsAndKeepsTheDraftUnsaved() async {
+        let network = FormDraftNetwork()
+        network.responseBody = #"{"status":false,"result":{"id":1}}"#
+        let model = TestDependencies.creator(
+            projectCode: "A",
+            network: network,
+            session: SessionContext(ownerID: "owner")
+        )
+        var finished = 0
+        model.creatingFinishCallback = { finished += 1 }
+        model.creatingEntityIsSuite = false
+        model.creatingTestCase.title = "Case"
+        let error = await thrownNetError { try await model.createNewEntity() }
+        #expect(invalidRequestMessage(error) == "The entity could not be created")
+        #expect(network.methods == [.post])
+        #expect(!model.isEntityWasCreated && !model.isSaving && finished == 0)
+        #expect(model.caseHasUnsavedChanges && model.canCreate)
+    }
+
 }
 
+@MainActor
+private func lastPayload(of network: FormDraftNetwork) throws -> [String: Any] {
+    let body = try #require(network.capturedBodies.last)
+    return try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+}
+
+/// Вызывает операцию и возвращает брошенную `NetError`; другая ошибка или успех дают `nil`.
+@MainActor
+private func thrownNetError(_ operation: () async throws -> Void) async -> API.NetError? {
+    do { try await operation() } catch { return error as? API.NetError }
+    return nil
+}
+
+private func invalidRequestMessage(_ error: API.NetError?) -> String? {
+    guard case .invalidRequest(let message)? = error else { return nil }
+    return message
+}
+
+/// Состояние на MainActor (тест читает `release`, `beforeResponse` меняет сессию);
+/// методы протокола `nonisolated`, чтобы `T.Type` не пересекал границу акторов.
+@MainActor
 private final class FormDraftNetwork: NetworkManager {
     var methods: [API.HTTPMethod] = []
     var capturedBodies: [Data] = []
     var error: API.NetError?
     var shouldSuspend = false
-    var onStarted: (() -> Void)?
     var beforeResponse: (() -> Void)?
     var release: CheckedContinuation<Void, Never>?
+    var responseBody = #"{"status":true,"result":{"id":1}}"#
 
-    func performRequest<T: Decodable>(
+    nonisolated func performRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         queryItems: [URLQueryItem],
         with data: Encodable?,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        methods.append(operation.httpMethod)
-        if let data { capturedBodies.append(try API.encodeBody(data)) }
-        if shouldSuspend {
-            await withCheckedContinuation { continuation in release = continuation
-                onStarted?() }
-        }
-        beforeResponse?()
-        if let error { throw error }
-        return try API.decodeResponse(from: Data(#"{"status":true,"result":{"id":1}}"#.utf8), as: modelType)
+        var body: Data?
+        if let data { body = try API.encodeBody(data) }
+        let reply = try await respond(method: operation.httpMethod, body: body)
+        return try API.decodeResponse(from: Data(reply.utf8), as: modelType)
     }
 
-    func performMultipartRequest<T: Decodable>(
+    /// Записывает запрос, при `shouldSuspend` ждёт `release`, затем вызывает `beforeResponse`
+    /// и отдаёт тело ответа `responseBody`.
+    private func respond(method: API.HTTPMethod, body: Data?) async throws(API.NetError) -> String {
+        methods.append(method)
+        if let body { capturedBodies.append(body) }
+        if shouldSuspend { await withCheckedContinuation { release = $0 } }
+        beforeResponse?()
+        if let error { throw error }
+        return responseBody
+    }
+
+    nonisolated func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
-    func auth(by token: String) async throws -> Bool { true }
+    nonisolated func auth(by token: String) async throws -> Bool { true }
 }

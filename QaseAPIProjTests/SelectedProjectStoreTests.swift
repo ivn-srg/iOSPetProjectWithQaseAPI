@@ -103,12 +103,136 @@ struct SelectedProjectStoreTests {
         #expect(fixture.store.selectedProject == nil)
         #expect(fixture.defaults.string(forKey: fixture.preferenceKey) == nil)
     }
+
+    // Ловит: удаление guard `session.isCurrent(stamp)` после запроса страницы (:53).
+    @Test func sessionChangeDuringFirstPageStopsTheWalkWithoutPublishing() async {
+        let fixture = StoreFixture(cached: [], network: .suspended([a, b]))
+        defer { fixture.tearDown() }
+        fixture.source.pages = [0: [a, b], 2: [c]]
+        fixture.source.pagesTotal = 3
+        fixture.defaults.set("B", forKey: fixture.preferenceKey)
+        let loading = Task { await fixture.store.load() }
+        await waitForCondition { fixture.source.requests == 1 }
+        fixture.session.invalidate()
+        fixture.source.release()
+        await loading.value
+        #expect(fixture.source.requests == 1)
+        #expect(fixture.store.projects.isEmpty)
+        #expect(fixture.store.selectedProject == nil)
+        #expect(fixture.store.errorMessage == nil)
+        #expect(!fixture.store.isLoading)
+        #expect(fixture.defaults.string(forKey: fixture.preferenceKey) == "B")
+        #expect(fixture.defaults.string(forKey: "selectedProject.signed-out") == nil)
+        #expect(fixture.selectionChanges == 0)
+    }
+
+    // Ловит: удаление guard `session.isCurrent(stamp)` в ветке ошибки (:71).
+    @Test func lateFailureAfterSessionChangeDoesNotSetErrorMessage() async {
+        let fixture = StoreFixture(cached: [], network: .suspendedFailure)
+        defer { fixture.tearDown() }
+        let loading = Task { await fixture.store.load() }
+        await waitForCondition { fixture.source.requests == 1 }
+        fixture.session.invalidate()
+        fixture.source.release()
+        await loading.value
+        #expect(fixture.store.errorMessage == nil)
+        #expect(fixture.store.selectedProject == nil)
+        #expect(!fixture.store.isLoading)
+    }
+
+    // Ловит: удаление guard `session.isCurrent(originStamp)` в `commit` (:79).
+    @Test func commitAfterSessionChangeDoesNotWritePreferenceOfTheNewOwner() {
+        let fixture = StoreFixture(cached: [], network: .projects([a]))
+        defer { fixture.tearDown() }
+        fixture.session.invalidate()
+        fixture.session.activate(ownerID: "new-owner")
+        fixture.store.commit(a)
+        #expect(fixture.store.selectedProject == nil)
+        #expect(fixture.defaults.string(forKey: "selectedProject.new-owner") == nil)
+        #expect(fixture.defaults.string(forKey: "selectedProject.signed-out") == nil)
+        #expect(fixture.defaults.string(forKey: fixture.preferenceKey) == nil)
+        #expect(fixture.selectionChanges == 0)
+    }
+
+    // Ловит: удаление guard на пустые `unique` при непустой странице (:55-57), из-за чего
+    // страница из дублей молча принимается как последняя.
+    @Test func pageMadeOnlyOfDuplicatesFailsTheLoadInsteadOfHanging() async {
+        let fixture = StoreFixture(cached: [], network: .projects([a, b]))
+        defer { fixture.tearDown() }
+        fixture.source.pages = [0: [a, b], 2: [a, b]]
+        fixture.source.pagesTotal = 4
+        await fixture.store.load()
+        #expect(fixture.source.offsets == [0, 2])
+        #expect(fixture.store.errorMessage == "Could not load projects".localized)
+        #expect(fixture.store.projects.isEmpty)
+        #expect(!fixture.store.isLoading)
+    }
+
+    // Ловит: `throw` на любом дубле вместо отбрасывания дублей (страница `[b, c]` после `[a, b]`).
+    @Test func partiallyDuplicatedSecondPageIsMergedWithoutDuplicates() async {
+        let fixture = StoreFixture(cached: [], network: .projects([a, b]))
+        defer { fixture.tearDown() }
+        fixture.source.pages = [0: [a, b], 2: [b, c]]
+        fixture.source.pagesTotal = 4
+        await fixture.store.load()
+        #expect(fixture.source.offsets == [0, 2])
+        #expect(fixture.store.errorMessage == nil)
+        #expect(fixture.store.projects.map(\.code) == ["A", "B", "C"])
+    }
+
+    // Ловит: `changed` считается по равенству проекта, а не по коду (колбэк на смену title),
+    // и колбэк, который не срабатывает при смене A -> B.
+    @Test func selectionChangedFiresOnlyWhenTheCodeChanges() async {
+        let fixture = StoreFixture(cached: [], network: .projects([a, b]))
+        defer { fixture.tearDown() }
+        await fixture.store.load()
+        #expect(fixture.store.selectedProject?.code == "A")
+        #expect(fixture.selectionChanges == 1)
+        fixture.source.mode = .projects([ProjectSummary(title: "A renamed", code: "A"), b])
+        await fixture.store.load()
+        #expect(fixture.store.selectedProject?.title == "A renamed")
+        #expect(fixture.selectionChanges == 1)
+        fixture.store.commit(b)
+        #expect(fixture.store.selectedProject?.code == "B")
+        #expect(fixture.selectionChanges == 2)
+        fixture.store.commit(ProjectSummary(title: "B renamed", code: "B"))
+        #expect(fixture.selectionChanges == 2)
+    }
+
+    // Ловит: удаление проверки кода в `refreshSelection` (чужой проект подменяет выбор)
+    // и отсутствие обновления элемента `projects`.
+    @Test func refreshSelectionUpdatesOnlyTheSelectedCode() async {
+        let fixture = StoreFixture(cached: [], network: .projects([a, b]))
+        defer { fixture.tearDown() }
+        await fixture.store.load()
+        fixture.store.refreshSelection(ProjectSummary(title: "A updated", code: "A"))
+        #expect(fixture.store.selectedProject?.title == "A updated")
+        #expect(fixture.store.projects.map(\.title) == ["A updated", "B"])
+        fixture.store.refreshSelection(ProjectSummary(title: "B updated", code: "B"))
+        #expect(fixture.store.selectedProject?.code == "A")
+        #expect(fixture.store.selectedProject?.title == "A updated")
+        #expect(fixture.store.projects.map(\.title) == ["A updated", "B"])
+        #expect(fixture.selectionChanges == 1)
+    }
+
+    // Ловит: удаление `errorMessage = nil` в начале `load` (:42).
+    @Test func successfulLoadClearsThePreviousErrorMessage() async {
+        let fixture = StoreFixture(cached: [], network: .failure)
+        defer { fixture.tearDown() }
+        await fixture.store.load()
+        #expect(fixture.store.errorMessage != nil)
+        fixture.source.mode = .projects([a])
+        await fixture.store.load()
+        #expect(fixture.store.errorMessage == nil)
+        #expect(fixture.store.selectedProject?.code == "A")
+    }
 }
 
 @MainActor
 private final class StoreFixture {
     let store: SelectedProjectStore
     let source: ProjectsSource
+    let session: SessionContext
     let defaults: UserDefaults
     private let suiteName = UUID().uuidString
     private(set) var requestedSelections = 0
@@ -117,6 +241,7 @@ private final class StoreFixture {
 
     init(cached: [ProjectSummary], network: ProjectsSource.Mode) {
         let session = SessionContext(ownerID: "owner")
+        self.session = session
         let cache = TestDependencies.cache(session: session)
         _ = cache.saveProjectSummaries(cached, stamp: session.capture())
         source = ProjectsSource(network)

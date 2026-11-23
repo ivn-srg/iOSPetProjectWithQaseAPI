@@ -2,7 +2,7 @@ import Foundation
 @testable import QaseAPIProj
 import Testing
 
-@MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct PagedReadViewModelTests {
     @Test("A late response for a previous search never replaces the new results")
     func staleSearch() async {
@@ -77,22 +77,19 @@ struct PagedReadViewModelTests {
 @MainActor
 private final class SearchResponseControl {
     private var oldResponse: CheckedContinuation<QaseAPIListResult<CaseSummary>, Never>?
-    private var suspendedWaiter: CheckedContinuation<Void, Never>?
 
     func response(query: String) async -> QaseAPIListResult<CaseSummary> {
         if query == "old" {
             return await withCheckedContinuation { continuation in
                 oldResponse = continuation
-                suspendedWaiter?.resume()
-                suspendedWaiter = nil
             }
         }
         return page(title: "new")
     }
 
+    /// Ограниченное ожидание: без приостановки тест падает по `waitForCondition`, а не висит.
     func waitUntilSuspended() async {
-        guard oldResponse == nil else { return }
-        await withCheckedContinuation { suspendedWaiter = $0 }
+        await waitForCondition { oldResponse != nil }
     }
 
     func resumeOld() {

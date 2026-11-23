@@ -22,7 +22,7 @@ private actor RecordingTransport: HTTPTransport {
     }
 }
 
-@Suite @MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct ArchitectureRegressionTests {
     @Test(.timeLimit(.minutes(1))) func removingEditorReleasesItBeforePendingRequestCompletes() async throws {
         let session = SessionContext(ownerID: "editor")
@@ -206,23 +206,87 @@ struct ArchitectureRegressionTests {
         #expect(composition.session.ownerID == nil)
     }
     
-    @Test func demoCachesAndCredentialsAreIsolatedBetweenEnvironments() async throws {
-        let firstSession = SessionContext(ownerID: "first")
-        let secondSession = SessionContext(ownerID: "second")
-        let first = TestDependencies.cache(session: firstSession)
-        let second = TestDependencies.cache(session: secondSession)
-        first.useDemoStore(true)
-        second.useDemoStore(true)
-        let project = try JSONDecoder().decode(
-            Project.self,
-            from: Data("{\"title\":\"A\",\"code\":\"A\"}".utf8)
+    // Мутация: `useDemoStore(true)` оставляет production-конфигурацию (демо видит чужие данные) или
+    // `useDemoStore(false)` не возвращает production-хранилище.
+    @Test(.timeLimit(.minutes(1)))
+    func demoAndProductionStoresDoNotSeeEachOthersData() throws {
+        let session = SessionContext(ownerID: "owner")
+        let configuration = Realm.Configuration(
+            inMemoryIdentifier: UUID().uuidString,
+            objectTypes: RealmManager.cacheObjectTypes
         )
-        #expect(first.saveProjects([project], stamp: firstSession.capture()))
-        #expect(second.getProjects()?.isEmpty != false)
-        try second.clearAll()
-        #expect(first.getProjects()?.count == 1)
+        // In-memory Realm живёт, пока открыт хотя бы один экземпляр: без него переключение на демо
+        // удалило бы production-данные, и тест проходил бы при любом `useDemoStore`.
+        let productionKeeper = try Realm(configuration: configuration)
+        defer { withExtendedLifetime(productionKeeper) {} }
+        let cache = RealmManager(configuration: configuration, session: session)
+        let stamp = session.capture()
+
+        let production = try Self.project("PROD")
+        let demo = try Self.project("DEMO")
+        #expect(cache.saveProjects([production], stamp: stamp))
+        #expect(cache.getProjects()?.map(\.code) == ["PROD"])
+
+        cache.useDemoStore(true)
+        #expect(cache.getProjects()?.map(\.code) == [String]())
+        #expect(cache.saveProjects([demo], stamp: stamp))
+        #expect(cache.getProjects()?.map(\.code) == ["DEMO"])
+        try cache.clearAll()
+        #expect(cache.getProjects()?.map(\.code) == [String]())
+
+        cache.useDemoStore(false)
+        #expect(cache.getProjects()?.map(\.code) == ["PROD"])
     }
-    
+
+    // Мутация: `isDemoMode` не зависит от токена (всегда `true` при наличии credential); composition
+    // не переключает кеш на демо-хранилище (`configureDemoMode` без `useDemoStore`) — тогда выход из демо
+    // очищает production-кеш; `logout` не удаляет credential или не сбрасывает владельца сессии.
+    @Test(.timeLimit(.minutes(1)))
+    func demoLoginSwitchesToDemoModeAndLogoutRemovesCredential() async throws {
+        let domain = "ArchitectureRegressionTests." + UUID().uuidString
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let storage = MemoryCredentialStorage()
+        try storage.saveCredential(AuthCredential(token: "real-token", ownerID: "real-owner"))
+        let configuration = Realm.Configuration(
+            inMemoryIdentifier: UUID().uuidString,
+            objectTypes: RealmManager.cacheObjectTypes
+        )
+        // Сильная ссылка держит production in-memory Realm, пока composition работает с демо-хранилищем.
+        let productionKeeper = try await Realm(configuration: configuration)
+        defer { withExtendedLifetime(productionKeeper) {} }
+        let composition = AppCompositionRoot(
+            defaults: defaults,
+            arguments: [],
+            credentialStorage: storage,
+            cacheConfiguration: configuration
+        )
+        #expect(!composition.auth.isDemoMode)
+
+        try await composition.auth.loggedIn(token: "QASE_DEMO")
+        let credential = try #require(storage.getCredential())
+        #expect(credential.token == "QASE_DEMO")
+        #expect(credential.ownerID != "real-owner")
+        #expect(composition.auth.isDemoMode)
+        #expect(composition.auth.isUserLoggedIn())
+        #expect(composition.session.ownerID == credential.ownerID)
+
+        // Строка production-кеша, записанная мимо composition: выход из демо очищает только демо-хранилище.
+        let production = ProjectRO(projectData: try Self.project("PROD"), ownerID: "real-owner")
+        try productionKeeper.write { productionKeeper.add(production) }
+        try await composition.auth.logout()
+        productionKeeper.refresh()
+        #expect(productionKeeper.objects(ProjectRO.self).map(\.code) == ["PROD"])
+        #expect(storage.getCredential() == nil)
+        #expect(!composition.auth.isDemoMode)
+        #expect(!composition.auth.isUserLoggedIn())
+        #expect(composition.session.ownerID == nil)
+    }
+
+    private static func project(_ code: String) throws -> Project {
+        try JSONDecoder().decode(Project.self, from: Data(#"{"title":"\#(code)","code":"\#(code)"}"#.utf8))
+    }
+
     @Test func fixedAndDynamicIdentifiersPreserveLegacyValues() {
         #expect(AccessibilityID.field(.title).identifier == "field.Title")
         #expect(AccessibilityID.breadcrumb(nil).identifier == "repository.breadcrumb.root")

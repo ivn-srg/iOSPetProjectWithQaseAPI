@@ -76,6 +76,7 @@ struct RepositorySearchStateTests {
 }
 
 /// Запрос ждёт `releaseAll()` (если `holdsRequests`) и возвращает пустую страницу.
+/// Состояние на MainActor; методы протокола `nonisolated`, чтобы `T.Type` не пересекал границу акторов.
 @MainActor
 private final class SuspendingListNetwork: NetworkManager {
     var holdsRequests = true
@@ -88,24 +89,28 @@ private final class SuspendingListNetwork: NetworkManager {
         continuations.forEach { $0.resume() }
     }
 
-    func performRequest<T: Decodable>(
+    private func holdIfNeeded() async {
+        if holdsRequests { await withCheckedContinuation { waiting.append($0) } }
+    }
+
+    nonisolated func performRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         queryItems: [URLQueryItem],
         with data: Encodable?,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        if holdsRequests { await withCheckedContinuation { waiting.append($0) } }
+        await holdIfNeeded()
         let body = #"{"status": true, "result": {"total": 0, "filtered": 0, "count": 0, "entities": []}}"#
         return try API.decodeResponse(from: Data(body.utf8), as: modelType)
     }
 
-    func performMultipartRequest<T: Decodable>(
+    nonisolated func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
 
-    func auth(by token: String) async throws -> Bool { true }
+    nonisolated func auth(by token: String) async throws -> Bool { true }
 }

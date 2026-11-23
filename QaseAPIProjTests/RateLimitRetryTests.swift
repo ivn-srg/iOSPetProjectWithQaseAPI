@@ -118,7 +118,7 @@ private final class RetryFixture {
 }
 
 /// N-й запрос получает `replies[N-1]`: страницу запусков, страницу проектов или 429.
-@MainActor
+/// Без `@MainActor`: вызовы строго последовательны, приостановки нет.
 private final class ScriptedHomeNetwork: NetworkManager {
     enum Reply {
         case runs([Int])

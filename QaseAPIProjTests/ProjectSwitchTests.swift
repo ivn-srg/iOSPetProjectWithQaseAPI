@@ -19,7 +19,7 @@ private final class DraftFixture: ProjectDraft {
         hasUnsavedChanges = false }
 }
 
-@Suite @MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct ProjectSwitchTests {
     @Test func busyCleanParticipantBlocksSaveAndDiscard() async throws {
         let busy = DraftFixture(), changed = DraftFixture()
@@ -62,5 +62,31 @@ struct ProjectSwitchTests {
         let drafts = [DraftFixture(), DraftFixture()]
         #expect(try await ProjectSwitchGuard().resolve(drafts, decision: .discard))
         #expect(drafts.allSatisfy { !$0.hasUnsavedChanges && $0.discards == 1 })
+    }
+
+    // Ловит: `dirty` -> `drafts` в `.save` (:80-81): чистый участник сохраняется
+    // или своим `canSaveDraft == false` блокирует сохранение грязного.
+    @Test func saveTouchesOnlyDirtyParticipantsAndIgnoresCleanOnes() async throws {
+        let dirty = DraftFixture(), clean = DraftFixture()
+        clean.hasUnsavedChanges = false
+        clean.canSaveDraft = false
+        let allowed = try await ProjectSwitchGuard().resolve([clean, dirty], decision: .save)
+        #expect(allowed)
+        #expect(dirty.saves == 1)
+        #expect(clean.saves == 0)
+        #expect(clean.discards == 0)
+    }
+
+    // Ловит: `dirty` -> `drafts` в `.discard` (:77): сбрасывается и чистый участник.
+    @Test func discardTouchesOnlyDirtyParticipants() async throws {
+        let dirty = DraftFixture(), clean = DraftFixture()
+        clean.hasUnsavedChanges = false
+        clean.canSaveDraft = false
+        let allowed = try await ProjectSwitchGuard().resolve([clean, dirty], decision: .discard)
+        #expect(allowed)
+        #expect(dirty.discards == 1)
+        #expect(!dirty.hasUnsavedChanges)
+        #expect(clean.discards == 0)
+        #expect(clean.saves == 0)
     }
 }

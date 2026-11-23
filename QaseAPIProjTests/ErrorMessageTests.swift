@@ -48,6 +48,132 @@ struct ErrorMessageTests {
         }
     }
 
+    // Мутация: убрать код из `API.offlineCodes` или ветку `.timedOut` в `makeHTTPRequest`.
+    @Test(arguments: [
+        URLError.Code.notConnectedToInternet, .networkConnectionLost, .cannotFindHost, .cannotConnectToHost,
+        .dnsLookupFailed, .dataNotAllowed
+    ])
+    func offlineTransportFailuresBecomeNoInternetConnection(code: URLError.Code) async {
+        let error = await Self.failure(of: ThrowingTransport(code))
+        guard case API.NetError.noInternetConnection? = error else {
+            Issue.record("Expected noInternetConnection for \(code), got \(String(describing: error))")
+            return
+        }
+    }
+
+    // Мутация: вернуть `.timedOut` в общую ветку `otherNetworkError` или смешать с `offlineCodes`.
+    @Test func timedOutTransportFailureBecomesTimeout() async {
+        let error = await Self.failure(of: ThrowingTransport(.timedOut))
+        guard case API.NetError.timeout? = error else {
+            Issue.record("Expected timeout, got \(String(describing: error))")
+            return
+        }
+    }
+
+    // Фиксация текущего поведения (NG-3): отмену `APIManager` отдельно не различает.
+    // Мутация: добавить `.cancelled` в `offlineCodes` или бросать `CancellationError`.
+    @Test func cancelledTransportFailureIsReportedAsOtherNetworkError() async {
+        let error = await Self.failure(of: ThrowingTransport(.cancelled))
+        guard case API.NetError.otherNetworkError? = error else {
+            Issue.record("Expected otherNetworkError, got \(String(describing: error))")
+            return
+        }
+    }
+
+    // Мутация: убрать завершающий `catch` в `makeHTTPRequest` (чужая ошибка уходит наружу как есть).
+    @Test func unknownTransportFailureBecomesOtherNetworkError() async {
+        let error = await Self.failure(of: StubTransport { throw CocoaError(.fileReadUnknown) })
+        guard case API.NetError.otherNetworkError? = error else {
+            Issue.record("Expected otherNetworkError, got \(String(describing: error))")
+            return
+        }
+    }
+
+    // Мутация: принять не-HTTP ответ за успех (декодирование пустого тела дало бы `parsingError`).
+    @Test func nonHTTPResponseBecomesOtherNetworkError() async {
+        let error = await Self.failure(of: StubTransport {
+            let url = try #require(URL(string: "https://api.qase.io/v1/project"))
+            let response = URLResponse(
+                url: url,
+                mimeType: nil,
+                expectedContentLength: 0,
+                textEncodingName: nil
+            )
+            return (Data(), response)
+        })
+        guard case API.NetError.otherNetworkError? = error else {
+            Issue.record("Expected otherNetworkError, got \(String(describing: error))")
+            return
+        }
+    }
+
+    // Мутация: в `decodeResponse` отдавать ошибку разбора как `otherNetworkError` вместо `parsingError`.
+    @Test func malformedSuccessBodyBecomesParsingError() async {
+        let error = await Self.failure(of: StubTransport { try Self.httpReply(status: 200, body: "{}") })
+        guard case API.NetError.parsingError? = error else {
+            Issue.record("Expected parsingError, got \(String(describing: error))")
+            return
+        }
+    }
+
+    // Мутация: проверять статус после декодирования — тело ошибки Qase не разбирается как `QaseAPIIDResult`.
+    @Test func serverFailureKeepsStatusAndRetryAfterFromResponse() async {
+        let error = await Self.failure(of: StubTransport {
+            try Self.httpReply(
+                status: 429,
+                body: #"{"errorMessage":"slow down"}"#,
+                headers: ["Retry-After": "7"]
+            )
+        })
+        guard case API.NetError.httpError(let status, let message, let retryAfter)? = error else {
+            Issue.record("Expected httpError, got \(String(describing: error))")
+            return
+        }
+        #expect(status == 429)
+        #expect(message == "slow down")
+        #expect(retryAfter == 7)
+    }
+
+    @Test func validSuccessBodyIsDecoded() async throws {
+        let network = APIManager(
+            tokenProvider: { "token" },
+            transport: StubTransport { try Self.httpReply(status: 200, body: #"{"id":7}"#) }
+        )
+        let result: QaseAPIIDResult = try await network.performRequest(
+            for: .getProjects,
+            modelType: QaseAPIIDResult.self
+        )
+        #expect(result.id == 7)
+    }
+
+    private nonisolated static func failure(of transport: some HTTPTransport) async -> (any Error)? {
+        let network = APIManager(tokenProvider: { "token" }, transport: transport)
+        do {
+            let _: QaseAPIIDResult = try await network.performRequest(
+                for: .getProjects,
+                modelType: QaseAPIIDResult.self
+            )
+            return nil
+        } catch {
+            return error
+        }
+    }
+
+    private nonisolated static func httpReply(
+        status: Int,
+        body: String,
+        headers: [String: String]? = nil
+    ) throws -> (Data, URLResponse) {
+        let url = try #require(URL(string: "https://api.qase.io/v1/project"))
+        let response = try #require(HTTPURLResponse(
+            url: url,
+            statusCode: status,
+            httpVersion: nil,
+            headerFields: headers
+        ))
+        return (Data(body.utf8), response)
+    }
+
     @Test func pagedListShowsTokenHintOn401() async {
         let session = SessionContext(ownerID: "owner")
         let model = PagedReadViewModel<RunReadDTO>(session: session) { _, _ in throw Self.unauthorized }
@@ -109,6 +235,13 @@ private actor ThrowingTransport: HTTPTransport {
     let code: URLError.Code
     init(_ code: URLError.Code) { self.code = code }
     func send(_ request: URLRequest) async throws -> (Data, URLResponse) { throw URLError(code) }
+}
+
+/// Транспорт с заданным ответом: тест описывает ответ или сбой замыканием.
+private struct StubTransport: HTTPTransport {
+    let reply: @Sendable () throws -> (Data, URLResponse)
+    init(_ reply: @escaping @Sendable () throws -> (Data, URLResponse)) { self.reply = reply }
+    func send(_ request: URLRequest) async throws -> (Data, URLResponse) { try reply() }
 }
 
 /// Сеть, отвечающая 401 на любой запрос, как Qase при отозванном токене.

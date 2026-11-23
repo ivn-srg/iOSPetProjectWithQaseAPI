@@ -463,8 +463,6 @@ final class APIManager: NetworkManager {
             return try API.decodeResponse(from: data, as: codableModelType)
         } catch let error as API.NetError {
             throw error
-        } catch let error as DecodingError {
-            throw .parsingError(error.errorDescription ?? error.localizedDescription)
         } catch let error as URLError where API.offlineCodes.contains(error.code) {
             throw .noInternetConnection
         } catch let error as URLError where error.code == .timedOut {

@@ -356,25 +356,23 @@ struct IdentityCacheTests {
     }
 }
 
+/// Состояние фейка живёт на MainActor; метод протокола `nonisolated`, чтобы `T.Type`
+/// не пересекал границу акторов (Swift 6: NonSendableInAsyncConformanceOrOverride).
 @MainActor
 private final class IdentityRecordingNetwork: NetworkManager {
     var urls: [URL] = []
     var methods: [API.HTTPMethod] = []
     var beforeResponse: (() -> Void)?
     var caseStatus = true
-    func performRequest<T: Decodable>(
+    nonisolated func performRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         queryItems: [URLQueryItem],
         with data: Encodable?,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        if let url = API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems) {
-            urls.append(url)
-        }
-        methods.append(operation.httpMethod)
-        await Task.yield()
-        beforeResponse?()
+        let url = API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
+        let caseStatus = await record(url: url, method: operation.httpMethod)
         if modelType == TestCaseModel.self {
             guard let value = TestCaseModel(status: caseStatus, result: TestCaseEntity.empty) as? T else {
                 throw API.NetError.serializationError("Fixture type mismatch")
@@ -387,13 +385,22 @@ private final class IdentityRecordingNetwork: NetworkManager {
         )
     }
 
-    func performMultipartRequest<T: Decodable>(
+    /// Записывает запрос, отдаёт ход и вызывает `beforeResponse`; возвращает статус ответа кейса.
+    private func record(url: URL?, method: API.HTTPMethod) async -> Bool {
+        if let url { urls.append(url) }
+        methods.append(method)
+        await Task.yield()
+        beforeResponse?()
+        return caseStatus
+    }
+
+    nonisolated func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
-    func auth(by token: String) async throws -> Bool { true }
+    nonisolated func auth(by token: String) async throws -> Bool { true }
 }
 
 @objc(QaseLegacyCacheCaseFixture)

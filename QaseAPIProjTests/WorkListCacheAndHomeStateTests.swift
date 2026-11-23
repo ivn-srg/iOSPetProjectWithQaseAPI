@@ -207,7 +207,8 @@ private final class WorkFixture {
 }
 
 /// N-й запрос получает `replies[N-1]` — страницу с указанными id (`Run N` / `Defect N`);
-/// выбранные запросы ждут `resumePending()`.
+/// выбранные запросы ждут `resumePending()`. Состояние на MainActor; методы протокола
+/// `nonisolated`, чтобы `T.Type` не пересекал границу акторов.
 @MainActor
 private final class WorkNetwork: NetworkManager {
     enum Reply { case page([Int]) }
@@ -223,18 +224,24 @@ private final class WorkNetwork: NetworkManager {
         continuation?.resume()
     }
 
-    func performRequest<T: Decodable>(
+    /// Регистрирует вызов, при необходимости ждёт `resumePending()` и отдаёт id страницы.
+    private func nextPage() async throws(API.NetError) -> [Int] {
+        calls += 1
+        let call = calls
+        if suspendedCalls.contains(call) { await withCheckedContinuation { pending = $0 } }
+        guard call <= replies.count, case .page(let ids) = replies[call - 1]
+        else { throw .invalidRequest("Unexpected request #\(call)") }
+        return ids
+    }
+
+    nonisolated func performRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         queryItems: [URLQueryItem],
         with data: Encodable?,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        calls += 1
-        let call = calls
-        if suspendedCalls.contains(call) { await withCheckedContinuation { pending = $0 } }
-        guard call <= replies.count, case .page(let ids) = replies[call - 1]
-        else { throw .invalidRequest("Unexpected request #\(call)") }
+        let ids = try await nextPage()
         let prefix = operation == .getDefects ? "Defect" : "Run"
         let entities = ids.map { #"{"id": \#($0), "title": "\#(prefix) \#($0)"}"# }.joined(separator: ",")
         let result = #"{"total": \#(ids.count), "count": \#(ids.count), "entities": [\#(entities)]}"#
@@ -242,14 +249,14 @@ private final class WorkNetwork: NetworkManager {
         return try API.decodeResponse(from: Data(body.utf8), as: modelType)
     }
 
-    func performMultipartRequest<T: Decodable>(
+    nonisolated func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
 
-    func auth(by token: String) async throws -> Bool { true }
+    nonisolated func auth(by token: String) async throws -> Bool { true }
 }
 
 @MainActor

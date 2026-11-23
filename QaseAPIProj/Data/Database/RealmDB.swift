@@ -171,13 +171,12 @@ final class RealmManager: AppCache {
         commit(stamp) { realm, owner in
             for project in projects {
                 let object = ProjectRO(projectData: project, ownerID: owner)
-                if !project.descriptionWasProvided, let previous = realm.object(
-                    ofType: ProjectRO.self,
-                    forPrimaryKey: object.cacheKey
-                ) {
+                let previous = realm.object(ofType: ProjectRO.self, forPrimaryKey: object.cacheKey)
+                if !project.descriptionWasProvided, let previous {
                     object.itemDescription = previous.itemDescription
                     object.hasDescription = previous.hasDescription
                 }
+                if object.counts == nil, let previous { object.counts = copyCounts(previous.counts) }
                 realm.add(object, update: .modified)
             }
         }
@@ -392,23 +391,67 @@ final class RealmManager: AppCache {
         object.itemDescription = project.descriptionWasProvided ? project.description : previous?
             .itemDescription
         object.hasDescription = project.descriptionWasProvided || previous?.hasDescription == true
+        let previousCounts = previous?.counts
         let counts = CountsOfProjectRO()
         counts.hasCases = project.metrics.cases != nil
         counts.cases = project.metrics.cases ?? 0
         counts.hasSuites = project.metrics.suites != nil
         counts.suites = project.metrics.suites ?? 0
-        counts.hasRuns = project.metrics.runs != nil
-        counts.hasDefects = project.metrics.defects != nil
-        if let total = project.metrics
-            .runs { let runs = TestRunsRO()
+        counts.milestones = project.metrics.milestones ?? previousCounts?.milestones ?? 0
+        if let total = project.metrics.runs {
+            let runs = TestRunsRO()
             runs.total = total
-            counts.runs = runs }
-        if let total = project.metrics
-            .defects { let defects = BugReportsRO()
+            runs.active = project.metrics.activeRuns ?? previousCounts?.runs?.active ?? 0
+            counts.runs = runs
+            counts.hasRuns = true
+        } else {
+            counts.runs = copyRuns(previousCounts?.runs)
+            counts.hasRuns = previousCounts?.hasRuns ?? false
+        }
+        if let total = project.metrics.defects {
+            let defects = BugReportsRO()
             defects.total = total
-            counts.defects = defects }
+            defects.open = project.metrics.openDefects ?? previousCounts?.defects?.open ?? 0
+            counts.defects = defects
+            counts.hasDefects = true
+        } else {
+            counts.defects = copyDefects(previousCounts?.defects)
+            counts.hasDefects = previousCounts?.hasDefects ?? false
+        }
         object.counts = counts
         return object
+    }
+
+    // Embedded objects are owned by one parent, so a managed value is copied field by field before reuse.
+    private func copyRuns(_ runs: TestRunsRO?) -> TestRunsRO? {
+        guard let runs else { return nil }
+        let copy = TestRunsRO()
+        copy.total = runs.total
+        copy.active = runs.active
+        return copy
+    }
+
+    private func copyDefects(_ defects: BugReportsRO?) -> BugReportsRO? {
+        guard let defects else { return nil }
+        let copy = BugReportsRO()
+        copy.total = defects.total
+        copy.open = defects.open
+        return copy
+    }
+
+    private func copyCounts(_ counts: CountsOfProjectRO?) -> CountsOfProjectRO? {
+        guard let counts else { return nil }
+        let copy = CountsOfProjectRO()
+        copy.hasCases = counts.hasCases
+        copy.hasSuites = counts.hasSuites
+        copy.hasRuns = counts.hasRuns
+        copy.hasDefects = counts.hasDefects
+        copy.cases = counts.cases
+        copy.suites = counts.suites
+        copy.milestones = counts.milestones
+        copy.runs = copyRuns(counts.runs)
+        copy.defects = copyDefects(counts.defects)
+        return copy
     }
 
     func saveProjectSummaries(_ projects: [ProjectSummary], stamp: SessionStamp) -> Bool {

@@ -44,9 +44,10 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
 
     func appear() async {
         guard !hasAppeared, session.isCurrent(originStamp), !Task.isCancelled else { return }
-        hasAppeared = true
         items = cached?(query) ?? []
         await reload()
+        // Отменённая первая загрузка не должна блокировать повторную при следующем появлении экрана.
+        if !Task.isCancelled { hasAppeared = true }
     }
 
     func searchChanged() {

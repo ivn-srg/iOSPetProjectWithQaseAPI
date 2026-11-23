@@ -13,6 +13,7 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
     private var projectPageStamp: SessionStamp?
     private var projectPageOffset = 0
     private var fetchedProjects: [ProjectSummary] = []
+    private var prefixGenerations: [String: Int] = [:]
 
     private func reportCacheWrite(_ accepted: Bool) {
         if !accepted { onCacheFailure() }
@@ -122,14 +123,13 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
                 total: page.filtered ?? page.total
             ) { break }
         }
-        let active = candidates.sorted(by: Self.mostRecentFirst).first?.summary
+        let latestRun = candidates.sorted(by: Self.mostRecentFirst).first
+        let active = latestRun?.summary
         if let dao {
-            if !candidates.isEmpty {
-                reportCacheWrite(dao.saveRuns(
-                    merged(dao.getRuns(projectCode: projectCode) ?? [], with: candidates),
-                    projectCode: projectCode,
-                    stamp: stamp
-                ))
+            // Отфильтрованная выборка не пишется в кеш списка Runs. Деталь нужна для офлайн-открытия с Home;
+            // деталь с кейсами (загружена экраном запуска) полнее и не затирается.
+            if let latestRun, dao.getRun(projectCode: projectCode, id: latestRun.id)?.cases == nil {
+                reportCacheWrite(dao.saveRun(latestRun, projectCode: projectCode, stamp: stamp))
             }
             let previous = dao.getHomeSnapshot(projectCode: projectCode)
             reportCacheWrite(dao.saveHomeSnapshot(
@@ -196,17 +196,21 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
 
     func runs(projectCode: String, offset: Int = 0) async throws -> QaseAPIListResult<RunReadDTO> {
         let stamp = session.capture()
+        let prefix = beginPrefixPage("runs|\(projectCode)", offset: offset)
         let page: QaseAPIListResult<RunReadDTO> = try await request(
             .getRuns,
             path: ["code": projectCode],
             query: pagination(offset),
             stamp: stamp
         )
-        if let dao { reportCacheWrite(dao.saveRuns(
-            merged(dao.getRuns(projectCode: projectCode) ?? [], with: page.entities),
-            projectCode: projectCode,
-            stamp: stamp
-        )) }
+        if let dao,
+           let cached = prefixBase(prefix, offset: offset, cached: dao.getRuns(projectCode: projectCode)) {
+            reportCacheWrite(dao.saveRuns(
+                merged(cached, with: page.entities),
+                projectCode: projectCode,
+                stamp: stamp
+            ))
+        }
         return page
     }
 
@@ -224,17 +228,21 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
 
     func defects(projectCode: String, offset: Int = 0) async throws -> QaseAPIListResult<DefectReadDTO> {
         let stamp = session.capture()
+        let prefix = beginPrefixPage("defects|\(projectCode)", offset: offset)
         let page: QaseAPIListResult<DefectReadDTO> = try await request(
             .getDefects,
             path: ["code": projectCode],
             query: pagination(offset),
             stamp: stamp
         )
-        if let dao { reportCacheWrite(dao.saveDefects(
-            merged(dao.getDefects(projectCode: projectCode) ?? [], with: page.entities),
-            projectCode: projectCode,
-            stamp: stamp
-        )) }
+        if let dao,
+           let cached = prefixBase(prefix, offset: offset, cached: dao.getDefects(projectCode: projectCode)) {
+            reportCacheWrite(dao.saveDefects(
+                merged(cached, with: page.entities),
+                projectCode: projectCode,
+                stamp: stamp
+            ))
+        }
         return page
     }
 
@@ -285,6 +293,20 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
     func hasCachedDefects(projectCode: String) -> Bool {
         guard session.isCurrent(originStamp) else { return false }
         return dao?.getDefects(projectCode: projectCode) != nil
+    }
+
+    /// Кеш Runs/Defects — последний просмотренный префикс списка: страница offset 0 начинает его заново,
+    /// следующие дописываются, только если префикс не начинали заново с момента их запроса.
+    private func beginPrefixPage(_ key: String, offset: Int) -> (key: String, generation: Int) {
+        if offset == 0 { prefixGenerations[key, default: 0] += 1 }
+        return (key, prefixGenerations[key, default: 0])
+    }
+
+    /// Основа для записи страницы: `[]` для offset 0, текущий кеш для продолжения;
+    /// `nil` — страницу не писать.
+    private func prefixBase<T>(_ prefix: (key: String, generation: Int), offset: Int, cached: [T]?) -> [T]? {
+        guard prefixGenerations[prefix.key, default: 0] == prefix.generation else { return nil }
+        return offset == 0 ? [] : cached
     }
 
     private func merged<T: Identifiable>(_ cached: [T], with fetched: [T]) -> [T] {

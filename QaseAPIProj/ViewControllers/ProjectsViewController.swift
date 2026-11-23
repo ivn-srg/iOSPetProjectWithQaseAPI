@@ -95,8 +95,11 @@ final class ProjectsViewController: UIViewController {
         view.addSubview(activity)
         activity.snp.makeConstraints { $0.center.equalToSuperview() }
         view.addSubview(emptyDataLabel)
+        emptyDataLabel.accessibilityIdentifier = AccessibilityID.projectsEmpty.identifier
         emptyDataLabel.snp.makeConstraints {
             $0.center.equalToSuperview()
+            $0.leading.greaterThanOrEqualToSuperview().offset(AppTheme.Space.screen)
+            $0.trailing.lessThanOrEqualToSuperview().inset(AppTheme.Space.screen)
         }
 
         view.addSubview(tableVw)
@@ -197,6 +200,7 @@ extension ProjectsViewController: UITableViewDelegate {
             }
         }
         swipeAction.image = AppImages.trash
+        swipeAction.backgroundColor = AppTheme.Palette.destructiveFill
         return UISwipeActionsConfiguration(actions: [swipeAction])
     }
 

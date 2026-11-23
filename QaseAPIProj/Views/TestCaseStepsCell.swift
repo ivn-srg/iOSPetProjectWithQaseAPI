@@ -125,7 +125,8 @@ private final class StepNumberBadge: UIView {
     init(number: String) {
         super.init(frame: .zero)
         label.text = number
-        label.textColor = AppTheme.Palette.accent
+        // Цифра на подложке accent 12%: accent-текст не даёт 4.5:1, основной цвет текста — даёт.
+        label.textColor = AppTheme.Palette.text
         label.textAlignment = .center
         label.adjustsFontForContentSizeCategory = true
         label.isAccessibilityElement = false

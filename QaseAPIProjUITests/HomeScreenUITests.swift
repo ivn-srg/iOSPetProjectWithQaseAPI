@@ -28,6 +28,22 @@ final class HomeScreenUITests: XCTestCase {
         button.tap()
     }
 
+    private func waitForLabel(_ element: XCUIElement, containing text: String, timeout: TimeInterval = 12) {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label CONTAINS %@", text),
+            object: element
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed, app.debugDescription)
+    }
+
+    private func waitForDisappearance(_ element: XCUIElement, timeout: TimeInterval = 5) {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false"),
+            object: element
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed, app.debugDescription)
+    }
+
     private func reveal(_ identifier: AccessibilityID) -> XCUIElement {
         let item = app.descendants(matching: .any).matching(identifier: identifier.identifier).firstMatch
         for _ in 0 ..< 8 {
@@ -46,12 +62,14 @@ final class HomeScreenUITests: XCTestCase {
         )).firstMatch
         XCTAssertTrue(choice.waitForExistence(timeout: 5))
         choice.tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.projectPicker.identifier].label.contains("1Forma"))
+        let picker = app.buttons[AccessibilityID.projectPicker.identifier]
+        waitForLabel(picker, containing: "1Forma")
         selectTab(.tabRepository, title: "Репозиторий")
-        XCTAssertTrue(app.buttons[AccessibilityID.projectPicker.identifier].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons[AccessibilityID.projectPicker.identifier].label.contains("1Forma"))
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        waitForLabel(picker, containing: "1Forma")
         selectTab(.tabWork, title: "Работа")
-        XCTAssertTrue(app.buttons[AccessibilityID.projectPicker.identifier].label.contains("1Forma"))
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        waitForLabel(picker, containing: "1Forma")
     }
 
     func testCaseOpenAddsRecentEntryAndSearchWorks() {
@@ -59,7 +77,7 @@ final class HomeScreenUITests: XCTestCase {
         let row = reveal(.repositoryCase(81))
         row.tap()
         XCTAssertTrue(app.navigationBars.staticTexts["DEMO-81"].waitForExistence(timeout: 8))
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.navigationBars.buttons[AccessibilityID.formBack.identifier].tap()
         selectTab(.tabHome, title: "Главная")
         XCTAssertTrue(app.buttons[AccessibilityID.recent(project: "DEMO", caseID: 81).identifier]
             .waitForExistence(timeout: 5))
@@ -70,9 +88,62 @@ final class HomeScreenUITests: XCTestCase {
         app.buttons[AccessibilityID.homeSearchCases.identifier].tap()
         let field = app.textFields[AccessibilityID.repositorySearch.identifier]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForKeyboardFocus(field, focused: true), app.debugDescription)
         field.tap()
         field.typeText("Кейс верхнего")
+        let match = app.buttons[AccessibilityID.repositoryCase(81).identifier]
+        XCTAssertTrue(match.waitForExistence(timeout: 8), app.debugDescription)
+        XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.repositoryCase(2).identifier].exists)
+        let caseRows = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "repository.case.")
+        )
+        XCTAssertEqual(caseRows.count, 1, app.debugDescription)
         _ = reveal(.repositoryCase(81))
+    }
+
+    func testSearchFocusIsAppliedOncePerRequest() {
+        app.buttons[AccessibilityID.homeSearchCases.identifier].tap()
+        let field = app.textFields[AccessibilityID.repositorySearch.identifier]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForKeyboardFocus(field, focused: true), app.debugDescription)
+        field.typeText("Кейс верхнего")
+        let match = app.buttons[AccessibilityID.repositoryCase(81).identifier]
+        XCTAssertTrue(match.waitForExistence(timeout: 8), app.debugDescription)
+        match.tap()
+        XCTAssertTrue(app.navigationBars.staticTexts["DEMO-81"].waitForExistence(timeout: 8))
+        let back = app.navigationBars.buttons[AccessibilityID.formBack.identifier]
+        XCTAssertTrue(back.waitForExistence(timeout: 5))
+        back.tap()
+        XCTAssertTrue(field.waitForExistence(timeout: 8), app.debugDescription)
+        // Возврат с кейса не должен вернуть полю фокус (проверка фокуса, а не клавиатуры:
+        // при аппаратной клавиатуре симулятора программная не показывается).
+        XCTAssertFalse(waitForKeyboardFocus(field, focused: true, timeout: 2), app.debugDescription)
+    }
+
+    /// Ждёт, пока у элемента появится (или пропадёт) фокус ввода.
+    private func waitForKeyboardFocus(_ element: XCUIElement, focused: Bool, timeout: TimeInterval = 5) -> Bool {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "hasKeyboardFocus == %@", NSNumber(value: focused)),
+            object: element
+        )
+        return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
+    }
+
+    func testLongPressOffersDeleteWithConfirmation() {
+        selectTab(.tabRepository, title: "Репозиторий")
+        let row = reveal(.repositoryCase(1000))
+        row.press(forDuration: 1.0)
+        let delete = app.buttons["Удалить"].firstMatch
+        XCTAssertTrue(delete.waitForExistence(timeout: 5), app.debugDescription)
+        delete.tap()
+        let title = app.staticTexts["Удалить кейс?"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5), app.debugDescription)
+        let cancel = app.buttons["Отмена"].firstMatch
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5), app.debugDescription)
+        cancel.tap()
+        waitForDisappearance(title)
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.repositoryCase(1000).identifier]
+            .waitForExistence(timeout: 5), app.debugDescription)
     }
 
     func testLargeTextLayout() {

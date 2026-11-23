@@ -195,12 +195,7 @@ struct HomeView: View {
                             ) }
                     }
                 }
-                .background(
-                    Color(uiColor: AppTheme.Palette.surface),
-                    in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                )
-                .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                    .stroke(Color(uiColor: AppTheme.Palette.border)))
+                .cardSurface()
             }
         }
     }

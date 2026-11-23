@@ -101,7 +101,7 @@ final class ApplicationRouter: ApplicationRouting {
             nav.popToRootViewController(animated: false)
             if let root = nav.viewControllers.first as? RepositoryViewController {
                 root.model.query = ""
-                root.model.requestSearchFocus = search
+                if search { root.model.requestSearchFocus() }
             }
         }
     }

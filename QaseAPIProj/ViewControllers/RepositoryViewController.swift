@@ -41,6 +41,8 @@ final class RepositoryViewController: UIHostingController<RepositoryView> {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        // Пока экран в окне: иначе поле поиска остаётся first responder и при возврате поднимает клавиатуру.
+        view.endEditing(true)
         task?.cancel()
         model.cancel()
     }

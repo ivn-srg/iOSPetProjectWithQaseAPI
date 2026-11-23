@@ -5,25 +5,85 @@ import UIKit
 
 @Suite @MainActor
 struct DesignTokenTests {
+    private static let themes: [UIUserInterfaceStyle] = [.light, .dark]
+
+    @Test func whiteTextOnDestructiveFillMeetsContrastInBothThemes() {
+        for style in Self.themes {
+            let fill = Self.rgb(AppTheme.Palette.destructiveFill, style)
+            #expect(Self.contrast([1, 1, 1], fill) >= 4.5, "\(style == .dark ? "dark" : "light")")
+        }
+    }
+
     @Test func primaryButtonWhiteTextMeetsContrastInBothThemes() {
-        for style in [UIUserInterfaceStyle.light, .dark] {
-            let traits = UITraitCollection(userInterfaceStyle: style)
+        for style in Self.themes {
             for color in [AppTheme.Palette.buttonStart, AppTheme.Palette.buttonEnd] {
-                var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
-                #expect(color.resolvedColor(with: traits).getRed(
-                    &red,
-                    green: &green,
-                    blue: &blue,
-                    alpha: &alpha
-                ))
                 let shade = 1 - AppTheme.Palette.buttonContrastOverlay
-                let components = [Double(red) * shade, Double(green) * shade, Double(blue) * shade].map {
-                    $0 <= 0.04045 ? $0 / 12.92 : pow(($0 + 0.055) / 1.055, 2.4)
-                }
-                let luminance = components[0] * 0.2126 + components[1] * 0.7152 + components[2] * 0.0722
-                #expect(1.05 / (luminance + 0.05) >= 4.5)
+                let shaded = Self.rgb(color, style).map { $0 * shade }
+                #expect(1.05 / (Self.luminance(shaded) + 0.05) >= 4.5)
             }
         }
+    }
+
+    /// Пары «текст/фон», которые реально встречаются в интерфейсе (DESIGN_SYSTEM §3.3: не ниже 4.5:1).
+    @Test func usedTextAndBackgroundPairsMeetContrastInBothThemes() {
+        typealias Palette = AppTheme.Palette
+        let backgrounds = [Palette.canvas, Palette.surface, Palette.secondarySurface]
+        var pairs: [(String, UIColor, UIColor)] = []
+        let texts = [
+            ("text", Palette.text), ("secondaryText", Palette.secondaryText), ("accent", Palette.accent)
+        ]
+        for (name, text) in texts {
+            pairs += backgrounds.map { (name, text, $0) }
+        }
+        pairs += [
+            ("tertiaryText/surface", Palette.tertiaryText, Palette.surface),
+            ("tertiaryText/secondarySurface", Palette.tertiaryText, Palette.secondarySurface),
+            ("danger/canvas", Palette.danger, Palette.canvas),
+            ("danger/surface", Palette.danger, Palette.surface),
+            ("danger/secondarySurface", Palette.danger, Palette.secondarySurface),
+            ("danger/dangerBackground", Palette.danger, Palette.dangerBackground),
+            ("info/infoBackground", Palette.info, Palette.infoBackground),
+            ("info/secondarySurface", Palette.info, Palette.secondarySurface),
+            ("success/successBackground", Palette.success, Palette.successBackground),
+            ("success/secondarySurface", Palette.success, Palette.secondarySurface),
+            ("warning/warningBackground", Palette.warning, Palette.warningBackground),
+            ("warning/secondarySurface", Palette.warning, Palette.secondarySurface)
+        ]
+        for style in Self.themes {
+            for (name, text, background) in pairs {
+                let ratio = Self.contrast(Self.rgb(text, style), Self.rgb(background, style))
+                #expect(ratio >= 4.5, "\(name) in \(style == .dark ? "dark" : "light"): \(ratio)")
+            }
+            // Номер шага кейса: основной текст на подложке accent 12% поверх secondarySurface.
+            let accent = Self.rgb(Palette.accent, style)
+            let stepBackground = zip(accent, Self.rgb(Palette.secondarySurface, style))
+                .map { accent, surface in accent * 0.12 + surface * 0.88 }
+            #expect(Self.contrast(Self.rgb(Palette.text, style), stepBackground) >= 4.5)
+        }
+    }
+
+    @Test func everyAppSymbolExistsInSystemCatalog() {
+        for symbol in AppSymbol.allCases {
+            #expect(UIImage(systemName: symbol.rawValue) != nil, "\(symbol.rawValue)")
+        }
+    }
+
+    private static func rgb(_ color: UIColor, _ style: UIUserInterfaceStyle) -> [Double] {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        let resolved = color.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
+        #expect(resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha))
+        return [Double(red), Double(green), Double(blue)]
+    }
+
+    private static func luminance(_ rgb: [Double]) -> Double {
+        let linear = rgb.map { $0 <= 0.04045 ? $0 / 12.92 : pow(($0 + 0.055) / 1.055, 2.4) }
+        return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722
+    }
+
+    private static func contrast(_ first: [Double], _ second: [Double]) -> Double {
+        let values = [luminance(first), luminance(second)]
+        let (lighter, darker) = (values.max() ?? 0, values.min() ?? 0)
+        return (lighter + 0.05) / (darker + 0.05)
     }
 }
 

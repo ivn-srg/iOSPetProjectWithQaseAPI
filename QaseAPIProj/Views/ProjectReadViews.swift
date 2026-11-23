@@ -35,12 +35,7 @@ private struct ReadListSkeleton: View {
                     .padding(.leading, AppTheme.Space.regular) }
             }
         }
-        .background(
-            Color(uiColor: AppTheme.Palette.surface),
-            in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-        )
-        .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-            .stroke(Color(uiColor: AppTheme.Palette.border)))
+        .cardSurface()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Loading".localized)
         .accessibilityIdentifier(AccessibilityID.workLoading.identifier)
@@ -52,6 +47,7 @@ private struct ReadListContent<Item: Codable & Identifiable, Row: View>: View {
     @ObservedObject var model: PagedReadViewModel<Item>
     let projectTitle: String
     let emptyTitle: String
+    let emptyMessage: String
     @ViewBuilder let row: (Item) -> Row
 
     var body: some View {
@@ -70,7 +66,13 @@ private struct ReadListContent<Item: Codable & Identifiable, Row: View>: View {
                 }
                 if model.isLoading && model.items.isEmpty { ReadListSkeleton() }
                 else if model.items.isEmpty && model.errorMessage == nil {
-                    HomeStateView(title: emptyTitle, symbol: .tray)
+                    HomeStateView(
+                        title: emptyTitle,
+                        symbol: .tray,
+                        message: emptyMessage,
+                        actionTitle: "Refresh".localized,
+                        action: { Task { await model.reload() } }
+                    )
                 }
                 if !model.items.isEmpty {
                     LazyVStack(spacing: 0) {
@@ -83,12 +85,7 @@ private struct ReadListContent<Item: Codable & Identifiable, Row: View>: View {
                                 ) }
                         }
                     }
-                    .background(
-                        Color(uiColor: AppTheme.Palette.surface),
-                        in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                    )
-                    .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                        .stroke(Color(uiColor: AppTheme.Palette.border)))
+                    .cardSurface()
                 }
                 if let error = model.errorMessage {
                     HomeStateView(
@@ -140,7 +137,8 @@ struct RunListView: View {
         ReadListContent(
             model: model,
             projectTitle: selection.projects.first(where: { $0.code == projectCode })?.title ?? projectCode,
-            emptyTitle: "No runs".localized
+            emptyTitle: "No runs".localized,
+            emptyMessage: "Runs started in Qase appear here.".localized
         ) { run in
             EntityRow(
                 identifier: "\(projectCode)-\(run.id)",
@@ -174,7 +172,8 @@ struct DefectListView: View {
         ReadListContent(
             model: model,
             projectTitle: selection.projects.first(where: { $0.code == projectCode })?.title ?? projectCode,
-            emptyTitle: "No defects".localized
+            emptyTitle: "No defects".localized,
+            emptyMessage: "Defects reported in Qase appear here.".localized
         ) { defect in
             EntityRow(
                 identifier: "\(projectCode)-\(defect.id)",
@@ -223,22 +222,22 @@ struct RunDetailView: View {
                         HomeStateView(title: "Progress unavailable".localized, symbol: .questionmarkCircle) }
                     SectionHeader(title: "Cases".localized)
                     if let cases = run.cases, !cases.isEmpty {
-                        VStack(spacing: 0) {
+                        LazyVStack(spacing: 0) {
                             ForEach(cases, id: \.self) { id in
                                 EntityRow(
                                     identifier: "\(projectCode)-\(id)",
-                                    title: "Case".localized + " \(id.formatted())"
+                                    title: "Case".localized + " " + String(id)
                                 ) { onCase(TestCaseReference(projectCode: projectCode, caseID: id)) }
                                     .accessibilityIdentifier(AccessibilityID.entity(
                                         project: projectCode,
                                         id: id
                                     ).identifier)
-                                if id != cases.last { Divider() }
+                                if id != cases.last {
+                                    Divider().padding(.leading, AppTheme.Space.regular)
+                                }
                             }
-                        }.background(
-                            Color(uiColor: AppTheme.Palette.surface),
-                            in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                        )
+                        }
+                        .cardSurface()
                     } else {
                         HomeStateView(
                             title: (run.cases == nil ? "Cases unavailable" : "No cases").localized,
@@ -337,12 +336,7 @@ struct WorkHomeView: View {
                         .padding(.leading, AppTheme.Space.regular)
                     EntityRow(identifier: "", title: "Defects".localized, symbol: .ladybug, action: onDefects)
                 }
-                .background(
-                    Color(uiColor: AppTheme.Palette.surface),
-                    in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                )
-                .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                    .stroke(Color(uiColor: AppTheme.Palette.border)))
+                .cardSurface()
             }.frame(maxWidth: AppTheme.Size.content)
                 .padding(AppTheme.Space.screen)
                 .frame(maxWidth: .infinity)

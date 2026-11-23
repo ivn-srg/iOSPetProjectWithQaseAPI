@@ -22,6 +22,7 @@ enum AccessibilityID: Hashable, Sendable {
     case navigationBar
     case projectManage
     case projectPicker
+    case projectsEmpty
     case projectsTableView
     case repositoryCounts
     case repositoryCreate
@@ -103,6 +104,7 @@ enum AccessibilityID: Hashable, Sendable {
         case .navigationBar: return "navigationBar"
         case .projectManage: return "project.manage"
         case .projectPicker: return "project.picker"
+        case .projectsEmpty: return "projects.empty"
         case .projectsTableView: return "projectsTableView"
         case .repositoryCounts: return "repository.counts"
         case .repositoryCreate: return "repository.create"

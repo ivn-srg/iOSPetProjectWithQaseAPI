@@ -82,20 +82,22 @@ enum AppTheme {
         static let secondarySurface = adaptive(0xF4F5F7, 0x2C2C2D)
         static let tertiarySurface = adaptive(0xECEEF2, 0x34343A)
         static let text = adaptive(0x111113, 0xF7F7F8)
-        static let secondaryText = adaptive(0x6F7179, 0xA5A7AE)
-        static let tertiaryText = adaptive(0x92949D, 0x7D8089)
+        static let secondaryText = adaptive(0x6E7078, 0xA5A7AE)
+        static let tertiaryText = adaptive(0x6E707A, 0x90939A)
         static let border = adaptive(0xE6E7EB, 0x34343A)
         static let strongBorder = adaptive(0xD4D6DC, 0x484850)
-        static let accent = adaptive(0x6757F5, 0x8577FF)
+        static let accent = adaptive(0x6757F5, 0x8F82FF)
         static let secondaryAccent = adaptive(0x8068FF, 0xA59BFF)
         static let info = adaptive(0x0B5FCC, 0x5AA2FF)
         static let success = adaptive(0x147A32, 0x4EC46D)
         static let warning = adaptive(0xA64B00, 0xFF9F43)
-        static let danger = adaptive(0xD92D20, 0xFF6B6B)
+        static let danger = adaptive(0xD02B1F, 0xFF6B6B)
         static let infoBackground = adaptive(0xE8F1FF, 0x0B2B55)
         static let successBackground = adaptive(0xEAF7ED, 0x123A20)
         static let warningBackground = adaptive(0xFFF1E5, 0x4A280B)
         static let dangerBackground = adaptive(0xFDECEA, 0x4A1717)
+        /// Заливка destructive-кнопки с белым текстом: светлый `danger` в dark даёт белому только 2.78:1.
+        static let destructiveFill = adaptive(0xD02B1F, 0xDE3125)
 
         private static func adaptive(_ light: UInt32, _ dark: UInt32) -> UIColor {
             UIColor { traits in

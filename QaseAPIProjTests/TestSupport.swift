@@ -104,6 +104,7 @@ final class TokenCredentialStorage: AuthCredentialStorage {
     private let lock = NSLock()
     private var record: AuthCredential?
     var failSaving = false
+    var failDeleting = false
     var savingError: Error?
     private(set) var savedRecords: [AuthCredential] = []
     private(set) var deleteCount = 0
@@ -128,6 +129,7 @@ final class TokenCredentialStorage: AuthCredentialStorage {
     func deleteToken() throws {
         lock.lock()
         defer { lock.unlock() }
+        if failDeleting { throw TokenFixtureError.storage }
         record = nil
         deleteCount += 1
     }
@@ -149,6 +151,7 @@ final class TokenReplacementFixture {
     var notifications: [Bool] = []
     var onClearCache: (() -> Void)?
     var onNotify: (() -> Void)?
+    var protectedDataAvailable = true
 
     lazy var auth = AuthManager(
         userDefaults: defaults,
@@ -174,7 +177,8 @@ final class TokenReplacementFixture {
                 notifications.append(cleanupFailed)
                 onNotify?()
             }
-        )
+        ),
+        isProtectedDataAvailable: { [unowned self] in protectedDataAvailable }
     )
 
     init() {

@@ -180,6 +180,53 @@ struct ArchitectureRegressionTests {
         #expect(patch.contains(#""is_flaky":1"#))
     }
     
+    // Ловит: `makeContent` не удаляет токен прежней установки (флаг входа удалён вместе с приложением).
+    @Test func reinstalledAppDropsStaleCredentialAndShowsSignIn() throws {
+        let domain = "ArchitectureRegressionTests." + UUID().uuidString
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let storage = MemoryCredentialStorage()
+        try storage.saveCredential(AuthCredential(token: "real-token", ownerID: "real-owner"))
+        let composition = AppCompositionRoot(
+            defaults: defaults,
+            arguments: [],
+            credentialStorage: storage,
+            cacheConfiguration: .init(inMemoryIdentifier: UUID().uuidString)
+        )
+        let root = composition.makeRootController()
+        root.loadViewIfNeeded()
+        #expect(root.children.first is AuthViewController)
+        #expect(storage.getCredential() == nil)
+        #expect(composition.session.ownerID == nil)
+    }
+
+    // Ловит: `makeContent` не восстанавливает сессию или восстанавливает её после сборки графа —
+    // граф захватывает неактивный stamp, проекты не загружаются.
+    @Test func coldStartRestoresSessionBeforeBuildingTheShell() async throws {
+        let domain = "ArchitectureRegressionTests." + UUID().uuidString
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        defaults.set(true, forKey: "isUserLoggedIn")
+        let storage = MemoryCredentialStorage()
+        let credential = AuthCredential(token: "QASE_DEMO", ownerID: "demo-owner")
+        try storage.saveCredential(credential)
+        let composition = AppCompositionRoot(
+            defaults: defaults,
+            arguments: [],
+            credentialStorage: storage,
+            cacheConfiguration: .init(inMemoryIdentifier: UUID().uuidString)
+        )
+        #expect(composition.session.ownerID == nil)
+        let root = composition.makeRootController()
+        root.loadViewIfNeeded()
+        #expect(root.children.first is MainTabbarViewController)
+        #expect(composition.session.ownerID == credential.ownerID)
+        #expect(storage.getCredential() == credential)
+        // Оболочка сразу грузит проекты: с устаревшим stamp `SelectedProjectStore.load()` молча выходит
+        // и выбор не записывается.
+        await waitForCondition { defaults.string(forKey: "selectedProject.demo-owner") == "DEMO" }
+    }
+
     @Test func authenticatedGraphIsReplacedOnTokenChangeAndReleasedOnLogout() async throws {
         let domain = "ArchitectureRegressionTests." + UUID().uuidString
         let defaults = try #require(UserDefaults(suiteName: domain))

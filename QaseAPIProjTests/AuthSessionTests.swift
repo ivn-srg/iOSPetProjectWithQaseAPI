@@ -106,31 +106,98 @@ struct AuthSessionTests {
         fixture.expectPreserved(stamp: changed)
     }
 
-    // Ловит: холодный запуск (сессия не активна, токен сохранён) не активирует сессию владельца
+    // Ловит: холодный старт (сессия не активна, токен и флаг сохранены) не активирует сессию владельца
     // токена и не выбирает режим; повторный вызов активирует сессию заново.
     @Test(arguments: [("old-fixture", false), ("QASE_DEMO", true)])
-    func coldCheckActivatesSessionAndModeOnce(token: String, demo: Bool) throws {
+    func restoreActivatesSessionAndModeOnColdStart(token: String, demo: Bool) throws {
         let fixture = TokenReplacementFixture()
         try fixture.storage.saveCredential(AuthCredential(token: token, ownerID: "stored-owner"))
         fixture.session.invalidate()
         let invalidated = fixture.session.capture()
-        #expect(fixture.auth.isUserLoggedIn())
+        fixture.auth.restoreSessionIfNeeded()
         #expect(fixture.session.ownerID == "stored-owner")
         #expect(fixture.session.capture().generation == invalidated.generation + 1)
         #expect(fixture.configuredModes == [demo])
-        #expect(fixture.auth.isUserLoggedIn())
+        fixture.auth.restoreSessionIfNeeded()
         #expect(fixture.session.capture().generation == invalidated.generation + 1)
         #expect(fixture.configuredModes == [demo])
+        #expect(fixture.auth.isUserLoggedIn())
+        #expect(fixture.notifications.isEmpty)
     }
 
-    // Ловит: удаление условия `session.ownerID == nil` в `isUserLoggedIn()` (:142):
-    // тёплая проверка повторно активирует сессию и обнуляет её штамп.
-    @Test func warmCheckKeepsTheActiveSessionStamp() {
+    // Ловит: удаление условия `session.ownerID == nil` в `restoreSessionIfNeeded()`:
+    // повторное восстановление пересоздаёт активную сессию и обнуляет её штамп.
+    @Test func restoreKeepsTheActiveSessionStamp() {
         let fixture = TokenReplacementFixture()
-        #expect(fixture.auth.isUserLoggedIn())
-        #expect(fixture.auth.isUserLoggedIn())
+        fixture.auth.restoreSessionIfNeeded()
+        fixture.auth.restoreSessionIfNeeded()
         #expect(fixture.session.capture() == fixture.originalStamp)
         #expect(fixture.configuredModes.isEmpty)
         #expect(fixture.events.isEmpty)
+        #expect(fixture.storage.deleteCount == 0)
+    }
+
+    // Ловит: побочный эффект в `isUserLoggedIn()` — проверка активирует сессию и режим кеша (APP-009).
+    @Test func isUserLoggedInDoesNotTouchSessionOrCacheMode() {
+        let fixture = TokenReplacementFixture()
+        fixture.session.invalidate()
+        let invalidated = fixture.session.capture()
+        #expect(fixture.auth.isUserLoggedIn())
+        #expect(fixture.session.capture() == invalidated)
+        #expect(fixture.session.ownerID == nil)
+        #expect(fixture.configuredModes.isEmpty)
+    }
+
+    // Ловит: токен прежней установки (флага нет) или прерванного входа (флаг `false`) не удаляется
+    // и активирует сессию.
+    @Test(arguments: [nil, false] as [Bool?])
+    func staleCredentialWithoutLoginFlagIsDeletedOnRestore(flag: Bool?) {
+        let fixture = TokenReplacementFixture()
+        if let flag { fixture.defaults.set(flag, forKey: "isUserLoggedIn") }
+        else { fixture.defaults.removeObject(forKey: "isUserLoggedIn") }
+        fixture.session.invalidate()
+        fixture.auth.restoreSessionIfNeeded()
+        #expect(fixture.storage.getCredential() == nil)
+        #expect(fixture.storage.deleteCount == 1)
+        #expect(fixture.session.ownerID == nil)
+        #expect(fixture.configuredModes.isEmpty)
+        #expect(fixture.events.isEmpty)
+        #expect(!fixture.auth.isUserLoggedIn())
+    }
+
+    // Ловит: флаг проверяется только при неактивной сессии — устаревший токен переживает старт.
+    @Test func staleCredentialIsDeletedEvenWhileSessionIsActive() {
+        let fixture = TokenReplacementFixture()
+        fixture.defaults.removeObject(forKey: "isUserLoggedIn")
+        fixture.auth.restoreSessionIfNeeded()
+        #expect(fixture.storage.getCredential() == nil)
+        #expect(fixture.session.capture() == fixture.originalStamp)
+        #expect(fixture.notifications.isEmpty)
+    }
+
+    // Ловит: удаление при заблокированном устройстве (необратимо) или активация сессии вместо ожидания.
+    @Test func staleCredentialIsKeptWhileProtectedDataIsUnavailable() {
+        let fixture = TokenReplacementFixture()
+        fixture.protectedDataAvailable = false
+        fixture.defaults.removeObject(forKey: "isUserLoggedIn")
+        fixture.session.invalidate()
+        fixture.auth.restoreSessionIfNeeded()
+        #expect(fixture.storage.getCredential() == fixture.original)
+        #expect(fixture.storage.deleteCount == 0)
+        #expect(fixture.session.ownerID == nil)
+        #expect(!fixture.auth.isUserLoggedIn())
+    }
+
+    // Ловит: сбой удаления устаревшего токена роняет старт или активирует его сессию.
+    @Test func failedStaleCredentialDeletionLeavesTheUserSignedOut() {
+        let fixture = TokenReplacementFixture()
+        fixture.storage.failDeleting = true
+        fixture.defaults.removeObject(forKey: "isUserLoggedIn")
+        fixture.session.invalidate()
+        fixture.auth.restoreSessionIfNeeded()
+        #expect(fixture.storage.getCredential() == fixture.original)
+        #expect(fixture.session.ownerID == nil)
+        #expect(fixture.configuredModes.isEmpty)
+        #expect(!fixture.auth.isUserLoggedIn())
     }
 }

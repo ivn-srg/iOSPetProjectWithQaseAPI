@@ -71,7 +71,8 @@ final class AppCompositionRoot {
                         )
                 }
             ),
-            usesTestTokenStore: testing
+            usesTestTokenStore: testing,
+            isProtectedDataAvailable: { UIApplication.shared.isProtectedDataAvailable }
         )
     }
 
@@ -88,6 +89,8 @@ final class AppCompositionRoot {
 
     private func makeContent() -> UIViewController {
         authenticatedGraph = nil
+        // До сборки графа: `SelectedProjectStore` и модели захватывают stamp активной сессии.
+        auth.restoreSessionIfNeeded()
         guard auth.isUserLoggedIn() else { return AuthViewController(auth: auth) }
         let network = auth.isDemoMode ? mockNetwork : realNetwork
         let reportFailure: (String) -> Void = { [session] message in

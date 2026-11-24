@@ -29,10 +29,63 @@ final class RealmManager: AppCache {
     private var realm: Realm?
     private(set) var initializationError: Error?
 
-    static func productionConfiguration() -> Realm.Configuration {
+    nonisolated static let storeDirectoryName = "QaseCache"
+    private static let storeFileName = "default.realm"
+    private static let legacyBackupExtension = "legacy-backup"
 
-        let configuration = migratedConfiguration(Realm.Configuration.defaultConfiguration)
-        return configuration
+    static func productionConfiguration() -> Realm.Configuration {
+        var configuration = Realm.Configuration.defaultConfiguration
+        let fileManager = FileManager.default
+        if let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first,
+           let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            configuration.fileURL = storeURL(
+                documents: documents,
+                applicationSupport: support,
+                fileManager: fileManager
+            )
+        }
+        return migratedConfiguration(configuration)
+    }
+
+    /// Расположение базы: `Application Support/QaseCache`, исключённое из бэкапа. База прежних версий
+    /// переносится из `Documents` до первого открытия Realm. Сначала атомарно переносится основной файл —
+    /// он определяет место хранения; остальное best effort. При сбое переноса — прежний путь
+    /// на этот запуск.
+    static func storeURL(
+        documents: URL,
+        applicationSupport: URL,
+        fileManager: FileManager = .default
+    ) -> URL {
+        let legacy = documents.appendingPathComponent(storeFileName)
+        let directory = applicationSupport.appendingPathComponent(storeDirectoryName, isDirectory: true)
+        let target = directory.appendingPathComponent(storeFileName)
+        do { try fileManager.createDirectory(at: directory, withIntermediateDirectories: true) }
+        catch { return legacy }
+        if !fileManager.fileExists(atPath: target.path), fileManager.fileExists(atPath: legacy.path) {
+            do { try fileManager.moveItem(at: legacy, to: target) }
+            catch { return legacy }
+        }
+        let legacyBackup = legacy.appendingPathExtension(legacyBackupExtension)
+        let targetBackup = target.appendingPathExtension(legacyBackupExtension)
+        if fileManager.fileExists(atPath: legacyBackup.path),
+           !fileManager.fileExists(atPath: targetBackup.path) {
+            try? fileManager.moveItem(at: legacyBackup, to: targetBackup)
+        }
+        // Служебные файлы старого пути и база, брошенная после отката на старую сборку, — производный кеш.
+        for suffix in ["", ".lock", ".note", ".management"] {
+            let leftover = URL(fileURLWithPath: legacy.path + suffix)
+            if fileManager.fileExists(atPath: leftover.path) { try? fileManager.removeItem(at: leftover) }
+        }
+        excludeFromBackup(directory)
+        if fileManager.fileExists(atPath: target.path) { excludeFromBackup(target) }
+        return target
+    }
+
+    private static func excludeFromBackup(_ url: URL) {
+        var url = url
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
     }
 
     static func migratedConfiguration(_ initialConfiguration: Realm.Configuration) -> Realm.Configuration {

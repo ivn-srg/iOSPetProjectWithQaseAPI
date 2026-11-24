@@ -425,8 +425,8 @@ struct FormDraftTests {
     }
 
     /// Ловит: ошибка второго POST проглатывается; `onEntityCreated` вызывается для неудавшейся части;
-    /// форма остаётся заблокированной после ошибки (нет сброса в `defer`).
-    /// Сегмент после ошибки намеренно не проверяется (APP-089).
+    /// форма остаётся заблокированной после ошибки (нет сброса в `defer`); после ошибки виден
+    /// подтверждённый набор, а несохранённый кейс скрыт (APP-089).
     @Test func saveDraftFailureOnTheSecondRequestKeepsConfirmedSuiteAndUnlocksTheForm() async {
         let form = CreateFormFixture()
         form.network.failure = (request: 2, error: .timeout)
@@ -440,7 +440,24 @@ struct FormDraftTests {
         #expect(form.network.operations == [.createSuite, .createCase])
         #expect(form.created.count == 1)
         #expect(!form.model.suiteHasUnsavedChanges && form.model.caseHasUnsavedChanges)
+        #expect(!form.model.creatingEntityIsSuite)
         #expect(!form.controller.isSavingDraft)
+        #expect(form.closeIsEnabled)
+    }
+
+    /// Ловит: после сбоя первого POST форма возвращает исходный сегмент кейса, а несохранённый
+    /// набор остаётся скрытым (APP-089).
+    @Test func saveDraftFailureOnTheFirstRequestShowsTheUnsavedSuite() async {
+        let form = CreateFormFixture()
+        form.network.failure = (request: 1, error: .timeout)
+        form.model.creatingSuite.title = "Suite"
+        form.model.creatingTestCase.title = "Case"
+        form.model.creatingEntityIsSuite = false
+        _ = await thrownNetError { try await form.controller.saveDraft() }
+        #expect(form.network.operations == [.createSuite])
+        #expect(form.created.count == 0)
+        #expect(form.model.suiteHasUnsavedChanges && form.model.caseHasUnsavedChanges)
+        #expect(form.model.creatingEntityIsSuite)
         #expect(form.closeIsEnabled)
     }
 

@@ -288,13 +288,14 @@ extension CreateSuiteOrCaseViewController: FormDepartureParticipant {
         guard canSaveDraft,
               !isSavingDraft else { throw API.NetError.invalidRequest("The drafts cannot be saved") }
         let previous = viewModel.creatingEntityIsSuite
-        let callback = viewModel.creatingFinishCallback
+        var savedAll = false
         isSavingSequence = true
-        viewModel.creatingFinishCallback = {}
         checkConditionAndToggleRightBarButton()
         defer {
-            viewModel.creatingFinishCallback = callback
-            viewModel.creatingEntityIsSuite = previous
+            // После сбоя виден несохранённый черновик, а не уже подтверждённый (APP-089);
+            // до разблокировки: `checkConditionAndToggleRightBarButton` применяет сегмент из модели.
+            if savedAll { viewModel.creatingEntityIsSuite = previous }
+            else { showRemainingDraft() }
             isSavingSequence = false
             checkConditionAndToggleRightBarButton()
         }
@@ -308,6 +309,7 @@ extension CreateSuiteOrCaseViewController: FormDepartureParticipant {
             }
             onEntityCreated?()
         }
+        savedAll = true
     }
 
     func discardDraft() {

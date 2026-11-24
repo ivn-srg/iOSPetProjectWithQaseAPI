@@ -8,6 +8,8 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var usingCache = false
     @Published private(set) var hasMore = true
+    /// Последняя ошибка — сбой догрузки страницы (а не первой загрузки): Retry повторяет страницу.
+    private var pageLoadFailed = false
     @Published var query = ""
 
     private let originStamp: SessionStamp
@@ -38,6 +40,7 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
                 self.isLoading = false
                 self.usingCache = false
                 self.errorMessage = nil
+                self.pageLoadFailed = false
                 self.hasMore = false
             }
     }
@@ -57,6 +60,7 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
         items = cached?(query) ?? []
         usingCache = false
         errorMessage = nil
+        pageLoadFailed = false
         isLoading = false
         searchTask = Task { [weak self] in
             do { try await Task.sleep(for: SearchPolicy.debounce) }
@@ -78,6 +82,13 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
         await load(reset: false)
     }
 
+    /// Повтор после ошибки: упавшая догрузка повторяет ту же страницу, не сбрасывая загруженный список.
+    func retry() async {
+        guard session.isCurrent(originStamp) else { return }
+        if pageLoadFailed { await loadMore() }
+        else { await reload() }
+    }
+
     private func load(reset: Bool) async {
         let requestGeneration = generation
         let requestedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -85,6 +96,7 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
         let stamp = session.capture()
         isLoading = true
         errorMessage = nil
+        pageLoadFailed = false
         defer {
             if generation == requestGeneration { isLoading = false }
         }
@@ -112,6 +124,7 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
                 hasMore = false
             }
             errorMessage = API.userMessage(for: error, fallback: "Could not load data".localized)
+            pageLoadFailed = !reset
         }
     }
 }

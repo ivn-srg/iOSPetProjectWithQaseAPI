@@ -27,6 +27,20 @@ final class ProjectsViewController: UIViewController {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    /// Удаление после подтверждения. `true` — проект удалён; `false` — отказ `beforeDeleteProject`
+    /// или удаление того же проекта уже в пути (побочные эффекты удаления не выполняются).
+    func deleteConfirmedProject(_ project: Project) async throws -> Bool {
+        let guardDelete = beforeDeleteProject
+        let outcome = try await viewModel.deleteProject(project) {
+            guard let guardDelete else { return true }
+            return await guardDelete(project)
+        }
+        guard outcome == .deleted else { return false }
+        onProjectDeleted?(project.code)
+        onProjectsChanged?()
+        return true
+    }
+
     // MARK: - UI
     private lazy var tableVw: UITableView = {
         let tv = UITableView()
@@ -170,11 +184,18 @@ extension ProjectsViewController: UITableViewDelegate {
             style: .destructive,
             title: "Delete".localized
         ) { [weak self] _, _, completionHandler in
-            guard let self = self else { return }
+            guard let self = self else { completionHandler(false)
+                return }
             guard self.viewModel.projects.indices.contains(indexPath.row)
             else { completionHandler(false)
                 return }
             let project = self.viewModel.projects[indexPath.row]
+            // Удаление уже отправлено: повтор не подтверждается и не запускает побочные эффекты.
+            guard !self.viewModel.isDeleting(project.code) else { completionHandler(false)
+                return }
+            // Подтверждение не показать (сверху уже другой экран) — свайп закрывается без удаления.
+            guard self.canPresentNow else { completionHandler(false)
+                return }
             let codeOfProject = project.code
             let composedMessage = String(
                 format: "confirmMessage".localized,
@@ -188,13 +209,11 @@ extension ProjectsViewController: UITableViewDelegate {
                 message: composedMessage
             ) { _ in
                 self.executeWithErrorHandling {
-                    if let guardDelete = self.beforeDeleteProject,
-                       !(await guardDelete(project)) { return }
-                    try await self.viewModel.deleteProject(project)
-                    self.onProjectDeleted?(project.code)
-                    self.onProjectsChanged?()
+                    // Свайп завершается по результату — ровно один раз на любом пути, включая ошибку.
+                    var deleted = false
+                    defer { completionHandler(deleted) }
+                    deleted = try await self.deleteConfirmedProject(project)
                 }
-                completionHandler(true)
             } cancelCompetionHandler: { _ in
                 completionHandler(false)
             }

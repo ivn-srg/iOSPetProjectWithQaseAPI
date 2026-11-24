@@ -481,6 +481,87 @@ struct ProjectsListViewModelTests {
         #expect(!model.isLoading)
     }
 
+    /// Ловит: повторное удаление того же проекта, пока первое в пути, шлёт второй DELETE
+    /// или считается успешным (APP-088).
+    @Test func secondDeleteWhileFirstIsInFlightSendsNoRequest() async throws {
+        let network = GatedNetwork(responseBody: #"{"status":true}"#)
+        network.holdNext = 1
+        let model = ProjectsViewModel(network: network, dao: cache, session: session)
+        model.projects = [project("A")]
+        let first = Task { try await model.deleteProject(project("A")) }
+        await waitForCondition { network.isHolding }
+        #expect(model.isDeleting("A"))
+        #expect(try await model.deleteProject(project("A")) == .alreadyInFlight)
+        #expect(network.operations == [.deleteProject])
+        network.release()
+        #expect(try await first.value == .deleted)
+        #expect(!model.isDeleting("A"))
+        #expect(model.projects.isEmpty)
+    }
+
+    /// Ловит: защита от повтора не снимается после ошибки — проект больше нельзя удалить.
+    @Test func deletionIsAllowedAgainAfterAFailure() async {
+        let network = LifecycleNetwork()
+        network.responseBody = #"{"status":false}"#
+        let model = ProjectsViewModel(network: network, dao: cache, session: session)
+        _ = await thrownError { try await model.deleteProject(project("A")) }
+        #expect(!model.isDeleting("A"))
+        _ = await thrownError { try await model.deleteProject(project("A")) }
+        #expect(network.operations == [.deleteProject, .deleteProject])
+    }
+
+    /// Ловит: дубль удаления в контроллере выполняет побочные эффекты удаления (смена выбранного
+    /// проекта, обновление списков), хотя первый DELETE ещё не завершён.
+    @Test func duplicateConfirmedDeletionHasNoSideEffects() async throws {
+        let network = GatedNetwork(responseBody: #"{"status":true}"#)
+        network.holdNext = 1
+        let model = ProjectsViewModel(network: network, dao: cache, session: session)
+        let controller = ProjectsViewController(viewModel: model, onCreateProject: {})
+        var deleted: [String] = []
+        var changes = 0
+        controller.onProjectDeleted = { deleted.append($0) }
+        controller.onProjectsChanged = { changes += 1 }
+        let first = Task { try await controller.deleteConfirmedProject(project("A")) }
+        await waitForCondition { network.isHolding }
+        #expect(try await controller.deleteConfirmedProject(project("A")) == false)
+        #expect(deleted.isEmpty && changes == 0)
+        network.release()
+        #expect(try await first.value)
+        #expect(deleted == ["A"] && changes == 1)
+        #expect(network.operations == [.deleteProject])
+    }
+
+    /// Ловит: резерв ставится только перед DELETE — пока идёт подготовка (сохранение черновиков),
+    /// второе подтверждение запускает вторую подготовку и второй DELETE.
+    @Test func deletionIsReservedWhilePreparationRuns() async throws {
+        let network = GatedNetwork(responseBody: #"{"status":true}"#)
+        let model = ProjectsViewModel(network: network, dao: cache, session: session)
+        let controller = ProjectsViewController(viewModel: model, onCreateProject: {})
+        let preparation = PreparationGate()
+        controller.beforeDeleteProject = { _ in await preparation.wait() }
+        let first = Task { try await controller.deleteConfirmedProject(project("A")) }
+        await waitForCondition { preparation.calls == 1 }
+        #expect(model.isDeleting("A"))
+        #expect(try await controller.deleteConfirmedProject(project("A")) == false)
+        #expect(preparation.calls == 1)
+        #expect(network.operations.isEmpty)
+        preparation.resume(true)
+        #expect(try await first.value)
+        #expect(network.operations == [.deleteProject])
+    }
+
+    /// Ловит: отказ `beforeDeleteProject` (пользователь остался с черновиком) всё равно удаляет проект.
+    @Test func rejectedPreparationDeletesNothing() async throws {
+        let network = GatedNetwork(responseBody: #"{"status":true}"#)
+        let model = ProjectsViewModel(network: network, dao: cache, session: session)
+        let controller = ProjectsViewController(viewModel: model, onCreateProject: {})
+        var deleted = 0
+        controller.beforeDeleteProject = { _ in false }
+        controller.onProjectDeleted = { _ in deleted += 1 }
+        #expect(try await controller.deleteConfirmedProject(project("A")) == false)
+        #expect(network.operations.isEmpty && deleted == 0)
+    }
+
     /// Ловит: удалён guard `status` при удалении — отказ сервера не даёт ошибки.
     @Test func deleteWithFalseStatusThrowsAndKeepsListAndCache() async {
         #expect(cache.saveProjects([project("A"), project("B")], stamp: session.capture()))
@@ -493,5 +574,22 @@ struct ProjectsListViewModelTests {
         #expect(network.operations == [.deleteProject])
         #expect(model.projects.map(\.code) == ["A", "B"])
         #expect(Set(cache.getProjects()?.map(\.code) ?? []) == ["A", "B"])
+    }
+}
+
+/// Подготовка к удалению, которая ждёт ответа теста.
+@MainActor
+private final class PreparationGate {
+    private(set) var calls = 0
+    private var pending: CheckedContinuation<Bool, Never>?
+
+    func wait() async -> Bool {
+        calls += 1
+        return await withCheckedContinuation { pending = $0 }
+    }
+
+    func resume(_ value: Bool) {
+        pending?.resume(returning: value)
+        pending = nil
     }
 }

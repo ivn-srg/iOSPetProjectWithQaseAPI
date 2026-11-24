@@ -92,9 +92,9 @@ private struct ReadListContent<Item: Codable & Identifiable, Row: View>: View {
                         title: error,
                         symbol: .exclamationmarkTriangle,
                         actionTitle: "Retry".localized
-                    ) { Task { await model.reload() } }
+                    ) { Task { await model.retry() } }
                 }
-                if model.hasMore && !model.items.isEmpty && !model.usingCache {
+                if model.hasMore && !model.items.isEmpty && !model.usingCache && model.errorMessage == nil {
                     if model.isLoading { ProgressView()
                         .frame(maxWidth: .infinity) }
                     else { Button("Load more".localized) { Task { await model.loadMore() } }.frame(

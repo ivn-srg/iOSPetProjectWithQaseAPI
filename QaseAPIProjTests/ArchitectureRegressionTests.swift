@@ -543,6 +543,25 @@ struct SessionScopeRegressionTests {
         #expect(model.items.isEmpty)
     }
     
+    // Ловит: удалён guard сессии в `retry()` — повтор упавшей страницы уходит запросом от имени
+    // другого владельца (догрузка своей проверки сессии не имеет).
+    @Test func retryAfterOwnerChangeSendsNoRequest() async {
+        let session = SessionContext(ownerID: "first")
+        var requests = 0
+        let model = PagedReadViewModel<ProjectSummary>(session: session, fetch: { _, offset in
+            requests += 1
+            if offset > 0 { throw URLError(.notConnectedToInternet) }
+            let entities = ["A", "B"].map { ProjectSummary(title: $0, code: $0) }
+            return QaseAPIListResult(total: 4, filtered: 4, count: 2, entities: entities)
+        })
+        await model.reload()
+        await model.loadMore()
+        #expect(requests == 2 && model.errorMessage != nil)
+        session.activate(ownerID: "second")
+        await model.retry()
+        #expect(requests == 2)
+    }
+
     @Test func unknownTotalsRequireAnEmptyOrShortPageBeforeCompletion() {
         #expect(PaginationPolicy.hasMore(received: 50, offset: 50, total: nil))
         #expect(!PaginationPolicy.hasMore(received: 49, offset: 99, total: nil))

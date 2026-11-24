@@ -170,7 +170,7 @@ struct RepositoryHierarchyTests {
             objectTypes: RealmManager.cacheObjectTypes
         )
         let session = SessionContext(ownerID: "migration")
-        try autoreleasepool {
+        autoreleasepool {
             let cache = RealmManager(configuration: config, session: session)
             #expect(cache.saveProjectSummaries(
                 [.init(title: "A", code: "A", metrics: .init(cases: 42))],

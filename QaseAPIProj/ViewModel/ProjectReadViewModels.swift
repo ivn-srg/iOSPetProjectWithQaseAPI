@@ -18,7 +18,12 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
     private let cached: ((String) -> [Item]?)?
     private var generation = 0
     private var nextOffset = 0
-    private var hasAppeared = false
+    /// Первая загрузка завершена (не отменена) или сессия завершена: до этого экран показывает скелетон,
+    /// а не пустое состояние.
+    @Published private(set) var hasAppeared = false
+
+    /// Скелетон вместо пустого состояния: данных ещё нет и ошибки нет, а загрузка идёт или не завершалась.
+    var showsSkeleton: Bool { (isLoading || !hasAppeared) && items.isEmpty && errorMessage == nil }
     private var searchTask: Task<Void, Never>?
     private var sessionSubscription: AnyCancellable?
 
@@ -42,6 +47,8 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
                 self.errorMessage = nil
                 self.pageLoadFailed = false
                 self.hasMore = false
+                // Модель больше не загрузит данные: скелетон не должен висеть.
+                self.hasAppeared = true
             }
     }
 

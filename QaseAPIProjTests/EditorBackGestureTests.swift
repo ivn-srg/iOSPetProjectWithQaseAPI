@@ -82,7 +82,8 @@ private final class EditorBackFixture {
         let session = SessionContext(ownerID: "owner")
         let model = TestDependencies.detail(
             reference: .init(projectCode: "DEMO", caseID: 1),
-            network: OfflineEditorNetwork(),
+            // Без данных: загрузка кейса в `viewDidLoad` завершается ошибкой и не меняет черновик.
+            network: ScriptedNetwork(respond: ScriptedNetwork.failure(.noInternetConnection)),
             session: session
         )
         let editor = TestCaseViewController(
@@ -136,24 +137,4 @@ private final class GestureDelegateStub: NSObject, UIGestureRecognizerDelegate {
     var answer = true
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool { answer }
-}
-
-/// Сеть без данных: загрузка кейса в `viewDidLoad` завершается ошибкой и не меняет черновик.
-private final class OfflineEditorNetwork: NetworkManager {
-    func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .noInternetConnection }
-
-    func performMultipartRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        files: [API.UploadFile],
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidRequest("No multipart fixture") }
-
-    func auth(by token: String) async throws -> Bool { true }
 }

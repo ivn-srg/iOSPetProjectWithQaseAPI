@@ -196,12 +196,14 @@ struct ErrorMessageTests {
     @Test func homeSectionsShowTokenHintOn401() async {
         let session = SessionContext(ownerID: "owner")
         let cache = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
-        let repository = HomeRepository(network: UnauthorizedNetwork(), dao: cache, session: session)
+        let repository = HomeRepository(network: Self.unauthorizedNetwork(), dao: cache, session: session)
+        let domain = UUID().uuidString
+        defer { UserDefaults.standard.removePersistentDomain(forName: domain) }
         let selection = SelectedProjectStore(
             repository: repository,
             cache: cache,
             session: session,
-            defaults: UserDefaults(suiteName: UUID().uuidString) ?? .standard
+            defaults: UserDefaults(suiteName: domain) ?? .standard
         )
         selection.commit(ProjectSummary(title: "A", code: "A"))
         let model = HomeViewModel(repository: repository, cache: cache, selection: selection, session: session)
@@ -216,11 +218,13 @@ struct ErrorMessageTests {
     @Test func projectLoadShowsTokenHintOn401WithoutTouchingSession() async {
         let session = SessionContext(ownerID: "owner")
         let cache = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
+        let domain = UUID().uuidString
+        defer { UserDefaults.standard.removePersistentDomain(forName: domain) }
         let selection = SelectedProjectStore(
-            repository: HomeRepository(network: UnauthorizedNetwork(), dao: cache, session: session),
+            repository: HomeRepository(network: Self.unauthorizedNetwork(), dao: cache, session: session),
             cache: cache,
             session: session,
-            defaults: UserDefaults(suiteName: UUID().uuidString) ?? .standard
+            defaults: UserDefaults(suiteName: domain) ?? .standard
         )
         let stamp = session.capture()
         await selection.load()
@@ -229,6 +233,11 @@ struct ErrorMessageTests {
     }
 
     private static let unauthorized = API.NetError.httpError(statusCode: 401, message: "Unauthorized", retryAfter: nil)
+
+    /// Сеть, отвечающая 401 на любой запрос, как Qase при отозванном токене.
+    private static func unauthorizedNetwork() -> ScriptedNetwork {
+        ScriptedNetwork(respond: ScriptedNetwork.failure(unauthorized))
+    }
 }
 
 private actor ThrowingTransport: HTTPTransport {
@@ -242,26 +251,4 @@ private struct StubTransport: HTTPTransport {
     let reply: @Sendable () throws -> (Data, URLResponse)
     init(_ reply: @escaping @Sendable () throws -> (Data, URLResponse)) { self.reply = reply }
     func send(_ request: URLRequest) async throws -> (Data, URLResponse) { try reply() }
-}
-
-/// Сеть, отвечающая 401 на любой запрос, как Qase при отозванном токене.
-private final class UnauthorizedNetwork: NetworkManager {
-    func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T {
-        throw .httpError(statusCode: 401, message: "Unauthorized", retryAfter: nil)
-    }
-
-    func performMultipartRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        files: [API.UploadFile],
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
-
-    func auth(by token: String) async throws -> Bool { true }
 }

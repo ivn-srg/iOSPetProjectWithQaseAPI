@@ -64,7 +64,8 @@ private struct ReadListContent<Item: Codable & Identifiable, Row: View>: View {
                         message: "Some data could not be refreshed".localized
                     )
                 }
-                if model.isLoading && model.items.isEmpty { ReadListSkeleton() }
+                // До первой загрузки — скелетон: иначе на первом кадре мелькает пустое состояние.
+                if model.showsSkeleton { ReadListSkeleton() }
                 else if model.items.isEmpty && model.errorMessage == nil {
                     HomeStateView(
                         title: emptyTitle,

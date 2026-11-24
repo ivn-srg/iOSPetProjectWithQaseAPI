@@ -153,6 +153,10 @@ final class TokenReplacementFixture {
     var onNotify: (() -> Void)?
     var protectedDataAvailable = true
 
+    /// Домен `defaults` удаляется вместе с фикстурой.
+    private let domains: TemporaryDefaults
+    var defaultsDomain: String { domains.names[0] }
+
     lazy var auth = AuthManager(
         userDefaults: defaults,
         credentialStore: storage,
@@ -186,7 +190,9 @@ final class TokenReplacementFixture {
         let session = SessionContext(ownerID: "old-owner")
         self.original = original
         self.session = session
-        defaults = UserDefaults(suiteName: "TokenReplacementTests." + UUID().uuidString)!
+        let domains = TemporaryDefaults()
+        self.domains = domains
+        defaults = domains.make()
         storage = TokenCredentialStorage(original)
         originalStamp = session.capture()
         defaults.set(true, forKey: "isUserLoggedIn")
@@ -232,4 +238,123 @@ final class TokenValidationGate {
         responseContinuation?.resume(returning: true)
         responseContinuation = nil
     }
+}
+
+/// Общее ядро сетевого фейка тестов: записывает запросы, удерживает их по условию и отвечает замыканием.
+/// Без заданного `respond` запрос получает ошибку `.invalidRequest` (тест сам не падает — модель
+/// обработает её как обычную ошибку сети); ответ по умолчанию задают фабрики в файлах тестов.
+/// Состояние на MainActor; методы протокола `nonisolated`, чтобы `T.Type` не пересекал границу акторов.
+@MainActor
+final class ScriptedNetwork: NetworkManager {
+    struct Request: Sendable {
+        let operation: API.Operation
+        let method: API.HTTPMethod
+        let path: [String: String]
+        let query: [URLQueryItem]
+        let body: Data?
+
+        /// Смещение страницы из query; `nil`, если параметра нет.
+        var offset: Int? { query.first { $0.name == "offset" }?.value.flatMap(Int.init) }
+    }
+
+    typealias Responder = (Request) -> Result<Data, API.NetError>
+
+    var respond: Responder = { _ in .failure(.invalidRequest("Unexpected request")) }
+    /// Запросы, для которых условие истинно, ждут `releaseNext()`/`releaseAll()`.
+    var holds: (Request) -> Bool = { _ in false }
+    /// Вызывается после удержания, перед ответом (например, сменить сессию или отменить загрузку).
+    var beforeResponse: (() -> Void)?
+    private(set) var requests: [Request] = []
+    private var held: [CheckedContinuation<Void, Never>] = []
+
+    var operations: [API.Operation] { requests.map(\.operation) }
+    var methods: [API.HTTPMethod] { requests.map(\.method) }
+    /// Тела запросов в том виде, в каком их отправил бы `APIManager`.
+    var capturedBodies: [Data] { requests.compactMap(\.body) }
+    var pending: Int { held.count }
+
+    init(respond: Responder? = nil) {
+        if let respond { self.respond = respond }
+    }
+
+    /// Всегда отвечает этим телом.
+    static func body(_ json: String) -> Responder { { _ in .success(Data(json.utf8)) } }
+    /// Всегда бросает эту ошибку.
+    static func failure(_ error: API.NetError) -> Responder { { _ in .failure(error) } }
+
+    func releaseNext() {
+        guard !held.isEmpty else { return }
+        held.removeFirst().resume()
+    }
+
+    func releaseAll() {
+        let continuations = held
+        held = []
+        continuations.forEach { $0.resume() }
+    }
+
+    nonisolated func performRequest<T: Decodable>(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem],
+        with data: Encodable?,
+        modelType: T.Type
+    ) async throws(API.NetError) -> T {
+        var body: Data?
+        if let data { body = try API.encodeBody(data) }
+        let request = Request(
+            operation: operation,
+            method: operation.httpMethod,
+            path: pathParameters,
+            query: queryItems,
+            body: body
+        )
+        switch await handle(request) {
+        case .success(let reply): return try API.decodeResponse(from: reply, as: modelType)
+        case .failure(let error): throw error
+        }
+    }
+
+    /// Запись и решение об удержании — в одном синхронном отрезке MainActor: тест, увидевший `pending`,
+    /// видит и запись запроса. После возобновления — `beforeResponse`, затем ответ.
+    private func handle(_ request: Request) async -> Result<Data, API.NetError> {
+        requests.append(request)
+        if holds(request) { await withCheckedContinuation { held.append($0) } }
+        beforeResponse?()
+        return respond(request)
+    }
+
+    nonisolated func performMultipartRequest<T: Decodable>(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        files: [API.UploadFile],
+        modelType: T.Type
+    ) async throws(API.NetError) -> T { throw .invalidURL }
+
+    nonisolated func auth(by token: String) async throws -> Bool { true }
+}
+
+/// Вызывает операцию и возвращает брошенную `NetError`; другая ошибка или успех дают `nil`.
+@MainActor
+func thrownNetError(_ operation: () async throws -> Void) async -> API.NetError? {
+    do { try await operation() } catch { return error as? API.NetError }
+    return nil
+}
+
+func invalidRequestMessage(_ error: API.NetError?) -> String? {
+    guard case .invalidRequest(let message)? = error else { return nil }
+    return message
+}
+
+/// Домены `UserDefaults` теста: удаляются, когда владелец (suite-структура или фикстура) освобождается.
+final class TemporaryDefaults {
+    private(set) var names: [String] = []
+
+    func make() -> UserDefaults {
+        let name = "QaseAPIProjTests." + UUID().uuidString
+        names.append(name)
+        return UserDefaults(suiteName: name)!
+    }
+
+    deinit { names.forEach { UserDefaults.standard.removePersistentDomain(forName: $0) } }
 }

@@ -200,4 +200,13 @@ struct AuthSessionTests {
         #expect(fixture.configuredModes.isEmpty)
         #expect(!fixture.auth.isUserLoggedIn())
     }
+
+    // Ловит: фикстура не удаляет свой домен `UserDefaults` — файлы настроек копятся в симуляторе.
+    @Test func fixtureRemovesItsDefaultsDomainWhenReleased() throws {
+        var fixture: TokenReplacementFixture? = TokenReplacementFixture()
+        let domain = try #require(fixture?.defaultsDomain)
+        #expect(UserDefaults.standard.persistentDomain(forName: domain)?["featureFlag"] as? Bool == true)
+        fixture = nil
+        #expect(UserDefaults.standard.persistentDomain(forName: domain) == nil)
+    }
 }

@@ -9,7 +9,7 @@ import Testing
 struct RepositorySearchStateTests {
     @Test func typingShowsLoadingAndHidesStaleLoadMoreUntilResultsArrive() async {
         let session = SessionContext(ownerID: "owner")
-        let network = SuspendingListNetwork()
+        let network = emptyListNetwork()
         let model = TestDependencies.entities(projectCode: "DEMO", network: network, session: session)
         model.query = "a"
         let search = Task { await model.search(reset: true) }
@@ -30,7 +30,7 @@ struct RepositorySearchStateTests {
 
     @Test func searchThatExitsEarlyDoesNotLeaveSpinner() async {
         let session = SessionContext(ownerID: "owner")
-        let network = SuspendingListNetwork()
+        let network = emptyListNetwork()
         let model = TestDependencies.entities(projectCode: "DEMO", network: network, session: session)
         model.query = "a"
         model.queryChanged()
@@ -43,18 +43,18 @@ struct RepositorySearchStateTests {
 
     @Test func emptyLevelCardSurvivesReloadInsteadOfFlickering() async {
         let session = SessionContext(ownerID: "owner")
-        let network = SuspendingListNetwork()
-        network.holdsRequests = false
+        let network = emptyListNetwork()
+        network.holds = { _ in false }
         let model = TestDependencies.entities(projectCode: "DEMO", network: network, session: session)
         #expect(!model.levelIsEmpty)
         await model.reload()
         #expect(model.levelIsEmpty)
-        network.holdsRequests = true
+        network.holds = { _ in true }
         let reload = Task { await model.reload() }
         await waitForCondition { network.pending > 0 }
         #expect(model.isLoading)
         #expect(model.levelIsEmpty)
-        network.holdsRequests = false
+        network.holds = { _ in false }
         network.releaseAll()
         await reload.value
         #expect(model.levelIsEmpty)
@@ -75,42 +75,12 @@ struct RepositorySearchStateTests {
     }
 }
 
-/// Запрос ждёт `releaseAll()` (если `holdsRequests`) и возвращает пустую страницу.
-/// Состояние на MainActor; методы протокола `nonisolated`, чтобы `T.Type` не пересекал границу акторов.
+/// Сеть списка на общем ядре: каждый запрос ждёт `releaseAll()` и возвращает пустую страницу.
 @MainActor
-private final class SuspendingListNetwork: NetworkManager {
-    var holdsRequests = true
-    private var waiting: [CheckedContinuation<Void, Never>] = []
-    var pending: Int { waiting.count }
-
-    func releaseAll() {
-        let continuations = waiting
-        waiting = []
-        continuations.forEach { $0.resume() }
-    }
-
-    private func holdIfNeeded() async {
-        if holdsRequests { await withCheckedContinuation { waiting.append($0) } }
-    }
-
-    nonisolated func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T {
-        await holdIfNeeded()
-        let body = #"{"status": true, "result": {"total": 0, "filtered": 0, "count": 0, "entities": []}}"#
-        return try API.decodeResponse(from: Data(body.utf8), as: modelType)
-    }
-
-    nonisolated func performMultipartRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        files: [API.UploadFile],
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
-
-    nonisolated func auth(by token: String) async throws -> Bool { true }
+private func emptyListNetwork() -> ScriptedNetwork {
+    let network = ScriptedNetwork(respond: ScriptedNetwork.body(
+        #"{"status": true, "result": {"total": 0, "filtered": 0, "count": 0, "entities": []}}"#
+    ))
+    network.holds = { _ in true }
+    return network
 }

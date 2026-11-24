@@ -54,11 +54,9 @@ struct DesignTokenTests {
                 let ratio = Self.contrast(Self.rgb(text, style), Self.rgb(background, style))
                 #expect(ratio >= 4.5, "\(name) in \(style == .dark ? "dark" : "light"): \(ratio)")
             }
-            // Номер шага кейса: основной текст на подложке accent 12% поверх secondarySurface.
-            let accent = Self.rgb(Palette.accent, style)
-            let stepBackground = zip(accent, Self.rgb(Palette.secondarySurface, style))
-                .map { accent, surface in accent * 0.12 + surface * 0.88 }
-            #expect(Self.contrast(Self.rgb(Palette.text, style), stepBackground) >= 4.5)
+            // Номер шага кейса: реальные цвет цифры и подложка бейджа поверх secondarySurface.
+            let badge = Self.stepBadgeColors(style)
+            #expect(Self.contrast(badge.text, badge.background) >= 4.5)
         }
     }
 
@@ -73,6 +71,36 @@ struct DesignTokenTests {
         let resolved = color.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
         #expect(resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha))
         return [Double(red), Double(green), Double(blue)]
+    }
+
+    /// Цвет цифры и подложки номера шага из настоящего `TestCaseStepView` (подложка с её прозрачностью
+    /// наложена на `secondarySurface`): тест следует за реальными значениями, а не за копиями констант.
+    private static func stepBadgeColors(
+        _ style: UIUserInterfaceStyle
+    ) -> (text: [Double], background: [Double]) {
+        let step = StepsInTestCase(
+            hash: "step",
+            position: 1,
+            sharedStepHash: nil,
+            sharedStepNestedHash: nil,
+            attachments: [],
+            action: "Action",
+            expectedResult: "Result",
+            data: nil,
+            steps: []
+        )
+        let card = TestCaseStepView(step: step, number: "1")
+        func descendants(_ view: UIView) -> [UIView] { [view] + view.subviews.flatMap(descendants) }
+        let label = descendants(card).compactMap { $0 as? UILabel }.first { $0.text == "1" }
+        let fill = label?.superview?.backgroundColor ?? .clear
+        #expect(fill != .clear, "Step number badge has no background")
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        let resolved = fill.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
+        #expect(resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha))
+        let surface = rgb(AppTheme.Palette.secondarySurface, style)
+        let background = zip([Double(red), Double(green), Double(blue)], surface)
+            .map { badge, surface in badge * Double(alpha) + surface * (1 - Double(alpha)) }
+        return (rgb(label?.textColor ?? .clear, style), background)
     }
 
     private static func luminance(_ rgb: [Double]) -> Double {

@@ -6,7 +6,6 @@ final class TestCaseStepView: UIView {
         static let contentInset = AppTheme.Space.regular
         static let bodySpacing = AppTheme.Space.medium
         static let captionSpacing: CGFloat = 6
-        static let badgeOpacity: CGFloat = 0.12
     }
 
     private let step: StepsInTestCase

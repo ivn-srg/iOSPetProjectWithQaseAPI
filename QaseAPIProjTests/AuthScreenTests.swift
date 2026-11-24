@@ -146,7 +146,7 @@ struct AuthScreenTests {
         defer { service.finish() }
         let parent = UIViewController()
         var controller: AuthViewController? = AuthViewController(auth: service)
-        weak var released = controller
+        weak let released = controller
         parent.addChild(try #require(controller))
         parent.view.addSubview(try #require(controller).view)
         controller?.didMove(toParent: parent)

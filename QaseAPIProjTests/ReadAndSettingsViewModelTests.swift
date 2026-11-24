@@ -5,6 +5,8 @@ import Testing
 /// Экран детали чтения (`ReadDetailViewModel`) и настройки кеша (`SettingsViewModel`).
 @Suite(.timeLimit(.minutes(1))) @MainActor
 struct ReadAndSettingsViewModelTests {
+    private let defaultsDomains = TemporaryDefaults()
+
     // MARK: - ReadDetailViewModel
 
     // Мутация: не записывать результат `fetch` в `item` или не гасить `loading`.
@@ -133,7 +135,7 @@ struct ReadAndSettingsViewModelTests {
     @Test(arguments: [true, false])
     func refreshCacheReflectsDownloadedData(hasData: Bool) {
         let cache = SettingsCacheFake(hasData: .success(hasData))
-        let model = Self.settings(cache: cache)
+        let model = settings(cache: cache)
         model.refreshCache()
         #expect(model.hasCachedData == hasData)
         #expect(model.cacheError == nil)
@@ -143,7 +145,7 @@ struct ReadAndSettingsViewModelTests {
     // Мутация: подменить текст ошибки чтения или не записывать его в `cacheError`.
     @Test func refreshCacheReportsReadFailure() {
         let cache = SettingsCacheFake(hasData: .failure(CocoaError(.fileReadUnknown)))
-        let model = Self.settings(cache: cache)
+        let model = settings(cache: cache)
         model.refreshCache()
         #expect(model.cacheError == "Could not read cached data".localized)
         #expect(model.cacheNotice == nil)
@@ -152,7 +154,7 @@ struct ReadAndSettingsViewModelTests {
     // Мутация: убрать `cacheError = nil` / `cacheNotice = nil` в начале `refreshCache`.
     @Test func refreshCacheClearsPreviousErrorAndNotice() {
         let cache = SettingsCacheFake(hasData: .failure(CocoaError(.fileReadUnknown)))
-        let model = Self.settings(cache: cache)
+        let model = settings(cache: cache)
         model.refreshCache()
         #expect(model.cacheError != nil)
         cache.hasData = .success(true)
@@ -168,7 +170,7 @@ struct ReadAndSettingsViewModelTests {
     // Мутация: не вызывать `refreshCache` после очистки (флаг устаревает) или не ставить уведомление.
     @Test func clearCacheSucceedsAndRefreshesFlag() {
         let cache = SettingsCacheFake(hasData: .success(true))
-        let model = Self.settings(cache: cache)
+        let model = settings(cache: cache)
         model.refreshCache()
         #expect(model.hasCachedData)
         model.clearCache()
@@ -182,7 +184,7 @@ struct ReadAndSettingsViewModelTests {
     @Test func clearCacheFailureReportsErrorWithoutNotice() {
         let cache = SettingsCacheFake(hasData: .success(true))
         cache.clearError = CocoaError(.fileWriteUnknown)
-        let model = Self.settings(cache: cache)
+        let model = settings(cache: cache)
         model.refreshCache()
         model.clearCache()
         #expect(model.cacheError == "Could not clear cached data".localized)
@@ -194,7 +196,7 @@ struct ReadAndSettingsViewModelTests {
     @Test func clearCacheDoesNotClaimSuccessWhenRereadFails() {
         let cache = SettingsCacheFake(hasData: .success(true))
         cache.hasDataAfterClear = .failure(CocoaError(.fileReadUnknown))
-        let model = Self.settings(cache: cache)
+        let model = settings(cache: cache)
         model.clearCache()
         #expect(cache.clearCalls == 1)
         #expect(model.cacheError == "Could not read cached data".localized)
@@ -205,7 +207,7 @@ struct ReadAndSettingsViewModelTests {
     @Test func cacheCallsUseCurrentSessionStamp() {
         let session = SessionContext(ownerID: "A")
         let cache = SettingsCacheFake(hasData: .success(false))
-        let model = Self.settings(cache: cache, session: session)
+        let model = settings(cache: cache, session: session)
         session.activate(ownerID: "B")
         model.refreshCache()
         model.clearCache()
@@ -223,7 +225,7 @@ struct ReadAndSettingsViewModelTests {
             from: Data(#"{"title":"A","code":"A"}"#.utf8)
         )
         #expect(cache.saveProjects([project], stamp: session.capture()))
-        let model = Self.settings(cache: cache, session: session)
+        let model = settings(cache: cache, session: session)
 
         model.refreshCache()
         #expect(model.hasCachedData)
@@ -255,11 +257,11 @@ struct ReadAndSettingsViewModelTests {
         )
     }
 
-    private static func settings(
+    private func settings(
         cache: CacheMaintaining,
         session: SessionContext? = nil
     ) -> SettingsViewModel {
-        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let defaults = defaultsDomains.make()
         return SettingsViewModel(
             preferences: AppSettingsStore(defaults: defaults),
             auth: SettingsAuthStub(),

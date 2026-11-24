@@ -7,7 +7,7 @@ import Testing
 struct ProjectLifecycleTests {
     @Test func oldCreationDraftCannotAdoptAnotherOwner() async {
         let session = SessionContext(ownerID: "A")
-        let network = LifecycleNetwork()
+        let network = lifecycleNetwork()
         let model = CreatingProjectViewModel(network: network, session: session)
         model.creatingProject.title = "Retained draft"
         model.creatingProject.code = "OLD"
@@ -26,7 +26,7 @@ struct ProjectLifecycleTests {
             configuration: .init(inMemoryIdentifier: UUID().uuidString),
             session: session
         )
-        let network = LifecycleNetwork()
+        let network = lifecycleNetwork()
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         var a = Project()
         a.code = "A"
@@ -49,8 +49,9 @@ struct ProjectLifecycleTests {
             configuration: .init(inMemoryIdentifier: UUID().uuidString),
             session: session
         )
-        let network = LifecycleNetwork()
-        network.responseBody = #"{"status":true,"result":{"total":0,"filtered":0,"count":0,"entities":[]}}"#
+        let network = lifecycleNetwork(
+            replying: #"{"status":true,"result":{"total":0,"filtered":0,"count":0,"entities":[]}}"#
+        )
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         try await model.requestEntitiesData(place: .start)
         #expect(network.operations == [.getProjects])
@@ -63,8 +64,7 @@ struct ProjectLifecycleTests {
 
     @Test func projectCreationPostsToTheProjectCollection() async throws {
         let session = SessionContext(ownerID: "owner")
-        let network = LifecycleNetwork()
-        network.responseBody = #"{"status":true,"result":{"code":"NEW"}}"#
+        let network = lifecycleNetwork(replying: #"{"status":true,"result":{"code":"NEW"}}"#)
         let model = CreatingProjectViewModel(network: network, session: session)
         model.creatingProject.title = "New project"
         model.creatingProject.code = "NEW"
@@ -75,8 +75,7 @@ struct ProjectLifecycleTests {
 
     @Test func suiteAndCaseCreationUseTheirOwnOperationsAndProjectCode() async throws {
         let session = SessionContext(ownerID: "owner")
-        let network = LifecycleNetwork()
-        network.responseBody = #"{"status":true,"result":{"id":1}}"#
+        let network = lifecycleNetwork(replying: #"{"status":true,"result":{"id":1}}"#)
         let model = TestDependencies.creator(projectCode: "A", network: network, session: session)
         model.creatingSuite.title = "Suite"
         model.creatingTestCase.title = "Case"
@@ -98,14 +97,17 @@ struct ProjectLifecycleTests {
         )
         let a = ProjectSummary(title: "A", code: "A"), b = ProjectSummary(title: "B", code: "B")
         _ = cache.saveProjectSummaries([a, b], stamp: session.capture())
-        let network = LifecycleNetwork()
-        network.offline = true
+        let network = lifecycleNetwork()
+        network.respond = ScriptedNetwork.failure(.noInternetConnection)
         let repository = HomeRepository(network: network, dao: cache, session: session)
+        let domain = UUID().uuidString
+        let defaults = UserDefaults(suiteName: domain)!
+        defer { defaults.removePersistentDomain(forName: domain) }
         let store = SelectedProjectStore(
             repository: repository,
             cache: cache,
             session: session,
-            defaults: UserDefaults(suiteName: UUID().uuidString)!
+            defaults: defaults
         )
         await store.load()
         #expect(store.selectedProject?.code == "A")
@@ -144,7 +146,7 @@ struct ProjectLifecycleTests {
 
     /// Ловит: удалена проверка `isEmpty` (или без trim) — запрос уходит с пустым кодом проекта.
     @Test func emptyProjectDraftSendsNothingAndReportsMissingFields() async throws {
-        let network = LifecycleNetwork()
+        let network = lifecycleNetwork()
         let model = CreatingProjectViewModel(network: network, session: SessionContext(ownerID: "owner"))
         var alerts = 0
         var finished = 0
@@ -161,8 +163,7 @@ struct ProjectLifecycleTests {
     /// Ловит: baseline не обновляется после успеха; колбэк вызывается дважды; в тело не попал `code`
     /// или `description`.
     @Test func successfulProjectCreationConfirmsDraftAndNotifiesOnce() async throws {
-        let network = LifecycleNetwork()
-        network.responseBody = #"{"status":true,"result":{"code":"NEW"}}"#
+        let network = lifecycleNetwork(replying: #"{"status":true,"result":{"code":"NEW"}}"#)
         let model = CreatingProjectViewModel(network: network, session: SessionContext(ownerID: "owner"))
         var finished = 0
         model.creatingFinishCallback = { finished += 1 }
@@ -184,8 +185,7 @@ struct ProjectLifecycleTests {
 
     /// Ловит: удалён guard `status` — отказ сервера считается успехом, черновик «сохранён».
     @Test func projectCreationWithFalseStatusFailsAndKeepsTheDraft() async {
-        let network = LifecycleNetwork()
-        network.responseBody = #"{"status":false,"result":{"code":"X"}}"#
+        let network = lifecycleNetwork(replying: #"{"status":false,"result":{"code":"X"}}"#)
         let model = CreatingProjectViewModel(network: network, session: SessionContext(ownerID: "owner"))
         var finished = 0
         model.creatingFinishCallback = { finished += 1 }
@@ -200,20 +200,20 @@ struct ProjectLifecycleTests {
 
     /// Ловит: удалён guard `!isSaving` — второе нажатие шлёт повторный POST, пока первый в полёте.
     @Test func secondProjectSaveWhileTheFirstIsInFlightIsRejected() async throws {
-        let network = GatedNetwork(responseBody: #"{"status":true,"result":{"code":"NEW"}}"#)
-        network.holdNext = 1
+        let network = lifecycleNetwork(replying: #"{"status":true,"result":{"code":"NEW"}}"#)
+        network.holdNext(1)
         let model = CreatingProjectViewModel(network: network, session: SessionContext(ownerID: "owner"))
         var finished = 0
         model.creatingFinishCallback = { finished += 1 }
         model.creatingProject.title = "New project"
         model.creatingProject.code = "NEW"
         let first = Task { try await model.createNewProject() }
-        await waitForCondition { network.isHolding }
+        await waitForCondition { network.pending > 0 }
         #expect(model.isSaving)
         let second = await thrownError { try await model.createNewProject() }
         #expect(second is CancellationError)
         #expect(network.operations == [.createProject])
-        network.release()
+        network.releaseAll()
         try await first.value
         #expect(finished == 1 && !model.isSaving && !model.hasUnsavedChanges)
     }
@@ -221,17 +221,17 @@ struct ProjectLifecycleTests {
     /// Ловит: удалена проверка сессии после ответа — устаревшая форма подтверждает черновик и закрывается.
     @Test func projectResponseAfterSessionChangeDoesNotConfirmDraftOrNotify() async {
         let session = SessionContext(ownerID: "old")
-        let network = GatedNetwork(responseBody: #"{"status":true,"result":{"code":"NEW"}}"#)
-        network.holdNext = 1
+        let network = lifecycleNetwork(replying: #"{"status":true,"result":{"code":"NEW"}}"#)
+        network.holdNext(1)
         let model = CreatingProjectViewModel(network: network, session: session)
         var finished = 0
         model.creatingFinishCallback = { finished += 1 }
         model.creatingProject.title = "New project"
         model.creatingProject.code = "NEW"
         let save = Task { try await model.createNewProject() }
-        await waitForCondition { network.isHolding }
+        await waitForCondition { network.pending > 0 }
         session.activate(ownerID: "new")
-        network.release()
+        network.releaseAll()
         let error = await thrownError { try await save.value }
         #expect(error is CancellationError)
         #expect(finished == 0 && !model.isEntityWasCreated && !model.isSaving)
@@ -239,89 +239,44 @@ struct ProjectLifecycleTests {
     }
 }
 
-private final class LifecycleNetwork: NetworkManager {
-    var requestedURLs: [URL] = []
-    var operations: [API.Operation] = []
-    var offline = false
-    var responseBody = #"{"status":true}"#
-    /// Тела запросов в том виде, в каком их отправил бы `APIManager`.
-    var capturedBodies: [Data] = []
-    /// Значения query `offset` по порядку запросов.
-    var requestedOffsets: [Int] = []
-    /// Ответ по `offset`; без записи отвечает `responseBody`.
-    var responsesByOffset: [Int: String] = [:]
-    func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T {
-        operations.append(operation)
-        if let url = API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems) {
-            requestedURLs.append(url)
-        }
-        if let data, let encoded = try? API.encodeBody(data) { capturedBodies.append(encoded) }
-        let offset = queryItems.first { $0.name == "offset" }.flatMap { Int($0.value ?? "") }
-        if let offset { requestedOffsets.append(offset) }
-        if offline { throw .noInternetConnection }
-        let body = offset.flatMap { responsesByOffset[$0] } ?? responseBody
-        return try API.decodeResponse(from: Data(body.utf8), as: modelType)
-    }
+/// Ответ по умолчанию прежнего `LifecycleNetwork`: успех без результата.
+private let lifecycleReply = #"{"status":true}"#
 
-    func performMultipartRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        files: [API.UploadFile],
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidRequest("No multipart fixture") }
-    func auth(by token: String) async throws -> Bool { true }
+/// Сеть на общем ядре: всегда отвечает `body`, запросы не удерживаются.
+@MainActor
+private func lifecycleNetwork(replying body: String = lifecycleReply) -> ScriptedNetwork {
+    ScriptedNetwork(respond: ScriptedNetwork.body(body))
 }
 
-/// Фейк с приостановкой: первые `holdNext` запросов ждут `release()`, остальные отвечают сразу.
-/// Состояние на MainActor; методы протокола `nonisolated`, чтобы `T.Type` не пересекал границу акторов.
-@MainActor
-private final class GatedNetwork: NetworkManager {
-    var responseBody: String
-    var holdNext = 0
-    private(set) var operations: [API.Operation] = []
-    private var gate: CheckedContinuation<Void, Never>?
-    var isHolding: Bool { gate != nil }
+/// Ответ по `offset` из query; без записи для смещения (или без параметра) — `fallback`.
+private func pagesByOffset(
+    _ pages: [Int: String],
+    fallback: String = lifecycleReply
+) -> ScriptedNetwork.Responder {
+    { request in .success(Data((request.offset.flatMap { pages[$0] } ?? fallback).utf8)) }
+}
 
-    init(responseBody: String) { self.responseBody = responseBody }
-
-    func release() {
-        gate?.resume()
-        gate = nil
-    }
-
-    private func respond(operation: API.Operation) async -> String {
-        operations.append(operation)
-        if holdNext > 0 {
-            holdNext -= 1
-            await withCheckedContinuation { gate = $0 }
+private extension ScriptedNetwork {
+    /// URL запросов в том виде, в каком их собрал бы `APIManager`.
+    var requestedURLs: [URL] {
+        requests.compactMap {
+            API.makeURL(for: $0.operation, pathParameters: $0.path, queryItems: $0.query)
         }
-        return responseBody
     }
 
-    nonisolated func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T {
-        let reply = await respond(operation: operation)
-        return try API.decodeResponse(from: Data(reply.utf8), as: modelType)
-    }
 
-    nonisolated func performMultipartRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        files: [API.UploadFile],
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
-    nonisolated func auth(by token: String) async throws -> Bool { true }
+    /// Значения query `offset` по порядку запросов; запросы без параметра не попадают в список.
+    var requestedOffsets: [Int] { requests.compactMap(\.offset) }
+
+    /// Первые `count` запросов ждут `releaseAll()`, остальные отвечают сразу.
+    func holdNext(_ count: Int) {
+        var remaining = count
+        holds = { _ in
+            guard remaining > 0 else { return false }
+            remaining -= 1
+            return true
+        }
+    }
 }
 
 /// Вызывает операцию и возвращает брошенную ошибку; успех даёт `nil`.
@@ -363,14 +318,14 @@ struct ProjectsListViewModelTests {
     /// Ловит: удалено чтение кеша при `.start` — до ответа сервера экран пуст.
     @Test func startShowsCachedProjectsBeforeTheResponseArrives() async throws {
         #expect(cache.saveProjects([project("CACHED")], stamp: session.capture()))
-        let network = GatedNetwork(responseBody: projectsPage(["NET"], total: 1))
-        network.holdNext = 1
+        let network = lifecycleNetwork(replying: projectsPage(["NET"], total: 1))
+        network.holdNext(1)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let load = Task { try await model.requestEntitiesData(place: .start) }
-        await waitForCondition { network.isHolding }
+        await waitForCondition { network.pending > 0 }
         #expect(model.projects.map(\.code) == ["CACHED"])
         #expect(model.isLoading)
-        network.release()
+        network.releaseAll()
         try await load.value
         #expect(model.projects.map(\.code) == ["NET"])
         #expect(!model.isLoading)
@@ -380,11 +335,11 @@ struct ProjectsListViewModelTests {
     /// фильтра дублей по `code`; после достижения `total` уходит лишний запрос.
     @Test func nextPageUsesOffsetFiftyAndAppendsWithoutDuplicates() async throws {
         let firstPage = (0..<50).map { String(format: "P%02d", $0) }
-        let network = LifecycleNetwork()
-        network.responsesByOffset = [
+        let network = lifecycleNetwork()
+        network.respond = pagesByOffset([
             0: projectsPage(firstPage, total: 52),
             50: projectsPage(["P49", "P50", "P51"], total: 52)
-        ]
+        ])
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         try await model.requestEntitiesData(place: .start)
         #expect(model.projects.map(\.code) == firstPage)
@@ -396,12 +351,11 @@ struct ProjectsListViewModelTests {
 
     /// Ловит: `.refresh` дописывает страницу к списку из кеша вместо замены, либо не сбрасывает offset.
     @Test func refreshReplacesTheListWithTheFirstPage() async throws {
-        let network = LifecycleNetwork()
-        network.responseBody = projectsPage(["A", "B"], total: 2)
+        let network = lifecycleNetwork(replying: projectsPage(["A", "B"], total: 2))
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         try await model.requestEntitiesData(place: .start)
         #expect(model.projects.map(\.code) == ["A", "B"])
-        network.responseBody = projectsPage(["C"], total: 1)
+        network.respond = ScriptedNetwork.body(projectsPage(["C"], total: 1))
         try await model.requestEntitiesData(place: .refresh)
         #expect(model.projects.map(\.code) == ["C"])
         #expect(network.requestedOffsets == [0, 0])
@@ -409,14 +363,14 @@ struct ProjectsListViewModelTests {
 
     /// Ловит: удалён guard `!isLoading` — повторный запрос во время загрузки уходит на сервер.
     @Test func requestWhileLoadingDoesNotSendASecondRequest() async throws {
-        let network = GatedNetwork(responseBody: projectsPage(["A"], total: 5))
-        network.holdNext = 1
+        let network = lifecycleNetwork(replying: projectsPage(["A"], total: 5))
+        network.holdNext(1)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let load = Task { try await model.requestEntitiesData(place: .start) }
-        await waitForCondition { network.isHolding }
+        await waitForCondition { network.pending > 0 }
         try await model.requestEntitiesData(place: .continuos)
         #expect(network.operations == [.getProjects])
-        network.release()
+        network.releaseAll()
         try await load.value
         #expect(network.operations == [.getProjects])
         #expect(model.projects.map(\.code) == ["A"])
@@ -425,14 +379,14 @@ struct ProjectsListViewModelTests {
     /// Ловит: удалена проверка `generation` — ответ после `cancelLoading` публикуется;
     /// `cancelLoading` не снимает `isLoading`.
     @Test func responseAfterCancelLoadingIsNotPublished() async throws {
-        let network = GatedNetwork(responseBody: projectsPage(["A"], total: 1))
-        network.holdNext = 1
+        let network = lifecycleNetwork(replying: projectsPage(["A"], total: 1))
+        network.holdNext(1)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let load = Task { try await model.requestEntitiesData(place: .start) }
-        await waitForCondition { network.isHolding }
+        await waitForCondition { network.pending > 0 }
         model.cancelLoading()
         #expect(!model.isLoading)
-        network.release()
+        network.releaseAll()
         try await load.value
         #expect(model.projects.isEmpty && !model.isLoading)
         #expect(cache.getProjects()?.count == 0)
@@ -440,29 +394,28 @@ struct ProjectsListViewModelTests {
 
     /// Ловит: удалена проверка сессии после ответа — ответ прежнего владельца попадает в список.
     @Test func responseAfterSessionChangeIsNotPublished() async throws {
-        let network = GatedNetwork(responseBody: projectsPage(["A"], total: 1))
-        network.holdNext = 1
+        let network = lifecycleNetwork(replying: projectsPage(["A"], total: 1))
+        network.holdNext(1)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let load = Task { try await model.requestEntitiesData(place: .start) }
-        await waitForCondition { network.isHolding }
+        await waitForCondition { network.pending > 0 }
         session.activate(ownerID: "new")
-        network.release()
+        network.releaseAll()
         try await load.value
         #expect(model.projects.isEmpty && !model.isLoading)
     }
 
     /// Ловит: удалён сброс `isLoading` после ошибки — повторная загрузка блокируется навсегда.
     @Test func failedLoadResetsLoadingAndAllowsRetry() async throws {
-        let network = LifecycleNetwork()
-        network.offline = true
+        let network = lifecycleNetwork()
+        network.respond = ScriptedNetwork.failure(.noInternetConnection)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let error = await thrownError { try await model.requestEntitiesData(place: .start) }
         var isOffline = false
         if case .noInternetConnection? = error as? API.NetError { isOffline = true }
         #expect(isOffline)
         #expect(!model.isLoading)
-        network.offline = false
-        network.responseBody = projectsPage(["A"], total: 1)
+        network.respond = ScriptedNetwork.body(projectsPage(["A"], total: 1))
         try await model.requestEntitiesData(place: .start)
         #expect(model.projects.map(\.code) == ["A"])
         #expect(network.requestedOffsets == [0, 0])
@@ -471,8 +424,9 @@ struct ProjectsListViewModelTests {
     /// Ловит: удалён guard `status` — пустой ответ с `status:false` затирает список и кеш.
     @Test func listWithFalseStatusThrowsAndKeepsTheCachedProjects() async {
         #expect(cache.saveProjects([project("CACHED")], stamp: session.capture()))
-        let network = LifecycleNetwork()
-        network.responseBody = #"{"status":false,"result":{"total":0,"filtered":0,"count":0,"entities":[]}}"#
+        let network = lifecycleNetwork(
+            replying: #"{"status":false,"result":{"total":0,"filtered":0,"count":0,"entities":[]}}"#
+        )
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let error = await thrownError { try await model.requestEntitiesData(place: .start) }
         #expect(invalidRequestMessage(error) == "Projects could not be loaded")
@@ -484,16 +438,16 @@ struct ProjectsListViewModelTests {
     /// Ловит: повторное удаление того же проекта, пока первое в пути, шлёт второй DELETE
     /// или считается успешным (APP-088).
     @Test func secondDeleteWhileFirstIsInFlightSendsNoRequest() async throws {
-        let network = GatedNetwork(responseBody: #"{"status":true}"#)
-        network.holdNext = 1
+        let network = lifecycleNetwork(replying: #"{"status":true}"#)
+        network.holdNext(1)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         model.projects = [project("A")]
         let first = Task { try await model.deleteProject(project("A")) }
-        await waitForCondition { network.isHolding }
+        await waitForCondition { network.pending > 0 }
         #expect(model.isDeleting("A"))
         #expect(try await model.deleteProject(project("A")) == .alreadyInFlight)
         #expect(network.operations == [.deleteProject])
-        network.release()
+        network.releaseAll()
         #expect(try await first.value == .deleted)
         #expect(!model.isDeleting("A"))
         #expect(model.projects.isEmpty)
@@ -501,8 +455,7 @@ struct ProjectsListViewModelTests {
 
     /// Ловит: защита от повтора не снимается после ошибки — проект больше нельзя удалить.
     @Test func deletionIsAllowedAgainAfterAFailure() async {
-        let network = LifecycleNetwork()
-        network.responseBody = #"{"status":false}"#
+        let network = lifecycleNetwork(replying: #"{"status":false}"#)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         _ = await thrownError { try await model.deleteProject(project("A")) }
         #expect(!model.isDeleting("A"))
@@ -513,8 +466,8 @@ struct ProjectsListViewModelTests {
     /// Ловит: дубль удаления в контроллере выполняет побочные эффекты удаления (смена выбранного
     /// проекта, обновление списков), хотя первый DELETE ещё не завершён.
     @Test func duplicateConfirmedDeletionHasNoSideEffects() async throws {
-        let network = GatedNetwork(responseBody: #"{"status":true}"#)
-        network.holdNext = 1
+        let network = lifecycleNetwork(replying: #"{"status":true}"#)
+        network.holdNext(1)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let controller = ProjectsViewController(viewModel: model, onCreateProject: {})
         var deleted: [String] = []
@@ -522,10 +475,10 @@ struct ProjectsListViewModelTests {
         controller.onProjectDeleted = { deleted.append($0) }
         controller.onProjectsChanged = { changes += 1 }
         let first = Task { try await controller.deleteConfirmedProject(project("A")) }
-        await waitForCondition { network.isHolding }
+        await waitForCondition { network.pending > 0 }
         #expect(try await controller.deleteConfirmedProject(project("A")) == false)
         #expect(deleted.isEmpty && changes == 0)
-        network.release()
+        network.releaseAll()
         #expect(try await first.value)
         #expect(deleted == ["A"] && changes == 1)
         #expect(network.operations == [.deleteProject])
@@ -534,7 +487,7 @@ struct ProjectsListViewModelTests {
     /// Ловит: резерв ставится только перед DELETE — пока идёт подготовка (сохранение черновиков),
     /// второе подтверждение запускает вторую подготовку и второй DELETE.
     @Test func deletionIsReservedWhilePreparationRuns() async throws {
-        let network = GatedNetwork(responseBody: #"{"status":true}"#)
+        let network = lifecycleNetwork(replying: #"{"status":true}"#)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let controller = ProjectsViewController(viewModel: model, onCreateProject: {})
         let preparation = PreparationGate()
@@ -552,7 +505,7 @@ struct ProjectsListViewModelTests {
 
     /// Ловит: отказ `beforeDeleteProject` (пользователь остался с черновиком) всё равно удаляет проект.
     @Test func rejectedPreparationDeletesNothing() async throws {
-        let network = GatedNetwork(responseBody: #"{"status":true}"#)
+        let network = lifecycleNetwork(replying: #"{"status":true}"#)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         let controller = ProjectsViewController(viewModel: model, onCreateProject: {})
         var deleted = 0
@@ -565,8 +518,7 @@ struct ProjectsListViewModelTests {
     /// Ловит: удалён guard `status` при удалении — отказ сервера не даёт ошибки.
     @Test func deleteWithFalseStatusThrowsAndKeepsListAndCache() async {
         #expect(cache.saveProjects([project("A"), project("B")], stamp: session.capture()))
-        let network = LifecycleNetwork()
-        network.responseBody = #"{"status":false}"#
+        let network = lifecycleNetwork(replying: #"{"status":false}"#)
         let model = ProjectsViewModel(network: network, dao: cache, session: session)
         model.projects = [project("A"), project("B")]
         let error = await thrownError { try await model.deleteProject(project("A")) }

@@ -6,6 +6,8 @@ import Testing
 /// Чтение через `HomeRepository` переживает одиночный 429: один повтор после `Retry-After` до 10 с.
 @Suite(.timeLimit(.minutes(1))) @MainActor
 struct RateLimitRetryTests {
+    private let defaultsDomains = TemporaryDefaults()
+
     @Test func rateLimitedPageIsRetriedOnceAfterRetryAfter() async throws {
         let fixture = RetryFixture([.rateLimited(retryAfter: 2), .runs([1])])
         let page = try await fixture.repository.runs(projectCode: "A", offset: 0)
@@ -84,7 +86,7 @@ struct RateLimitRetryTests {
             repository: fixture.repository,
             cache: fixture.dao,
             session: fixture.session,
-            defaults: UserDefaults(suiteName: UUID().uuidString) ?? .standard
+            defaults: defaultsDomains.make()
         )
         await store.load()
         #expect(store.projects.map(\.code) == ["A", "B"])

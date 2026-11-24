@@ -261,6 +261,7 @@ private final class WorkNetwork: NetworkManager {
 
 @MainActor
 private final class HomeFixture {
+    private let defaultsDomains: TemporaryDefaults
     let session = SessionContext(ownerID: "owner")
     let source: ProjectsSource
     let selection: SelectedProjectStore
@@ -274,7 +275,9 @@ private final class HomeFixture {
             session: session
         )
         #expect(cached.isEmpty || cache.saveProjectSummaries(cached, stamp: session.capture()))
-        let defaults = UserDefaults(suiteName: UUID().uuidString) ?? .standard
+        let defaultsDomains = TemporaryDefaults()
+        self.defaultsDomains = defaultsDomains
+        let defaults = defaultsDomains.make()
         if let savedCode { defaults.set(savedCode, forKey: "selectedProject.owner") }
         selection = SelectedProjectStore(
             repository: source,

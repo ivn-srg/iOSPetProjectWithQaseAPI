@@ -83,7 +83,8 @@ enum AppTheme {
         static let tertiarySurface = adaptive(0xECEEF2, 0x34343A)
         static let text = adaptive(0x111113, 0xF7F7F8)
         static let secondaryText = adaptive(0x6E7078, 0xA5A7AE)
-        static let tertiaryText = adaptive(0x6E707A, 0x90939A)
+        /// В light равен `secondaryText`: светлее на белом не получить контраст 4.5:1 (иерархия — размером).
+        static let tertiaryText = adaptive(0x6E7078, 0x90939A)
         static let border = adaptive(0xE6E7EB, 0x34343A)
         static let strongBorder = adaptive(0xD4D6DC, 0x484850)
         static let accent = adaptive(0x6757F5, 0x8F82FF)

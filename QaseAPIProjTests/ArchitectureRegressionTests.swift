@@ -39,7 +39,7 @@ struct ArchitectureRegressionTests {
             form: GeneralDetailCaseViewController(vm: model),
             session: session
         )
-        weak var releasedController = controller
+        weak let releasedController = controller
         controller?.loadViewIfNeeded()
         await transport.waitUntilStarted()
         

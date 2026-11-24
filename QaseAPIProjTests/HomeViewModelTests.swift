@@ -138,7 +138,9 @@ struct HomeViewModelTests {
         #expect(model.recentCases.isEmpty)
     }
 
-    private func isolatedDefaults() -> UserDefaults { UserDefaults(suiteName: UUID().uuidString)! }
+    private let defaultsDomains = TemporaryDefaults()
+
+    private func isolatedDefaults() -> UserDefaults { defaultsDomains.make() }
 }
 
 @MainActor

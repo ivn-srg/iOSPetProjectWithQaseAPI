@@ -31,7 +31,7 @@ enum Severity: String, CaseIterable, MenuDataSource, Codable {
     }
 
     @MainActor
-    var menuItem: MenuItem { Self.dataSource[apiValue] }
+    var menuItem: MenuItem { Self.dataSource.first { $0.id == apiValue }! }
 
     @MainActor
     static var dataSource: [MenuItem] {
@@ -117,7 +117,7 @@ enum Status: String, CaseIterable, MenuDataSource, Codable {
     }
 
     @MainActor
-    var menuItem: MenuItem { Self.dataSource[apiValue] }
+    var menuItem: MenuItem { Self.dataSource.first { $0.id == apiValue }! }
 
     @MainActor
     static var dataSource: [MenuItem] {
@@ -150,7 +150,7 @@ enum Status: String, CaseIterable, MenuDataSource, Codable {
 }
 
 enum Priority: String, CaseIterable, MenuDataSource, Codable {
-    case nothing = "Not Set"
+    case nothing = "Not set"
     case high = "High"
     case medium = "Medium"
     case low = "Low"
@@ -169,7 +169,7 @@ enum Priority: String, CaseIterable, MenuDataSource, Codable {
     }
 
     @MainActor
-    var menuItem: MenuItem { Self.dataSource[apiValue] }
+    var menuItem: MenuItem { Self.dataSource.first { $0.id == apiValue }! }
 
     @MainActor
     static var dataSource: [MenuItem] {
@@ -220,7 +220,7 @@ enum Priority: String, CaseIterable, MenuDataSource, Codable {
 }
 
 enum Behavior: String, CaseIterable, MenuDataSource, Codable {
-    case nothing = "Not Set"
+    case nothing = "Not set"
     case positive = "Positive"
     case negative = "Negative"
     case destructive = "Destructive"
@@ -231,15 +231,15 @@ enum Behavior: String, CaseIterable, MenuDataSource, Codable {
 
     var apiValue: Int {
         switch self {
-        case .nothing: 0
-        case .positive: 1
-        case .negative: 2
-        case .destructive: 3
+        case .nothing: 1
+        case .positive: 2
+        case .negative: 3
+        case .destructive: 4
         }
     }
 
     @MainActor
-    var menuItem: MenuItem { Self.dataSource[apiValue] }
+    var menuItem: MenuItem { Self.dataSource.first { $0.id == apiValue }! }
 
     @MainActor
     static var dataSource: [MenuItem] {
@@ -253,9 +253,9 @@ enum Behavior: String, CaseIterable, MenuDataSource, Codable {
 
     init(_ number: Int) {
         self = switch number {
-        case 1: .positive
-        case 2: .negative
-        case 3: .destructive
+        case 2: .positive
+        case 3: .negative
+        case 4: .destructive
         default: .nothing
         }
     }
@@ -275,16 +275,16 @@ enum Behavior: String, CaseIterable, MenuDataSource, Codable {
 
 enum Types: String, CaseIterable, MenuDataSource, Codable {
     case other = "Other"
-    case functional = "Functional"
     case smoke = "Smoke"
     case regression = "Regression"
     case security = "Security"
-    case utility = "Utility"
-    case perfomance = "Perfomance"
-    case accertance = "Accertance"
+    case usability = "Usability"
+    case performance = "Performance"
+    case acceptance = "Acceptance"
+    case functional = "Functional"
     case compatibility = "Compatibility"
-    case exploratory = "Exploratory"
     case integration = "Integration"
+    case exploratory = "Exploratory"
 
     var localized: String {
         self.rawValue.localized
@@ -292,52 +292,52 @@ enum Types: String, CaseIterable, MenuDataSource, Codable {
 
     var apiValue: Int {
         switch self {
-        case .other: 0
-        case .functional: 1
+        case .other: 1
         case .smoke: 2
         case .regression: 3
         case .security: 4
-        case .utility: 5
-        case .perfomance: 6
-        case .accertance: 7
-        case .compatibility: 8
-        case .exploratory: 9
+        case .usability: 5
+        case .performance: 6
+        case .acceptance: 7
+        case .functional: 8
+        case .compatibility: 9
         case .integration: 10
+        case .exploratory: 11
         }
     }
 
     @MainActor
-    var menuItem: MenuItem { Self.dataSource[apiValue] }
+    var menuItem: MenuItem { Self.dataSource.first { $0.id == apiValue }! }
 
     @MainActor
     static var dataSource: [MenuItem] {
         [
             MenuItem(id: Types.other.apiValue, title: Types.other.localized),
-            MenuItem(id: Types.functional.apiValue, title: Types.functional.localized),
             MenuItem(id: Types.smoke.apiValue, title: Types.smoke.localized),
             MenuItem(id: Types.regression.apiValue, title: Types.regression.localized),
             MenuItem(id: Types.security.apiValue, title: Types.security.localized),
-            MenuItem(id: Types.utility.apiValue, title: Types.utility.localized),
-            MenuItem(id: Types.perfomance.apiValue, title: Types.perfomance.localized),
-            MenuItem(id: Types.accertance.apiValue, title: Types.accertance.localized),
+            MenuItem(id: Types.usability.apiValue, title: Types.usability.localized),
+            MenuItem(id: Types.performance.apiValue, title: Types.performance.localized),
+            MenuItem(id: Types.acceptance.apiValue, title: Types.acceptance.localized),
+            MenuItem(id: Types.functional.apiValue, title: Types.functional.localized),
             MenuItem(id: Types.compatibility.apiValue, title: Types.compatibility.localized),
-            MenuItem(id: Types.exploratory.apiValue, title: Types.exploratory.localized),
             MenuItem(id: Types.integration.apiValue, title: Types.integration.localized),
+            MenuItem(id: Types.exploratory.apiValue, title: Types.exploratory.localized),
         ]
     }
 
     init(_ number: Int) {
         self = switch number {
-        case 1: .functional
         case 2: .smoke
         case 3: .regression
         case 4: .security
-        case 5: .utility
-        case 6: .perfomance
-        case 7: .accertance
-        case 8: .compatibility
-        case 9: .exploratory
+        case 5: .usability
+        case 6: .performance
+        case 7: .acceptance
+        case 8: .functional
+        case 9: .compatibility
         case 10: .integration
+        case 11: .exploratory
         default: .other
         }
     }
@@ -356,6 +356,7 @@ enum Types: String, CaseIterable, MenuDataSource, Codable {
 }
 
 enum Layer: String, CaseIterable, MenuDataSource, Codable {
+    case nothing = "Not set"
     case e2e = "E2E"
     case api = "API"
     case unit = "Unit"
@@ -366,18 +367,20 @@ enum Layer: String, CaseIterable, MenuDataSource, Codable {
 
     var apiValue: Int {
         switch self {
-        case .e2e: 0
-        case .api: 1
-        case .unit: 2
+        case .nothing: 0
+        case .e2e: 1
+        case .api: 2
+        case .unit: 3
         }
     }
 
     @MainActor
-    var menuItem: MenuItem { Self.dataSource[apiValue] }
+    var menuItem: MenuItem { Self.dataSource.first { $0.id == apiValue }! }
 
     @MainActor
     static var dataSource: [MenuItem] {
         [
+            MenuItem(id: Layer.nothing.apiValue, title: Layer.nothing.localized, image: AppImages.minus),
             MenuItem(id: Layer.e2e.apiValue, title: Layer.e2e.localized, image: AppImages.desktopcomputer),
             MenuItem(
                 id: Layer.api.apiValue,
@@ -394,9 +397,10 @@ enum Layer: String, CaseIterable, MenuDataSource, Codable {
 
     init(_ number: Int) {
         self = switch number {
-        case 1: .api
-        case 2: .unit
-        default: .e2e
+        case 1: .e2e
+        case 2: .api
+        case 3: .unit
+        default: .nothing
         }
     }
 
@@ -431,7 +435,7 @@ enum AutomationStatus: String, CaseIterable, MenuDataSource, Codable {
     }
 
     @MainActor
-    var menuItem: MenuItem { Self.dataSource[apiValue] }
+    var menuItem: MenuItem { Self.dataSource.first { $0.id == apiValue }! }
 
     @MainActor
     static var dataSource: [MenuItem] {

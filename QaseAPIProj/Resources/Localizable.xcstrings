@@ -256,6 +256,159 @@
         }
       }
     },
+    "Refresh": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновить"
+          }
+        }
+      }
+    },
+    "Runs started in Qase appear here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs started in Qase appear here."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Здесь появятся запуски, созданные в Qase."
+          }
+        }
+      }
+    },
+    "Defects reported in Qase appear here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defects reported in Qase appear here."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Здесь появятся дефекты, заведённые в Qase."
+          }
+        }
+      }
+    },
+    "No suites or cases": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No suites or cases"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет наборов и кейсов"
+          }
+        }
+      }
+    },
+    "Create a suite or a case on this level.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create a suite or a case on this level."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создайте набор или кейс на этом уровне."
+          }
+        }
+      }
+    },
+    "Create suite or case": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create suite or case"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создать набор или кейс"
+          }
+        }
+      }
+    },
+    "Try a different query.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try a different query."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Попробуйте другой запрос."
+          }
+        }
+      }
+    },
+    "Check your API token in Settings.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check your API token in Settings."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверьте API-токен в Настройках."
+          }
+        }
+      }
+    },
+    "Too many requests. Try again in a moment.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many requests. Try again in a moment."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слишком много запросов. Повторите через несколько секунд."
+          }
+        }
+      }
+    },
     "Qase is temporarily unavailable. Try again later.": {
       "extractionState": "manual",
       "localizations": {
@@ -1791,7 +1944,7 @@
         }
       }
     },
-    "Accertance": {
+    "Acceptance": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
@@ -2434,17 +2587,6 @@
         }
       }
     },
-    "Delete entity?": {
-      "extractionState": "stale",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Удалить сущность?"
-          }
-        }
-      }
-    },
     "Deprecated": {
       "extractionState": "manual",
       "localizations": {
@@ -2695,23 +2837,6 @@
         }
       }
     },
-    "Internet connection problem": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check your internet connection"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Проверьте интернет соединение"
-          }
-        }
-      }
-    },
     "invalid": {
       "extractionState": "stale",
       "localizations": {
@@ -2719,17 +2844,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отклонён"
-          }
-        }
-      }
-    },
-    "Invalid credentials": {
-      "extractionState": "manual",
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Некорректые данные"
           }
         }
       }
@@ -3231,7 +3345,7 @@
         }
       }
     },
-    "Perfomance": {
+    "Performance": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
@@ -3719,6 +3833,12 @@
     "Something went wrong": {
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong"
+          }
+        },
         "ru": {
           "stringUnit": {
             "state": "translated",
@@ -3983,13 +4103,13 @@
         }
       }
     },
-    "Utility": {
+    "Usability": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Полезность"
+            "value": "Удобство использования"
           }
         }
       }
@@ -4176,6 +4296,127 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нет активных запусков"
+          }
+        }
+      }
+    },
+    "Sign out?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выйти из аккаунта?"
+          }
+        }
+      }
+    },
+    "You will need your API token to sign in again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You will need your API token to sign in again."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для повторного входа понадобится ваш API-токен."
+          }
+        }
+      }
+    },
+    "Delete case?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete case?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить кейс?"
+          }
+        }
+      }
+    },
+    "Delete suite and its cases?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete suite and its cases?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить набор и его кейсы?"
+          }
+        }
+      }
+    },
+    "Delete suite and its %lld cases?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete suite and its %lld case?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete suite and its %lld cases?"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Удалить набор и его %lld кейса?"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Удалить набор и его %lld кейсов?"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Удалить набор и его %lld кейс?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Удалить набор и его %lld кейсов?"
+                }
+              }
+            }
           }
         }
       }

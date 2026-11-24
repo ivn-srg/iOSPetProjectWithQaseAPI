@@ -274,8 +274,9 @@ struct IdentityCacheTests {
         #expect(dao.getRecentCases(projectCode: "A").count == 1)
         vm.changedTestCase?.title = "Edited"
         try await vm.updateTestCaseData()
-        #expect(network.urls.last?.path == "/v1/case/A/0")
-        #expect(network.methods.last == .patch)
+        // После PATCH кейс перечитывается: оба запроса идут в захваченный проект.
+        #expect(Array(network.methods.suffix(2)) == [.patch, .get])
+        #expect(network.urls.suffix(2).allSatisfy { $0.path == "/v1/case/A/0" })
         #expect(dao.getRecentCases(projectCode: "A").first?.viewedAt == Date(timeIntervalSince1970: 10))
     }
 
@@ -355,22 +356,23 @@ struct IdentityCacheTests {
     }
 }
 
+/// Состояние фейка живёт на MainActor; метод протокола `nonisolated`, чтобы `T.Type`
+/// не пересекал границу акторов (Swift 6: NonSendableInAsyncConformanceOrOverride).
 @MainActor
 private final class IdentityRecordingNetwork: NetworkManager {
     var urls: [URL] = []
     var methods: [API.HTTPMethod] = []
     var beforeResponse: (() -> Void)?
     var caseStatus = true
-    func performRequest<T: Decodable>(
+    nonisolated func performRequest<T: Decodable>(
+        for operation: API.Operation,
+        pathParameters: [String: String],
+        queryItems: [URLQueryItem],
         with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        if let urlString { urls.append(urlString) }
-        methods.append(method)
-        await Task.yield()
-        beforeResponse?()
+        let url = API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
+        let caseStatus = await record(url: url, method: operation.httpMethod)
         if modelType == TestCaseModel.self {
             guard let value = TestCaseModel(status: caseStatus, result: TestCaseEntity.empty) as? T else {
                 throw API.NetError.serializationError("Fixture type mismatch")
@@ -383,38 +385,22 @@ private final class IdentityRecordingNetwork: NetworkManager {
         )
     }
 
-    func performMultipartRequest<T: Decodable>(
+    /// Записывает запрос, отдаёт ход и вызывает `beforeResponse`; возвращает статус ответа кейса.
+    private func record(url: URL?, method: API.HTTPMethod) async -> Bool {
+        if let url { urls.append(url) }
+        methods.append(method)
+        await Task.yield()
+        beforeResponse?()
+        return caseStatus
+    }
+
+    nonisolated func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
-    func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? { API.makeLegacyURL(
-        for: method,
-        urlComponents: urlComponents,
-        queryItems: queryItems
-    ) }
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? { API.makeURL(
-        for: operation,
-        pathParameters: pathParameters,
-        queryItems: queryItems
-    ) }
-    func auth(by token: String) async throws -> Bool { true }
+    nonisolated func auth(by token: String) async throws -> Bool { true }
 }
 
 @objc(QaseLegacyCacheCaseFixture)

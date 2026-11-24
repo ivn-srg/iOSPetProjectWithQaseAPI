@@ -22,7 +22,7 @@ private actor RecordingTransport: HTTPTransport {
     }
 }
 
-@Suite @MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct ArchitectureRegressionTests {
     @Test(.timeLimit(.minutes(1))) func removingEditorReleasesItBeforePendingRequestCompletes() async throws {
         let session = SessionContext(ownerID: "editor")
@@ -39,7 +39,7 @@ struct ArchitectureRegressionTests {
             form: GeneralDetailCaseViewController(vm: model),
             session: session
         )
-        weak var releasedController = controller
+        weak let releasedController = controller
         controller?.loadViewIfNeeded()
         await transport.waitUntilStarted()
         
@@ -143,7 +143,90 @@ struct ArchitectureRegressionTests {
         #expect(headers == ["first", "replacement", "replacement", "candidate"])
         #expect(storage.getCredential()?.token == "replacement")
     }
+
+    /// Qase ждёт `isManual`/`isToBeAutomated` в camelCase рядом с `is_flaky`; остальные тела — snake_case.
+    @Test func requestBodyKeepsExplicitKeysAndConvertsOrdinaryKeysToSnakeCase() async throws {
+        struct OrdinaryBody: Encodable { let parentId: Int }
+        let transport = RecordingTransport()
+        let network = APIManager(tokenProvider: { "fixture" }, transport: transport)
+        var base = TestCaseEntity.empty
+        base.automation = .automation
+        var draft = base
+        draft.automation = .toBeAutomated
+        draft.isFlaky = true
+        let _: TransportResponse = try await network.performRequest(
+            for: .updateCase,
+            pathParameters: ["code": "A", "id": "7"],
+            with: TestCaseUpdatePayload(from: base, to: draft),
+            modelType: TransportResponse.self
+        )
+        let _: TransportResponse = try await network.performRequest(
+            for: .createSuite,
+            pathParameters: ["code": "A"],
+            with: OrdinaryBody(parentId: 3),
+            modelType: TransportResponse.self
+        )
+        let bodies = await transport.requests.compactMap { request in
+            request.httpBody.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+        }
+        try #require(bodies.count == 2)
+        #expect(Set(bodies[0].keys) == ["isManual", "isToBeAutomated", "is_flaky"])
+        #expect(bodies[0]["isManual"] as? Bool == true && bodies[0]["isToBeAutomated"] as? Bool == true)
+        #expect(bodies[0]["is_flaky"] as? Int == 1)
+        #expect(Set(bodies[1].keys) == ["parent_id"])
+        // JSONSerialization не отличает true от 1: тип по схеме Qase проверяется по сырому телу.
+        let patch = await transport.requests.first?.httpBody.map { String(decoding: $0, as: UTF8.self) } ?? ""
+        #expect(patch.contains(#""isManual":true"#) && patch.contains(#""isToBeAutomated":true"#))
+        #expect(patch.contains(#""is_flaky":1"#))
+    }
     
+    // Ловит: `makeContent` не удаляет токен прежней установки (флаг входа удалён вместе с приложением).
+    @Test func reinstalledAppDropsStaleCredentialAndShowsSignIn() throws {
+        let domain = "ArchitectureRegressionTests." + UUID().uuidString
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let storage = MemoryCredentialStorage()
+        try storage.saveCredential(AuthCredential(token: "real-token", ownerID: "real-owner"))
+        let composition = AppCompositionRoot(
+            defaults: defaults,
+            arguments: [],
+            credentialStorage: storage,
+            cacheConfiguration: .init(inMemoryIdentifier: UUID().uuidString)
+        )
+        let root = composition.makeRootController()
+        root.loadViewIfNeeded()
+        #expect(root.children.first is AuthViewController)
+        #expect(storage.getCredential() == nil)
+        #expect(composition.session.ownerID == nil)
+    }
+
+    // Ловит: `makeContent` не восстанавливает сессию или восстанавливает её после сборки графа —
+    // граф захватывает неактивный stamp, проекты не загружаются.
+    @Test func coldStartRestoresSessionBeforeBuildingTheShell() async throws {
+        let domain = "ArchitectureRegressionTests." + UUID().uuidString
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        defaults.set(true, forKey: "isUserLoggedIn")
+        let storage = MemoryCredentialStorage()
+        let credential = AuthCredential(token: "QASE_DEMO", ownerID: "demo-owner")
+        try storage.saveCredential(credential)
+        let composition = AppCompositionRoot(
+            defaults: defaults,
+            arguments: [],
+            credentialStorage: storage,
+            cacheConfiguration: .init(inMemoryIdentifier: UUID().uuidString)
+        )
+        #expect(composition.session.ownerID == nil)
+        let root = composition.makeRootController()
+        root.loadViewIfNeeded()
+        #expect(root.children.first is MainTabbarViewController)
+        #expect(composition.session.ownerID == credential.ownerID)
+        #expect(storage.getCredential() == credential)
+        // Оболочка сразу грузит проекты: с устаревшим stamp `SelectedProjectStore.load()` молча выходит
+        // и выбор не записывается.
+        await waitForCondition { defaults.string(forKey: "selectedProject.demo-owner") == "DEMO" }
+    }
+
     @Test func authenticatedGraphIsReplacedOnTokenChangeAndReleasedOnLogout() async throws {
         let domain = "ArchitectureRegressionTests." + UUID().uuidString
         let defaults = try #require(UserDefaults(suiteName: domain))
@@ -170,23 +253,87 @@ struct ArchitectureRegressionTests {
         #expect(composition.session.ownerID == nil)
     }
     
-    @Test func demoCachesAndCredentialsAreIsolatedBetweenEnvironments() async throws {
-        let firstSession = SessionContext(ownerID: "first")
-        let secondSession = SessionContext(ownerID: "second")
-        let first = TestDependencies.cache(session: firstSession)
-        let second = TestDependencies.cache(session: secondSession)
-        first.useDemoStore(true)
-        second.useDemoStore(true)
-        let project = try JSONDecoder().decode(
-            Project.self,
-            from: Data("{\"title\":\"A\",\"code\":\"A\"}".utf8)
+    // Мутация: `useDemoStore(true)` оставляет production-конфигурацию (демо видит чужие данные) или
+    // `useDemoStore(false)` не возвращает production-хранилище.
+    @Test(.timeLimit(.minutes(1)))
+    func demoAndProductionStoresDoNotSeeEachOthersData() throws {
+        let session = SessionContext(ownerID: "owner")
+        let configuration = Realm.Configuration(
+            inMemoryIdentifier: UUID().uuidString,
+            objectTypes: RealmManager.cacheObjectTypes
         )
-        #expect(first.saveProjects([project], stamp: firstSession.capture()))
-        #expect(second.getProjects()?.isEmpty != false)
-        try second.clearAll()
-        #expect(first.getProjects()?.count == 1)
+        // In-memory Realm живёт, пока открыт хотя бы один экземпляр: без него переключение на демо
+        // удалило бы production-данные, и тест проходил бы при любом `useDemoStore`.
+        let productionKeeper = try Realm(configuration: configuration)
+        defer { withExtendedLifetime(productionKeeper) {} }
+        let cache = RealmManager(configuration: configuration, session: session)
+        let stamp = session.capture()
+
+        let production = try Self.project("PROD")
+        let demo = try Self.project("DEMO")
+        #expect(cache.saveProjects([production], stamp: stamp))
+        #expect(cache.getProjects()?.map(\.code) == ["PROD"])
+
+        cache.useDemoStore(true)
+        #expect(cache.getProjects()?.map(\.code) == [String]())
+        #expect(cache.saveProjects([demo], stamp: stamp))
+        #expect(cache.getProjects()?.map(\.code) == ["DEMO"])
+        try cache.clearAll()
+        #expect(cache.getProjects()?.map(\.code) == [String]())
+
+        cache.useDemoStore(false)
+        #expect(cache.getProjects()?.map(\.code) == ["PROD"])
     }
-    
+
+    // Мутация: `isDemoMode` не зависит от токена (всегда `true` при наличии credential); composition
+    // не переключает кеш на демо-хранилище (`configureDemoMode` без `useDemoStore`) — тогда выход из демо
+    // очищает production-кеш; `logout` не удаляет credential или не сбрасывает владельца сессии.
+    @Test(.timeLimit(.minutes(1)))
+    func demoLoginSwitchesToDemoModeAndLogoutRemovesCredential() async throws {
+        let domain = "ArchitectureRegressionTests." + UUID().uuidString
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let storage = MemoryCredentialStorage()
+        try storage.saveCredential(AuthCredential(token: "real-token", ownerID: "real-owner"))
+        let configuration = Realm.Configuration(
+            inMemoryIdentifier: UUID().uuidString,
+            objectTypes: RealmManager.cacheObjectTypes
+        )
+        // Сильная ссылка держит production in-memory Realm, пока composition работает с демо-хранилищем.
+        let productionKeeper = try await Realm(configuration: configuration)
+        defer { withExtendedLifetime(productionKeeper) {} }
+        let composition = AppCompositionRoot(
+            defaults: defaults,
+            arguments: [],
+            credentialStorage: storage,
+            cacheConfiguration: configuration
+        )
+        #expect(!composition.auth.isDemoMode)
+
+        try await composition.auth.loggedIn(token: "QASE_DEMO")
+        let credential = try #require(storage.getCredential())
+        #expect(credential.token == "QASE_DEMO")
+        #expect(credential.ownerID != "real-owner")
+        #expect(composition.auth.isDemoMode)
+        #expect(composition.auth.isUserLoggedIn())
+        #expect(composition.session.ownerID == credential.ownerID)
+
+        // Строка production-кеша, записанная мимо composition: выход из демо очищает только демо-хранилище.
+        let production = ProjectRO(projectData: try Self.project("PROD"), ownerID: "real-owner")
+        try productionKeeper.write { productionKeeper.add(production) }
+        try await composition.auth.logout()
+        productionKeeper.refresh()
+        #expect(productionKeeper.objects(ProjectRO.self).map(\.code) == ["PROD"])
+        #expect(storage.getCredential() == nil)
+        #expect(!composition.auth.isDemoMode)
+        #expect(!composition.auth.isUserLoggedIn())
+        #expect(composition.session.ownerID == nil)
+    }
+
+    private static func project(_ code: String) throws -> Project {
+        try JSONDecoder().decode(Project.self, from: Data(#"{"title":"\#(code)","code":"\#(code)"}"#.utf8))
+    }
+
     @Test func fixedAndDynamicIdentifiersPreserveLegacyValues() {
         #expect(AccessibilityID.field(.title).identifier == "field.Title")
         #expect(AccessibilityID.breadcrumb(nil).identifier == "repository.breadcrumb.root")
@@ -396,6 +543,25 @@ struct SessionScopeRegressionTests {
         #expect(model.items.isEmpty)
     }
     
+    // Ловит: удалён guard сессии в `retry()` — повтор упавшей страницы уходит запросом от имени
+    // другого владельца (догрузка своей проверки сессии не имеет).
+    @Test func retryAfterOwnerChangeSendsNoRequest() async {
+        let session = SessionContext(ownerID: "first")
+        var requests = 0
+        let model = PagedReadViewModel<ProjectSummary>(session: session, fetch: { _, offset in
+            requests += 1
+            if offset > 0 { throw URLError(.notConnectedToInternet) }
+            let entities = ["A", "B"].map { ProjectSummary(title: $0, code: $0) }
+            return QaseAPIListResult(total: 4, filtered: 4, count: 2, entities: entities)
+        })
+        await model.reload()
+        await model.loadMore()
+        #expect(requests == 2 && model.errorMessage != nil)
+        session.activate(ownerID: "second")
+        await model.retry()
+        #expect(requests == 2)
+    }
+
     @Test func unknownTotalsRequireAnEmptyOrShortPageBeforeCompletion() {
         #expect(PaginationPolicy.hasMore(received: 50, offset: 50, total: nil))
         #expect(!PaginationPolicy.hasMore(received: 49, offset: 99, total: nil))

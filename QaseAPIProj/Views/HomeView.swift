@@ -26,13 +26,7 @@ struct HomeView: View {
                         .identified(by: .homeSearchCases)
                 }
                 if viewModel.project == nil {
-                    HomeStateView(
-                        title: "No project selected".localized,
-                        symbol: .folder,
-                        message: "Choose or create a project to get started".localized,
-                        actionTitle: "Choose project".localized,
-                        action: router.manageProjects
-                    )
+                    noProjectSection
                 } else {
                     runSection
                     overviewSection
@@ -51,6 +45,28 @@ struct HomeView: View {
             if viewModel.showingSavedData { OfflineBanner(updatedAt: viewModel.oldestUpdate) }
         }
         .accessibilityIdentifier(AccessibilityID.homeScreen.identifier)
+    }
+
+    @ViewBuilder private var noProjectSection: some View {
+        switch viewModel.noProjectState {
+        case .loading:
+            HomeSkeleton()
+        case .failed(let message):
+            HomeStateView(
+                title: message,
+                symbol: .exclamationmarkTriangle,
+                actionTitle: "Retry".localized,
+                action: { viewModel.reloadProjects() }
+            )
+        case .empty:
+            HomeStateView(
+                title: "No project selected".localized,
+                symbol: .folder,
+                message: "Choose or create a project to get started".localized,
+                actionTitle: "Choose project".localized,
+                action: router.manageProjects
+            )
+        }
     }
 
     @ViewBuilder private var runSection: some View {
@@ -179,12 +195,7 @@ struct HomeView: View {
                             ) }
                     }
                 }
-                .background(
-                    Color(uiColor: AppTheme.Palette.surface),
-                    in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                )
-                .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                    .stroke(Color(uiColor: AppTheme.Palette.border)))
+                .cardSurface()
             }
         }
     }

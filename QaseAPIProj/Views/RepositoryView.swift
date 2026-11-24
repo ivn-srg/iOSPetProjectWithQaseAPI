@@ -8,12 +8,25 @@ protocol RepositoryRouting: HomeRouting {
     func createEntity(in location: RepositoryLocation)
 }
 
+/// Запрошенное удаление: ссылка и число кейсов в поддереве набора, известное на момент запроса.
+private struct PendingDelete {
+    let reference: RepositoryItemReference
+    let casesCount: Int?
+
+    var title: String {
+        guard reference.isSuite else { return "Delete case?".localized }
+        guard let casesCount else { return "Delete suite and its cases?".localized }
+        return String.localizedStringWithFormat("Delete suite and its %lld cases?".localized, casesCount)
+    }
+}
+
 struct RepositoryView: View {
     @ObservedObject var model: TestEntitiesViewModel
     @ObservedObject var selection: SelectedProjectStore
     let router: RepositoryRouting
     @FocusState private var searchFocused: Bool
-    @State private var pendingDelete: RepositoryItemReference?
+    @State private var isVisible = false
+    @State private var pendingDelete: PendingDelete?
     @State private var deletionError: String?
 
     var body: some View {
@@ -107,27 +120,31 @@ struct RepositoryView: View {
             .tint(Color(uiColor: AppTheme.Palette.accent))
             .refreshable { await model.reload() }
             .onChange(of: model.query) { _, _ in model.queryChanged() }
-            .onChange(of: model.requestSearchFocus) { _, focused in
-                if focused { proxy.scrollTo("repository.header", anchor: .top) }
-                searchFocused = focused
-            }
+            .onChange(of: model.searchFocusRequest) { _, _ in applySearchFocusRequest(proxy) }
             .onAppear {
-                if model.requestSearchFocus {
-                    proxy.scrollTo("repository.header", anchor: .top)
-                    searchFocused = true
-                }
+                isVisible = true
+                applySearchFocusRequest(proxy)
             }
+            .onDisappear { isVisible = false }
             .confirmationDialog(
-                "Delete entity?".localized,
+                // Пустой заголовок при закрытии не подменяет текст на «Delete case?».
+                pendingDelete?.title ?? "",
                 isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
-                titleVisibility: .visible
-            ) {
-                if let reference = pendingDelete {
-                    Button("Delete".localized, role: .destructive) {
-                        pendingDelete = nil
-                        Task {
-                            do { try await model.delete(reference) } catch {
-                                deletionError = "Could not delete entity".localized } }
+                titleVisibility: .visible,
+                presenting: pendingDelete
+            ) { pending in
+                Button("Delete".localized, role: .destructive) {
+                    pendingDelete = nil
+                    deletionError = nil
+                    Task {
+                        do { try await model.delete(pending.reference) }
+                        catch is CancellationError {}
+                        catch {
+                            deletionError = API.userMessage(
+                                for: error,
+                                fallback: "Could not delete entity".localized
+                            )
+                        }
                     }
                 }
                 Button("Cancel".localized, role: .cancel) { pendingDelete = nil }
@@ -188,14 +205,40 @@ struct RepositoryView: View {
         ) } ?? "Case count unavailable".localized
     }
 
+    /// Запрос фокуса применяется только видимым экраном и один раз;
+    /// невидимый экран применит его при появлении.
+    private func applySearchFocusRequest(_ proxy: ScrollViewProxy) {
+        guard isVisible, model.consumeSearchFocusRequest() else { return }
+        proxy.scrollTo("repository.header", anchor: .top)
+        searchFocused = true
+    }
+
     @ViewBuilder private var levelContents: some View {
+        if model.levelIsEmpty {
+            HomeStateView(
+                title: "No suites or cases".localized,
+                symbol: .tray,
+                message: "Create a suite or a case on this level.".localized,
+                actionTitle: "Create suite or case".localized,
+                action: { router.createEntity(in: model.location) }
+            )
+            // В строке List кнопка без стиля делает нажимаемой всю карточку.
+            .buttonStyle(.borderless)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+        } else {
+            levelSections
+        }
+    }
+
+    @ViewBuilder private var levelSections: some View {
         Section("Suites".localized) {
             ForEach(model.childSuites, id: \.uniqueKey) { suite in suiteRow(suite, showPath: false) }
             if model.suitesLoading { ProgressView() }
             if let error = model.suiteError { retry(error) }
             if model.childSuites.isEmpty && !model.suitesLoading && model
                 .suiteError == nil { Text("No suites".localized)
-                .foregroundStyle(.secondary) }
+                .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText)) }
         }
         Section("Cases".localized) {
             ForEach(model.cases, id: \.uniqueKey) { entity in caseRow(entity) }
@@ -203,7 +246,7 @@ struct RepositoryView: View {
             if let error = model.caseError { retry(error) }
             if model.cases.isEmpty && !model.casesLoading && model
                 .caseError == nil { Text("No cases".localized)
-                .foregroundStyle(.secondary) }
+                .foregroundStyle(Color(uiColor: AppTheme.Palette.secondaryText)) }
             if model.hasMoreCases && !model
                 .casesLoading { Button("Load more".localized) { Task { await model.loadMoreCases() } } }
         }
@@ -231,11 +274,11 @@ struct RepositoryView: View {
                     router.showCase(reference: .init(projectCode: model.projectCode, caseID: item.id))
                 }.accessibilityIdentifier(AccessibilityID.repositoryCase(item.id).identifier)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    .swipeActions { deleteAction(.init(
+                    .deletable(by: deleteAction(.init(
                         projectCode: model.projectCode,
                         id: item.id,
                         isSuite: false
-                    )) }
+                    )))
             }
             if model.moreSearchCases && !model
                 .searchLoading { Button("Load more cases".localized) { Task { await model.search(
@@ -247,7 +290,15 @@ struct RepositoryView: View {
         if model.searchLoading { ProgressView() }
         if let error = model.searchError { retry(error) }
         if !model.searchLoading && model.searchedCases.isEmpty && model.searchedSuites.isEmpty && model
-            .searchError == nil { Text("No search results".localized) }
+            .searchError == nil {
+            HomeStateView(
+                title: "No search results".localized,
+                symbol: .magnifyingglass,
+                message: "Try a different query.".localized
+            )
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+        }
     }
 
     private func suiteRow(_ suite: TestListEntity, showPath: Bool) -> some View {
@@ -264,7 +315,7 @@ struct RepositoryView: View {
             router.openSuite(suite, from: model)
         }.accessibilityIdentifier(AccessibilityID.repositorySuite(suite.id).identifier)
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-            .swipeActions { deleteAction(.init(projectCode: model.projectCode, id: suite.id, isSuite: true)) }
+            .deletable(by: deleteAction(.init(projectCode: model.projectCode, id: suite.id, isSuite: true)))
     }
 
     private func caseRow(_ item: TestListEntity) -> some View {
@@ -277,11 +328,16 @@ struct RepositoryView: View {
             router.showCase(reference: .init(projectCode: model.projectCode, caseID: item.id))
         }.accessibilityIdentifier(AccessibilityID.repositoryCase(item.id).identifier)
             .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-            .swipeActions { deleteAction(.init(projectCode: model.projectCode, id: item.id, isSuite: false)) }
+            .deletable(by: deleteAction(.init(projectCode: model.projectCode, id: item.id, isSuite: false)))
     }
 
     private func deleteAction(_ reference: RepositoryItemReference) -> some View {
-        Button("Delete".localized, role: .destructive) { pendingDelete = reference }.tint(.red)
+        Button("Delete".localized, role: .destructive) {
+            pendingDelete = PendingDelete(
+                reference: reference,
+                casesCount: reference.isSuite ? model.casesCountInSubtree(of: reference.id) : nil
+            )
+        }.tint(Color(uiColor: AppTheme.Palette.destructiveFill))
     }
 
     private func retry(_ message: String) -> some View {
@@ -290,5 +346,12 @@ struct RepositoryView: View {
                 .foregroundStyle(Color(uiColor: AppTheme.Palette.warning))
             Button("Retry".localized) { Task { await model.reload() } }
         }
+    }
+}
+
+private extension View {
+    /// Удаление доступно свайпом и долгим нажатием: критическое действие не только жестом (DESIGN_SYSTEM).
+    func deletable(by action: some View) -> some View {
+        swipeActions { action }.contextMenu { action }
     }
 }

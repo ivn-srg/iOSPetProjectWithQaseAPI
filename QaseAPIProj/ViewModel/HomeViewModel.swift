@@ -3,8 +3,16 @@ import Foundation
 
 @MainActor
 final class HomeViewModel: ObservableObject {
+    /// Что показать, пока проект не выбран.
+    enum NoProjectState: Equatable {
+        case loading
+        case failed(String)
+        case empty
+    }
+
     static let recentLimit = CachePolicy.recentPreview
     @Published private(set) var project: ProjectSummary?
+    @Published private(set) var noProjectState: NoProjectState = .empty
     @Published private(set) var metrics: ProjectMetrics?
     @Published private(set) var activeRun: ActiveRunSummary?
     @Published private(set) var recentCases: [RecentCaseItem] = []
@@ -24,7 +32,9 @@ final class HomeViewModel: ObservableObject {
     private let clock: () -> Date
     private var subscription: AnyCancellable?
     private var sessionSubscription: AnyCancellable?
+    private var projectsStateSubscription: AnyCancellable?
     private var task: Task<Void, Never>?
+    private var projectsLoad: Task<Void, Never>?
     private var requestGeneration = 0
     private var isVisible = false
 
@@ -59,6 +69,13 @@ final class HomeViewModel: ObservableObject {
                 if self.isVisible { self.refresh() }
             }
         }
+        // Значения берутся из события: `@Published` публикует до присваивания, свойства store ещё старые.
+        projectsStateSubscription = Publishers.CombineLatest(selection.$isLoading, selection.$errorMessage)
+            .map { isLoading, error in
+                isLoading ? NoProjectState.loading : error.map(NoProjectState.failed) ?? .empty
+            }
+            .removeDuplicates()
+            .sink { [weak self] state in self?.noProjectState = state }
         sessionSubscription = NotificationCenter.default.publisher(for: .didInvalidateSession)
             .sink { [weak self] notification in
                 guard let self, notification.object as AnyObject? === self.session else { return }
@@ -84,8 +101,26 @@ final class HomeViewModel: ObservableObject {
         task = Task { [weak self] in await self?.reload() }
     }
 
+    /// Загружает список проектов в задаче, которую не отменяют `refresh()` и уход с экрана: store общий,
+    /// а прерванная загрузка оставила бы Home в состоянии «нет проектов».
+    @discardableResult
+    func reloadProjects() -> Task<Void, Never> {
+        if let projectsLoad { return projectsLoad }
+        let selection = selection
+        let load = Task { [weak self] in
+            await selection.load()
+            self?.projectsLoad = nil
+        }
+        projectsLoad = load
+        return load
+    }
+
     func reload() async {
-        guard session.isCurrent(originStamp), let code = project?.code else { return }
+        guard session.isCurrent(originStamp) else { return }
+        guard let code = project?.code else {
+            await reloadProjects().value
+            return
+        }
         requestGeneration += 1
         let generation = requestGeneration
         let stamp = session.capture()
@@ -107,7 +142,7 @@ final class HomeViewModel: ObservableObject {
                 } catch {
                     guard self.accepts(code: code, generation: generation, stamp: stamp),
                           !(error is CancellationError) else { return }
-                    self.metricsError = "Could not load overview".localized
+                    self.metricsError = API.userMessage(for: error, fallback: "Could not load overview".localized)
                 }
                 if self
                     .accepts(code: code, generation: generation, stamp: stamp) { self.metricsLoading = false }
@@ -122,7 +157,7 @@ final class HomeViewModel: ObservableObject {
                 } catch {
                     guard self.accepts(code: code, generation: generation, stamp: stamp),
                           !(error is CancellationError) else { return }
-                    self.runError = "Could not load active run".localized
+                    self.runError = API.userMessage(for: error, fallback: "Could not load active run".localized)
                 }
                 if self.accepts(code: code, generation: generation, stamp: stamp) { self.runLoading = false }
             }

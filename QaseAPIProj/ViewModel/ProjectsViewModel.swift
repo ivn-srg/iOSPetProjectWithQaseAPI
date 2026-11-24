@@ -13,6 +13,10 @@ final class ProjectsViewModel {
     private let dao: ProjectsCaching
     private let session: SessionContext
     private let stamp: SessionStamp
+    /// Проекты, удаление которых уже отправлено: повторное удаление не шлёт второй DELETE.
+    private var deletingCodes: Set<String> = []
+
+    enum DeletionOutcome: Equatable { case deleted, alreadyInFlight, cancelled }
 
     private func reportCacheWrite(_ accepted: Bool) {
         if !accepted { onCacheFailure() }
@@ -43,19 +47,18 @@ final class ProjectsViewModel {
             offset = 0
             projects = dao.getProjects() ?? []
         }
-        guard hasMoreProjects, !isLoading,
-              let url = network.composeURL(
-                  for: .project,
-                  urlComponents: nil,
-                  queryItems: [.limit: PaginationPolicy.pageSize, .offset: offset]
-              ) else { return }
+        guard hasMoreProjects, !isLoading else { return }
         let generation = loadGeneration
         isLoading = true
         defer { if generation == loadGeneration { isLoading = false } }
         let response = try await network.performRequest(
+            for: .getProjects,
+            pathParameters: [:],
+            queryItems: [
+                API.QueryParams.limit.item(String(PaginationPolicy.pageSize)),
+                API.QueryParams.offset.item(String(offset))
+            ],
             with: nil,
-            from: url,
-            method: .get,
             modelType: ProjectDataModel.self
         )
         guard session.isCurrent(stamp), !Task.isCancelled, generation == loadGeneration else { return }
@@ -68,15 +71,26 @@ final class ProjectsViewModel {
         hasMoreProjects = offset < response.result.total && !response.result.entities.isEmpty
     }
 
-    func deleteProject(_ project: Project) async throws(API.NetError) {
+    func isDeleting(_ code: String) -> Bool { deletingCodes.contains(code) }
+
+    /// Удаление проекта. Проект резервируется до `prepare` (подготовка к уходу, например сохранение
+    /// черновиков): повторный вызов во время подготовки или запроса не шлёт второй DELETE.
+    @discardableResult
+    func deleteProject(
+        _ project: Project,
+        prepare: () async -> Bool = { true }
+    ) async throws(API.NetError) -> DeletionOutcome {
         guard session.isCurrent(stamp) else { throw .invalidRequest("Session ended") }
-        guard let url = network.composeURL(for: .project, urlComponents: [project.code], queryItems: nil)
-        else { throw .invalidURL }
+        guard deletingCodes.insert(project.code).inserted else { return .alreadyInFlight }
+        defer { deletingCodes.remove(project.code) }
+        guard await prepare() else { return .cancelled }
+        guard session.isCurrent(stamp) else { throw .invalidRequest("Session ended") }
 
         let response = try await network.performRequest(
+            for: .deleteProject,
+            pathParameters: ["code": project.code],
+            queryItems: [],
             with: nil,
-            from: url,
-            method: .delete,
             modelType: SharedResponseModel.self
         )
         guard session.isCurrent(stamp) else { throw .invalidRequest("Session ended") }
@@ -85,6 +99,7 @@ final class ProjectsViewModel {
             reportCacheWrite(dao.deleteProject(project, stamp: stamp))
             projects.removeAll { $0.code == project.code }
         }
+        return .deleted
     }
 
     func countOfRows() -> Int { projects.count }

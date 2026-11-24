@@ -3,7 +3,7 @@ import Foundation
 import RealmSwift
 import Testing
 
-@MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct HomeViewModelTests {
     @Test("Metrics can refresh while a failed run section retains its cached value")
     func partialRefresh() async {
@@ -138,27 +138,26 @@ struct HomeViewModelTests {
         #expect(model.recentCases.isEmpty)
     }
 
-    private func isolatedDefaults() -> UserDefaults { UserDefaults(suiteName: UUID().uuidString)! }
+    private let defaultsDomains = TemporaryDefaults()
+
+    private func isolatedDefaults() -> UserDefaults { defaultsDomains.make() }
 }
 
 @MainActor
 private final class HomeResponseControl {
     private var projectAResponse: CheckedContinuation<Data, Never>?
-    private var suspendedWaiter: CheckedContinuation<Void, Never>?
     func projectResponse(code: String) async -> Data {
         if code == "A" {
             return await withCheckedContinuation { continuation in
                 projectAResponse = continuation
-                suspendedWaiter?.resume()
-                suspendedWaiter = nil
             }
         }
         return payload(code: code, count: 2)
     }
 
+    /// Ограниченное ожидание: без приостановки тест падает по `waitForCondition`, а не висит.
     func waitUntilSuspended() async {
-        guard projectAResponse == nil else { return }
-        await withCheckedContinuation { suspendedWaiter = $0 }
+        await waitForCondition { projectAResponse != nil }
     }
 
     func resumeA() {
@@ -193,31 +192,11 @@ private final class HomeStateNetwork: NetworkManager {
         catch { throw .otherNetworkError(error.localizedDescription) }
     }
 
-    func performRequest<T: Decodable>(
-        with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidRequest("Operation required") }
     func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidRequest("No multipart fixture") }
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? { nil }
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? { API.makeURL(
-        for: operation,
-        pathParameters: pathParameters,
-        queryItems: queryItems
-    ) }
     func auth(by token: String) async throws -> Bool { true }
 }

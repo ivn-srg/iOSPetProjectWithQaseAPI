@@ -6,7 +6,6 @@ final class TestCaseStepView: UIView {
         static let contentInset = AppTheme.Space.regular
         static let bodySpacing = AppTheme.Space.medium
         static let captionSpacing: CGFloat = 6
-        static let badgeOpacity: CGFloat = 0.12
     }
 
     private let step: StepsInTestCase
@@ -125,7 +124,8 @@ private final class StepNumberBadge: UIView {
     init(number: String) {
         super.init(frame: .zero)
         label.text = number
-        label.textColor = AppTheme.Palette.accent
+        // Цифра на подложке accent 12%: accent-текст не даёт 4.5:1, основной цвет текста — даёт.
+        label.textColor = AppTheme.Palette.text
         label.textAlignment = .center
         label.adjustsFontForContentSizeCategory = true
         label.isAccessibilityElement = false

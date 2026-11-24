@@ -15,7 +15,7 @@ class ProjectTableViewCell: UITableViewCell {
     private lazy var leftContainerVw: UIView = {
         let lvw = UIView()
         lvw.translatesAutoresizingMaskIntoConstraints = false
-        lvw.backgroundColor = .systemBlue
+        lvw.backgroundColor = AppTheme.Palette.accent
         lvw.layer.cornerRadius = Layout.stripeRadius
         return lvw
     }()
@@ -34,6 +34,7 @@ class ProjectTableViewCell: UITableViewCell {
         nameLbl.font = .preferredFont(forTextStyle: .headline)
         nameLbl.numberOfLines = 0
         nameLbl.adjustsFontForContentSizeCategory = true
+        nameLbl.textColor = AppTheme.Palette.text
         return nameLbl
     }()
 
@@ -43,7 +44,7 @@ class ProjectTableViewCell: UITableViewCell {
         cLbl.font = .preferredFont(forTextStyle: .footnote)
         cLbl.numberOfLines = 0
         cLbl.adjustsFontForContentSizeCategory = true
-        cLbl.textColor = .systemGray
+        cLbl.textColor = AppTheme.Palette.secondaryText
         return cLbl
     }()
 
@@ -53,6 +54,7 @@ class ProjectTableViewCell: UITableViewCell {
         tLbl.font = .preferredFont(forTextStyle: .footnote)
         tLbl.numberOfLines = 0
         tLbl.adjustsFontForContentSizeCategory = true
+        tLbl.textColor = AppTheme.Palette.text
         return tLbl
     }()
 

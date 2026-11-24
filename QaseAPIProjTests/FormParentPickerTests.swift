@@ -8,11 +8,11 @@ struct FormParentPickerTests {
     @Test func pagesWithoutTotalsLoadUntilShortPageAndDeduplicate() async {
         let session = SessionContext(ownerID: "owner")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
-        let network = FormCatalogNetwork()
-        network.pages = [
+        let network = catalogNetwork()
+        network.respond = catalogPages([
             0: (1 ... 50).map { suite($0, "Suite \($0)") },
             50: [suite(50, "Duplicate"), suite(51, "Last")]
-        ]
+        ])
         let model = TestDependencies.picker(
             projectCode: "A",
             selectedID: 0,
@@ -77,8 +77,8 @@ struct FormParentPickerTests {
         let session = SessionContext(ownerID: "owner")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
         #expect(dao.replaceSuiteCatalog([suite(99, "Saved")], projectCode: "A", stamp: session.capture()))
-        let network = FormCatalogNetwork()
-        network.pages = [0: [suite(1, "Late")]]
+        let network = catalogNetwork()
+        network.respond = catalogPages([0: [suite(1, "Late")]])
         let model = TestDependencies.picker(
             projectCode: "A",
             selectedID: 99,
@@ -97,8 +97,8 @@ struct FormParentPickerTests {
         let session = SessionContext(ownerID: "owner")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
         #expect(dao.saveTestEntities([suite(99, "Partial")], projectCode: "A", stamp: session.capture()))
-        let network = FormCatalogNetwork()
-        network.error = .noInternetConnection
+        let network = catalogNetwork()
+        network.respond = ScriptedNetwork.failure(.noInternetConnection)
         let model = TestDependencies.picker(projectCode: "A", network: network, dao: dao, session: session)
         await model.load()
         #expect(!model.catalogComplete && model.errorMessage != nil)
@@ -109,9 +109,9 @@ struct FormParentPickerTests {
     @Test func stalledFullPageFailsWithoutReplacingCache() async {
         let session = SessionContext(ownerID: "owner")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
-        let network = FormCatalogNetwork()
+        let network = catalogNetwork()
         let page = (1 ... 50).map { suite($0, "Suite") }
-        network.pages = [0: page, 50: page]
+        network.respond = catalogPages([0: page, 50: page])
         let model = TestDependencies.picker(projectCode: "A", network: network, dao: dao, session: session)
         await model.load()
         #expect(network.offsets == [0, 50])
@@ -122,8 +122,8 @@ struct FormParentPickerTests {
     @Test func staleOwnerCannotCacheResponseUnderAnotherOwner() async {
         let session = SessionContext(ownerID: "old")
         let dao = RealmManager(configuration: .init(inMemoryIdentifier: UUID().uuidString), session: session)
-        let network = FormCatalogNetwork()
-        network.pages = [0: [suite(1, "Old")]]
+        let network = catalogNetwork()
+        network.respond = catalogPages([0: [suite(1, "Old")]])
         let model = TestDependencies.picker(projectCode: "A", network: network, dao: dao, session: session)
         network.beforeResponse = { session.activate(ownerID: "new") }
         await model.load()
@@ -143,59 +143,30 @@ struct FormParentPickerTests {
     }
 }
 
-private final class FormCatalogNetwork: NetworkManager {
-    var pages: [Int: [TestListEntity]] = [:]
-    var offsets: [Int] = []
-    var error: API.NetError?
-    var beforeResponse: (() -> Void)?
+/// Каталог наборов на общем ядре: страница по `offset` (нет параметра — 0), без итогов.
+@MainActor
+private func catalogNetwork() -> ScriptedNetwork {
+    ScriptedNetwork(respond: catalogPages([:]))
+}
 
-    func performRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem],
-        with data: Encodable?,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T {
-        let offset = Int(queryItems.first { $0.name == "offset" }?.value ?? "0") ?? 0
-        offsets.append(offset)
-        beforeResponse?()
-        if let error { throw error }
+private func catalogPages(_ pages: [Int: [TestListEntity]]) -> ScriptedNetwork.Responder {
+    { request in
         let response = FormCatalogResponse(
             status: true,
-            result: QaseAPIListResult(total: nil, filtered: nil, count: nil, entities: pages[offset] ?? [])
+            result: QaseAPIListResult(
+                total: nil,
+                filtered: nil,
+                count: nil,
+                entities: pages[request.offset ?? 0] ?? []
+            )
         )
-        do { return try API.decodeResponse(from: JSONEncoder().encode(response), as: modelType) }
-        catch let error as API.NetError { throw error }
-        catch { throw .serializationError("Fixture encoding failed") }
+        do { return .success(try JSONEncoder().encode(response)) }
+        catch { return .failure(.serializationError("Fixture encoding failed")) }
     }
+}
 
-    func performRequest<T: Decodable>(
-        with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
-    func performMultipartRequest<T: Decodable>(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        files: [API.UploadFile],
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? { nil }
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? { API.makeURL(
-        for: operation,
-        pathParameters: pathParameters,
-        queryItems: queryItems
-    ) }
-    func auth(by token: String) async throws -> Bool { true }
+private extension ScriptedNetwork {
+    var offsets: [Int] { requests.map { $0.offset ?? 0 } }
 }
 
 private struct FormCatalogResponse: Encodable {

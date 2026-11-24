@@ -29,10 +29,63 @@ final class RealmManager: AppCache {
     private var realm: Realm?
     private(set) var initializationError: Error?
 
-    static func productionConfiguration() -> Realm.Configuration {
+    nonisolated static let storeDirectoryName = "QaseCache"
+    private static let storeFileName = "default.realm"
+    private static let legacyBackupExtension = "legacy-backup"
 
-        let configuration = migratedConfiguration(Realm.Configuration.defaultConfiguration)
-        return configuration
+    static func productionConfiguration() -> Realm.Configuration {
+        var configuration = Realm.Configuration.defaultConfiguration
+        let fileManager = FileManager.default
+        if let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first,
+           let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            configuration.fileURL = storeURL(
+                documents: documents,
+                applicationSupport: support,
+                fileManager: fileManager
+            )
+        }
+        return migratedConfiguration(configuration)
+    }
+
+    /// Расположение базы: `Application Support/QaseCache`, исключённое из бэкапа. База прежних версий
+    /// переносится из `Documents` до первого открытия Realm. Сначала атомарно переносится основной файл —
+    /// он определяет место хранения; остальное best effort. При сбое переноса — прежний путь
+    /// на этот запуск.
+    static func storeURL(
+        documents: URL,
+        applicationSupport: URL,
+        fileManager: FileManager = .default
+    ) -> URL {
+        let legacy = documents.appendingPathComponent(storeFileName)
+        let directory = applicationSupport.appendingPathComponent(storeDirectoryName, isDirectory: true)
+        let target = directory.appendingPathComponent(storeFileName)
+        do { try fileManager.createDirectory(at: directory, withIntermediateDirectories: true) }
+        catch { return legacy }
+        if !fileManager.fileExists(atPath: target.path), fileManager.fileExists(atPath: legacy.path) {
+            do { try fileManager.moveItem(at: legacy, to: target) }
+            catch { return legacy }
+        }
+        let legacyBackup = legacy.appendingPathExtension(legacyBackupExtension)
+        let targetBackup = target.appendingPathExtension(legacyBackupExtension)
+        if fileManager.fileExists(atPath: legacyBackup.path),
+           !fileManager.fileExists(atPath: targetBackup.path) {
+            try? fileManager.moveItem(at: legacyBackup, to: targetBackup)
+        }
+        // Служебные файлы старого пути и база, брошенная после отката на старую сборку, — производный кеш.
+        for suffix in ["", ".lock", ".note", ".management"] {
+            let leftover = URL(fileURLWithPath: legacy.path + suffix)
+            if fileManager.fileExists(atPath: leftover.path) { try? fileManager.removeItem(at: leftover) }
+        }
+        excludeFromBackup(directory)
+        if fileManager.fileExists(atPath: target.path) { excludeFromBackup(target) }
+        return target
+    }
+
+    private static func excludeFromBackup(_ url: URL) {
+        var url = url
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
     }
 
     static func migratedConfiguration(_ initialConfiguration: Realm.Configuration) -> Realm.Configuration {
@@ -171,13 +224,12 @@ final class RealmManager: AppCache {
         commit(stamp) { realm, owner in
             for project in projects {
                 let object = ProjectRO(projectData: project, ownerID: owner)
-                if !project.descriptionWasProvided, let previous = realm.object(
-                    ofType: ProjectRO.self,
-                    forPrimaryKey: object.cacheKey
-                ) {
+                let previous = realm.object(ofType: ProjectRO.self, forPrimaryKey: object.cacheKey)
+                if !project.descriptionWasProvided, let previous {
                     object.itemDescription = previous.itemDescription
                     object.hasDescription = previous.hasDescription
                 }
+                if object.counts == nil, let previous { object.counts = copyCounts(previous.counts) }
                 realm.add(object, update: .modified)
             }
         }
@@ -265,23 +317,64 @@ final class RealmManager: AppCache {
         ).map(TestListEntity.init(suiteRO:))
     }
 
+    /// Удаляет детали кейсов со шагами и записи «недавних» для переданных идентификаторов.
+    private func deleteCaseDetails(caseIDs: [Int], projectCode: String, owner: String, in realm: Realm) {
+        let detailKeys = caseIDs.map {
+            "\(owner)|\(TestCaseReference(projectCode: projectCode, caseID: $0).cacheKey)"
+        }
+        deleteCases(Array(realm.objects(TestEntityRO.self).filter("uniqueKey IN %@", detailKeys)), in: realm)
+        realm.delete(realm.objects(RecentCaseRO.self).filter("cacheKey IN %@", detailKeys))
+    }
+
+    /// Ключ снимка уровня репозитория; корень проекта хранится как `root`.
+    private static func levelKind(_ suiteID: Int?) -> String {
+        "repository.level.\(suiteID.map(String.init) ?? "root")"
+    }
+
+    /// Удаляет набор вместе с вложенными наборами, их кейсами, деталями кейсов, недавними и снимками уровней.
+    private func deleteSuiteSubtree(rootID: Int, projectCode: String, owner: String, in realm: Realm) {
+        let suites = realm.objects(TestEntitiesDataRO.self)
+            .filter("ownerID == %@ AND codeOfProject == %@ AND isSuites == true", owner, projectCode)
+            .map(TestListEntity.init(suiteRO:))
+        let suiteList = Array(SuiteCatalogLoader.subtreeIDs(of: rootID, in: Array(suites)))
+        let caseRows = realm.objects(TestEntitiesDataRO.self).filter(
+            "ownerID == %@ AND codeOfProject == %@ AND isSuites == false AND parentId IN %@",
+            owner,
+            projectCode,
+            suiteList
+        )
+        let detailRows = realm.objects(TestEntityRO.self).filter(
+            "ownerID == %@ AND projectCode == %@ AND suiteId IN %@",
+            owner,
+            projectCode,
+            suiteList
+        )
+        let caseIDs = Array(Set(caseRows.map(\.id)).union(detailRows.map(\.id)))
+        deleteCaseDetails(caseIDs: caseIDs, projectCode: projectCode, owner: owner, in: realm)
+        realm.delete(realm.objects(ReadCacheRO.self).filter(
+            "cacheKey IN %@",
+            suiteList.map { "\(owner)|\(projectCode)|\(Self.levelKind($0))" }
+        ))
+        realm.delete(caseRows)
+        realm.delete(realm.objects(TestEntitiesDataRO.self).filter(
+            "ownerID == %@ AND codeOfProject == %@ AND isSuites == true AND id IN %@",
+            owner,
+            projectCode,
+            suiteList
+        ))
+    }
+
     func deleteEntity(_ entity: TestListEntity, projectCode: String, stamp: SessionStamp) -> Bool {
         commit(stamp) { realm, owner in
+            if entity.isSuite {
+                deleteSuiteSubtree(rootID: entity.id, projectCode: projectCode, owner: owner, in: realm)
+                return
+            }
             if let object = realm.object(
                 ofType: TestEntitiesDataRO.self,
                 forPrimaryKey: entityKey(entity, code: projectCode, owner: owner)
             ) { realm.delete(object) }
-            if !entity.isSuite {
-                let reference = TestCaseReference(projectCode: projectCode, caseID: entity.id)
-                if let object = realm.object(
-                    ofType: TestEntityRO.self,
-                    forPrimaryKey: "\(owner)|\(reference.cacheKey)"
-                ) { deleteCases([object], in: realm) }
-                if let recent = realm.object(
-                    ofType: RecentCaseRO.self,
-                    forPrimaryKey: "\(owner)|\(reference.cacheKey)"
-                ) { realm.delete(recent) }
-            }
+            deleteCaseDetails(caseIDs: [entity.id], projectCode: projectCode, owner: owner, in: realm)
         }
     }
 
@@ -351,23 +444,67 @@ final class RealmManager: AppCache {
         object.itemDescription = project.descriptionWasProvided ? project.description : previous?
             .itemDescription
         object.hasDescription = project.descriptionWasProvided || previous?.hasDescription == true
+        let previousCounts = previous?.counts
         let counts = CountsOfProjectRO()
         counts.hasCases = project.metrics.cases != nil
         counts.cases = project.metrics.cases ?? 0
         counts.hasSuites = project.metrics.suites != nil
         counts.suites = project.metrics.suites ?? 0
-        counts.hasRuns = project.metrics.runs != nil
-        counts.hasDefects = project.metrics.defects != nil
-        if let total = project.metrics
-            .runs { let runs = TestRunsRO()
+        counts.milestones = project.metrics.milestones ?? previousCounts?.milestones ?? 0
+        if let total = project.metrics.runs {
+            let runs = TestRunsRO()
             runs.total = total
-            counts.runs = runs }
-        if let total = project.metrics
-            .defects { let defects = BugReportsRO()
+            runs.active = project.metrics.activeRuns ?? previousCounts?.runs?.active ?? 0
+            counts.runs = runs
+            counts.hasRuns = true
+        } else {
+            counts.runs = copyRuns(previousCounts?.runs)
+            counts.hasRuns = previousCounts?.hasRuns ?? false
+        }
+        if let total = project.metrics.defects {
+            let defects = BugReportsRO()
             defects.total = total
-            counts.defects = defects }
+            defects.open = project.metrics.openDefects ?? previousCounts?.defects?.open ?? 0
+            counts.defects = defects
+            counts.hasDefects = true
+        } else {
+            counts.defects = copyDefects(previousCounts?.defects)
+            counts.hasDefects = previousCounts?.hasDefects ?? false
+        }
         object.counts = counts
         return object
+    }
+
+    // Embedded objects are owned by one parent, so a managed value is copied field by field before reuse.
+    private func copyRuns(_ runs: TestRunsRO?) -> TestRunsRO? {
+        guard let runs else { return nil }
+        let copy = TestRunsRO()
+        copy.total = runs.total
+        copy.active = runs.active
+        return copy
+    }
+
+    private func copyDefects(_ defects: BugReportsRO?) -> BugReportsRO? {
+        guard let defects else { return nil }
+        let copy = BugReportsRO()
+        copy.total = defects.total
+        copy.open = defects.open
+        return copy
+    }
+
+    private func copyCounts(_ counts: CountsOfProjectRO?) -> CountsOfProjectRO? {
+        guard let counts else { return nil }
+        let copy = CountsOfProjectRO()
+        copy.hasCases = counts.hasCases
+        copy.hasSuites = counts.hasSuites
+        copy.hasRuns = counts.hasRuns
+        copy.hasDefects = counts.hasDefects
+        copy.cases = counts.cases
+        copy.suites = counts.suites
+        copy.milestones = counts.milestones
+        copy.runs = copyRuns(counts.runs)
+        copy.defects = copyDefects(counts.defects)
+        return copy
     }
 
     func saveProjectSummaries(_ projects: [ProjectSummary], stamp: SessionStamp) -> Bool {
@@ -619,7 +756,8 @@ extension RealmManager {
             // Root requests scan every project case, so a completed scan is authoritative project-wide.
             let removed = existing.filter { !ids.contains($0.id) }
             for entity in removed {
-                let key = "\(owner)|\(TestCaseReference(projectCode: location.projectCode, caseID: entity.id).cacheKey)"
+                let reference = TestCaseReference(projectCode: location.projectCode, caseID: entity.id)
+                let key = "\(owner)|\(reference.cacheKey)"
                 if let detail = realm.object(ofType: TestEntityRO.self, forPrimaryKey: key) { deleteCases(
                     [detail],
                     in: realm
@@ -637,8 +775,7 @@ extension RealmManager {
             let marker = ReadCacheRO()
             marker.ownerID = owner
             marker.projectCode = location.projectCode
-            let level = location.suiteID.map(String.init) ?? "root"
-            marker.cacheKey = "\(owner)|\(location.projectCode)|repository.level.\(level)"
+            marker.cacheKey = "\(owner)|\(location.projectCode)|\(Self.levelKind(location.suiteID))"
             marker.payload = data
             realm.add(marker, update: .modified)
         }
@@ -648,7 +785,7 @@ extension RealmManager {
         readPayload(
             RepositoryLevelSnapshot.self,
             projectCode: location.projectCode,
-            kind: "repository.level.\(location.suiteID.map(String.init) ?? "root")"
+            kind: Self.levelKind(location.suiteID)
         )
     }
 

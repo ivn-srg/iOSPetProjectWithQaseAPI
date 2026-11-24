@@ -10,7 +10,7 @@
         "code": "DEMO",
         "counts": {
           "cases": 12,
-          "suites": 3,
+          "suites": 10,
           "milestones": 2,
           "runs": {
             "total": 2,
@@ -27,16 +27,16 @@
         "title": "1Forma",
         "code": "1F",
         "counts": {
-          "cases": 251,
-          "suites": 54,
+          "cases": 12,
+          "suites": 10,
           "milestones": 0,
           "runs": {
             "total": 0,
             "active": 0
           },
           "defects": {
-            "total": 24,
-            "open": 20
+            "total": 1,
+            "open": 1
           }
         },
         "description": ""

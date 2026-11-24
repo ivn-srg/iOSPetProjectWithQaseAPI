@@ -17,7 +17,9 @@ final class EmptyDataLabel: UILabel {
         translatesAutoresizingMaskIntoConstraints = false
         text = "There's nothing here yet 🙁".localized
         textAlignment = .center
-        textColor = .gray
+        textColor = AppTheme.Palette.secondaryText
+        font = .preferredFont(forTextStyle: .body)
+        adjustsFontForContentSizeCategory = true
         numberOfLines = 0
         isHidden = true
     }

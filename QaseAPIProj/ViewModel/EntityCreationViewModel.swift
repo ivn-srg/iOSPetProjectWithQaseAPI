@@ -115,11 +115,6 @@ final class EntityCreationViewModel {
         let forSuite = creatingEntityIsSuite
         let suiteDraft = creatingSuite
         let caseDraft = creatingTestCase
-        guard let url = network.composeURL(
-            for: forSuite ? .suites : .cases,
-            urlComponents: [projectCode],
-            queryItems: nil
-        ) else { throw .invalidURL }
         isFieldsEmpty = false
         isSaving = true
         defer {
@@ -127,13 +122,16 @@ final class EntityCreationViewModel {
         }
         if forSuite {
             let response = try await network.performRequest(
+                for: .createSuite,
+                pathParameters: ["code": projectCode],
+                queryItems: [],
                 with: QaseAPISuiteCreateRequest(
                     title: suiteDraft.title,
                     description: suiteDraft.itemDescription,
                     preconditions: suiteDraft.preconditions,
                     parentId: suiteDraft.parentId
                 ),
-                from: url, method: .post, modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self
+                modelType: ServerResponseModel<CreateOrUpdateSuiteModel>.self
             )
             guard isSessionCurrent,
                   !Task.isCancelled else { throw .invalidRequest("The session is no longer active") }
@@ -142,9 +140,10 @@ final class EntityCreationViewModel {
             baselineSuite = suiteDraft
         } else {
             let response = try await network.performRequest(
+                for: .createCase,
+                pathParameters: ["code": projectCode],
+                queryItems: [],
                 with: caseDraft.dictOfValues,
-                from: url,
-                method: .post,
                 modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
             )
             guard isSessionCurrent,

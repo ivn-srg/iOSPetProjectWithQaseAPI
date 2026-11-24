@@ -64,17 +64,20 @@ final class AuthManager: AuthServicing {
     private let replacementDependencies: AuthReplacementDependencies
     private let managerID = UUID()
     private let usesTestTokenStore: Bool
+    private let isProtectedDataAvailable: @MainActor () -> Bool
 
     init(
         userDefaults: UserDefaults,
         credentialStore: AuthCredentialStorage,
         replacementDependencies: AuthReplacementDependencies,
-        usesTestTokenStore: Bool = false
+        usesTestTokenStore: Bool = false,
+        isProtectedDataAvailable: @escaping @MainActor () -> Bool = { true }
     ) {
         self.userDefaults = userDefaults
         self.credentialStore = credentialStore
         self.replacementDependencies = replacementDependencies
         self.usesTestTokenStore = usesTestTokenStore
+        self.isProtectedDataAvailable = isProtectedDataAvailable
     }
 
     @MainActor
@@ -136,15 +139,26 @@ final class AuthManager: AuthServicing {
         return TokenReplacementResult(didChange: true, cacheCleanupFailed: cacheCleanupFailed)
     }
 
+    /// Первый шаг сборки содержимого: удаляет токен прежней установки и восстанавливает сессию.
+    /// Флаг входа ставится после сохранения токена и удаляется вместе с приложением, а Keychain — нет:
+    /// токен без флага остался от прежней установки или прерванного входа.
+    @MainActor
+    func restoreSessionIfNeeded() {
+        guard let credential = currentCredential() else { return }
+        guard userDefaults.bool(forKey: authStatusKey) else {
+            // При заблокированном устройстве ничего не удаляем: необратимо, повтор при следующем старте.
+            if isProtectedDataAvailable() { try? deleteCredential() }
+            return
+        }
+        guard replacementDependencies.session.ownerID == nil else { return }
+        let usesDemo = usesTestTokenStore || credential.token == "QASE_DEMO"
+        replacementDependencies.configureDemoMode(usesDemo)
+        replacementDependencies.session.activate(ownerID: credential.ownerID)
+    }
+
     @MainActor
     func isUserLoggedIn() -> Bool {
-        let credential = currentCredential()
-        if let credential, replacementDependencies.session.ownerID == nil {
-            let usesDemo = usesTestTokenStore || credential.token == "QASE_DEMO"
-            replacementDependencies.configureDemoMode(usesDemo)
-            replacementDependencies.session.activate(ownerID: credential.ownerID)
-        }
-        return credential != nil && userDefaults.bool(forKey: authStatusKey)
+        currentCredential() != nil && userDefaults.bool(forKey: authStatusKey)
     }
 
     func getAuthToken() -> String? { currentCredential()?.token }
@@ -205,14 +219,29 @@ final class AuthManager: AuthServicing {
 }
 
 final class KeychainService: AuthCredentialStorage {
-    private let key = "authToken"
+    static let defaultKey = "authToken"
+    /// Токен доступен только на этом устройстве и только после разблокировки: не уходит в бэкап.
+    static let accessibility = kSecAttrAccessibleWhenUnlockedThisDeviceOnly as String
+
+    private let key: String
+    private let updateAccessibility: (CFDictionary, CFDictionary) -> OSStatus
     private let lock = NSLock()
+    /// Поиск без `kSecAttrAccessible`: иначе элементы прежних версий (класс `WhenUnlocked`) не найдутся.
     private var query: [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
             kSecAttrLabel as String: key
         ]
+    }
+
+    /// `updateAccessibility` — для тестов сбоя перевода класса доступности.
+    init(
+        key: String = KeychainService.defaultKey,
+        updateAccessibility: @escaping (CFDictionary, CFDictionary) -> OSStatus = SecItemUpdate
+    ) {
+        self.key = key
+        self.updateAccessibility = updateAccessibility
     }
 
     func saveCredential(_ record: AuthCredential) throws {
@@ -223,11 +252,14 @@ final class KeychainService: AuthCredentialStorage {
 
     private func saveUnlocked(_ record: AuthCredential) throws {
         let data = try JSONEncoder().encode(record)
-        // SecItemUpdate replaces token and owner together; never delete before saving.
-        let status = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        // SecItemUpdate replaces token, owner and accessibility together; never delete before saving.
+        let attributes: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: Self.accessibility
+        ]
+        let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
         if status == errSecItemNotFound {
-            var insertion = query
-            insertion[kSecValueData as String] = data
+            let insertion = query.merging(attributes) { _, new in new }
             let result = SecItemAdd(insertion as CFDictionary, nil)
             guard result == errSecSuccess else { throw KeychainError.unhandledError(status: result) }
         } else if status != errSecSuccess { throw KeychainError.unhandledError(status: status) }
@@ -238,12 +270,21 @@ final class KeychainService: AuthCredentialStorage {
         defer { lock.unlock() }
         var read = query
         read[kSecReturnData as String] = true
+        read[kSecReturnAttributes as String] = true
         var item: CFTypeRef?
         guard SecItemCopyMatching(read as CFDictionary, &item) == errSecSuccess,
-              let data = item as? Data, let record = AuthCredential.decode(data) else { return nil }
+              let attributes = item as? [String: Any],
+              let data = attributes[kSecValueData as String] as? Data,
+              let record = AuthCredential.decode(data) else { return nil }
         if (try? JSONDecoder().decode(AuthCredential.self, from: data)) == nil {
-            // Upgrade legacy UTF8 records once so the account marker persists across launches.
+            // Upgrade legacy UTF8 records once so the account marker persists across launches;
+            // the same update moves the item to the device-only accessibility class.
             guard (try? saveUnlocked(record)) != nil else { return nil }
+        } else if attributes[kSecAttrAccessible as String] as? String != Self.accessibility {
+            // Элемент прежней версии: перевод класса на месте.
+            // Сбой не скрывает токен — повтор при следующем чтении.
+            let update = [kSecAttrAccessible as String: Self.accessibility]
+            _ = updateAccessibility(query as CFDictionary, update as CFDictionary)
         }
         return record
     }

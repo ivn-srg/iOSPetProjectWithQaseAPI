@@ -3,7 +3,7 @@ import Foundation
 import RealmSwift
 import Testing
 
-@Suite @MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct RepositoryRefinementTests {
     @Test func descriptionSurvivesBothCacheWritersAndExplicitNullClearsIt() throws {
         let session = SessionContext(ownerID: "owner")
@@ -33,7 +33,7 @@ struct RepositoryRefinementTests {
     }
 }
 
-@Suite @MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct RepositoryHierarchyTests {
     @Test func rootContainsSuitesAndLooseCasesWithSeparateIdentifiers() async throws {
         let session = SessionContext(ownerID: "root")
@@ -170,7 +170,7 @@ struct RepositoryHierarchyTests {
             objectTypes: RealmManager.cacheObjectTypes
         )
         let session = SessionContext(ownerID: "migration")
-        try autoreleasepool {
+        autoreleasepool {
             let cache = RealmManager(configuration: config, session: session)
             #expect(cache.saveProjectSummaries(
                 [.init(title: "A", code: "A", metrics: .init(cases: 42))],
@@ -189,7 +189,7 @@ struct RepositoryHierarchyTests {
     }
 }
 
-@Suite @MainActor
+@Suite(.timeLimit(.minutes(1))) @MainActor
 struct RepositoryPaginationTests {
     @Test func cacheFailureDoesNotDiscardFreshCasesOrStopPagination() async {
         let session = SessionContext(ownerID: "cache-failure")
@@ -308,8 +308,9 @@ struct RepositoryPaginationTests {
     }
 }
 
+/// Кеш, отклоняющий каждую запись (`false`); чтения пусты. Счётчики — только для двух записей уровня.
 @MainActor
-private final class RejectingRepositoryCache: RepositoryCaching {
+private final class RejectingRepositoryCache: RepositoryCaching, HomeRepositoryCache {
     private(set) var partialWriteAttempts = 0
     private(set) var snapshotWriteAttempts = 0
 
@@ -344,6 +345,27 @@ private final class RejectingRepositoryCache: RepositoryCaching {
         by parentSuite: ParentSuite?,
         testEntitiesType: TargetTestEntities
     ) -> [TestListEntity]? { [] }
+
+    func saveProjects(_ projects: [Project], stamp: SessionStamp) -> Bool { false }
+    func getProjects() -> [Project]? { nil }
+    func deleteProject(_ project: Project, stamp: SessionStamp) -> Bool { false }
+    func getProjectSummaries() -> [ProjectSummary] { [] }
+    func saveProjectSummaries(_ projects: [ProjectSummary], stamp: SessionStamp) -> Bool { false }
+    func replaceProjectSummaries(_ projects: [ProjectSummary], stamp: SessionStamp) -> Bool { false }
+
+    func getHomeSnapshot(projectCode: String) -> HomeSnapshot? { nil }
+    func saveHomeSnapshot(_ snapshot: HomeSnapshot, stamp: SessionStamp) -> Bool { false }
+    func getRecentCases(projectCode: String) -> [RecentCaseItem] { [] }
+    func recordRecentCase(_ item: RecentCaseItem, stamp: SessionStamp) -> Bool { false }
+
+    func getRuns(projectCode: String) -> [RunReadDTO]? { nil }
+    func saveRuns(_ runs: [RunReadDTO], projectCode: String, stamp: SessionStamp) -> Bool { false }
+    func getRun(projectCode: String, id: Int) -> RunReadDTO? { nil }
+    func saveRun(_ run: RunReadDTO, projectCode: String, stamp: SessionStamp) -> Bool { false }
+    func getDefects(projectCode: String) -> [DefectReadDTO]? { nil }
+    func saveDefects(_ defects: [DefectReadDTO], projectCode: String, stamp: SessionStamp) -> Bool { false }
+    func getDefect(projectCode: String, id: Int) -> DefectReadDTO? { nil }
+    func saveDefect(_ defect: DefectReadDTO, projectCode: String, stamp: SessionStamp) -> Bool { false }
 }
 
 private final class LevelNetwork: NetworkManager {
@@ -382,36 +404,16 @@ private final class LevelNetwork: NetworkManager {
         catch { throw .otherNetworkError(error.localizedDescription) }
     }
 
-    func performRequest<T: Decodable>(
-        with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T { throw .invalidURL }
     func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
         files: [API.UploadFile],
         modelType: T.Type
     ) async throws(API.NetError) -> T { throw .invalidURL }
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL? { nil }
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? { API.makeURL(
-        for: operation,
-        pathParameters: pathParameters,
-        queryItems: queryItems
-    ) }
     func auth(by token: String) async throws -> Bool { true }
 }
 
-@Suite struct RepositoryRequestTests {
+@Suite(.timeLimit(.minutes(1))) struct RepositoryRequestTests {
     @Test func clearingSuiteEncodesNullInsteadOfZeroOrOmission() throws {
         var item = TestCaseEntity.empty
         item.suiteId = nil
@@ -422,5 +424,188 @@ private final class LevelNetwork: NetworkManager {
         let nested = try #require(JSONSerialization
             .jsonObject(with: JSONEncoder().encode(item.dictOfValues)) as? [String: Any])
         #expect(nested["suite_id"] as? Int == 81)
+    }
+}
+
+@MainActor
+private struct FixedSuitesRepository: RepositoryReading {
+    let values: [TestListEntity]
+
+    func cases(projectCode: String, query: String, offset: Int, suiteID: Int?) async throws
+        -> QaseAPIListResult<CaseSummary> {
+        QaseAPIListResult(total: 0, filtered: 0, count: 0, entities: [])
+    }
+
+    func suites(projectCode: String, query: String, offset: Int) async throws
+        -> QaseAPIListResult<TestListEntity> {
+        let page = offset == 0 ? values : []
+        return QaseAPIListResult(
+            total: values.count,
+            filtered: values.count,
+            count: page.count,
+            entities: page
+        )
+    }
+}
+
+@Suite(.timeLimit(.minutes(1))) @MainActor
+struct SuiteCatalogLoaderCacheFailureTests {
+    @Test func rejectedCatalogWriteReturnsValuesAndReportsOnce() async throws {
+        let session = SessionContext(ownerID: "catalog-cache-failure")
+        let values = [
+            TestListEntity(
+                isSuite: true,
+                id: 1,
+                title: "A",
+                description: nil,
+                parentId: nil,
+                casesCount: nil
+            ),
+            TestListEntity(
+                isSuite: true,
+                id: 2,
+                title: "B",
+                description: nil,
+                parentId: 1,
+                casesCount: nil
+            )
+        ]
+        var failures = 0
+        let loader = SuiteCatalogLoader(
+            repository: FixedSuitesRepository(values: values),
+            dao: RejectingRepositoryCache(),
+            session: session,
+            onCacheFailure: { failures += 1 }
+        )
+        let loaded = try await loader.load(projectCode: "A", isCurrent: { true })
+        #expect(loaded.map(\.id) == [1, 2])
+        #expect(failures == 1)
+    }
+}
+
+@Suite(.timeLimit(.minutes(1))) @MainActor
+struct CacheFailureReportingTests {
+    private func thrownError(_ body: () async throws -> Void) async -> Error? {
+        do { try await body(); return nil } catch { return error }
+    }
+
+    /// Ловит: убрать `reportCacheWrite` вокруг `saveRuns` (или инвертировать условие).
+    @Test func rejectedRunsWriteIsReportedOnceAndPageStillReturned() async throws {
+        let session = SessionContext(ownerID: "owner")
+        var failures = 0
+        let repository = HomeRepository(
+            network: RepositoryScriptNetwork(),
+            dao: RejectingRepositoryCache(),
+            session: session,
+            onCacheFailure: { failures += 1 }
+        )
+
+        let page = try await repository.runs(projectCode: "A", offset: 0)
+
+        #expect(page.entities.map(\.id) == [1])
+        #expect(failures == 1)
+    }
+
+    /// Ловит: убрать `reportCacheWrite` у одной из двух записей `project(code:)` — сводки или снимка Home.
+    @Test func rejectedProjectWritesAreReportedForSummaryAndHomeSnapshot() async throws {
+        let session = SessionContext(ownerID: "owner")
+        var failures = 0
+        let repository = HomeRepository(
+            network: RepositoryScriptNetwork(),
+            dao: RejectingRepositoryCache(),
+            session: session,
+            onCacheFailure: { failures += 1 }
+        )
+
+        let project = try await repository.project(code: "A")
+
+        #expect(project.code == "A")
+        #expect(failures == 2)
+    }
+
+    /// Ловит: вызывать `onCacheFailure` безусловно (принятая запись не должна считаться отказом).
+    @Test func acceptedWritesAreNotReported() async throws {
+        let session = SessionContext(ownerID: "owner")
+        let cache = RealmManager(
+            configuration: .init(inMemoryIdentifier: UUID().uuidString),
+            session: session
+        )
+        var failures = 0
+        let repository = HomeRepository(
+            network: RepositoryScriptNetwork(),
+            dao: cache,
+            session: session,
+            onCacheFailure: { failures += 1 }
+        )
+
+        _ = try await repository.runs(projectCode: "A", offset: 0)
+        _ = try await repository.project(code: "A")
+
+        #expect(failures == 0)
+        #expect(cache.getRuns(projectCode: "A")?.map(\.id) == [1])
+    }
+
+    private func deletionModel(
+        network: RepositoryScriptNetwork,
+        cache: some RepositoryCaching,
+        session: SessionContext,
+        onCacheFailure: @escaping () -> Void
+    ) -> TestEntitiesViewModel {
+        let repository = HomeRepository(network: network, session: session)
+        return TestEntitiesViewModel(
+            projectCode: "A",
+            network: network,
+            repository: repository,
+            catalogLoader: SuiteCatalogLoader(repository: repository, dao: cache, session: session),
+            dao: cache,
+            session: session,
+            onCacheFailure: onCacheFailure
+        )
+    }
+
+    /// Ловит: убрать `reportCacheWrite(dao.deleteEntity)` в `delete`. Перезапрос уровня сломан,
+    /// чтобы отказ записи после перезапроса не засчитался за отказ удаления.
+    @Test func rejectedCacheDeleteIsReportedWhileRemoteDeleteSucceeds() async throws {
+        let session = SessionContext(ownerID: "owner")
+        let network = RepositoryScriptNetwork()
+        network.levelsFail = true
+        var failures = 0
+        let model = deletionModel(
+            network: network,
+            cache: RejectingRepositoryCache(),
+            session: session,
+            onCacheFailure: { failures += 1 }
+        )
+
+        let error = await thrownError {
+            try await model.delete(RepositoryItemReference(projectCode: "A", id: 1, isSuite: true))
+        }
+
+        #expect(error == nil)
+        #expect(network.deletes.count == 1)
+        #expect(failures == 1)
+    }
+
+    /// Ловит: вызывать `onCacheFailure` при удачном удалении из кеша.
+    @Test func acceptedCacheDeleteIsNotReported() async throws {
+        let session = SessionContext(ownerID: "owner")
+        let network = RepositoryScriptNetwork()
+        network.levelsFail = true
+        var failures = 0
+        let cache = RealmManager(
+            configuration: .init(inMemoryIdentifier: UUID().uuidString),
+            session: session
+        )
+        let model = deletionModel(
+            network: network,
+            cache: cache,
+            session: session,
+            onCacheFailure: { failures += 1 }
+        )
+
+        try await model.delete(RepositoryItemReference(projectCode: "A", id: 10, isSuite: false))
+
+        #expect(network.deletes.count == 1)
+        #expect(failures == 0)
     }
 }

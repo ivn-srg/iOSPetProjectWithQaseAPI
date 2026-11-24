@@ -62,7 +62,9 @@ final class ApplicationRouter: ApplicationRouting {
     private func rebuildRoots() {
         guard let shell else { return }
         let active = shell.selectedIndex
-        shell.navigationRoot.dismiss(animated: false)
+        if !coordinator.hasUnsavedDrafts(inPresentedStackOf: shell.navigationRoot) {
+            shell.navigationRoot.dismiss(animated: false)
+        }
         shell.replaceRoots(factory.makeRoots(router: self), selectedIndex: active)
     }
 
@@ -99,7 +101,7 @@ final class ApplicationRouter: ApplicationRouting {
             nav.popToRootViewController(animated: false)
             if let root = nav.viewControllers.first as? RepositoryViewController {
                 root.model.query = ""
-                root.model.requestSearchFocus = search
+                if search { root.model.requestSearchFocus() }
             }
         }
     }

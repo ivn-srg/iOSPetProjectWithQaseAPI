@@ -14,15 +14,20 @@ final class AppCompositionRoot {
     private let defaults: UserDefaults
     private var authenticatedGraph: AuthenticatedGraph?
 
+    /// Аргумент запуска UI-тестов: изолированные defaults, память вместо Keychain и Realm на диске.
+    static let uiTestingArgument = "UITests"
+    private static let uiTestingDefaultsSuite = "QaseAPIProj.UITests"
+
     init(
-        defaults: UserDefaults = .standard,
+        defaults: UserDefaults? = nil,
         bundle: Bundle = .main,
         arguments: [String] = ProcessInfo.processInfo.arguments,
         credentialStorage: AuthCredentialStorage? = nil,
         urlSession: URLSession = .shared,
         cacheConfiguration: Realm.Configuration? = nil
     ) {
-        let testing = arguments.contains("UITests")
+        let testing = arguments.contains(Self.uiTestingArgument)
+        let defaults = defaults ?? Self.makeDefaults(testing: testing)
         let storage: AuthCredentialStorage = credentialStorage ??
             (testing ? MemoryCredentialStorage() : KeychainService())
         let session = SessionContext()
@@ -66,8 +71,16 @@ final class AppCompositionRoot {
                         )
                 }
             ),
-            usesTestTokenStore: testing
+            usesTestTokenStore: testing,
+            isProtectedDataAvailable: { UIApplication.shared.isProtectedDataAvailable }
         )
+    }
+
+    private static func makeDefaults(testing: Bool) -> UserDefaults {
+        let suite = uiTestingDefaultsSuite
+        guard testing, let defaults = UserDefaults(suiteName: suite) else { return .standard }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
     }
 
     func makeRootController() -> RootViewController {
@@ -76,6 +89,8 @@ final class AppCompositionRoot {
 
     private func makeContent() -> UIViewController {
         authenticatedGraph = nil
+        // До сборки графа: `SelectedProjectStore` и модели захватывают stamp активной сессии.
+        auth.restoreSessionIfNeeded()
         guard auth.isUserLoggedIn() else { return AuthViewController(auth: auth) }
         let network = auth.isDemoMode ? mockNetwork : realNetwork
         let reportFailure: (String) -> Void = { [session] message in
@@ -85,13 +100,14 @@ final class AppCompositionRoot {
                 userInfo: ["message": message]
             )
         }
+        let reportCacheFailure: () -> Void = {
+            reportFailure("Could not update cached data. Fresh data remains available.".localized)
+        }
         let repository = HomeRepository(
             network: network,
             dao: cache,
             session: session,
-            onCacheFailure: {
-                reportFailure("Could not update cached data. Fresh data remains available.".localized)
-            }
+            onCacheFailure: reportCacheFailure
         )
         let selection = SelectedProjectStore(
             repository: repository,
@@ -100,7 +116,12 @@ final class AppCompositionRoot {
             defaults: defaults
         )
         let coordinator = ApplicationProjectCoordinator(store: selection, session: session)
-        let catalog = SuiteCatalogLoader(repository: repository, dao: cache, session: session)
+        let catalog = SuiteCatalogLoader(
+            repository: repository,
+            dao: cache,
+            session: session,
+            onCacheFailure: reportCacheFailure
+        )
         let factory = FeatureScreenFactory(
             network: network,
             cache: cache,

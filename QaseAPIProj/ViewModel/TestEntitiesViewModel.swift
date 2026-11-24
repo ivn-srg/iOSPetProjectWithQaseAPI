@@ -16,7 +16,10 @@ final class TestEntitiesViewModel: ObservableObject {
     @Published private(set) var caseCount: Int?
     @Published private(set) var updatedAt: Date?
     @Published var query = ""
-    @Published var requestSearchFocus = false
+    /// Запросы фокуса поиска: каждый «Search cases» увеличивает счётчик,
+    /// экран применяет новый запрос один раз.
+    @Published private(set) var searchFocusRequest = 0
+    private var handledSearchFocusRequest = 0
     @Published private(set) var searchedSuites: [TestListEntity] = []
     @Published private(set) var searchedCases: [CaseSummary] = []
     @Published private(set) var searchLoading = false
@@ -24,6 +27,8 @@ final class TestEntitiesViewModel: ObservableObject {
     @Published private(set) var moreSearchSuites = false
     @Published private(set) var moreSearchCases = false
     @Published private(set) var hasMoreCases = true
+    /// Последняя завершённая загрузка показала пустой уровень: карточка не мигает при повторной загрузке.
+    @Published private(set) var lastLoadWasEmpty = false
     private let catalogLoader: SuiteCatalogLoading
     private let repository: RepositoryReading
     private let network: NetworkManager
@@ -43,6 +48,12 @@ final class TestEntitiesViewModel: ObservableObject {
     var childSuites: [TestListEntity] { catalog.filter { normalized($0.parentId) == location.suiteID } }
     var testEntitiesData: [TestListEntity] { childSuites + cases }
     var isLoading: Bool { suitesLoading || casesLoading }
+    /// Уровень точно пуст (всё загружено, ошибок нет) или пуст был и сейчас перезагружается.
+    var levelIsEmpty: Bool { loadedLevelIsEmpty || (isLoading && lastLoadWasEmpty) }
+    private var loadedLevelIsEmpty: Bool {
+        catalogComplete && childSuites.isEmpty && cases.isEmpty && !hasMoreCases && !isLoading
+            && suiteError == nil && caseError == nil
+    }
     var hasQuery: Bool { !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     var showingSavedData: Bool {
         (suiteError != nil && catalogComplete) || (caseError != nil && updatedAt != nil) ||
@@ -95,6 +106,9 @@ final class TestEntitiesViewModel: ObservableObject {
                 guard let self, notification.object as AnyObject? === self.session else { return }
                 self.cancel()
                 self.catalog = []
+                // Пустой каталог устаревшей сессии не должен выглядеть как пустой уровень с действием «создать».
+                self.catalogComplete = false
+                self.lastLoadWasEmpty = false
                 self.cases = []
                 self.searchedSuites = []
                 self.searchedCases = []
@@ -119,10 +133,14 @@ final class TestEntitiesViewModel: ObservableObject {
         caseCount = nil
         casesLoading = false
         caseGeneration += 1
+        // Активный запрос переищется после загрузки уровня: до этого показываем загрузку, а не «No search results».
+        searchLoading = hasQuery
         await withTaskGroup(of: Void.self) { group in
             group.addTask { @MainActor [weak self] in await self?.loadCatalog() }
             group.addTask { @MainActor [weak self] in await self?.loadMoreCases() }
         }
+        // Прерванная загрузка (уход с экрана) не меняет знание о пустоте уровня.
+        if !Task.isCancelled, session.isCurrent(stamp) { lastLoadWasEmpty = loadedLevelIsEmpty }
         if hasQuery { await search(reset: true) }
     }
 
@@ -148,7 +166,9 @@ final class TestEntitiesViewModel: ObservableObject {
                 suiteError = "Suite unavailable".localized }
         } catch {
             if accepts(generation, catalogGeneration),
-               !(error is CancellationError) { suiteError = "Could not load suites".localized }
+               !(error is CancellationError) {
+                suiteError = API.userMessage(for: error, fallback: "Could not load suites".localized)
+            }
         }
     }
 
@@ -163,6 +183,7 @@ final class TestEntitiesViewModel: ObservableObject {
             repeat {
                 let page = try await repository.cases(
                     projectCode: projectCode,
+                    query: "",
                     offset: offset,
                     suiteID: location.suiteID
                 )
@@ -197,7 +218,9 @@ final class TestEntitiesViewModel: ObservableObject {
             }
         } catch {
             if accepts(generation, caseGeneration),
-               !(error is CancellationError) { caseError = "Could not load cases".localized }
+               !(error is CancellationError) {
+                caseError = API.userMessage(for: error, fallback: "Could not load cases".localized)
+            }
         }
     }
 
@@ -207,16 +230,34 @@ final class TestEntitiesViewModel: ObservableObject {
         searchedSuites = []
         searchedCases = []
         searchError = nil
-        guard hasQuery else { searchLoading = false
-            return }
+        // Пока идёт debounce, результатов нет: показываем загрузку,
+        // а не «No search results» и старые «Load more».
+        moreSearchSuites = false
+        moreSearchCases = false
+        searchLoading = hasQuery
+        guard hasQuery else { return }
         searchTask = Task { [weak self] in
             do { try await Task.sleep(for: SearchPolicy.debounce) } catch { return }
             await self?.search(reset: true)
         }
     }
 
+    func requestSearchFocus() {
+        searchFocusRequest += 1
+    }
+
+    /// `true` один раз на каждый новый запрос фокуса; возврат на экран без нового запроса фокус не поднимает.
+    func consumeSearchFocusRequest() -> Bool {
+        guard searchFocusRequest > handledSearchFocusRequest else { return false }
+        handledSearchFocusRequest = searchFocusRequest
+        return true
+    }
+
     func search(reset: Bool, suites: Bool = true, cases: Bool = true) async {
-        guard hasQuery, session.isCurrent(stamp) else { return }
+        guard hasQuery, session.isCurrent(stamp) else {
+            if reset { searchLoading = false }
+            return
+        }
         if reset {
             searchGeneration += 1
             suiteSearchOffset = 0
@@ -271,7 +312,8 @@ final class TestEntitiesViewModel: ObservableObject {
                         let page = try await self.repository.cases(
                             projectCode: self.projectCode,
                             query: requestedQuery,
-                            offset: self.caseSearchOffset
+                            offset: self.caseSearchOffset,
+                            suiteID: nil
                         )
                         guard self.accepts(generation, self.searchGeneration) else { return }
                         if reset { self.searchedCases = [] }
@@ -306,6 +348,22 @@ final class TestEntitiesViewModel: ObservableObject {
         catalog: catalog,
         suiteID: suiteID
     ) }
+
+    /// Число кейсов в наборе и во всём его поддереве; `nil`, если каталог неполон или счётчик неизвестен.
+    func casesCountInSubtree(of suiteID: Int) -> Int? {
+        guard catalogComplete else { return nil }
+        return Self.casesCount(inSubtreeOf: suiteID, catalog: catalog)
+    }
+
+    static func casesCount(inSubtreeOf suiteID: Int, catalog: [TestListEntity]) -> Int? {
+        let byID = Dictionary(catalog.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var total = 0
+        for id in SuiteCatalogLoader.subtreeIDs(of: suiteID, in: catalog) {
+            guard let count = byID[id]?.casesCount else { return nil }
+            total += count
+        }
+        return total
+    }
 
     func delete(_ reference: RepositoryItemReference) async throws {
         guard session.isCurrent(stamp),

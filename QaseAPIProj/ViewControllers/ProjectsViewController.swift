@@ -27,6 +27,20 @@ final class ProjectsViewController: UIViewController {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    /// Удаление после подтверждения. `true` — проект удалён; `false` — отказ `beforeDeleteProject`
+    /// или удаление того же проекта уже в пути (побочные эффекты удаления не выполняются).
+    func deleteConfirmedProject(_ project: Project) async throws -> Bool {
+        let guardDelete = beforeDeleteProject
+        let outcome = try await viewModel.deleteProject(project) {
+            guard let guardDelete else { return true }
+            return await guardDelete(project)
+        }
+        guard outcome == .deleted else { return false }
+        onProjectDeleted?(project.code)
+        onProjectsChanged?()
+        return true
+    }
+
     // MARK: - UI
     private lazy var tableVw: UITableView = {
         let tv = UITableView()
@@ -47,14 +61,6 @@ final class ProjectsViewController: UIViewController {
         return rbb
     }()
 
-    private lazy var searchController: UISearchController = {
-        let search = UISearchController(searchResultsController: nil)
-        search.searchBar.placeholder = "Search repository".localized
-        search.obscuresBackgroundDuringPresentation = false
-        search.definesPresentationContext = true
-        return search
-    }()
-
     private lazy var emptyDataLabel: UILabel = EmptyDataLabel()
     private let activity = UIActivityIndicatorView(style: .medium)
 
@@ -66,13 +72,8 @@ final class ProjectsViewController: UIViewController {
         viewModel.delegate = self
         configureRefreshControl()
 
-        navigationItem.searchController = searchController
         definesPresentationContext = true
         navigationItem.rightBarButtonItem = rightBarButton
-
-        if #available(iOS 26.0, *) {
-            navigationItem.searchBarPlacementAllowsToolbarIntegration = false
-        }
 
         view.backgroundColor = AppTheme.Palette.canvas
         navigationController?.navigationBar.accessibilityIdentifier = AccessibilityID.navigationBar.identifier
@@ -108,8 +109,11 @@ final class ProjectsViewController: UIViewController {
         view.addSubview(activity)
         activity.snp.makeConstraints { $0.center.equalToSuperview() }
         view.addSubview(emptyDataLabel)
+        emptyDataLabel.accessibilityIdentifier = AccessibilityID.projectsEmpty.identifier
         emptyDataLabel.snp.makeConstraints {
             $0.center.equalToSuperview()
+            $0.leading.greaterThanOrEqualToSuperview().offset(AppTheme.Space.screen)
+            $0.trailing.lessThanOrEqualToSuperview().inset(AppTheme.Space.screen)
         }
 
         view.addSubview(tableVw)
@@ -180,11 +184,18 @@ extension ProjectsViewController: UITableViewDelegate {
             style: .destructive,
             title: "Delete".localized
         ) { [weak self] _, _, completionHandler in
-            guard let self = self else { return }
+            guard let self = self else { completionHandler(false)
+                return }
             guard self.viewModel.projects.indices.contains(indexPath.row)
             else { completionHandler(false)
                 return }
             let project = self.viewModel.projects[indexPath.row]
+            // Удаление уже отправлено: повтор не подтверждается и не запускает побочные эффекты.
+            guard !self.viewModel.isDeleting(project.code) else { completionHandler(false)
+                return }
+            // Подтверждение не показать (сверху уже другой экран) — свайп закрывается без удаления.
+            guard self.canPresentNow else { completionHandler(false)
+                return }
             let codeOfProject = project.code
             let composedMessage = String(
                 format: "confirmMessage".localized,
@@ -198,18 +209,17 @@ extension ProjectsViewController: UITableViewDelegate {
                 message: composedMessage
             ) { _ in
                 self.executeWithErrorHandling {
-                    if let guardDelete = self.beforeDeleteProject,
-                       !(await guardDelete(project)) { return }
-                    try await self.viewModel.deleteProject(project)
-                    self.onProjectDeleted?(project.code)
-                    self.onProjectsChanged?()
+                    // Свайп завершается по результату — ровно один раз на любом пути, включая ошибку.
+                    var deleted = false
+                    defer { completionHandler(deleted) }
+                    deleted = try await self.deleteConfirmedProject(project)
                 }
-                completionHandler(true)
             } cancelCompetionHandler: { _ in
                 completionHandler(false)
             }
         }
         swipeAction.image = AppImages.trash
+        swipeAction.backgroundColor = AppTheme.Palette.destructiveFill
         return UISwipeActionsConfiguration(actions: [swipeAction])
     }
 

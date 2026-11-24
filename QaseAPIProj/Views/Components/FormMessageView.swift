@@ -21,7 +21,8 @@ final class FormMessageView: UIView {
         label.textColor = AppTheme.Palette.danger
         label.numberOfLines = 0
         retryButton.setTitle("Retry".localized, for: .normal)
-        retryButton.tintColor = AppTheme.Palette.accent
+        // На danger-подложке accent не даёт 4.5:1 — действие окрашено цветом ошибки.
+        retryButton.tintColor = AppTheme.Palette.danger
         retryButton.titleLabel?.font = .preferredFont(forTextStyle: .body)
         retryButton.titleLabel?.adjustsFontForContentSizeCategory = true
         retryButton.addTarget(self, action: #selector(retry), for: .touchUpInside)

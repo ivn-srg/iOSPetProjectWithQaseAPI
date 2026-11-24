@@ -6,6 +6,9 @@ struct ProjectMetrics: Codable, Equatable {
     var suites: Int? = nil
     var runs: Int? = nil
     var defects: Int? = nil
+    var activeRuns: Int? = nil
+    var openDefects: Int? = nil
+    var milestones: Int? = nil
 }
 
 struct ProjectSummary: Codable, Equatable, Identifiable {
@@ -34,9 +37,14 @@ struct ProjectSummary: Codable, Equatable, Identifiable {
     private struct Counts: Decodable {
         let cases: Int?
         let suites: Int?
+        let milestones: Int?
         let runs: Total?
         let defects: Total?
-        struct Total: Decodable { let total: Int? }
+        struct Total: Decodable {
+            let total: Int?
+            let active: Int?
+            let open: Int?
+        }
     }
 
     init(from decoder: Decoder) throws {
@@ -53,7 +61,10 @@ struct ProjectSummary: Codable, Equatable, Identifiable {
                 cases: counts?.cases,
                 suites: counts?.suites,
                 runs: counts?.runs?.total,
-                defects: counts?.defects?.total
+                defects: counts?.defects?.total,
+                activeRuns: counts?.runs?.active,
+                openDefects: counts?.defects?.open,
+                milestones: counts?.milestones
             )
         }
     }

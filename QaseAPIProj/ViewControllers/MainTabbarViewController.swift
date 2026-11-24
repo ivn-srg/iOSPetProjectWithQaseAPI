@@ -34,12 +34,39 @@ extension MainTabbarViewController: UITabBarControllerDelegate {
         _ tabBarController: UITabBarController,
         shouldSelect viewController: UIViewController
     ) -> Bool {
-        guard viewController !== selectedViewController else { return true }
         guard !isChangingTab else { return false }
+        guard viewController !== selectedViewController else { return shouldReselect(selectedViewController) }
         guard let origin = selectedViewController,
               let top = (origin as? UINavigationController)?.topViewController,
               let form = top as? FormDepartureParticipant else { return true }
-        guard !form.isSavingDraft else { return false }
+        confirmDeparture(of: form, from: origin, requiring: viewController) { [weak self] in
+            self?.selectedViewController = viewController
+        }
+        return false
+    }
+
+    private func shouldReselect(_ origin: UIViewController?) -> Bool {
+        guard let nav = origin as? UINavigationController, nav.viewControllers.count > 1,
+              let top = nav.topViewController,
+              let form = top as? FormDepartureParticipant else { return true }
+        // Незавершённый ввод IME попадает в модель только после resign first responder.
+        form.finishEditing()
+        guard form.hasUnsavedChanges else { return true }
+        confirmDeparture(of: form, from: nav, requiring: nav) {
+            nav.popToRootViewController(animated: true)
+        }
+        return false
+    }
+
+    /// Запрашивает подтверждение ухода с формы и выполняет `action`, только если после ожидания
+    /// сессия и вкладка не изменились, а `target` всё ещё в `viewControllers`.
+    private func confirmDeparture(
+        of form: FormDepartureParticipant,
+        from origin: UIViewController,
+        requiring target: UIViewController,
+        then action: @escaping () -> Void
+    ) {
+        guard !form.isSavingDraft else { return }
         let stamp = session.capture()
         isChangingTab = true
         Task { [weak self] in
@@ -47,9 +74,8 @@ extension MainTabbarViewController: UITabBarControllerDelegate {
             defer { self.isChangingTab = false }
             guard await form.requestDeparture(), self.session.isCurrent(stamp),
                   self.selectedViewController === origin,
-                  self.viewControllers?.contains(where: { $0 === viewController }) == true else { return }
-            self.selectedViewController = viewController
+                  self.viewControllers?.contains(where: { $0 === target }) == true else { return }
+            action()
         }
-        return false
     }
 }

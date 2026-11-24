@@ -8,6 +8,8 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var usingCache = false
     @Published private(set) var hasMore = true
+    /// Последняя ошибка — сбой догрузки страницы (а не первой загрузки): Retry повторяет страницу.
+    private var pageLoadFailed = false
     @Published var query = ""
 
     private let originStamp: SessionStamp
@@ -16,7 +18,12 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
     private let cached: ((String) -> [Item]?)?
     private var generation = 0
     private var nextOffset = 0
-    private var hasAppeared = false
+    /// Первая загрузка завершена (не отменена) или сессия завершена: до этого экран показывает скелетон,
+    /// а не пустое состояние.
+    @Published private(set) var hasAppeared = false
+
+    /// Скелетон вместо пустого состояния: данных ещё нет и ошибки нет, а загрузка идёт или не завершалась.
+    var showsSkeleton: Bool { (isLoading || !hasAppeared) && items.isEmpty && errorMessage == nil }
     private var searchTask: Task<Void, Never>?
     private var sessionSubscription: AnyCancellable?
 
@@ -38,15 +45,19 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
                 self.isLoading = false
                 self.usingCache = false
                 self.errorMessage = nil
+                self.pageLoadFailed = false
                 self.hasMore = false
+                // Модель больше не загрузит данные: скелетон не должен висеть.
+                self.hasAppeared = true
             }
     }
 
     func appear() async {
         guard !hasAppeared, session.isCurrent(originStamp), !Task.isCancelled else { return }
-        hasAppeared = true
         items = cached?(query) ?? []
         await reload()
+        // Отменённая первая загрузка не должна блокировать повторную при следующем появлении экрана.
+        if !Task.isCancelled { hasAppeared = true }
     }
 
     func searchChanged() {
@@ -56,6 +67,7 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
         items = cached?(query) ?? []
         usingCache = false
         errorMessage = nil
+        pageLoadFailed = false
         isLoading = false
         searchTask = Task { [weak self] in
             do { try await Task.sleep(for: SearchPolicy.debounce) }
@@ -77,6 +89,13 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
         await load(reset: false)
     }
 
+    /// Повтор после ошибки: упавшая догрузка повторяет ту же страницу, не сбрасывая загруженный список.
+    func retry() async {
+        guard session.isCurrent(originStamp) else { return }
+        if pageLoadFailed { await loadMore() }
+        else { await reload() }
+    }
+
     private func load(reset: Bool) async {
         let requestGeneration = generation
         let requestedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -84,6 +103,7 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
         let stamp = session.capture()
         isLoading = true
         errorMessage = nil
+        pageLoadFailed = false
         defer {
             if generation == requestGeneration { isLoading = false }
         }
@@ -110,7 +130,8 @@ final class PagedReadViewModel<Item: Codable & Identifiable>: ObservableObject {
                 usingCache = true
                 hasMore = false
             }
-            errorMessage = "Could not load data".localized
+            errorMessage = API.userMessage(for: error, fallback: "Could not load data".localized)
+            pageLoadFailed = !reset
         }
     }
 }
@@ -153,7 +174,7 @@ final class ReadDetailViewModel<Item>: ObservableObject {
             usingCache = false
         } catch {
             guard session.isCurrent(stamp), !Task.isCancelled, !(error is CancellationError) else { return }
-            errorMessage = failureMessage
+            errorMessage = API.userMessage(for: error, fallback: failureMessage)
             usingCache = item != nil
         }
     }

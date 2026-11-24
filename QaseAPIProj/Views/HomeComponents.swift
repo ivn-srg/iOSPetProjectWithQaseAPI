@@ -49,6 +49,22 @@ struct HomeGlass: ViewModifier {
     private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: radius) }
 }
 
+private struct CardSurface: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(
+                Color(uiColor: AppTheme.Palette.surface),
+                in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
+            )
+            .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
+                .stroke(Color(uiColor: AppTheme.Palette.border)))
+    }
+}
+
+extension View {
+    func cardSurface() -> some View { modifier(CardSurface()) }
+}
+
 struct HomePressStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.isEnabled) private var enabled
@@ -366,12 +382,7 @@ struct MetricTile: View {
             .padding(.vertical, AppTheme.Space.medium)
             .padding(.horizontal, AppTheme.Space.small)
             .frame(maxWidth: .infinity, minHeight: Layout.metricCardMinimumHeight)
-            .background(
-                Color(uiColor: AppTheme.Palette.surface),
-                in: RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-            )
-            .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.card)
-                .stroke(Color(uiColor: AppTheme.Palette.border)))
+            .cardSurface()
             .shadow(
                 color: Color(uiColor: AppTheme.Shadows.low),
                 radius: AppTheme.Shadows.lowRadius,

@@ -40,17 +40,18 @@ xcodebuild test \
   -only-testing:QaseAPIProjTests
 ```
 
-UI-проверки используют тот же вызов с `-only-testing:QaseAPIProjUITests`. Имя и OS замените на установленный симулятор. Для отдельной проверки: `-only-testing:QaseAPIProjTests/QaseAPIProjTests/checkValidURL`.
+Чтобы не нагружать машину клонами симулятора, добавляйте `-parallel-testing-enabled NO`. UI-проверки используют тот же вызов с `-only-testing:QaseAPIProjUITests`. Имя и OS замените на установленный симулятор. Для отдельной проверки: `-only-testing:QaseAPIProjTests/QaseAPIProjTests/checkValidURL`.
 
-Исходники unit-проверок используют Swift Testing, UI-проверок — XCTest. Общие схемы сохранены в проекте. UI-тестовый аргумент `UITests` выбирает mock-сеть, credentials в памяти и изолированный Realm; реальные токены в тестовых данных не нужны.
+Исходники unit-проверок используют Swift Testing, UI-проверок — XCTest. Общие схемы сохранены в проекте. UI-тестовый аргумент `UITests` выбирает mock-сеть, credentials в памяти и изолированный Realm; реальные токены в тестовых данных не нужны. Общие помощники unit-тестов — в `QaseAPIProjTests/TestSupport.swift`: сетевой фейк `ScriptedNetwork` (запись запросов, удержание по условию, ответ замыканием), `waitForCondition` (ограниченное ожидание вместо `sleep`), `TemporaryDefaults` (тестовые домены `UserDefaults` удаляются после теста).
 
 | Область | Исходники проверок |
 |---|---|
 | Авторизация и замена токена | AuthScreenTests, AuthHTTPTests, TokenReplacementTests, AuthScreenUITests |
 | Сессии, проект и граф зависимостей | ArchitectureRegressionTests, ProjectLifecycleTests, ProjectSwitchTests |
 | Кеш, Home и пагинация | IdentityCacheTests, CacheManagementTests, HomeDataTests, HomeViewModelTests, PagedReadViewModelTests, RepositoryRefinementTests |
-| Формы и родитель | FormComponentTests, FormDraftTests, FormParentPickerTests |
-| Настройки, tokens и UI | AppSettingsTests, DesignTokenTests, HomeScreenUITests, QaseAPIProjUITests |
+| Формы и родитель | FormComponentTests, FormDraftTests, FormSaveDraftTests, FormRequestBodyTests, FormParentPickerTests, EditorBackGestureTests, EntityFormUITests |
+| Хранение данных | KeychainServiceTests, AuthSessionTests, RealmStoreLocationTests |
+| Настройки, tokens и UI | AppSettingsTests, DesignTokenTests, ReadAndSettingsViewModelTests, HomeScreenUITests, SettingsScreenUITests, WorkScreenUITests, QaseAPIProjUITests |
 
 [CI](../.github/workflows/ios-ci.yml) содержит сборку, unit/UI-проверки и сохранение результатов. Наличие workflow и тестовых исходников не подтверждает успешный прогон; актуальный результат проверяется отдельно пользователем.
 

@@ -41,7 +41,9 @@ final class QaseAPIProjUITests: XCTestCase {
         if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
             // This measures how long it takes to launch your application.
             measure(metrics: [XCTApplicationLaunchMetric()]) {
-                XCUIApplication().launch()
+                let app = XCUIApplication()
+                app.launchArguments = ["UITests", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+                app.launch()
             }
         }
     }

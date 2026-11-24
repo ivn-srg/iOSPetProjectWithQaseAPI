@@ -21,6 +21,7 @@ final class TestCaseEditorViewModel {
     private let clock: () -> Date
     private var didRecordView = false
     private var isPublishing = false
+    private var saveGeneration = 0
 
     private func reportCacheWrite(_ accepted: Bool) {
         if !accepted { onCacheFailure() }
@@ -55,30 +56,52 @@ final class TestCaseEditorViewModel {
         changedTestCase = testCase
     }
 
+    /// Кеш показывается сразу, затем кейс сверяется с сервером. Ошибка сверки при показанном кеше не сообщается.
     func fetchCaseDataJSON() async throws(API.NetError) {
         guard session.isCurrent(stamp), !Task.isCancelled else { return }
-        if let cached = dao.getTestCase(reference: reference) {
-            publish(cached)
-            return
+        let cached = dao.getTestCase(reference: reference)
+        if let cached { publish(cached) }
+        let generation = saveGeneration
+        guard let result = await loadServerCase() else { return }
+        switch result {
+        case .failure(let error):
+            if cached == nil { throw error }
+        case .success(let fresh):
+            // Сохранение, начатое во время сверки, перечитает кейс само; старый ответ не пишется никуда.
+            guard generation == saveGeneration, !isSaving else { return }
+            reportCacheWrite(dao.saveTestCase(fresh, reference: reference, stamp: stamp))
+            if !hasUnsavedChanges {
+                publish(fresh)
+                // Первое открытие из кеша записало в историю устаревшую версию.
+                if cached != nil { recordRecentView(of: fresh) }
+            }
         }
-        guard let url = network.composeURL(
-            for: .cases,
-            urlComponents: [reference.projectCode, String(reference.caseID)],
-            queryItems: nil
-        ) else { throw .invalidURL }
+    }
 
-        let response = try await network.performRequest(
-            with: nil,
-            from: url,
-            method: .get,
-            modelType: TestCaseModel.self
-        )
-        guard session.isCurrent(stamp), !Task.isCancelled else { return }
-        guard response.status,
-              response.result.id == reference.caseID
-        else { throw .invalidRequest("The test case could not be loaded") }
-        reportCacheWrite(dao.saveTestCase(response.result, reference: reference, stamp: stamp))
-        publish(response.result)
+    /// `nil` — сессия сменилась или задача отменена: ответ не применяется.
+    private func loadServerCase() async -> Result<TestCaseEntity, API.NetError>? {
+        let response: TestCaseModel
+        do {
+            response = try await network.performRequest(
+                for: .getCase,
+                pathParameters: casePath,
+                queryItems: [],
+                with: nil,
+                modelType: TestCaseModel.self
+            )
+        } catch {
+            // `performRequest` бросает только `API.NetError`: тип ошибки здесь выводится компилятором.
+            guard session.isCurrent(stamp), !Task.isCancelled else { return nil }
+            return .failure(error)
+        }
+        guard session.isCurrent(stamp), !Task.isCancelled else { return nil }
+        guard response.status, response.result.id == reference.caseID
+        else { return .failure(.invalidRequest("The test case could not be loaded")) }
+        return .success(response.result)
+    }
+
+    private var casePath: [String: String] {
+        ["code": reference.projectCode, "id": String(reference.caseID)]
     }
 
     private func publish(_ value: TestCaseEntity) {
@@ -89,45 +112,56 @@ final class TestCaseEditorViewModel {
         isPublishing = false
         checkDataChanged()
         if !didRecordView {
-            let item = RecentCaseItem(
-                reference: reference,
-                title: value.title,
-                description: value.description,
-                priority: value.priority.apiValue,
-                automation: value.automation.apiValue,
-                viewedAt: clock()
-            )
-            reportCacheWrite(dao.recordRecentCase(item, stamp: stamp))
+            recordRecentView(of: value)
             didRecordView = true
         }
     }
 
+    private func recordRecentView(of value: TestCaseEntity) {
+        let item = RecentCaseItem(
+            reference: reference,
+            title: value.title,
+            description: value.description,
+            priority: value.priority.apiValue,
+            automation: value.automation.apiValue,
+            viewedAt: clock()
+        )
+        reportCacheWrite(dao.recordRecentCase(item, stamp: stamp))
+    }
+
+    /// PATCH отправляет только изменённые поля, затем кейс перечитывается: ответ PATCH содержит лишь `id`.
     func updateTestCaseData() async throws(API.NetError) {
         guard !isSaving else { throw .invalidRequest("A save is already in progress") }
         isUploadingSuccess = false
-        guard isSessionCurrent, !Task.isCancelled, let draft = changedTestCase, canSaveDraft,
-              hasUnsavedChanges else { throw .invalidRequest("The draft cannot be saved") }
-        guard let url = network.composeURL(
-            for: .cases,
-            urlComponents: [reference.projectCode, String(reference.caseID)],
-            queryItems: nil
-        ) else { throw .invalidURL }
+        guard isSessionCurrent, !Task.isCancelled, let base = testCase, let draft = changedTestCase,
+              canSaveDraft, hasUnsavedChanges else { throw .invalidRequest("The draft cannot be saved") }
+        saveGeneration += 1
         isSaving = true
         defer { isSaving = false }
-        let response = try await network.performRequest(
-            with: draft.dictOfValues,
-            from: url,
-            method: .patch,
-            modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
-        )
-        guard isSessionCurrent,
-              !Task.isCancelled else { throw .invalidRequest("The session is no longer active") }
-        guard response.status?.value == true
-        else { throw .invalidRequest("The test case could not be saved") }
-        reportCacheWrite(dao.saveTestCase(draft, reference: reference, stamp: stamp))
+        let payload = TestCaseUpdatePayload(from: base, to: draft)
+        var saved = draft
+        if !payload.isEmpty {
+            let response = try await network.performRequest(
+                for: .updateCase,
+                pathParameters: casePath,
+                queryItems: [],
+                with: payload,
+                modelType: ServerResponseModel<CreateOrUpdateTestCaseModel>.self
+            )
+            guard isSessionCurrent,
+                  !Task.isCancelled else { throw .invalidRequest("The session is no longer active") }
+            guard response.status?.value == true
+            else { throw .invalidRequest("The test case could not be saved") }
+            // Не удалось перечитать — PATCH уже принят, в кеш идёт черновик.
+            if case .success(let fresh)? = await loadServerCase() { saved = fresh }
+            guard isSessionCurrent,
+                  !Task.isCancelled else { throw .invalidRequest("The session is no longer active") }
+        }
+        reportCacheWrite(dao.saveTestCase(saved, reference: reference, stamp: stamp))
+        recordRecentView(of: saved)
         isPublishing = true
-        changedTestCase = draft
-        testCase = draft
+        changedTestCase = saved
+        testCase = saved
         isPublishing = false
         checkDataChanged()
         isSaving = false

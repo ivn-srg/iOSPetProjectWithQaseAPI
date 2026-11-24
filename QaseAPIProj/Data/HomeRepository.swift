@@ -9,10 +9,12 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
     private let originStamp: SessionStamp
     private let session: SessionContext
     private let clock: () -> Date
+    private let sleep: (Duration) async throws -> Void
     private let pageSize = PaginationPolicy.pageSize
     private var projectPageStamp: SessionStamp?
     private var projectPageOffset = 0
     private var fetchedProjects: [ProjectSummary] = []
+    private var prefixGenerations: [String: Int] = [:]
 
     private func reportCacheWrite(_ accepted: Bool) {
         if !accepted { onCacheFailure() }
@@ -23,6 +25,7 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
         dao: HomeRepositoryCache? = nil,
         session: SessionContext,
         clock: @escaping () -> Date = Date.init,
+        sleep: @escaping (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
         onCacheFailure: @escaping () -> Void = {}
     ) {
         self.onCacheFailure = onCacheFailure
@@ -31,6 +34,7 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
         self.session = session
         originStamp = session.capture()
         self.clock = clock
+        self.sleep = sleep
     }
 
     func listProjects(offset: Int = 0) async throws -> QaseAPIListResult<ProjectSummary> {
@@ -122,14 +126,13 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
                 total: page.filtered ?? page.total
             ) { break }
         }
-        let active = candidates.sorted(by: Self.mostRecentFirst).first?.summary
+        let latestRun = candidates.sorted(by: Self.mostRecentFirst).first
+        let active = latestRun?.summary
         if let dao {
-            if !candidates.isEmpty {
-                reportCacheWrite(dao.saveRuns(
-                    merged(dao.getRuns(projectCode: projectCode) ?? [], with: candidates),
-                    projectCode: projectCode,
-                    stamp: stamp
-                ))
+            // Отфильтрованная выборка не пишется в кеш списка Runs. Деталь нужна для офлайн-открытия с Home;
+            // деталь с кейсами (загружена экраном запуска) полнее и не затирается.
+            if let latestRun, dao.getRun(projectCode: projectCode, id: latestRun.id)?.cases == nil {
+                reportCacheWrite(dao.saveRun(latestRun, projectCode: projectCode, stamp: stamp))
             }
             let previous = dao.getHomeSnapshot(projectCode: projectCode)
             reportCacheWrite(dao.saveHomeSnapshot(
@@ -196,17 +199,21 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
 
     func runs(projectCode: String, offset: Int = 0) async throws -> QaseAPIListResult<RunReadDTO> {
         let stamp = session.capture()
+        let prefix = beginPrefixPage("runs|\(projectCode)", offset: offset)
         let page: QaseAPIListResult<RunReadDTO> = try await request(
             .getRuns,
             path: ["code": projectCode],
             query: pagination(offset),
             stamp: stamp
         )
-        if let dao { reportCacheWrite(dao.saveRuns(
-            merged(dao.getRuns(projectCode: projectCode) ?? [], with: page.entities),
-            projectCode: projectCode,
-            stamp: stamp
-        )) }
+        if let dao,
+           let cached = prefixBase(prefix, offset: offset, cached: dao.getRuns(projectCode: projectCode)) {
+            reportCacheWrite(dao.saveRuns(
+                merged(cached, with: page.entities),
+                projectCode: projectCode,
+                stamp: stamp
+            ))
+        }
         return page
     }
 
@@ -224,17 +231,21 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
 
     func defects(projectCode: String, offset: Int = 0) async throws -> QaseAPIListResult<DefectReadDTO> {
         let stamp = session.capture()
+        let prefix = beginPrefixPage("defects|\(projectCode)", offset: offset)
         let page: QaseAPIListResult<DefectReadDTO> = try await request(
             .getDefects,
             path: ["code": projectCode],
             query: pagination(offset),
             stamp: stamp
         )
-        if let dao { reportCacheWrite(dao.saveDefects(
-            merged(dao.getDefects(projectCode: projectCode) ?? [], with: page.entities),
-            projectCode: projectCode,
-            stamp: stamp
-        )) }
+        if let dao,
+           let cached = prefixBase(prefix, offset: offset, cached: dao.getDefects(projectCode: projectCode)) {
+            reportCacheWrite(dao.saveDefects(
+                merged(cached, with: page.entities),
+                projectCode: projectCode,
+                stamp: stamp
+            ))
+        }
         return page
     }
 
@@ -287,6 +298,20 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
         return dao?.getDefects(projectCode: projectCode) != nil
     }
 
+    /// Кеш Runs/Defects — последний просмотренный префикс списка: страница offset 0 начинает его заново,
+    /// следующие дописываются, только если префикс не начинали заново с момента их запроса.
+    private func beginPrefixPage(_ key: String, offset: Int) -> (key: String, generation: Int) {
+        if offset == 0 { prefixGenerations[key, default: 0] += 1 }
+        return (key, prefixGenerations[key, default: 0])
+    }
+
+    /// Основа для записи страницы: `[]` для offset 0, текущий кеш для продолжения;
+    /// `nil` — страницу не писать.
+    private func prefixBase<T>(_ prefix: (key: String, generation: Int), offset: Int, cached: [T]?) -> [T]? {
+        guard prefixGenerations[prefix.key, default: 0] == prefix.generation else { return nil }
+        return offset == 0 ? [] : cached
+    }
+
     private func merged<T: Identifiable>(_ cached: [T], with fetched: [T]) -> [T] {
         let incomingIDs = Set(fetched.map(\.id))
         return cached.filter { !incomingIDs.contains($0.id) } + fetched
@@ -300,13 +325,29 @@ final class HomeRepository: HomeReading, ProjectsReading, RepositoryReading, Wor
     ) async throws -> T {
         try Task.checkCancellation()
         guard session.isCurrent(originStamp) else { throw CancellationError() }
-        let response = try await network.performRequest(
-            for: operation,
-            pathParameters: path,
-            queryItems: query,
-            with: nil,
-            modelType: QaseAPIResponse<T>.self
-        )
+        func send() async throws -> QaseAPIResponse<T> {
+            try await network.performRequest(
+                for: operation,
+                pathParameters: path,
+                queryItems: query,
+                with: nil,
+                modelType: QaseAPIResponse<T>.self
+            )
+        }
+        let response: QaseAPIResponse<T>
+        do {
+            response = try await send()
+        } catch let error as API.NetError {
+            // Один повтор той же страницы: полный обход не должен обрываться на коротком окне лимита Qase.
+            // Повторяется только чтение: запись не должна уходить дважды.
+            guard operation.httpMethod == .get,
+                  case .httpError(statusCode: 429, message: _, retryAfter: let retryAfter) = error,
+                  let delay = RateLimitPolicy.retryDelay(retryAfter: retryAfter) else { throw error }
+            try await sleep(delay)
+            try Task.checkCancellation()
+            guard session.isCurrent(originStamp), session.isCurrent(stamp) else { throw CancellationError() }
+            response = try await send()
+        }
         try Task.checkCancellation()
         guard session.isCurrent(stamp) else { throw CancellationError() }
         guard let result = response.result, response.status?.value != false else {

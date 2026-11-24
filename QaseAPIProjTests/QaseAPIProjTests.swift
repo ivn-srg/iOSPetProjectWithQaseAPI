@@ -27,7 +27,11 @@ struct QaseAPIProjTests {
 
     @Test("API compose method checking")
     func checkValidURL() async throws {
-        let projectUrl = apiManager.composeURL(for: .project, urlComponents: nil, queryItems: [.limit: 10])!
+        let projectUrl = apiManager.composeURL(
+            for: .getProjects,
+            pathParameters: [:],
+            queryItems: [API.QueryParams.limit.item("10")]
+        )!
 
         #expect(projectUrl.absoluteString == "https://api.qase.io/v1/project?limit=10")
     }
@@ -203,10 +207,8 @@ struct QaseAPIProjTests {
     }
 
     @Test func checkFirstProjectTitle() async throws {
-        let dataURL = apiManager.composeURL(for: .project, urlComponents: nil)!
         let projectsData = try await apiManager.performRequest(
-            from: dataURL,
-            method: .get,
+            for: .getProjects,
             modelType: ProjectDataModel.self
         )
         let projects = projectsData.result.entities

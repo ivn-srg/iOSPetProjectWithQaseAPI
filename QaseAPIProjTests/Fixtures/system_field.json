@@ -1,0 +1,592 @@
+{
+  "status": true,
+  "result": [
+    {
+      "title": "Priority",
+      "slug": "priority",
+      "default_value": "0",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 0,
+          "title": "Not set",
+          "slug": "undefined",
+          "color": "medium",
+          "icon": "minus",
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 1,
+          "title": "High",
+          "slug": "high",
+          "color": "high",
+          "icon": "arrow-up",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 2,
+          "title": "Medium",
+          "slug": "medium",
+          "color": "medium",
+          "icon": "genderless",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 3,
+          "title": "Low",
+          "slug": "low",
+          "color": "low",
+          "icon": "arrow-down",
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "Severity",
+      "slug": "severity",
+      "default_value": "4",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 0,
+          "title": "Not set",
+          "slug": "undefined",
+          "color": "normal",
+          "icon": "minus",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 1,
+          "title": "Blocker",
+          "slug": "blocker",
+          "color": "blocker",
+          "icon": "ban",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 2,
+          "title": "Critical",
+          "slug": "critical",
+          "color": "critical",
+          "icon": "angle-double-up",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 3,
+          "title": "Major",
+          "slug": "major",
+          "color": "major",
+          "icon": "angle-up",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 4,
+          "title": "Normal",
+          "slug": "normal",
+          "color": "normal",
+          "icon": "genderless",
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 5,
+          "title": "Minor",
+          "slug": "minor",
+          "color": "minor",
+          "icon": "angle-down",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 6,
+          "title": "Trivial",
+          "slug": "trivial",
+          "color": "normal",
+          "icon": "angle-double-down",
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "Type",
+      "slug": "type",
+      "default_value": "1",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 1,
+          "title": "Other",
+          "slug": "other",
+          "color": "#C2C2C2",
+          "icon": null,
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 8,
+          "title": "Functional",
+          "slug": "functional",
+          "color": "#007bff",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 2,
+          "title": "Smoke",
+          "slug": "smoke",
+          "color": "#6610f2",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 3,
+          "title": "Regression",
+          "slug": "regression",
+          "color": "#e83e8c",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 4,
+          "title": "Security",
+          "slug": "security",
+          "color": "#fd7e14",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 5,
+          "title": "Usability",
+          "slug": "usability",
+          "color": "#28a745",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 6,
+          "title": "Performance",
+          "slug": "performance",
+          "color": "#20c997",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 7,
+          "title": "Acceptance",
+          "slug": "acceptance",
+          "color": "#17a2b8",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 9,
+          "title": "Compatibility",
+          "slug": "compatibility",
+          "color": "#6f42c1",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 10,
+          "title": "Integration",
+          "slug": "integration",
+          "color": "#dc3545",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 11,
+          "title": "Exploratory",
+          "slug": "exploratory",
+          "color": "#f8f9fa",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "Behavior",
+      "slug": "behavior",
+      "default_value": "1",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 1,
+          "title": "Not set",
+          "slug": "undefined",
+          "color": "#C2C2C2",
+          "icon": null,
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 2,
+          "title": "Positive",
+          "slug": "positive",
+          "color": "#7ED321",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 3,
+          "title": "Negative",
+          "slug": "negative",
+          "color": "#D0021B",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 4,
+          "title": "Destructive",
+          "slug": "destructive",
+          "color": "#fd7e14",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "Description",
+      "slug": "description",
+      "default_value": "",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 2
+    },
+    {
+      "title": "Pre-conditions",
+      "slug": "preconditions",
+      "default_value": "",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 2
+    },
+    {
+      "title": "Post-conditions",
+      "slug": "postconditions",
+      "default_value": "",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 2
+    },
+    {
+      "title": "Status",
+      "slug": "status",
+      "default_value": "0",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 0,
+          "title": "Actual",
+          "slug": "actual",
+          "color": "#7ED321",
+          "icon": null,
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 1,
+          "title": "Draft",
+          "slug": "draft",
+          "color": "#C2C2C2",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 2,
+          "title": "Deprecated",
+          "slug": "deprecated",
+          "color": "#D0021B",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "Automation status (deprecated)",
+      "slug": "automation",
+      "default_value": "0",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 0,
+          "title": "Manual",
+          "slug": "is-not-automated",
+          "color": "",
+          "icon": "hand-paper",
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 1,
+          "title": "To be automated",
+          "slug": "to-be-automated",
+          "color": "",
+          "icon": "user-cog",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 2,
+          "title": "Automated",
+          "slug": "automated",
+          "color": "var(--cf-icon-color-8)",
+          "icon": "cog",
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "Automation status",
+      "slug": "isManual",
+      "default_value": "0",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 0,
+          "title": "Manual",
+          "slug": "manual",
+          "color": "",
+          "icon": "hand-paper",
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 1,
+          "title": "Automated",
+          "slug": "automated",
+          "color": "var(--cf-icon-color-8)",
+          "icon": "cog",
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "To be automated",
+      "slug": "isToBeAutomated",
+      "default_value": "",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 4
+    },
+    {
+      "title": "Layer",
+      "slug": "layer",
+      "default_value": "0",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 0,
+          "title": "Not set",
+          "slug": "unknown",
+          "color": "",
+          "icon": null,
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 1,
+          "title": "E2E",
+          "slug": "e2e",
+          "color": "",
+          "icon": "desktop",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 2,
+          "title": "API",
+          "slug": "api",
+          "color": "",
+          "icon": "network-wired",
+          "is_default": false,
+          "read_only": false
+        },
+        {
+          "id": 3,
+          "title": "Unit",
+          "slug": "unit",
+          "color": "",
+          "icon": "cogs",
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "Is flaky",
+      "slug": "is_flaky",
+      "default_value": "0",
+      "is_required": false,
+      "entity": 0,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 0,
+          "title": "No",
+          "slug": "no",
+          "color": "var(--cf-icon-color-8)",
+          "icon": null,
+          "is_default": true,
+          "read_only": false
+        },
+        {
+          "id": 1,
+          "title": "Yes",
+          "slug": "yes",
+          "color": "#D0021B",
+          "icon": null,
+          "is_default": false,
+          "read_only": false
+        }
+      ]
+    },
+    {
+      "title": "Result status",
+      "slug": "result_status",
+      "default_value": "0",
+      "is_required": false,
+      "entity": 3,
+      "type": 0,
+      "input_type": 3,
+      "options": [
+        {
+          "id": 0,
+          "title": "Untested",
+          "slug": "untested",
+          "color": "#5A576D",
+          "icon": "fas fa-square-dashed",
+          "is_default": true,
+          "read_only": true
+        },
+        {
+          "id": 1,
+          "title": "Passed",
+          "slug": "passed",
+          "color": "#00875E",
+          "icon": "fas fa-check",
+          "is_default": false,
+          "read_only": true
+        },
+        {
+          "id": 2,
+          "title": "Failed",
+          "slug": "failed",
+          "color": "#DE1846",
+          "icon": "fas fa-xmark",
+          "is_default": false,
+          "read_only": true
+        },
+        {
+          "id": 3,
+          "title": "Blocked",
+          "slug": "blocked",
+          "color": "#D0A632",
+          "icon": "fas fa-ban",
+          "is_default": false,
+          "read_only": true
+        },
+        {
+          "id": 4,
+          "title": "Retest",
+          "slug": "retest",
+          "color": "#9196F1",
+          "icon": "fas fa-arrow-rotate-left",
+          "is_default": false,
+          "read_only": true
+        },
+        {
+          "id": 5,
+          "title": "Skipped",
+          "slug": "skipped",
+          "color": "#A3A1B2",
+          "icon": "fas fa-right-to-line",
+          "is_default": false,
+          "read_only": true
+        },
+        {
+          "id": 6,
+          "title": "Deleted",
+          "slug": "deleted",
+          "color": "normal",
+          "icon": "fas fa-trash-alt",
+          "is_default": false,
+          "read_only": true
+        },
+        {
+          "id": 7,
+          "title": "In progress",
+          "slug": "in_progress",
+          "color": "#1e54c5",
+          "icon": "fas fa-spinner",
+          "is_default": false,
+          "read_only": true
+        },
+        {
+          "id": 8,
+          "title": "Invalid",
+          "slug": "invalid",
+          "color": "#9425BD",
+          "icon": "fas fa-heart-broken",
+          "is_default": false,
+          "read_only": true
+        }
+      ]
+    }
+  ]
+}

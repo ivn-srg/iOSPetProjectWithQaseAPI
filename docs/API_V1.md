@@ -27,7 +27,7 @@
 | Cases | `GET /case/{code}` | Query: search, milestone_id, suite_id, severity, priority, type, behavior, automation, status, `external_issues[type]`, repeated `external_issues[ids][]`, include, limit, offset | `QaseAPIResponse<QaseAPIListResult<TestCaseEntity>>` |
 | Cases | `POST /case/{code}` | `EncodableTestCase` JSON body | `QaseAPIResponse<QaseAPIIDResult>` |
 | Cases | `GET /case/{code}/{id}` | Query: include | `QaseAPIResponse<TestCaseEntity>` |
-| Cases | `PATCH /case/{code}/{id}` | `EncodableTestCase` JSON body | `QaseAPIResponse<QaseAPIIDResult>` |
+| Cases | `PATCH /case/{code}/{id}` | `TestCaseUpdatePayload` JSON body: только изменённые поля, `isManual`/`isToBeAutomated` в camelCase | `QaseAPIResponse<QaseAPIIDResult>` |
 | Cases | `DELETE /case/{code}/{id}` | — | `QaseAPIResponse<QaseAPIIDResult>` |
 | Cases | `POST /case/{code}/bulk` | `QaseAPIBulkCasesRequest` JSON body | `QaseAPIResponse<QaseAPIIDsResult>` |
 | Cases | `POST /case/{code}/external-issue/attach` | `QaseAPIExternalIssueRequest` JSON body (`type`, `links`) | Envelope результата Qase |
@@ -126,7 +126,7 @@ let response = try await network.performRequest(
 - JSON-запросы используют encoder с `convertToSnakeCase`. `QaseAPIObjectRequest` и `QaseAPIJSONValue` позволяют передать дополнительные поля и вложенные значения. Create/update DTO разделены там, где отличаются обязательные поля.
 - `QaseAPIResourceDTO` сохраняет общие поля и дополнительные свойства в `fields`; `QaseAPIIdentifier` принимает числовой или строковый ID. Действующие экраны проектов, suites и cases также используют специализированные модели проекта.
 - Multipart использует `file[]`. В клиенте заданы ограничения: до 20 файлов, до 32 MiB на файл, до 128 MiB на multipart body вместе с заголовками и boundary. Проверяются MIME type и экранирование имени файла. Эти константы не являются подтверждением актуальных лимитов сервера.
-- Non-2xx в обычных JSON/multipart запросах становятся `API.NetError.httpError`. Числовой `Retry-After` доступен вызывающему коду; автоматического повторения запроса этот клиент не выполняет.
+- Non-2xx в обычных JSON/multipart запросах становятся `API.NetError.httpError`. Числовой `Retry-After` доступен вызывающему коду. `APIManager` запросы не повторяет; `HomeRepository` (чтение) повторяет ответ 429 один раз, если `Retry-After` не больше 10 с (`RateLimitPolicy`). Офлайн-коды `URLError` (нет сети, потеря соединения, хост недоступен) становятся `API.NetError.noInternetConnection`.
 - `APIManager.auth(by:)` возвращает `false` для пустого токена и HTTP 401. Остальные HTTP-отказы, включая 403, передаются ошибкой; транспортные ошибки также не превращаются в `false`. Проверка candidate не меняет действующие credentials.
 - Для ответов, не описанных generic DTO, используйте отдельную модель. Не подключайте операцию к UI только на основании существования маршрута: нужны проверка прав, состояний ошибок и сценария сохранения.
 

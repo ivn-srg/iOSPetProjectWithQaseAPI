@@ -24,29 +24,6 @@ struct API {
         case delete = "DELETE"
     }
 
-    enum Endpoint: String, CaseIterable {
-        case attachment
-        case author
-        case configuration
-        case project = "project"
-        case customField = "custom_field"
-        case defect
-        case environment
-        case milestone
-        case plan
-        case result
-        case review
-        case run
-        case search
-        case sharedParameter = "shared_parameter"
-        case sharedStep = "shared_step"
-        case suites = "suite"
-        case cases = "case"
-        case systemField = "system_field"
-        case user
-
-    }
-
     enum Operation: String, CaseIterable {
         case getAttachments = "GET /attachment"
         case getAttachment = "GET /attachment/{hash}"
@@ -216,6 +193,32 @@ struct API {
         return components?.url
     }
 
+    /// Коды `URLError`, при которых до Qase не достучаться из-за сети устройства.
+    static let offlineCodes: Set<URLError.Code> = [
+        .notConnectedToInternet, .networkConnectionLost, .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed,
+        .dataNotAllowed
+    ]
+
+    /// Текст ошибки для пользователя: известные причины (токен, лимит, сервер, связь) получают свой текст,
+    /// остальные — текст экрана. Серверный `message` и технические строки не показываются.
+    static func userMessage(for error: Error, fallback: String) -> String {
+        switch error {
+        case NetError.httpError(statusCode: 401, message: _, retryAfter: _):
+            return "Check your API token in Settings.".localized
+        case NetError.httpError(statusCode: 429, message: _, retryAfter: _):
+            return "Too many requests. Try again in a moment.".localized
+        case NetError.httpError(statusCode: let status, message: _, retryAfter: _)
+            where (500 ... 599).contains(status):
+            return "Qase is temporarily unavailable. Try again later.".localized
+        case NetError.noInternetConnection, NetError.timeout:
+            return "Could not connect. Check your internet connection and try again.".localized
+        case let error as URLError where offlineCodes.contains(error.code) || error.code == .timedOut:
+            return "Could not connect. Check your internet connection and try again.".localized
+        default:
+            return fallback
+        }
+    }
+
     static func httpError(from response: HTTPURLResponse, data: Data) -> NetError? {
         guard !(200 ... 299).contains(response.statusCode) else { return nil }
 
@@ -223,6 +226,17 @@ struct API {
         let message = errorModel?.errorMessage ?? errorModel?.message ?? "Qase API request failed."
         let retryAfter = response.value(forHTTPHeaderField: "Retry-After").flatMap(TimeInterval.init)
         return .httpError(statusCode: response.statusCode, message: message, retryAfter: retryAfter)
+    }
+
+    /// Тело запроса: ключи в snake_case, кроме тел с `ExplicitCodingKeys` — их ключи уходят как объявлены.
+    static func encodeBody(_ body: Encodable) throws(NetError) -> Data {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = body is ExplicitCodingKeys ? .useDefaultKeys : .convertToSnakeCase
+        do {
+            return try encoder.encode(body)
+        } catch {
+            throw .serializationError(error.localizedDescription)
+        }
     }
 
     static func decodeResponse<Response: Decodable>(
@@ -305,14 +319,11 @@ struct API {
     }
 }
 
-protocol NetworkManager: AnyObject {
-    func performRequest<T: Decodable>(
-        with data: Encodable?,
-        from urlString: URL?,
-        method: API.HTTPMethod,
-        modelType: T.Type
-    ) async throws(API.NetError) -> T
+/// Тело объявляет ключи в итоговом виде: Qase ждёт смесь snake_case и camelCase (`is_flaky`, `isManual`),
+/// а `.convertToSnakeCase` переписал бы и явные `CodingKeys`.
+protocol ExplicitCodingKeys {}
 
+protocol NetworkManager: AnyObject {
     func performMultipartRequest<T: Decodable>(
         for operation: API.Operation,
         pathParameters: [String: String],
@@ -328,19 +339,17 @@ protocol NetworkManager: AnyObject {
         modelType: T.Type
     ) async throws(API.NetError) -> T
 
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]?
-    ) -> URL?
+    func auth(by token: String) async throws -> Bool
+}
 
+extension NetworkManager {
     func composeURL(
         for operation: API.Operation,
         pathParameters: [String: String],
         queryItems: [URLQueryItem]
-    ) -> URL?
-
-    func auth(by token: String) async throws -> Bool
+    ) -> URL? {
+        API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
+    }
 }
 
 final class APIManager: NetworkManager {
@@ -355,7 +364,7 @@ final class APIManager: NetworkManager {
     func auth(by token: String) async throws -> Bool {
         guard
             !token.isEmpty,
-            let url = composeURL(for: .project, urlComponents: nil)
+            let url = API.makeURL(for: .getProjects, pathParameters: [:], queryItems: [])
         else {
             return false
         }
@@ -376,32 +385,21 @@ final class APIManager: NetworkManager {
         return true
     }
 
-    func performRequest<T: Decodable>(
-        with data: Encodable? = nil,
-        from urlString: URL?,
+    private func send<T: Decodable>(
+        _ url: URL,
         method: API.HTTPMethod,
-        modelType: T.Type
+        body data: Encodable?,
+        as modelType: T.Type
     ) async throws(API.NetError) -> T {
-        guard
-            let url = urlString,
-            let authToken = tokenProvider()
-        else { throw .invalidURL }
+        guard let authToken = tokenProvider() else { throw .invalidURL }
 
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.addValue(authToken, forHTTPHeaderField: "Token")
 
         if let data = data {
-            let encoder = JSONEncoder()
-            let jsonData: Data
-            encoder.keyEncodingStrategy = .convertToSnakeCase
-            do {
-                jsonData = try encoder.encode(data)
-                request.httpBody = jsonData
-                request.addValue("application/json", forHTTPHeaderField: "content-type")
-            } catch {
-                throw .serializationError(error.localizedDescription)
-            }
+            request.httpBody = try API.encodeBody(data)
+            request.addValue("application/json", forHTTPHeaderField: "content-type")
         }
 
         if method == .delete || method == .get {
@@ -418,17 +416,12 @@ final class APIManager: NetworkManager {
         with data: Encodable? = nil,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        guard let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
+        guard let url = API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
         else {
             throw .invalidURL
         }
 
-        return try await performRequest(
-            with: data,
-            from: url,
-            method: operation.httpMethod,
-            modelType: modelType
-        )
+        return try await send(url, method: operation.httpMethod, body: data, as: modelType)
     }
 
     func performMultipartRequest<T: Decodable>(
@@ -470,31 +463,13 @@ final class APIManager: NetworkManager {
             return try API.decodeResponse(from: data, as: codableModelType)
         } catch let error as API.NetError {
             throw error
-        } catch let error as DecodingError {
-            throw .parsingError(error.errorDescription ?? error.localizedDescription)
-        } catch let error as URLError where error.code == .notConnectedToInternet {
+        } catch let error as URLError where API.offlineCodes.contains(error.code) {
             throw .noInternetConnection
         } catch let error as URLError where error.code == .timedOut {
             throw .timeout
         } catch {
             throw .otherNetworkError(error.localizedDescription)
         }
-    }
-
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]? = nil
-    ) -> URL? {
-        API.makeLegacyURL(for: method, urlComponents: urlComponents, queryItems: queryItems)
-    }
-
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? {
-        API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
     }
 }
 
@@ -509,25 +484,15 @@ final class APIMockManager: NetworkManager {
 
     func auth(by token: String) async throws -> Bool { true }
 
-    func performRequest<T: Decodable>(
-        with data: Encodable? = nil,
-        from urlString: URL?,
+    private func send<T: Decodable>(
+        _ url: URL,
         method: API.HTTPMethod,
-        modelType: T.Type
+        body data: Encodable?,
+        as modelType: T.Type
     ) async throws(API.NetError) -> T {
-        guard let url = urlString else { throw .invalidURL }
-
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
-        if let data {
-            do {
-                let encoder = JSONEncoder()
-                encoder.keyEncodingStrategy = .convertToSnakeCase
-                request.httpBody = try encoder.encode(data)
-            } catch {
-                throw .serializationError(error.localizedDescription)
-            }
-        }
+        if let data { request.httpBody = try API.encodeBody(data) }
         return try await makeHTTPRequest(for: request, codableModelType: modelType)
     }
 
@@ -538,16 +503,11 @@ final class APIMockManager: NetworkManager {
         with data: Encodable? = nil,
         modelType: T.Type
     ) async throws(API.NetError) -> T {
-        guard let url = composeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
+        guard let url = API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
         else {
             throw .invalidURL
         }
-        return try await performRequest(
-            with: data,
-            from: url,
-            method: operation.httpMethod,
-            modelType: modelType
-        )
+        return try await send(url, method: operation.httpMethod, body: data, as: modelType)
     }
 
     func performMultipartRequest<T: Decodable>(
@@ -681,13 +641,38 @@ final class APIMockManager: NetworkManager {
         case "PATCH" where detailID != nil:
             guard let index = entities.firstIndex(where: matchesID)
             else { throw API.NetError.invalidRequest("Entity not found.") }
-            entities[index].merge(try body(of: request)) { _, new in new }
+            var changes = try body(of: request)
+            if endpoint == "case", let isManual = changes["isManual"] as? Bool {
+                // Как сервер: устаревший `automation` следует за isManual/isToBeAutomated.
+                let toBeAutomated = changes["isToBeAutomated"] as? Bool ?? false
+                changes["automation"] = isManual ? (toBeAutomated ? 1 : 0) : 2
+            }
+            entities[index].merge(changes) { _, new in new }
             records[key] = entities
             return ["id": entities[index]["id"] ?? 0]
         case "DELETE" where detailID != nil:
             guard entities.contains(where: matchesID)
             else { throw API.NetError.invalidRequest("Entity not found.") }
-            entities.removeAll(where: matchesID)
+            if endpoint == "suite", let projectCode, let rootID = detailID.flatMap(Int.init) {
+                // DELETE /suite удаляет набор вместе с кейсами: developers.qase.io/reference/delete-suite
+                // Вложенные наборы удаляются так же; parent_id 0 означает корень, как в SuiteCatalogLoader.
+                var removed: Set<Int> = [rootID]
+                var changed = true
+                while changed {
+                    changed = false
+                    for suite in entities {
+                        if let id = suite["id"] as? Int, let parent = suite["parent_id"] as? Int, parent != 0,
+                           removed.contains(parent), removed.insert(id).inserted { changed = true }
+                    }
+                }
+                entities.removeAll { ($0["id"] as? Int).map(removed.contains) ?? false }
+                let caseKey = "case/\(projectCode)"
+                var cases = try records[caseKey] ?? initialRecords(endpoint: "case", projectCode: projectCode)
+                cases.removeAll { ($0["suite_id"] as? Int).map(removed.contains) ?? false }
+                records[caseKey] = cases
+            } else {
+                entities.removeAll(where: matchesID)
+            }
             records[key] = entities
             return [:] as [String: Any]
         default:
@@ -730,39 +715,5 @@ final class APIMockManager: NetworkManager {
         default:
             return []
         }
-    }
-
-    func composeURL(
-        for method: API.Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [API.QueryParams: Int?]? = nil
-    ) -> URL? {
-        API.makeLegacyURL(for: method, urlComponents: urlComponents, queryItems: queryItems)
-    }
-
-    func composeURL(
-        for operation: API.Operation,
-        pathParameters: [String: String],
-        queryItems: [URLQueryItem]
-    ) -> URL? {
-        API.makeURL(for: operation, pathParameters: pathParameters, queryItems: queryItems)
-    }
-}
-
-extension API {
-    static func makeLegacyURL(
-        for endpoint: Endpoint,
-        urlComponents: [String?]?,
-        queryItems: [QueryParams: Int?]?
-    ) -> URL? {
-        guard var url = URL(string: "\(BASE_URL)/\(endpoint.rawValue)") else { return nil }
-        for component in urlComponents ?? [] {
-            if let component { url.appendPathComponent(component) }
-        }
-        let items = (queryItems ?? [:]).compactMap { parameter, value in
-            value.map { URLQueryItem(name: parameter.rawValue, value: String($0)) }
-        }
-        if !items.isEmpty { url.append(queryItems: items) }
-        return url
     }
 }

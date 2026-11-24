@@ -28,6 +28,8 @@ extension ProjectDraft {
 
 @MainActor
 protocol FormDepartureParticipant: ProjectDraft {
+    /// Завершает ввод (в том числе IME), чтобы модель увидела актуальный текст.
+    func finishEditing()
     func requestDeparture() async -> Bool
 }
 
@@ -40,7 +42,10 @@ enum FormDepartureGuard {
     ) async -> Bool {
         guard !draft.isSavingDraft else { return false }
         guard draft.hasUnsavedChanges else { return true }
-        guard presenter.presentedViewController == nil else { return false }
+        guard let alertHost = await presenter.presenterWhenReady() else { return false }
+        // За время ожидания состояние формы могло измениться.
+        guard !draft.isSavingDraft else { return false }
+        guard draft.hasUnsavedChanges else { return true }
         let decision: DraftDecision = await withCheckedContinuation { continuation in
             let alert = UIAlertController(
                 title: "Discard changes?".localized,
@@ -53,7 +58,7 @@ enum FormDepartureGuard {
             alert.addAction(UIAlertAction(title: "Discard changes".localized, style: .destructive) { _ in
                 continuation.resume(returning: .discard)
             })
-            presenter.present(alert, animated: true)
+            alertHost.present(alert, animated: true)
         }
         return (try? await ProjectSwitchGuard().resolve([draft], decision: decision)) == true
     }
@@ -127,7 +132,7 @@ final class ApplicationProjectCoordinator {
         do {
             return try await ProjectSwitchGuard().resolve(drafts, decision: decision)
         } catch {
-            let presenter = topPresenter(shell)
+            let presenter = shell.topPresentedController
             UIAlertController.showSimpleAlert(
                 on: presenter,
                 title: "Error".localized,
@@ -136,6 +141,11 @@ final class ApplicationProjectCoordinator {
             )
             return false
         }
+    }
+
+    func hasUnsavedDrafts(inPresentedStackOf root: UIViewController) -> Bool {
+        guard let presented = root.presentedViewController else { return false }
+        return participants(in: presented).contains(where: \.hasUnsavedChanges)
     }
 
     private func participants(in controller: UIViewController) -> [ProjectDraft] {
@@ -147,23 +157,13 @@ final class ApplicationProjectCoordinator {
         return result.filter { seen.insert(ObjectIdentifier($0)).inserted }
     }
 
-    private func topPresenter(_ controller: UIViewController) -> UIViewController {
-        if let presented = controller.presentedViewController { return topPresenter(presented) }
-        if let tab = controller as? UITabBarController, let selected = tab.selectedViewController {
-            return topPresenter(selected)
-        }
-        if let nav = controller as? UINavigationController, let visible = nav.visibleViewController {
-            return topPresenter(visible)
-        }
-        return controller
-    }
-
     private func decisionForDrafts(
         _ drafts: [ProjectDraft],
         from shell: UIViewController,
         switchingProject: Bool
     ) async -> DraftDecision {
-        await withCheckedContinuation { continuation in
+        guard let presenter = await shell.presenterWhenReady() else { return .stay }
+        return await withCheckedContinuation { continuation in
             let alert = UIAlertController(
                 title: "Unsaved changes".localized,
                 message: (switchingProject ?
@@ -192,7 +192,7 @@ final class ApplicationProjectCoordinator {
                 alert.message = "Some changes cannot be saved. Stay to finish editing or discard them."
                     .localized
             }
-            topPresenter(shell).present(alert, animated: true)
+            presenter.present(alert, animated: true)
         }
     }
 }

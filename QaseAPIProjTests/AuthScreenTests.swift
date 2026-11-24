@@ -3,7 +3,7 @@ import Foundation
 import Testing
 import UIKit
 
-@Suite(.serialized) @MainActor
+@Suite(.serialized, .timeLimit(.minutes(1))) @MainActor
 struct AuthScreenTests {
     @Test func emptyAndWhitespaceCannotStartLogin() throws {
         let fixture = AuthScreenFixture()
@@ -146,7 +146,7 @@ struct AuthScreenTests {
         defer { service.finish() }
         let parent = UIViewController()
         var controller: AuthViewController? = AuthViewController(auth: service)
-        weak var released = controller
+        weak let released = controller
         parent.addChild(try #require(controller))
         parent.view.addSubview(try #require(controller).view)
         controller?.didMove(toParent: parent)
@@ -357,7 +357,7 @@ private func findControl<T: UIView>(_ view: UIView, _ identifier: AccessibilityI
 
 @MainActor
 private func waitUntil(_ condition: () -> Bool) async {
-    while !condition() { await Task.yield() }
+    await waitForCondition(condition)
 }
 
 private enum AuthScreenFixtureError: Error { case unexpectedMethod }
@@ -367,7 +367,8 @@ private final class AuthScreenService: AuthServicing {
     var tokens: [String] = []
     var cancelled = false
     private var pending: CheckedContinuation<Void, Error>?
-    private var onStarted: (() -> Void)?
+    /// Сколько вызовов `loggedIn` дошли до ожидания ответа.
+    private var startedCalls = 0
     var isDemoMode: Bool { false }
     
     func isUserLoggedIn() -> Bool { false }
@@ -377,20 +378,18 @@ private final class AuthScreenService: AuthServicing {
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 pending = continuation
-                let notify = onStarted
-                onStarted = nil
-                notify?()
+                startedCalls += 1
             }
         } onCancel: {
             Task { @MainActor [weak self] in self?.cancelled = true }
         }
     }
     
+    /// Ограниченное ожидание: если `action` не запустил вход, тест падает, а не висит.
     func waitForStart(_ action: () -> Void) async {
-        await withCheckedContinuation { continuation in
-            onStarted = { continuation.resume() }
-            action()
-        }
+        let before = startedCalls
+        action()
+        await waitForCondition { startedCalls > before }
     }
     
     func finish(error: Error? = nil) {
